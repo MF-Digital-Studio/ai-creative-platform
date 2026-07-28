@@ -1,26 +1,152 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f6f5f1;
+  --surface: #ffffff;
+  --surface-soft: #eceae4;
+
   --foreground: #171717;
+  --foreground-muted: #6b6964;
+
+  --accent: #7257ff;
+  --accent-soft: #e8e3ff;
+
+  --border: rgba(23, 23, 23, 0.12);
+
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+
+  --container: 1440px;
+  --container-padding: clamp(1.25rem, 3vw, 3rem);
+
+  --section-space-compact: clamp(3rem, 6vw, 5rem);
+  --section-space: clamp(4.5rem, 9vw, 8rem);
+  --section-space-large: clamp(6rem, 12vw, 11rem);
+
+  --transition-fast: 160ms;
+  --button-transition-duration: 500ms;
+  --button-transition-ease: cubic-bezier(0.22, 0.84, 0.32, 1);
+  --focus-ring: rgba(114, 87, 255, 0.48);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+.button-label-viewport {
+  position: relative;
+  display: grid;
+  height: 1.25em;
+  overflow: hidden;
+  line-height: 1.25;
+  perspective: 560px;
+  transform-style: preserve-3d;
+}
+
+.button-label-copy {
+  grid-area: 1 / 1;
+  display: block;
+  min-width: max-content;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition:
+    transform var(--button-transition-duration) var(--button-transition-ease),
+    opacity var(--button-transition-duration) var(--button-transition-ease);
+}
+
+.button-label-copy-current {
+  transform: translateY(0%) rotateX(0deg);
+  opacity: 1;
+}
+
+.button-label-copy-next {
+  transform: translateY(120%) rotateX(65deg);
+  opacity: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button-roll:not(:disabled):hover .button-label-copy-current {
+    transform: translateY(-120%) rotateX(-65deg);
+    opacity: 0;
+  }
+
+  .button-roll:not(:disabled):hover .button-label-copy-next {
+    transform: translateY(0%) rotateX(0deg);
+    opacity: 1;
+  }
+
+  .button-roll:not(:disabled):hover .button-label-fallback {
+    transform: translateY(-1px);
+  }
+}
+
+.button-label-fallback {
+  transition: transform var(--button-transition-duration) var(--button-transition-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button-label-copy {
+    transition: none;
+  }
+
+  .button-label-copy-current {
+    transform: none;
+    opacity: 1;
+  }
+
+  .button-label-copy-next {
+    display: none;
+  }
+
+  .button-label-fallback {
+    transition: none;
+  }
 }

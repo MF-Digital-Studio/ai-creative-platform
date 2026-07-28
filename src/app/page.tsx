@@ -1,65 +1,74 @@
-import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
+import { Section } from "@/components/ui/section";
+import { SectionHeading } from "@/components/ui/section-heading";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main>
+      <h1 className="sr-only">UI Preview</h1>
+      <Section spacing="large" aria-label="UI Preview">
+        <Container>
+          <div className="border-y border-[var(--border)] py-[var(--section-space-compact)]">
+            <SectionHeading
+              eyebrow="Foundation"
+              title="UI Preview"
+              description="Creative platform için tutarlı, sade ve içerik odaklı arayüz bileşenleri."
+              align="center"
+              className="mx-auto"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          </div>
+        </Container>
+      </Section>
+
+      <Section spacing="compact" aria-labelledby="actions-title">
+        <Container>
+          <div className="grid gap-10 border-b border-[var(--border)] pb-[var(--section-space-compact)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--foreground-muted)]">
+                Actions
+              </p>
+              <h2
+                id="actions-title"
+                className="mt-3 text-2xl tracking-[-0.035em]"
+              >
+                Button variants
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button>Primary action</Button>
+              <Button variant="secondary">Secondary action</Button>
+              <Button variant="ghost">Ghost action</Button>
+              <Button variant="dark">Dark action</Button>
+              <Button disabled>Disabled action</Button>
+            </div>
+          </div>
+        </Container>
+      </Section>
+
+      <Section spacing="compact" aria-labelledby="tags-title">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--foreground-muted)]">
+                Categories
+              </p>
+              <h2
+                id="tags-title"
+                className="mt-3 text-2xl tracking-[-0.035em]"
+              >
+                Badge variants
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Badge>Takı</Badge>
+              <Badge variant="accent">Giyim</Badge>
+              <Badge variant="outline">Kozmetik</Badge>
+            </div>
+          </div>
+        </Container>
+      </Section>
+    </main>
   );
 }
