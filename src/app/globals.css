@@ -30,6 +30,7 @@
   --button-transition-ease: cubic-bezier(0.22, 0.84, 0.32, 1);
   --navbar-height: 4.5rem;
   --navbar-transition-duration: 360ms;
+  --menu-transition-duration: 240ms;
   --navbar-surface: color-mix(in srgb, var(--background) 90%, transparent);
   --focus-ring: rgba(114, 87, 255, 0.48);
 
@@ -186,6 +187,24 @@ video {
   transition: color var(--footer-link-transition) var(--button-transition-ease);
 }
 
+.language-menu {
+  animation: language-menu-enter var(--menu-transition-duration)
+    var(--button-transition-ease);
+  transform-origin: top right;
+}
+
+@keyframes language-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .footer-link::after {
   position: absolute;
   right: 0.125rem;
@@ -260,5 +279,9 @@ video {
 
   .footer-link:hover::after {
     transform: scaleX(0);
+  }
+
+  .language-menu {
+    animation: none;
   }
 }

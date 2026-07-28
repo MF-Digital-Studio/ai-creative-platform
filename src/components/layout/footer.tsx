@@ -1,39 +1,10 @@
-import Link from "next/link";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
 import { navigationItems } from "@/data/navigation";
-
-const footerNavigation = [
-  {
-    title: "Platform",
-    links: navigationItems,
-  },
-  {
-    title: "Sektörler",
-    links: [
-      { label: "Takı", href: "#jewelry" },
-      { label: "Giyim", href: "#fashion" },
-      { label: "Kozmetik", href: "#cosmetics" },
-    ],
-  },
-  {
-    title: "Şirket",
-    links: [
-      { label: "Hakkımızda", href: "/about" },
-      { label: "İletişim", href: "/contact" },
-      { label: "Gizlilik", href: "/privacy" },
-      { label: "Kullanım Koşulları", href: "/terms" },
-    ],
-  },
-] as const;
-
-const socialLinks = [
-  { label: "Instagram", href: siteConfig.links.instagram },
-  { label: "LinkedIn", href: siteConfig.links.linkedin },
-  { label: "X", href: siteConfig.links.x },
-].filter((link) => link.href);
+import { getPathname, Link } from "@/i18n/navigation";
 
 function FooterLink({ href, label }: { href: string; label: string }) {
   return (
@@ -46,33 +17,78 @@ function FooterLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-export function Footer() {
+export async function Footer() {
+  const locale = await getLocale();
+  const footerT = await getTranslations("Footer");
+  const navigationT = await getTranslations("Navigation");
+  const footerNavigation = [
+    {
+      title: footerT("platform"),
+      links: navigationItems.map((item) => ({
+        label: navigationT(item.key),
+        href: item.href,
+      })),
+    },
+    {
+      title: footerT("industries"),
+      links: [
+        { label: footerT("jewelry"), href: "#jewelry" },
+        { label: footerT("fashion"), href: "#fashion" },
+        { label: footerT("cosmetics"), href: "#cosmetics" },
+      ],
+    },
+    {
+      title: footerT("company"),
+      links: [
+        { label: footerT("about"), href: siteConfig.routes.about },
+        { label: footerT("contact"), href: siteConfig.routes.contact },
+        { label: footerT("privacy"), href: siteConfig.routes.privacy },
+        { label: footerT("terms"), href: siteConfig.routes.terms },
+      ],
+    },
+  ];
+  const socialLinks = [
+    {
+      label: footerT("instagramLabel"),
+      href: siteConfig.links.instagram,
+    },
+    {
+      label: footerT("linkedinLabel"),
+      href: siteConfig.links.linkedin,
+    },
+    { label: footerT("xLabel"), href: siteConfig.links.x },
+  ].filter((link) => link.href);
+
   return (
     <footer className="w-full max-w-[100vw] overflow-hidden bg-[var(--foreground)] text-[var(--background)]">
       <Container>
         <section className="grid grid-cols-1 gap-10 border-b border-[var(--footer-border)] py-[var(--section-space)] lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.65fr)] lg:items-end lg:gap-16">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--footer-muted)]">
-              Kampanyanı oluştur
+              {footerT("eyebrow")}
             </p>
             <h2
               className="mt-5 max-w-full text-[clamp(2.25rem,4.1vw,4rem)] font-medium leading-[0.98] tracking-[-0.06em]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              <span className="block">Bir ürün fotoğrafı.</span>
-              <span className="block">
-                Baştan sona bir <span className="block lg:inline">kampanya.</span>
-              </span>
+              <span className="block">{footerT("ctaTitleLead")}</span>
+              <span className="block">{footerT("ctaTitleTrail")}</span>
             </h2>
           </div>
 
           <div className="min-w-0 max-w-md lg:pb-1">
             <p className="text-base leading-7 text-[var(--footer-muted)]">
-              Takı, giyim ve kozmetik ürünlerinizi gerçekçi görsellere ve kısa
-              videolara dönüştürün.
+              {footerT("description")}
             </p>
-            <Button href={siteConfig.routes.signup} className="mt-7" size="lg">
-              Ücretsiz Dene →
+            <Button
+              href={getPathname({
+                href: siteConfig.routes.signup,
+                locale,
+              })}
+              className="mt-7"
+              size="lg"
+            >
+              {footerT("cta")}
             </Button>
           </div>
         </section>
@@ -86,12 +102,12 @@ export function Footer() {
               {siteConfig.name}
             </p>
             <p className="mt-4 text-sm leading-6 text-[var(--footer-muted)]">
-              {siteConfig.shortDescription}
+              {footerT("shortDescription")}
             </p>
           </div>
 
           <nav
-            aria-label="Footer platform navigasyonu"
+            aria-label={footerT("navigationLabel")}
             className="grid grid-cols-2 gap-x-7 gap-y-10 sm:grid-cols-3 lg:col-span-3 lg:gap-8"
           >
             {footerNavigation.map((group) => (
@@ -122,9 +138,14 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-5 border-t border-[var(--footer-border)] py-6 text-sm text-[var(--footer-muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 {siteConfig.name}. Tüm hakları saklıdır.</p>
+          <p>
+            {footerT("copyright", {
+              year: 2026,
+              brand: siteConfig.name,
+            })}
+          </p>
           {socialLinks.length > 0 ? (
-            <nav aria-label="Sosyal medya bağlantıları">
+            <nav aria-label={footerT("socialNavigationLabel")}>
               <ul className="flex flex-wrap gap-x-5 gap-y-2" role="list">
                 {socialLinks.map((link) => (
                   <li key={link.label}>

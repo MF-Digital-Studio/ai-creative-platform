@@ -1,15 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 import { navigationItems } from "@/data/navigation";
+import { getPathname, Link } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
 
 const mobileMenuId = "mobile-navigation-panel";
 
 export function MobileNavigation() {
+  const locale = useLocale();
+  const navigationT = useTranslations("Navigation");
+  const commonT = useTranslations("Common");
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -42,10 +48,10 @@ export function MobileNavigation() {
         className="group inline-flex h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 text-sm font-medium text-[var(--foreground)] shadow-[var(--shadow-subtle)] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
         aria-controls={mobileMenuId}
         aria-expanded={isOpen}
-        aria-label={isOpen ? "Menüyü kapat" : "Menüyü aç"}
+        aria-label={isOpen ? commonT("closeMenu") : commonT("openMenu")}
         onClick={() => setIsOpen((current) => !current)}
       >
-        <span>Menü</span>
+        <span>{commonT("menu")}</span>
         <span aria-hidden="true" className="relative block h-4 w-5">
           <span
             className={cn(
@@ -76,27 +82,37 @@ export function MobileNavigation() {
                   className="flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-base font-medium tracking-[-0.01em] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
                   onClick={closeMenu}
                 >
-                  {item.label}
+                  {navigationT(item.key)}
                 </Link>
               ))}
             </div>
 
             <div className="mt-3 flex items-center gap-3 border-t border-[var(--border)] px-3 pt-4">
               <Link
-                href="/login"
+                href={siteConfig.routes.login}
                 className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium transition-colors duration-(--transition-fast) hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
                 onClick={closeMenu}
               >
-                Giriş Yap
+                {commonT("signIn")}
               </Link>
               <Button
-                href="/signup"
+                href={getPathname({
+                  href: siteConfig.routes.signup,
+                  locale,
+                })}
                 variant="dark"
                 size="sm"
                 onClick={closeMenu}
               >
-                Ücretsiz Dene
+                {commonT("tryForFree")}
               </Button>
+            </div>
+
+            <div className="mt-3 border-t border-[var(--border)] px-3 pt-3">
+              <LanguageSwitcher
+                variant="mobile"
+                onLocaleChange={closeMenu}
+              />
             </div>
           </div>
         </div>

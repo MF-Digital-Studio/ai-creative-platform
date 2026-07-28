@@ -1,9 +1,5 @@
 export const siteConfig = {
   name: "CREATIVE AI",
-  shortDescription: "Ürün fotoğraflarından kampanyaya hazır içerikler.",
-  title: "Creative AI — Ürün Fotoğrafından Kampanyaya",
-  description:
-    "Takı, giyim ve kozmetik ürünlerini gerçekçi kampanya görsellerine ve kısa videolara dönüştüren AI kreatif platformu.",
   links: {
     instagram: "",
     linkedin: "",
@@ -13,5 +9,9 @@ export const siteConfig = {
     home: "/",
     login: "/login",
     signup: "/signup",
+    about: "/about",
+    contact: "/contact",
+    privacy: "/privacy",
+    terms: "/terms",
   },
 } as const;

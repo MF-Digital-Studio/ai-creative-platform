@@ -1,7 +1,7 @@
 export const navigationItems = [
-  { label: "Ürün", href: "#product" },
-  { label: "Nasıl Çalışır", href: "#how-it-works" },
-  { label: "Şablonlar", href: "#templates" },
-  { label: "Örnekler", href: "#showcase" },
-  { label: "Fiyatlandırma", href: "#pricing" },
+  { key: "product", href: "#product" },
+  { key: "howItWorks", href: "#how-it-works" },
+  { key: "templates", href: "#templates" },
+  { key: "showcase", href: "#showcase" },
+  { key: "pricing", href: "#pricing" },
 ] as const;

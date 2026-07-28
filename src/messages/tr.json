@@ -1,0 +1,73 @@
+{
+  "Metadata": {
+    "title": "Creative AI — Ürün Fotoğrafından Kampanyaya",
+    "description": "Takı, giyim ve kozmetik ürünlerini gerçekçi kampanya görsellerine ve kısa videolara dönüştüren AI kreatif platformu."
+  },
+  "Navigation": {
+    "product": "Ürün",
+    "howItWorks": "Nasıl Çalışır",
+    "templates": "Şablonlar",
+    "showcase": "Örnekler",
+    "pricing": "Fiyatlandırma",
+    "mainLabel": "Ana navigasyon",
+    "homeLabel": "{brand} ana sayfa"
+  },
+  "Common": {
+    "signIn": "Giriş Yap",
+    "tryForFree": "Ücretsiz Dene",
+    "menu": "Menü",
+    "openMenu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat"
+  },
+  "Preview": {
+    "foundation": "TEMEL",
+    "title": "UI Önizleme",
+    "description": "Creative platform için tutarlı, sade ve içerik odaklı arayüz bileşenleri.",
+    "ariaLabel": "UI Önizleme",
+    "actions": "AKSİYONLAR",
+    "buttonVariants": "Buton varyantları",
+    "primaryAction": "Ana aksiyon",
+    "secondaryAction": "İkincil aksiyon",
+    "ghostAction": "Hayalet aksiyon",
+    "darkAction": "Koyu aksiyon",
+    "disabledAction": "Devre dışı aksiyon",
+    "categories": "KATEGORİLER",
+    "badgeVariants": "Etiket varyantları",
+    "jewelry": "Takı",
+    "fashion": "Giyim",
+    "cosmetics": "Kozmetik"
+  },
+  "Footer": {
+    "eyebrow": "Kampanyanı oluştur",
+    "ctaTitleLead": "Bir ürün fotoğrafı.",
+    "ctaTitleTrail": "Baştan sona bir kampanya.",
+    "description": "Takı, giyim ve kozmetik ürünlerinizi gerçekçi görsellere ve kısa videolara dönüştürün.",
+    "cta": "Ücretsiz Dene →",
+    "shortDescription": "Ürün fotoğraflarından kampanyaya hazır içerikler.",
+    "platform": "PLATFORM",
+    "industries": "SEKTÖRLER",
+    "company": "ŞİRKET",
+    "jewelry": "Takı",
+    "fashion": "Giyim",
+    "cosmetics": "Kozmetik",
+    "about": "Hakkımızda",
+    "contact": "İletişim",
+    "privacy": "Gizlilik",
+    "terms": "Kullanım Koşulları",
+    "navigationLabel": "Footer platform navigasyonu",
+    "socialNavigationLabel": "Sosyal medya bağlantıları",
+    "instagramLabel": "Instagram",
+    "linkedinLabel": "LinkedIn",
+    "xLabel": "X",
+    "copyright": "© {year} {brand}. Tüm hakları saklıdır."
+  },
+  "LanguageSwitcher": {
+    "label": "Dil seç",
+    "menuLabel": "Dil seçenekleri",
+    "switchTo": "Dili değiştir:",
+    "localeNames": {
+      "tr": "Türkçe",
+      "en": "English"
+    }
+  }
+}

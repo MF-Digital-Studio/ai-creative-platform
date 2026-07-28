@@ -121,3 +121,15 @@ Her görev sonunda şunları raporla:
 - Lint sonucu
 - Build sonucu
 - Manuel kontrol edilmesi gereken noktalar
+
+# Internationalization Rules
+
+- Desteklenen locale'ler `tr` ve `en`, varsayılan locale `tr` olmalı.
+- Kullanıcıya görünen sabit metinleri component içinde hard-code etme.
+- Yeni mesajları hem `tr.json` hem `en.json` dosyasına ekle.
+- Route ve URL değerlerini çeviri dosyalarına koyma.
+- `CREATIVE AI` marka adını çevirme.
+- Locale-aware navigation yardımcılarını kullan.
+- `<html lang>` aktif locale'i doğru göstermeli.
+- Çeviriler doğal ve kısa olmalı; kelime kelime kötü çeviriden kaçın.
+- Yeni section veya feature iki dilde tamamlanmadan bitmiş kabul edilmemeli.

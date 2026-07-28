@@ -1,0 +1,73 @@
+{
+  "Metadata": {
+    "title": "Creative AI — From Product Photo to Campaign",
+    "description": "An AI creative platform that turns jewelry, fashion and cosmetics products into realistic campaign visuals and short-form videos."
+  },
+  "Navigation": {
+    "product": "Product",
+    "howItWorks": "How It Works",
+    "templates": "Templates",
+    "showcase": "Showcase",
+    "pricing": "Pricing",
+    "mainLabel": "Main navigation",
+    "homeLabel": "{brand} home"
+  },
+  "Common": {
+    "signIn": "Sign In",
+    "tryForFree": "Try for Free",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "Preview": {
+    "foundation": "FOUNDATION",
+    "title": "UI Preview",
+    "description": "Consistent, minimal and content-focused interface components for the creative platform.",
+    "ariaLabel": "UI Preview",
+    "actions": "ACTIONS",
+    "buttonVariants": "Button variants",
+    "primaryAction": "Primary action",
+    "secondaryAction": "Secondary action",
+    "ghostAction": "Ghost action",
+    "darkAction": "Dark action",
+    "disabledAction": "Disabled action",
+    "categories": "CATEGORIES",
+    "badgeVariants": "Badge variants",
+    "jewelry": "Jewelry",
+    "fashion": "Fashion",
+    "cosmetics": "Cosmetics"
+  },
+  "Footer": {
+    "eyebrow": "Create your campaign",
+    "ctaTitleLead": "One product photo.",
+    "ctaTitleTrail": "An entire campaign.",
+    "description": "Turn your jewelry, fashion and cosmetics products into realistic visuals and short-form videos.",
+    "cta": "Try for Free →",
+    "shortDescription": "Campaign-ready content from your product photos.",
+    "platform": "PLATFORM",
+    "industries": "INDUSTRIES",
+    "company": "COMPANY",
+    "jewelry": "Jewelry",
+    "fashion": "Fashion",
+    "cosmetics": "Cosmetics",
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy",
+    "terms": "Terms of Use",
+    "navigationLabel": "Footer platform navigation",
+    "socialNavigationLabel": "Social media links",
+    "instagramLabel": "Instagram",
+    "linkedinLabel": "LinkedIn",
+    "xLabel": "X",
+    "copyright": "© {year} {brand}. All rights reserved."
+  },
+  "LanguageSwitcher": {
+    "label": "Select language",
+    "menuLabel": "Language options",
+    "switchTo": "Switch language to",
+    "localeNames": {
+      "tr": "Türkçe",
+      "en": "English"
+    }
+  }
+}

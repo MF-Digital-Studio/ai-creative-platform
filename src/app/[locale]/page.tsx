@@ -5,20 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { notFound } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
-export default function Home() {
+import { isSupportedLocale } from "@/i18n/routing";
+
+type HomeProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function Home({ params }: HomeProps) {
+  const { locale } = await params;
+
+  if (!isSupportedLocale(locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+
+  const t = await getTranslations({ locale, namespace: "Preview" });
+
   return (
     <>
       <Navbar />
       <main>
-        <h1 className="sr-only">UI Preview</h1>
-        <Section spacing="large" aria-label="UI Preview">
+        <h1 className="sr-only">{t("title")}</h1>
+        <Section spacing="large" aria-label={t("ariaLabel")}>
           <Container>
             <div className="border-y border-[var(--border)] py-[var(--section-space-compact)]">
               <SectionHeading
-                eyebrow="Foundation"
-                title="UI Preview"
-                description="Creative platform için tutarlı, sade ve içerik odaklı arayüz bileşenleri."
+                eyebrow={t("foundation")}
+                title={t("title")}
+                description={t("description")}
                 align="center"
                 className="mx-auto"
               />
@@ -31,21 +49,21 @@ export default function Home() {
             <div className="grid gap-10 border-b border-[var(--border)] pb-[var(--section-space-compact)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--foreground-muted)]">
-                  Actions
+                  {t("actions")}
                 </p>
                 <h2
                   id="actions-title"
                   className="mt-3 text-2xl tracking-[-0.035em]"
                 >
-                  Button variants
+                  {t("buttonVariants")}
                 </h2>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button>Primary action</Button>
-                <Button variant="secondary">Secondary action</Button>
-                <Button variant="ghost">Ghost action</Button>
-                <Button variant="dark">Dark action</Button>
-                <Button disabled>Disabled action</Button>
+                <Button>{t("primaryAction")}</Button>
+                <Button variant="secondary">{t("secondaryAction")}</Button>
+                <Button variant="ghost">{t("ghostAction")}</Button>
+                <Button variant="dark">{t("darkAction")}</Button>
+                <Button disabled>{t("disabledAction")}</Button>
               </div>
             </div>
           </Container>
@@ -56,19 +74,19 @@ export default function Home() {
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--foreground-muted)]">
-                  Categories
+                  {t("categories")}
                 </p>
                 <h2
                   id="tags-title"
                   className="mt-3 text-2xl tracking-[-0.035em]"
                 >
-                  Badge variants
+                  {t("badgeVariants")}
                 </h2>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Badge>Takı</Badge>
-                <Badge variant="accent">Giyim</Badge>
-                <Badge variant="outline">Kozmetik</Badge>
+                <Badge>{t("jewelry")}</Badge>
+                <Badge variant="accent">{t("fashion")}</Badge>
+                <Badge variant="outline">{t("cosmetics")}</Badge>
               </div>
             </div>
           </Container>
