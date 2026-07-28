@@ -27,7 +27,15 @@
   --transition-fast: 160ms;
   --button-transition-duration: 500ms;
   --button-transition-ease: cubic-bezier(0.22, 0.84, 0.32, 1);
+  --navbar-height: 4.5rem;
+  --navbar-transition-duration: 360ms;
+  --navbar-surface: color-mix(in srgb, var(--background) 90%, transparent);
   --focus-ring: rgba(114, 87, 255, 0.48);
+
+  --footer-muted: color-mix(in srgb, var(--background) 72%, transparent);
+  --footer-border: color-mix(in srgb, var(--background) 18%, transparent);
+  --footer-wordmark: color-mix(in srgb, var(--background) 15%, transparent);
+  --footer-link-transition: 300ms;
 }
 
 * {
@@ -65,9 +73,11 @@ a {
   font: inherit;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 img,
@@ -79,6 +89,42 @@ video {
 ::selection {
   background: var(--accent);
   color: white;
+}
+
+.navbar-label-viewport {
+  position: relative;
+  display: grid;
+  height: 1.25em;
+  overflow: hidden;
+  line-height: 1.25;
+}
+
+.navbar-label-copy {
+  grid-area: 1 / 1;
+  display: block;
+  min-width: max-content;
+  transition:
+    color var(--transition-fast) ease,
+    transform var(--navbar-transition-duration) var(--button-transition-ease);
+}
+
+.navbar-label-current {
+  transform: translateY(0%);
+}
+
+.navbar-label-next {
+  color: var(--foreground);
+  transform: translateY(110%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .navbar-link:hover .navbar-label-current {
+    transform: translateY(-110%);
+  }
+
+  .navbar-link:hover .navbar-label-next {
+    transform: translateY(0%);
+  }
 }
 
 .button-label-viewport {
@@ -95,6 +141,7 @@ video {
   grid-area: 1 / 1;
   display: block;
   min-width: max-content;
+  color: inherit;
   transform-origin: center center;
   backface-visibility: hidden;
   transition:
@@ -129,10 +176,56 @@ video {
 }
 
 .button-label-fallback {
+  color: inherit;
   transition: transform var(--button-transition-duration) var(--button-transition-ease);
 }
 
+.footer-link {
+  position: relative;
+  transition: color var(--footer-link-transition) var(--button-transition-ease);
+}
+
+.footer-link::after {
+  position: absolute;
+  right: 0.125rem;
+  bottom: 0;
+  left: 0.125rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--footer-link-transition) var(--button-transition-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .footer-link:hover {
+    color: var(--accent-soft);
+  }
+
+  .footer-link:hover::after {
+    transform: scaleX(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .navbar-label-copy {
+    transition: color var(--transition-fast) ease;
+  }
+
+  .navbar-label-current {
+    transform: none;
+  }
+
+  .navbar-label-next {
+    display: none;
+  }
+
+  .navbar-link:hover .navbar-label-current {
+    color: var(--foreground);
+    transform: none;
+  }
+
   .button-label-copy {
     transition: none;
   }
@@ -146,7 +239,25 @@ video {
     display: none;
   }
 
+  .button-roll:not(:disabled):hover .button-label-copy-current {
+    transform: none;
+    opacity: 1;
+  }
+
   .button-label-fallback {
     transition: none;
+  }
+
+  .button-roll:not(:disabled):hover .button-label-fallback {
+    transform: none;
+  }
+
+  .footer-link,
+  .footer-link::after {
+    transition: none;
+  }
+
+  .footer-link:hover::after {
+    transform: scaleX(0);
   }
 }

@@ -1,14 +1,29 @@
-import type { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
+import type { ComponentProps, ButtonHTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "dark";
 type ButtonSize = "sm" | "md" | "lg";
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonBaseProps {
+  children?: ReactNode;
+  className?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
 }
+
+type ButtonAsButtonProps = ButtonBaseProps &
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    href?: never;
+  };
+
+type ButtonAsLinkProps = ButtonBaseProps &
+  Omit<ComponentProps<typeof Link>, "children" | "className"> & {
+    href: ComponentProps<typeof Link>["href"];
+  };
+
+export type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
 type ButtonVariantClasses = {
   button: string;
@@ -31,7 +46,7 @@ const variantClasses: Record<ButtonVariant, ButtonVariantClasses> = {
       "top-auto bottom-0 h-px translate-y-0 origin-left scale-x-0 bg-[var(--accent)] [@media(hover:hover)]:group-hover:scale-x-100 motion-reduce:!translate-y-0 motion-reduce:!scale-x-0",
   },
   dark: {
-    button: "border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)]",
+    button: "border-[var(--foreground)] bg-[var(--foreground)] text-white",
     fill: "bg-[var(--accent)] motion-reduce:!translate-y-full",
   },
 };
@@ -42,39 +57,32 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "h-13 px-6 text-base",
 };
 
-export function Button({
+function ButtonContent({
   children,
-  className,
-  variant = "primary",
-  size = "md",
-  type = "button",
-  ...props
-}: ButtonProps) {
+  fillClassName,
+}: {
+  children: ReactNode;
+  fillClassName: string;
+}) {
   const isTextLabel =
     typeof children === "string" || typeof children === "number";
 
   return (
-    <button
-      className={cn(
-        "button-roll group relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[var(--radius-md)] border font-medium tracking-[-0.01em] transition-[background-color,border-color,color,transform] duration-(--button-transition-duration) ease-(--button-transition-ease) [@media(hover:hover)]:hover:-translate-y-px active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none",
-        variantClasses[variant].button,
-        sizeClasses[size],
-        className,
-      )}
-      type={type}
-      {...props}
-    >
+    <>
       <span
         aria-hidden="true"
         className={cn(
           "pointer-events-none absolute inset-x-0 top-0 z-0 translate-y-full transition-transform duration-(--button-transition-duration) ease-(--button-transition-ease) [@media(hover:hover)]:group-hover:translate-y-0 motion-reduce:transition-none",
-          variantClasses[variant].fill,
+          fillClassName,
         )}
       />
       {isTextLabel ? (
         <span className="relative z-10 inline-flex items-center justify-center">
           <span className="sr-only">{children}</span>
-          <span aria-hidden="true" className="button-label-viewport">
+          <span
+            aria-hidden="true"
+            className="button-label-viewport text-inherit"
+          >
             <span className="button-label-copy button-label-copy-current">
               {children}
             </span>
@@ -84,10 +92,56 @@ export function Button({
           </span>
         </span>
       ) : (
-        <span className="button-label-fallback relative z-10 inline-flex items-center justify-center">
+        <span className="button-label-fallback relative z-10 inline-flex items-center justify-center text-inherit">
           {children}
         </span>
       )}
+    </>
+  );
+}
+
+export function Button(props: ButtonProps) {
+  const {
+    children,
+    className,
+    variant = "primary",
+    size = "md",
+  } = props;
+  const buttonClassName = cn(
+    "button-roll group relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[var(--radius-md)] border font-medium tracking-[-0.01em] transition-[background-color,border-color,color,transform] duration-(--button-transition-duration) ease-(--button-transition-ease) [@media(hover:hover)]:hover:-translate-y-px active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none",
+    variantClasses[variant].button,
+    sizeClasses[size],
+    className,
+  );
+
+  if ("href" in props && props.href !== undefined) {
+    const { href, ...linkProps } = props;
+    delete linkProps.children;
+    delete linkProps.className;
+    delete linkProps.variant;
+    delete linkProps.size;
+
+    return (
+      <Link className={buttonClassName} href={href} {...linkProps}>
+        <ButtonContent fillClassName={variantClasses[variant].fill}>
+          {children}
+        </ButtonContent>
+      </Link>
+    );
+  }
+
+  const buttonProps = { ...props, type: props.type ?? "button" };
+  delete buttonProps.children;
+  delete buttonProps.className;
+  delete buttonProps.variant;
+  delete buttonProps.size;
+  delete buttonProps.href;
+
+  return (
+    <button className={buttonClassName} {...buttonProps}>
+      <ButtonContent fillClassName={variantClasses[variant].fill}>
+        {children}
+      </ButtonContent>
     </button>
   );
 }
