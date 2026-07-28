@@ -193,6 +193,318 @@ video {
   transform-origin: top right;
 }
 
+.hero-section {
+  background:
+    radial-gradient(
+      circle at 50% 18%,
+      color-mix(in srgb, var(--accent-soft) 38%, transparent),
+      transparent 34rem
+    ),
+    var(--background);
+}
+
+.hero-section::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--border) 0.7px, transparent 0.7px);
+  background-position: top center;
+  background-size: 1.75rem 1.75rem;
+  content: "";
+  mask-image: linear-gradient(to bottom, black, transparent 55%);
+  opacity: 0.24;
+}
+
+.hero-eyebrow,
+.hero-title,
+.hero-copy,
+.hero-prompt-shell,
+.hero-work-heading,
+.hero-media-card {
+  animation-duration: 850ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.22, 0.84, 0.32, 1);
+}
+
+.hero-eyebrow {
+  animation-name: hero-rise-in;
+}
+
+.hero-title {
+  animation-delay: 90ms;
+  animation-name: hero-rise-in;
+}
+
+.hero-copy {
+  animation-delay: 190ms;
+  animation-name: hero-rise-in;
+}
+
+.hero-prompt-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-subtle);
+  animation-delay: 310ms;
+  animation-name: hero-rise-in;
+}
+
+.hero-work-heading {
+  animation-delay: 440ms;
+  animation-name: hero-fade-in;
+}
+
+.hero-prompt-demo {
+  color: var(--foreground);
+}
+
+.hero-prompt-caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.05em;
+  margin-left: 0.15em;
+  background: var(--accent);
+  vertical-align: -0.12em;
+  animation: hero-caret-blink 900ms steps(1, end) infinite;
+}
+
+.hero-media-card {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  box-shadow: var(--shadow-subtle);
+  animation-name: hero-card-enter;
+  transition:
+    box-shadow var(--transition-fast) ease,
+    transform var(--transition-fast) ease;
+}
+
+.hero-media-card > img {
+  animation: hero-media-drift 8s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+.hero-media-card::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--surface) 35%, transparent);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+
+.hero-media-caption {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.7rem;
+  left: 0.75rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.hero-media-caption span:last-child {
+  color: var(--foreground-muted);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.hero-media-jewelry {
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 40%;
+  aspect-ratio: 9 / 13;
+  animation-delay: 540ms;
+}
+
+.hero-media-fashion {
+  top: 12rem;
+  left: 8%;
+  z-index: 2;
+  width: 84%;
+  aspect-ratio: 5 / 3;
+  animation-delay: 650ms;
+}
+
+.hero-media-cosmetics {
+  top: 3.5rem;
+  right: 0;
+  z-index: 4;
+  width: 43%;
+  aspect-ratio: 5 / 4;
+  animation-delay: 760ms;
+}
+
+.hero-media-input,
+.hero-media-video {
+  display: none;
+}
+
+.hero-video-marker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid color-mix(in srgb, var(--surface) 45%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--foreground) 76%, transparent);
+  place-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.hero-video-marker span {
+  width: 0;
+  height: 0;
+  margin-left: 0.2rem;
+  border-top: 0.4rem solid transparent;
+  border-bottom: 0.4rem solid transparent;
+  border-left: 0.65rem solid var(--surface);
+}
+
+@media (min-width: 40rem) {
+  .hero-prompt-shell {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 1rem 1rem 1.25rem;
+  }
+
+  .hero-media-jewelry {
+    top: 7%;
+    left: 2%;
+    width: 23%;
+  }
+
+  .hero-media-fashion {
+    top: 5%;
+    left: 28%;
+    width: 45%;
+  }
+
+  .hero-media-cosmetics {
+    top: 15%;
+    right: 2%;
+    width: 25%;
+  }
+
+  .hero-media-input {
+    bottom: 5%;
+    left: 14%;
+    z-index: 3;
+    display: block;
+    width: 19%;
+    aspect-ratio: 4 / 5;
+    animation-delay: 870ms;
+  }
+
+  .hero-media-video {
+    right: 15%;
+    bottom: 1%;
+    z-index: 4;
+    display: block;
+    width: 31%;
+    aspect-ratio: 5 / 3;
+    animation-delay: 980ms;
+  }
+}
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes hero-card-enter {
+  from {
+    opacity: 0;
+    scale: 0.98;
+    translate: 0 1rem;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes hero-media-drift {
+  from {
+    transform: scale(1.01) translateY(0);
+  }
+
+  to {
+    transform: scale(1.025) translateY(-0.2rem);
+  }
+}
+
+@keyframes hero-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-media-card:hover {
+    box-shadow: 0 10px 24px rgba(23, 23, 23, 0.16);
+  }
+
+  .hero-media-input:hover {
+    transform: translateY(-3px) rotate(-0.6deg);
+  }
+
+  .hero-media-jewelry:hover {
+    transform: translateY(-3px) rotate(0.8deg);
+  }
+
+  .hero-media-fashion:hover {
+    transform: translateY(-2px) rotate(-0.6deg);
+  }
+
+  .hero-media-cosmetics:hover {
+    transform: translateY(-3px) rotate(0.8deg);
+  }
+
+  .hero-media-video:hover {
+    transform: translateY(-3px) rotate(-0.5deg);
+  }
+}
+
 @keyframes language-menu-enter {
   from {
     opacity: 0;
@@ -282,6 +594,25 @@ video {
   }
 
   .language-menu {
+    animation: none;
+  }
+
+  .hero-eyebrow,
+  .hero-title,
+  .hero-copy,
+  .hero-prompt-shell,
+  .hero-work-heading,
+  .hero-media-card {
+    animation: none;
+  }
+
+  .hero-media-card,
+  .hero-media-card > img {
+    animation: none;
+    transition: none;
+  }
+
+  .hero-prompt-caret {
     animation: none;
   }
 }
