@@ -39,7 +39,7 @@ export function MobileNavigation() {
       <button
         ref={triggerRef}
         type="button"
-        className="group inline-flex h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 text-sm font-medium text-[var(--foreground)] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
+        className="group inline-flex h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 text-sm font-medium text-[var(--foreground)] shadow-[var(--shadow-subtle)] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
         aria-controls={mobileMenuId}
         aria-expanded={isOpen}
         aria-label={isOpen ? "Menüyü kapat" : "Menüyü aç"}

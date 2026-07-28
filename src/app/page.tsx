@@ -74,7 +74,9 @@ export default function Home() {
           </Container>
         </Section>
       </main>
-      <Footer />
+      <div className="mt-[var(--section-space)]">
+        <Footer />
+      </div>
     </>
   );
 }

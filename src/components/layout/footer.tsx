@@ -2,17 +2,13 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { siteConfig } from "@/config/site";
+import { navigationItems } from "@/data/navigation";
 
 const footerNavigation = [
   {
     title: "Platform",
-    links: [
-      { label: "Ürün", href: "#product" },
-      { label: "Nasıl Çalışır", href: "#how-it-works" },
-      { label: "Şablonlar", href: "#templates" },
-      { label: "Örnekler", href: "#showcase" },
-      { label: "Fiyatlandırma", href: "#pricing" },
-    ],
+    links: navigationItems,
   },
   {
     title: "Sektörler",
@@ -34,10 +30,10 @@ const footerNavigation = [
 ] as const;
 
 const socialLinks = [
-  { label: "Instagram", href: "#" },
-  { label: "LinkedIn", href: "#" },
-  { label: "X", href: "#" },
-] as const;
+  { label: "Instagram", href: siteConfig.links.instagram },
+  { label: "LinkedIn", href: siteConfig.links.linkedin },
+  { label: "X", href: siteConfig.links.x },
+].filter((link) => link.href);
 
 function FooterLink({ href, label }: { href: string; label: string }) {
   return (
@@ -52,7 +48,7 @@ function FooterLink({ href, label }: { href: string; label: string }) {
 
 export function Footer() {
   return (
-    <footer className="mt-[var(--section-space)] w-full max-w-[100vw] overflow-hidden bg-[var(--foreground)] text-[var(--background)]">
+    <footer className="w-full max-w-[100vw] overflow-hidden bg-[var(--foreground)] text-[var(--background)]">
       <Container>
         <section className="grid grid-cols-1 gap-10 border-b border-[var(--footer-border)] py-[var(--section-space)] lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.65fr)] lg:items-end lg:gap-16">
           <div className="min-w-0">
@@ -75,7 +71,7 @@ export function Footer() {
               Takı, giyim ve kozmetik ürünlerinizi gerçekçi görsellere ve kısa
               videolara dönüştürün.
             </p>
-            <Button href="/signup" className="mt-7" size="lg">
+            <Button href={siteConfig.routes.signup} className="mt-7" size="lg">
               Ücretsiz Dene →
             </Button>
           </div>
@@ -84,13 +80,13 @@ export function Footer() {
         <section className="grid grid-cols-1 gap-12 border-b border-[var(--footer-border)] py-[var(--section-space-compact)] lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.55fr))] lg:gap-8">
           <div className="max-w-xs">
             <p
-              className="text-sm font-extrabold tracking-[-0.025em]"
+              className="text-sm font-bold tracking-[-0.025em]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              CREATIVE AI
+              {siteConfig.name}
             </p>
             <p className="mt-4 text-sm leading-6 text-[var(--footer-muted)]">
-              Ürün fotoğraflarından kampanyaya hazır içerikler.
+              {siteConfig.shortDescription}
             </p>
           </div>
 
@@ -121,21 +117,23 @@ export function Footer() {
             className="whitespace-nowrap text-center text-[clamp(1.875rem,9vw,10rem)] font-semibold leading-[0.82] tracking-[-0.075em] text-[var(--footer-wordmark)] sm:text-[clamp(2.25rem,11.25vw,10rem)]"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            CREATIVE AI
+            {siteConfig.name}
           </p>
         </div>
 
         <div className="flex flex-col gap-5 border-t border-[var(--footer-border)] py-6 text-sm text-[var(--footer-muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Creative AI. Tüm hakları saklıdır.</p>
-          <nav aria-label="Sosyal medya bağlantıları">
-            <ul className="flex flex-wrap gap-x-5 gap-y-2" role="list">
-              {socialLinks.map((link) => (
-                <li key={link.label}>
-                  <FooterLink {...link} />
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <p>© 2026 {siteConfig.name}. Tüm hakları saklıdır.</p>
+          {socialLinks.length > 0 ? (
+            <nav aria-label="Sosyal medya bağlantıları">
+              <ul className="flex flex-wrap gap-x-5 gap-y-2" role="list">
+                {socialLinks.map((link) => (
+                  <li key={link.label}>
+                    <FooterLink {...link} />
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
         </div>
       </Container>
     </footer>

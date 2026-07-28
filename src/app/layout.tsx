@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Manrope } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
+
+import { siteConfig } from "@/config/site";
+
 import "./globals.css";
 
-const geist = Geist({
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const manrope = Manrope({
+const outfit = Outfit({
   variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "AI Creative Platform",
-  description:
-    "Ürün fotoğraflarını gerçekçi kampanya görsellerine ve videolarına dönüştürün.",
+  title: siteConfig.title,
+  description: siteConfig.description,
 };
 
 export default function RootLayout({
@@ -26,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${geist.variable} ${manrope.variable}`}>
+      <body className={`${inter.variable} ${outfit.variable}`}>
         {children}
       </body>
     </html>

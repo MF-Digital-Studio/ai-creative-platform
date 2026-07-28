@@ -12,6 +12,7 @@
   --accent-soft: #e8e3ff;
 
   --border: rgba(23, 23, 23, 0.12);
+  --shadow-subtle: 0 6px 16px rgba(23, 23, 23, 0.12);
 
   --radius-sm: 12px;
   --radius-md: 20px;

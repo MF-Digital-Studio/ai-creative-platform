@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { siteConfig } from "@/config/site";
 import { navigationItems } from "@/data/navigation";
 
 function NavigationLink({
@@ -32,12 +33,12 @@ export function Navbar() {
           className="relative grid h-[var(--navbar-height)] grid-cols-[1fr_auto] items-center border-b border-[var(--border)] xl:grid-cols-[1fr_auto_1fr]"
         >
           <Link
-            href="/"
-            aria-label="Creative AI ana sayfa"
-            className="w-max whitespace-nowrap rounded-[var(--radius-sm)] py-2 pr-2 text-sm font-extrabold tracking-[-0.025em] transition-opacity duration-(--transition-fast) hover:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
+            href={siteConfig.routes.home}
+            aria-label={`${siteConfig.name} ana sayfa`}
+            className="w-max whitespace-nowrap rounded-[var(--radius-sm)] py-2 pr-2 text-sm font-bold tracking-[-0.025em] transition-opacity duration-(--transition-fast) hover:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            CREATIVE AI
+            {siteConfig.name}
           </Link>
 
           <div className="hidden items-center justify-center gap-2 xl:flex">
@@ -48,12 +49,12 @@ export function Navbar() {
 
           <div className="hidden items-center justify-self-end gap-3 xl:flex">
             <Link
-              href="/login"
+              href={siteConfig.routes.login}
               className="rounded-[var(--radius-sm)] px-2 py-2 text-sm font-medium transition-colors duration-(--transition-fast) hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
             >
               Giriş Yap
             </Link>
-            <Button href="/signup" variant="dark" size="sm">
+            <Button href={siteConfig.routes.signup} variant="dark" size="sm">
               Ücretsiz Dene
             </Button>
           </div>

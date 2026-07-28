@@ -108,7 +108,7 @@ export function Button(props: ButtonProps) {
     size = "md",
   } = props;
   const buttonClassName = cn(
-    "button-roll group relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[var(--radius-md)] border font-medium tracking-[-0.01em] transition-[background-color,border-color,color,transform] duration-(--button-transition-duration) ease-(--button-transition-ease) [@media(hover:hover)]:hover:-translate-y-px active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none",
+    "button-roll group relative isolate inline-flex shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[var(--radius-md)] border font-medium tracking-[-0.01em] shadow-[var(--shadow-subtle)] transition-[background-color,border-color,color,transform] duration-(--button-transition-duration) ease-(--button-transition-ease) [@media(hover:hover)]:hover:-translate-y-px active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none",
     variantClasses[variant].button,
     sizeClasses[size],
     className,
