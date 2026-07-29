@@ -22,7 +22,7 @@ export async function Hero() {
         <header className="hero-heading mx-auto flex max-w-[82rem] flex-col items-center text-center">
           <h1
             id="hero-title"
-            className="hero-title w-full max-w-[60rem] text-[clamp(2rem,10vw,6.25rem)] font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--foreground)]"
+            className="hero-title w-full max-w-[60rem] text-[clamp(2rem,10vw,6.25rem)] font-medium leading-[0.96] tracking-[-0.055em] text-[var(--foreground)]"
             style={{ fontFamily: "var(--font-display)" }}
           >
             <span className="block whitespace-nowrap">{t("titleLead")}</span>

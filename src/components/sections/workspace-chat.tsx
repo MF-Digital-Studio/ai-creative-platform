@@ -59,7 +59,7 @@ export function WorkspaceChat({
         <div className="flex min-w-0 items-center gap-2">
           <span
             aria-hidden="true"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--workspace-control)] text-[var(--accent-soft)]"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--workspace-control)] text-[var(--workspace-muted)]"
           >
             <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
               <path
@@ -109,9 +109,9 @@ export function WorkspaceChat({
                   className={cn(
                     "grid h-4 w-4 shrink-0 place-items-center rounded-full border",
                     isComplete &&
-                      "border-[var(--accent)] bg-[var(--accent)] text-[var(--surface)]",
+                      "border-[var(--workspace-line-strong)] bg-[var(--workspace-control)] text-[var(--workspace-text)]",
                     isActive &&
-                      "workspace-status-active border-[var(--accent)]",
+                      "workspace-status-active border-[var(--workspace-muted)]",
                     !isComplete &&
                       !isActive &&
                       "border-[var(--workspace-line-strong)]",
@@ -128,7 +128,7 @@ export function WorkspaceChat({
                       />
                     </svg>
                   ) : isActive ? (
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--workspace-text)]" />
                   ) : null}
                 </span>
                 <span>{step}</span>
@@ -138,14 +138,14 @@ export function WorkspaceChat({
         </div>
 
         <div
+          key={`${agentResponse}-${isGenerating ? "loading" : "ready"}`}
           className={cn(
-            "flex gap-2.5 transition-opacity duration-(--workspace-transition) motion-reduce:transition-none",
-            isGenerating && "opacity-55",
+            "workspace-chat-response flex gap-2.5 motion-reduce:animation-none",
           )}
         >
           <span
             aria-hidden="true"
-            className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-[var(--surface)]"
+            className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--workspace-control)] text-[var(--workspace-text)]"
           >
             <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
               <path
@@ -158,9 +158,17 @@ export function WorkspaceChat({
             <p className="text-[0.6875rem] font-medium text-[var(--workspace-muted)]">
               {t("agentName")}
             </p>
-            <p className="mt-1.5 text-xs leading-5 text-[var(--workspace-text)]">
-              {agentResponse}
-            </p>
+            {isGenerating ? (
+              <span aria-hidden="true" className="mt-2 block space-y-1.5">
+                <span className="workspace-chat-loading-line block w-full" />
+                <span className="workspace-chat-loading-line block w-4/5" />
+                <span className="workspace-chat-loading-line block w-3/5" />
+              </span>
+            ) : (
+              <p className="mt-1.5 text-xs leading-5 text-[var(--workspace-text)]">
+                {agentResponse}
+              </p>
+            )}
           </div>
         </div>
 
@@ -234,7 +242,7 @@ export function WorkspaceChat({
               type="submit"
               aria-label={t("send")}
               disabled={!draft.trim()}
-              className="grid h-8 w-8 place-items-center rounded-full bg-[var(--accent)] text-[var(--surface)] transition-[opacity,transform] duration-(--transition-fast) hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:pointer-events-none disabled:opacity-35 motion-reduce:transform-none motion-reduce:transition-none"
+              className="grid h-8 w-8 place-items-center rounded-full bg-[var(--workspace-control)] text-[var(--workspace-text)] transition-[background-color,transform] duration-(--transition-fast) hover:-translate-y-px hover:bg-[var(--workspace-panel-raised)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:pointer-events-none disabled:opacity-35 motion-reduce:transform-none motion-reduce:transition-none"
             >
               <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="none">
                 <path

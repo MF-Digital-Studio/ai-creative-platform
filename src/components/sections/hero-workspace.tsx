@@ -11,7 +11,12 @@ import {
   type WorkspaceGenerationState,
   type WorkspaceScenarioId,
   workspaceGenerationConfig,
+  workspaceScenarios,
 } from "@/data/workspace-demo";
+
+function getScenarioRotationDelay() {
+  return 5_000 + Math.round(Math.random() * 2_500);
+}
 
 export function HeroWorkspace() {
   const t = useTranslations("WorkspaceDemo");
@@ -27,6 +32,7 @@ export function HeroWorkspace() {
     useState<WorkspaceGenerationState>("complete");
   const [usesUpdatedResponse, setUsesUpdatedResponse] = useState(false);
   const [layoutVersion, setLayoutVersion] = useState(0);
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false);
   const timeoutIdsRef = useRef<number[]>([]);
 
   const projectNames = useMemo(
@@ -55,18 +61,68 @@ export function HeroWorkspace() {
     setUsesUpdatedResponse(false);
   }
 
-  function handleScenarioChange(scenarioId: WorkspaceScenarioId) {
+  const handleScenarioChange = useCallback((scenarioId: WorkspaceScenarioId) => {
     const nextScenario = getWorkspaceScenario(scenarioId);
+    const { timings } = workspaceGenerationConfig;
 
     clearGenerationTimeouts();
     setActiveScenarioId(scenarioId);
     setSelectedAssetId(nextScenario.defaultSelectedAssetId);
     setDraft("");
     setSubmittedPrompt(null);
-    setGenerationState("complete");
+    setGenerationState("analyzing");
     setUsesUpdatedResponse(false);
     setLayoutVersion(0);
-  }
+
+    timeoutIdsRef.current = [
+      window.setTimeout(
+        () => setGenerationState("researching"),
+        timings.researching,
+      ),
+      window.setTimeout(
+        () => setGenerationState("composing"),
+        timings.composing,
+      ),
+      window.setTimeout(() => setGenerationState("complete"), timings.complete),
+    ];
+  }, [
+    clearGenerationTimeouts,
+    setActiveScenarioId,
+    setDraft,
+    setGenerationState,
+    setLayoutVersion,
+    setSelectedAssetId,
+    setSubmittedPrompt,
+    setUsesUpdatedResponse,
+  ]);
+
+  useEffect(() => {
+    if (
+      isProjectMenuOpen ||
+      draft.trim() ||
+      generationState !== "complete"
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const activeIndex = workspaceScenarios.findIndex(
+        (scenario) => scenario.id === activeScenarioId,
+      );
+      const nextScenario =
+        workspaceScenarios[(activeIndex + 1) % workspaceScenarios.length];
+
+      handleScenarioChange(nextScenario.id);
+    }, getScenarioRotationDelay());
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    activeScenarioId,
+    draft,
+    generationState,
+    handleScenarioChange,
+    isProjectMenuOpen,
+  ]);
 
   function handlePromptSubmit(prompt: string) {
     const { timings } = workspaceGenerationConfig;
@@ -105,17 +161,11 @@ export function HeroWorkspace() {
     <div
       role="region"
       aria-label={t("workspaceLabel")}
-      className="workspace-frame mx-auto w-full max-w-[80rem] border border-[var(--border)] bg-[var(--surface-soft)] p-2 shadow-[var(--shadow-subtle)] sm:p-3"
+      className="workspace-frame mx-auto w-full max-w-[80rem]"
     >
       <div className="flex min-h-0 flex-col overflow-hidden border border-[var(--workspace-line)] bg-[var(--workspace-canvas)] xl:min-h-[44rem] xl:[aspect-ratio:16/9.25]">
         <div className="relative z-30 flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-[var(--workspace-line)] bg-[var(--workspace-panel)] px-2.5 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-[var(--radius-sm)] bg-[var(--workspace-control)]"
-            >
-              <span className="h-2.5 w-2.5 rounded-[calc(var(--radius-sm)/4)] bg-[var(--accent)]" />
-            </span>
             <WorkspaceProjectSelector
               activeScenarioId={activeScenarioId}
               menuLabel={t("projectMenuLabel")}
@@ -123,6 +173,7 @@ export function HeroWorkspace() {
               selectProjectLabel={t("selectProject", {
                 project: projectNames[activeScenarioId],
               })}
+              onOpenChange={setIsProjectMenuOpen}
               onScenarioChange={handleScenarioChange}
             />
           </div>

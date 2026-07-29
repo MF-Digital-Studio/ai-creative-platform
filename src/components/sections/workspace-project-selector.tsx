@@ -13,6 +13,7 @@ type WorkspaceProjectSelectorProps = {
   menuLabel: string;
   projectNames: Record<WorkspaceScenarioId, string>;
   selectProjectLabel: string;
+  onOpenChange?: (isOpen: boolean) => void;
   onScenarioChange: (scenarioId: WorkspaceScenarioId) => void;
 };
 
@@ -21,6 +22,7 @@ export function WorkspaceProjectSelector({
   menuLabel,
   projectNames,
   selectProjectLabel,
+  onOpenChange,
   onScenarioChange,
 }: WorkspaceProjectSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +30,10 @@ export function WorkspaceProjectSelector({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
 
   useEffect(() => {
     if (!isOpen) {
