@@ -209,11 +209,6 @@ export function WorkspaceCanvas({
           isGenerating && "workspace-canvas-generating",
         )}
       >
-        <span
-          aria-hidden="true"
-          className="workspace-canvas-grid absolute inset-0"
-        />
-
         {scenario.assets.map((asset, index) => {
           const isSelected = asset.id === selectedAssetId;
           const placement =

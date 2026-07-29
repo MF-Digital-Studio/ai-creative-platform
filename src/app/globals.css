@@ -67,7 +67,6 @@
     var(--surface) 24%,
     transparent
   );
-  --workspace-grid: color-mix(in srgb, var(--surface) 5%, transparent);
   --workspace-label: color-mix(
     in srgb,
     var(--foreground) 76%,
@@ -284,14 +283,6 @@ video {
 .workspace-asset-enter {
   animation-duration: var(--workspace-transition);
   animation-name: workspace-asset-enter;
-}
-
-.workspace-canvas-grid {
-  background-image:
-    linear-gradient(to right, var(--workspace-grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--workspace-grid) 1px, transparent 1px);
-  background-size: 2rem 2rem;
-  mask-image: linear-gradient(to bottom right, black, transparent 82%);
 }
 
 .workspace-project-menu {
