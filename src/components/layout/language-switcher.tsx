@@ -128,11 +128,23 @@ export function LanguageSwitcher({
           }
         }}
       >
-        <span>
-          {variant === "mobile"
-            ? `${t("label")}: ${activeLocale.toUpperCase()}`
-            : activeLocale.toUpperCase()}
-        </span>
+        {variant === "mobile" ? (
+          <span>{`${t("label")}: ${activeLocale.toUpperCase()}`}</span>
+        ) : (
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-[1.125rem] w-[1.125rem]"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.6"
+          >
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M3.9 12h16.2M12 3.5c2.1 2.3 3.2 5.16 3.2 8.5S14.1 18.2 12 20.5C9.9 18.2 8.8 15.34 8.8 12S9.9 5.8 12 3.5Z" />
+          </svg>
+        )}
         <svg
           aria-hidden="true"
           viewBox="0 0 12 8"

@@ -20,28 +20,151 @@
     "closeMenu": "Close menu"
   },
   "Hero": {
-    "eyebrow": "FROM PRODUCT TO CAMPAIGN",
     "titleLead": "One product photo.",
-    "titleTrail": "Endless creative possibilities.",
-    "description": "Turn jewelry, fashion and cosmetics products into realistic visuals and short-form videos.",
-    "primaryCta": "Try for Free",
-    "promptLabel": "Start with a prompt",
-    "promptOne": "A close-up ad video of a gold ring on a woman’s finger with soft lighting",
-    "promptTwo": "A luxury serum bottle on a dark background with water droplets",
-    "promptThree": "A blonde male model wearing a jacket in a forest editorial fashion shoot",
-    "scrollHelper": "Explore generated work",
-    "mediaStageLabel": "AI-generated campaign work",
-    "productInput": "PRODUCT INPUT",
-    "jewelry": "JEWELRY",
-    "fashion": "FASHION",
-    "cosmetics": "COSMETICS",
-    "shortVideo": "SHORT VIDEO",
-    "mediaPlaceholder": "Temporary AI preview",
-    "productInputAlt": "Temporary media surface for product input",
-    "jewelryAlt": "Temporary media surface for jewelry campaign output",
-    "fashionAlt": "Temporary media surface for fashion campaign output",
-    "cosmeticsAlt": "Temporary media surface for cosmetics campaign output",
-    "shortVideoAlt": "Temporary media preview for a short advertising video"
+    "titleTrail": "A complete campaign.",
+    "description": "Upload your product, describe your campaign and create realistic visuals and short-form videos while preserving every product detail.",
+    "primaryCta": "Try for Free"
+  },
+  "WorkspaceDemo": {
+    "workspaceLabel": "Interactive Creative AI campaign workspace demo",
+    "canvasLabel": "Selectable campaign assets",
+    "chatLabel": "Creative Agent chat panel",
+    "selectedPreviewLabel": "Selected campaign asset preview",
+    "assetListLabel": "Campaign asset options",
+    "projectMenuLabel": "Sample campaigns",
+    "selectProject": "Change the sample campaign. Active campaign: {project}",
+    "demoLabel": "LOCAL DEMO",
+    "projects": {
+      "jewelry": "Jewelry Launch Campaign",
+      "fashion": "Fashion Collection",
+      "cosmetics": "Cosmetics Product Launch"
+    },
+    "newChat": "New Chat",
+    "agentName": "Creative Agent",
+    "status": {
+      "analyzed": "Analyzed user intent",
+      "explored": "Explored visual trends",
+      "collected": "Collected references"
+    },
+    "liveStatus": {
+      "idle": "The demo is ready.",
+      "analyzing": "Analyzing user intent.",
+      "researching": "Exploring visual directions.",
+      "composing": "Composing the campaign layout.",
+      "complete": "The demo campaign layout is ready."
+    },
+    "prompts": {
+      "jewelry": "Turn the organic gold ring into a quiet-luxury launch campaign with warm stone textures and close-up hand photography.",
+      "fashion": "Make the cobalt-blue jacket the focus of the new collection through bold architecture and modern editorial photography.",
+      "cosmetics": "Create a warm launch for the amber serum bottle using travertine, water reflections and natural skin texture."
+    },
+    "agent": {
+      "jewelry": {
+        "default": "I built a calm launch set from the product input through a model close-up, metal macro, horizontal campaign hero, vertical social image and short-video preview.",
+        "updated": "I applied your direction across six distinct jewelry outputs. The product-led close-up, macro, hero, social and short-video preview are selectable on the canvas."
+      },
+      "fashion": {
+        "default": "I turned the raw garment into an editorial set with a full-body model, fabric detail, horizontal campaign hero, vertical social image and short-video preview.",
+        "updated": "I applied your direction across six distinct fashion outputs. The jacket’s color and structure stay consistent across the model, detail, hero, social and short-video preview."
+      },
+      "cosmetics": {
+        "default": "I expanded the raw product into a warm launch set with a product hero, texture macro, model usage, vertical social image and short-video preview.",
+        "updated": "I applied your direction across six distinct cosmetics outputs. The bottle form stays consistent across the hero, macro, usage, social and short-video preview."
+      }
+    },
+    "composerLabel": "Campaign prompt",
+    "composerPlaceholder": "What should we create for your campaign?",
+    "send": "Send campaign prompt",
+    "selectAsset": "Select {asset}",
+    "assetTypes": {
+      "input": "Product Input",
+      "image": "Image",
+      "video": "Video Preview"
+    },
+    "video": {
+      "play": "Play {asset} video",
+      "pause": "Pause {asset} video"
+    },
+    "assets": {
+      "jewelry": {
+        "product": {
+          "alt": "Raw product photograph of an organic gold ring on a light studio background",
+          "label": "Raw Product"
+        },
+        "closeup": {
+          "alt": "Close-up campaign frame of an organic gold ring worn on a model’s hand",
+          "label": "Model Close-up"
+        },
+        "macro": {
+          "alt": "Macro photograph showing the metal and stone surface of the gold ring",
+          "label": "Macro Detail"
+        },
+        "hero": {
+          "alt": "Luxury horizontal campaign image of a gold ring on a stone surface",
+          "label": "Campaign Hero"
+        },
+        "social": {
+          "alt": "Vertical social crop from the gold ring campaign",
+          "label": "Vertical Social"
+        },
+        "video": {
+          "alt": "Vertical short-video concept preview for the gold ring campaign",
+          "label": "Short Video"
+        }
+      },
+      "fashion": {
+        "product": {
+          "alt": "Raw product photograph of a cobalt-blue cropped jacket on a light studio background",
+          "label": "Raw Product"
+        },
+        "model": {
+          "alt": "Full-length campaign photograph of a model wearing the cobalt-blue jacket",
+          "label": "Full-body Model"
+        },
+        "detail": {
+          "alt": "Close crop showing the collar and fabric detail of the cobalt-blue jacket",
+          "label": "Fabric Detail"
+        },
+        "campaign": {
+          "alt": "Horizontal campaign image of a cobalt-blue jacket in concrete architecture",
+          "label": "Campaign Hero"
+        },
+        "social": {
+          "alt": "Vertical social composition from the cobalt-blue jacket campaign",
+          "label": "Vertical Social"
+        },
+        "video": {
+          "alt": "Vertical short-video concept preview for the cobalt-blue jacket campaign",
+          "label": "Short Video"
+        }
+      },
+      "cosmetics": {
+        "product": {
+          "alt": "Raw product photograph of an unlabeled amber serum bottle on a light studio background",
+          "label": "Raw Product"
+        },
+        "hero": {
+          "alt": "Premium hero image of an amber serum bottle on travertine",
+          "label": "Product Hero"
+        },
+        "model": {
+          "alt": "Application frame with natural skin texture from the amber serum campaign",
+          "label": "Model Usage"
+        },
+        "detail": {
+          "alt": "Macro photograph of the amber serum glass, drop and product texture",
+          "label": "Texture Macro"
+        },
+        "social": {
+          "alt": "Vertical social composition from the amber serum campaign",
+          "label": "Vertical Social"
+        },
+        "video": {
+          "alt": "Vertical short-video concept preview for the amber serum campaign",
+          "label": "Short Video"
+        }
+      }
+    }
   },
   "Preview": {
     "foundation": "FOUNDATION",

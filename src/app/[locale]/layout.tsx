@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Manrope } from "next/font/google";
+import { Fraunces, Poppins } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -8,16 +8,18 @@ import { isSupportedLocale, routing } from "@/i18n/routing";
 
 import "../globals.css";
 
-const geist = Geist({
+const poppins = Poppins({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
-const manrope = Manrope({
+const fraunces = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
+  weight: "variable",
 });
 
 type LocaleLayoutProps = {
@@ -60,7 +62,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${geist.variable} ${manrope.variable}`}>
+      <body className={`${poppins.variable} ${fraunces.variable}`}>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>

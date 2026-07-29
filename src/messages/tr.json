@@ -20,28 +20,151 @@
     "closeMenu": "Menüyü kapat"
   },
   "Hero": {
-    "eyebrow": "ÜRÜNDEN KAMPANYAYA",
     "titleLead": "Tek ürün fotoğrafı.",
-    "titleTrail": "Sonsuz kreatif ihtimal.",
-    "description": "Takı, moda ve kozmetik ürünlerinizi gerçekçi görsellere ve kısa videolara dönüştürün.",
-    "primaryCta": "Ücretsiz Dene",
-    "promptLabel": "Bir prompt ile başla",
-    "promptOne": "Bir kadının parmağında altın yüzük, yakın plan, yumuşak ışıkta reklam videosu",
-    "promptTwo": "Siyah fonda lüks serum şişesi, su damlacıklarıyla kampanya görseli",
-    "promptThree": "Sarışın erkek model, ormanda mont ile editorial moda çekimi",
-    "scrollHelper": "Üretilen işleri keşfet",
-    "mediaStageLabel": "AI ile üretilen kampanya çalışmaları",
-    "productInput": "ÜRÜN GİRDİSİ",
-    "jewelry": "TAKI",
-    "fashion": "MODA",
-    "cosmetics": "KOZMETİK",
-    "shortVideo": "KISA VİDEO",
-    "mediaPlaceholder": "Geçici AI önizleme",
-    "productInputAlt": "Ürün girdisi için geçici medya yüzeyi",
-    "jewelryAlt": "Takı kampanya çıktısı için geçici medya yüzeyi",
-    "fashionAlt": "Moda kampanya çıktısı için geçici medya yüzeyi",
-    "cosmeticsAlt": "Kozmetik kampanya çıktısı için geçici medya yüzeyi",
-    "shortVideoAlt": "Kısa reklam videosu için geçici medya önizlemesi"
+    "titleTrail": "Tam bir kampanya.",
+    "description": "Ürününüzü yükleyin, kampanyanızı tarif edin ve ürün detaylarını koruyan görseller ile kısa videolar üretin.",
+    "primaryCta": "Ücretsiz Dene"
+  },
+  "WorkspaceDemo": {
+    "workspaceLabel": "Etkileşimli Creative AI kampanya çalışma alanı demosu",
+    "canvasLabel": "Seçilebilir kampanya varlıkları",
+    "chatLabel": "Creative Agent sohbet paneli",
+    "selectedPreviewLabel": "Seçili kampanya varlığı önizlemesi",
+    "assetListLabel": "Kampanya varlığı seçenekleri",
+    "projectMenuLabel": "Örnek kampanyalar",
+    "selectProject": "Örnek kampanyayı değiştir. Aktif kampanya: {project}",
+    "demoLabel": "YEREL DEMO",
+    "projects": {
+      "jewelry": "Takı Lansman Kampanyası",
+      "fashion": "Moda Koleksiyonu",
+      "cosmetics": "Kozmetik Ürün Lansmanı"
+    },
+    "newChat": "Yeni Sohbet",
+    "agentName": "Creative Agent",
+    "status": {
+      "analyzed": "Kullanıcı niyeti analiz edildi",
+      "explored": "Görsel trendler incelendi",
+      "collected": "Referanslar toplandı"
+    },
+    "liveStatus": {
+      "idle": "Demo hazır.",
+      "analyzing": "Kullanıcı niyeti analiz ediliyor.",
+      "researching": "Görsel yönler inceleniyor.",
+      "composing": "Kampanya düzeni oluşturuluyor.",
+      "complete": "Demo kampanya düzeni hazır."
+    },
+    "prompts": {
+      "jewelry": "Organik altın yüzüğü sıcak taş dokuları ve yakın plan el çekimleriyle sessiz lüks bir lansman kampanyasına dönüştür.",
+      "fashion": "Kobalt mavisi ceketi güçlü mimari kadrajlar ve modern editoryal çekimlerle yeni koleksiyonun odağı yap.",
+      "cosmetics": "Amber serum şişesi için traverten, su yansımaları ve doğal cilt dokusuyla sıcak bir ürün lansmanı hazırla."
+    },
+    "agent": {
+      "jewelry": {
+        "default": "Ürün girdisinden model yakın planına, makro metal detayına, yatay kampanya hero’suna, dikey sosyal görsele ve kısa video önizlemesine uzanan sakin bir lansman seti hazırladım.",
+        "updated": "Yönlendirmenizi altı farklı takı çıktısına uyguladım. Ürün formunu koruyan yakın plan, makro, hero, sosyal ve kısa video önizlemesi canvas üzerinde seçilebilir."
+      },
+      "fashion": {
+        "default": "Ham giysi girdisini tam boy model, kumaş detayı, yatay kampanya hero’su, dikey sosyal görsel ve kısa video önizlemesiyle tamamlayan editoryal bir set hazırladım.",
+        "updated": "Yönlendirmenizi altı farklı moda çıktısına uyguladım. Ceketin rengi ve yapısı korunurken model, detay, hero, sosyal ve kısa video önizlemesi canvas üzerinde yenilendi."
+      },
+      "cosmetics": {
+        "default": "Ham ürünü; ürün hero’su, doku makrosu, model üzerinde kullanım, dikey sosyal görsel ve kısa video önizlemesiyle tamamlayan sıcak bir lansman seti hazırladım.",
+        "updated": "Yönlendirmenizi altı farklı kozmetik çıktısına uyguladım. Şişe formunu koruyan hero, makro, kullanım, sosyal ve kısa video önizlemesi canvas üzerinde hazır."
+      }
+    },
+    "composerLabel": "Kampanya yönlendirmesi",
+    "composerPlaceholder": "Kampanya için ne tasarlayalım?",
+    "send": "Yönlendirmeyi gönder",
+    "selectAsset": "{asset} varlığını seç",
+    "assetTypes": {
+      "input": "Ürün Girdisi",
+      "image": "Görsel",
+      "video": "Video Önizlemesi"
+    },
+    "video": {
+      "play": "{asset} videosunu oynat",
+      "pause": "{asset} videosunu duraklat"
+    },
+    "assets": {
+      "jewelry": {
+        "product": {
+          "alt": "Açık stüdyo fonunda organik formlu altın yüzük ürün fotoğrafı",
+          "label": "Ham Ürün"
+        },
+        "closeup": {
+          "alt": "Modelin elinde organik altın yüzüğün yakın plan kampanya karesi",
+          "label": "Model Yakın Plan"
+        },
+        "macro": {
+          "alt": "Altın yüzüğün metal ve taş yüzeyini gösteren makro detay çekimi",
+          "label": "Makro Detay"
+        },
+        "hero": {
+          "alt": "Taş yüzey üzerinde altın yüzüğün lüks yatay kampanya görseli",
+          "label": "Kampanya Hero"
+        },
+        "social": {
+          "alt": "Altın yüzük kampanyasının dikey sosyal medya kadrajı",
+          "label": "Dikey Sosyal"
+        },
+        "video": {
+          "alt": "Altın yüzük kampanyası için dikey kısa video konsept önizlemesi",
+          "label": "Kısa Video"
+        }
+      },
+      "fashion": {
+        "product": {
+          "alt": "Açık stüdyo fonunda kobalt mavisi kısa ceket ürün fotoğrafı",
+          "label": "Ham Ürün"
+        },
+        "model": {
+          "alt": "Kobalt mavisi ceketle tam boy model kampanya çekimi",
+          "label": "Tam Boy Model"
+        },
+        "detail": {
+          "alt": "Kobalt mavisi ceketin yaka ve kumaş detayını gösteren yakın plan",
+          "label": "Kumaş Detayı"
+        },
+        "campaign": {
+          "alt": "Beton mimaride kobalt mavisi ceket için yatay kampanya görseli",
+          "label": "Kampanya Hero"
+        },
+        "social": {
+          "alt": "Kobalt mavisi ceket kampanyasının dikey sosyal medya kompozisyonu",
+          "label": "Dikey Sosyal"
+        },
+        "video": {
+          "alt": "Kobalt mavisi ceket kampanyası için dikey kısa video konsept önizlemesi",
+          "label": "Kısa Video"
+        }
+      },
+      "cosmetics": {
+        "product": {
+          "alt": "Açık stüdyo fonunda etiketsiz amber serum şişesi ürün fotoğrafı",
+          "label": "Ham Ürün"
+        },
+        "hero": {
+          "alt": "Traverten üzerinde amber serum şişesinin premium hero görseli",
+          "label": "Ürün Hero"
+        },
+        "model": {
+          "alt": "Amber serum kampanyasında doğal cilt dokulu model kullanım karesi",
+          "label": "Model Üzerinde Kullanım"
+        },
+        "detail": {
+          "alt": "Amber serumun cam, damla ve ürün dokusunu gösteren makro çekimi",
+          "label": "Doku Makro"
+        },
+        "social": {
+          "alt": "Amber serum kampanyasının dikey sosyal medya kompozisyonu",
+          "label": "Dikey Sosyal"
+        },
+        "video": {
+          "alt": "Amber serum kampanyası için dikey kısa video konsept önizlemesi",
+          "label": "Kısa Video"
+        }
+      }
+    }
   },
   "Preview": {
     "foundation": "TEMEL",
