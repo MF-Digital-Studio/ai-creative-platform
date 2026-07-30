@@ -4,11 +4,13 @@
     "description": "An AI creative platform that turns jewelry, fashion and cosmetics products into realistic campaign visuals and short-form videos."
   },
   "Navigation": {
-    "product": "Product",
+    "home": "Home",
     "howItWorks": "How It Works",
     "templates": "Templates",
     "showcase": "Showcase",
     "pricing": "Pricing",
+    "signIn": "Sign In",
+    "tryForFree": "Try for Free",
     "mainLabel": "Main navigation",
     "homeLabel": "{brand} home"
   },
@@ -18,6 +20,11 @@
     "menu": "Menu",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
+  },
+  "ShowcasePage": {
+    "eyebrow": "SHOWCASE",
+    "heading": "Work created with Creative AI.",
+    "description": "Our latest image and video generations will appear here soon."
   },
   "Hero": {
     "titleLead": "One product photo.",
@@ -85,6 +92,118 @@
     "handleLabel": "Drag to compare",
     "beforeAlt": "Yellow-gold ring with an oval champagne gemstone on a light studio background",
     "afterAlt": "Yellow-gold ring with an oval champagne gemstone worn on a woman's finger"
+  },
+  "PricingSection": {
+    "eyebrow": "PRICING",
+    "heading": "Choose a plan that fits your production volume.",
+    "description": "Manage your brand’s image and video production with one credit system.\nMove to higher capacity, stronger models and team features as your needs grow.",
+    "billingPeriod": "month",
+    "startingCreditsNote": "Start with trial credits. No credit card required.",
+    "mostPopular": "Most Popular",
+    "commonCta": "Try for Free",
+    "customContactCta": "Contact Us",
+    "footnote": "Video generations may use different credit amounts depending on the model, duration and resolution.",
+    "betaNote": "Pricing and generation limits may be updated during beta.",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "For small businesses and professionals creating their first campaigns.",
+        "credits": "500 generation credits / month",
+        "cta": "Start with Starter",
+        "features": {
+          "monthlyCredits": "500 generation credits per month",
+          "imageGeneration": "Image generation and basic editing",
+          "templates": "Ready-made creative templates",
+          "videoPreviews": "Basic image-to-video previews",
+          "queue": "Standard generation queue",
+          "commercialUse": "Commercial usage rights",
+          "history": "30-day project history"
+        }
+      },
+      "creator": {
+        "name": "Creator",
+        "description": "For brands and creative teams producing visuals and short videos regularly.",
+        "credits": "2,000 generation credits / month",
+        "cta": "Choose Creator",
+        "features": {
+          "included": "Everything in Starter",
+          "monthlyCredits": "2,000 generation credits per month",
+          "imageModels": "Advanced image models",
+          "imageToVideo": "Image-to-video generation",
+          "videoQuality": "Higher-quality short-form video outputs",
+          "batchVariations": "Batch variation generation",
+          "productDetail": "Advanced product-detail preservation",
+          "queue": "Priority generation queue",
+          "history": "90-day project history"
+        }
+      },
+      "studio": {
+        "name": "Studio",
+        "description": "For brands, agencies and teams producing campaigns at higher volume.",
+        "credits": "6,000 generation credits / month",
+        "cta": "Choose Studio",
+        "features": {
+          "included": "Everything in Creator",
+          "monthlyCredits": "6,000 generation credits per month",
+          "models": "Highest-quality image and video models",
+          "batchCampaigns": "Batch campaign generation",
+          "team": "Team members and shared workspace",
+          "brandAssets": "Brand assets and custom templates",
+          "queue": "Highest-priority generation queue",
+          "history": "365-day project history",
+          "support": "Priority support"
+        }
+      }
+    }
+  },
+  "FaqSection": {
+    "eyebrow": "FREQUENTLY ASKED QUESTIONS",
+    "heading": "What you should know\nbefore getting started.",
+    "description": "Answers to the most common questions about generation, credits and commercial usage.",
+    "supportText": "Still have a question?",
+    "supportLink": "Talk to our team",
+    "items": {
+      "howItWorks": {
+        "question": "How does Creative AI work?",
+        "answer": "Upload your product photo, choose a ready-made template or describe the creative direction with a prompt. The system analyzes the product and creates campaign visuals or short-form video outputs for the selected format."
+      },
+      "productFidelity": {
+        "question": "Will the design and details of my product be preserved?",
+        "answer": "The system is designed to preserve the product’s form, color, material and distinctive details. Results may vary depending on the quality of the uploaded image and the generation model, so final outputs should be reviewed before publishing."
+      },
+      "productPhotos": {
+        "question": "What kind of product photos produce the best results?",
+        "answer": "High-resolution, well-lit photos that clearly show the entire product, preferably against a clean background, produce the best results. Blurred, heavily compressed or partially obscured products may reduce output quality."
+      },
+      "creditUsage": {
+        "question": "Do image and video generations use the same number of credits?",
+        "answer": "No. Credit usage depends on the selected model, resolution, video duration and generation settings. Video generations generally require more credits than standard image generations."
+      },
+      "commercialUse": {
+        "question": "Can I use generated content commercially?",
+        "answer": "Paid plans allow you to use generated outputs in your brand’s campaigns, advertising, e-commerce and social media content. You remain responsible for having the appropriate rights to the products and brand assets you upload."
+      },
+      "customPrompts": {
+        "question": "Do I have to write my own prompt?",
+        "answer": "No. You can begin with a ready-made creative template and then customize the scene, lighting, model, composition and output format with your own prompt."
+      },
+      "generationModels": {
+        "question": "Which image and video models are used?",
+        "answer": "Creative AI is not tied to one model. It uses a multi-model approach that routes product analysis, image generation, editing and video tasks to suitable models. Available models may change over time based on quality, cost and performance."
+      },
+      "generationTime": {
+        "question": "How long does generation take?",
+        "answer": "Image generations are generally completed quickly. Video generation, high-resolution outputs and periods of high demand may take longer. Generation priority varies by plan."
+      },
+      "creditRollover": {
+        "question": "Do unused credits roll over to the next month?",
+        "answer": "The initial plan is for monthly subscription credits to refresh at the end of each billing period. Final rollover rules and additional credit packs will be confirmed during beta."
+      },
+      "subscription": {
+        "question": "Can I change or cancel my subscription at any time?",
+        "answer": "You will be able to upgrade, downgrade or cancel your plan from account settings before renewal. Final billing and plan-change rules will be published clearly before the service launches."
+      }
+    }
   },
   "WorkspaceDemo": {
     "workspaceLabel": "Interactive Creative AI campaign workspace demo",

@@ -10,7 +10,7 @@ export async function BeforeAfter() {
 
   return (
     <Section
-      id="before-after"
+      id="templates"
       aria-labelledby="before-after-title"
       spacing="large"
       className="scroll-mt-[var(--navbar-height)] overflow-x-clip bg-[var(--background)]"

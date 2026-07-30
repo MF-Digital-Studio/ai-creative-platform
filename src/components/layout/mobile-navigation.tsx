@@ -7,7 +7,7 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 import { navigationItems } from "@/data/navigation";
-import { getPathname, Link } from "@/i18n/navigation";
+import { getPathname, Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
 
 const mobileMenuId = "mobile-navigation-panel";
@@ -16,6 +16,7 @@ export function MobileNavigation() {
   const locale = useLocale();
   const navigationT = useTranslations("Navigation");
   const commonT = useTranslations("Common");
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -38,6 +39,14 @@ export function MobileNavigation() {
 
   function closeMenu() {
     setIsOpen(false);
+  }
+
+  function handleNavigation(key: (typeof navigationItems)[number]["key"]) {
+    closeMenu();
+
+    if (key === "home" && pathname === "/") {
+      window.scrollTo({ top: 0 });
+    }
   }
 
   return (
@@ -79,8 +88,18 @@ export function MobileNavigation() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-base font-medium tracking-[-0.01em] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
-                  onClick={closeMenu}
+                  aria-current={
+                    "activePath" in item && pathname === item.activePath
+                      ? "page"
+                      : undefined
+                  }
+                  className={cn(
+                    "flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-base font-medium tracking-[-0.01em] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
+                    "activePath" in item &&
+                      pathname === item.activePath &&
+                      "font-semibold",
+                  )}
+                  onClick={() => handleNavigation(item.key)}
                 >
                   {navigationT(item.key)}
                 </Link>
@@ -93,7 +112,7 @@ export function MobileNavigation() {
                 className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium transition-colors duration-(--transition-fast) hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
                 onClick={closeMenu}
               >
-                {commonT("signIn")}
+                {navigationT("signIn")}
               </Link>
               <Button
                 href={getPathname({
@@ -104,7 +123,7 @@ export function MobileNavigation() {
                 size="sm"
                 onClick={closeMenu}
               >
-                {commonT("tryForFree")}
+                {navigationT("tryForFree")}
               </Button>
             </div>
 

@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f5f1;
+  --background: #ffffff;
   --surface: #ffffff;
-  --surface-soft: #eceae4;
+  --surface-soft: #f7f7f5;
 
   --foreground: #171717;
-  --foreground-muted: #000000;
+  --foreground-muted: #686868;
 
   --accent: #7257ff;
   --accent-soft: #e8e3ff;
 
-  --border: rgba(23, 23, 23, 0.12);
-  --shadow-subtle: 0 6px 16px rgba(23, 23, 23, 0.12);
+  --border: rgba(17, 17, 17, 0.1);
+  --shadow-subtle: 0 12px 32px rgba(17, 17, 17, 0.05);
 
   --radius-sm: 12px;
   --radius-md: 20px;
@@ -90,6 +90,7 @@
 }
 
 html {
+  background: var(--background);
   scroll-behavior: smooth;
 }
 

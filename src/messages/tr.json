@@ -4,11 +4,13 @@
     "description": "Takı, giyim ve kozmetik ürünlerini gerçekçi kampanya görsellerine ve kısa videolara dönüştüren AI kreatif platformu."
   },
   "Navigation": {
-    "product": "Ürün",
+    "home": "Ana Sayfa",
     "howItWorks": "Nasıl Çalışır",
     "templates": "Şablonlar",
     "showcase": "Örnekler",
     "pricing": "Fiyatlandırma",
+    "signIn": "Giriş Yap",
+    "tryForFree": "Ücretsiz Dene",
     "mainLabel": "Ana navigasyon",
     "homeLabel": "{brand} ana sayfa"
   },
@@ -18,6 +20,11 @@
     "menu": "Menü",
     "openMenu": "Menüyü aç",
     "closeMenu": "Menüyü kapat"
+  },
+  "ShowcasePage": {
+    "eyebrow": "SHOWCASE",
+    "heading": "Creative AI ile üretilen çalışmalar.",
+    "description": "Görsel ve video üretimlerimizi yakında burada paylaşacağız."
   },
   "Hero": {
     "titleLead": "Tek ürün fotoğrafı.",
@@ -85,6 +92,118 @@
     "handleLabel": "Karşılaştırmayı sürükleyin",
     "beforeAlt": "Açık stüdyo fonunda oval şampanya taşlı sarı altın yüzük",
     "afterAlt": "Bir kadının parmağında oval şampanya taşlı sarı altın yüzük"
+  },
+  "PricingSection": {
+    "eyebrow": "FİYATLANDIRMA",
+    "heading": "Üretim hacminize uygun planı seçin.",
+    "description": "Markanızın görsel ve video üretimini tek kredi sistemiyle yönetin.\nİhtiyacınız arttıkça daha güçlü modellere, daha yüksek kapasiteye ve ekip özelliklerine geçin.",
+    "billingPeriod": "ay",
+    "startingCreditsNote": "Başlangıç kredileriyle deneyin. Kredi kartı gerekmez.",
+    "mostPopular": "En Popüler",
+    "commonCta": "Ücretsiz Dene",
+    "customContactCta": "Bizimle İletişime Geçin",
+    "footnote": "Video üretimleri kullanılan model, süre ve çözünürlüğe göre farklı kredi tüketebilir.",
+    "betaNote": "Beta sürecinde fiyatlar ve üretim limitleri güncellenebilir.",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "İlk kampanyalarını üretmek isteyen küçük işletmeler ve bireysel profesyoneller için.",
+        "credits": "500 üretim kredisi / ay",
+        "cta": "Starter ile Başla",
+        "features": {
+          "monthlyCredits": "Aylık 500 üretim kredisi",
+          "imageGeneration": "Görsel üretimi ve temel düzenleme",
+          "templates": "Hazır yaratıcı şablonlar",
+          "videoPreviews": "Temel image-to-video önizlemeleri",
+          "queue": "Standart üretim sırası",
+          "commercialUse": "Ticari kullanım hakkı",
+          "history": "30 gün proje geçmişi"
+        }
+      },
+      "creator": {
+        "name": "Creator",
+        "description": "Düzenli görsel ve kısa video üreten markalar ve yaratıcı ekipler için.",
+        "credits": "2.000 üretim kredisi / ay",
+        "cta": "Creator’ı Seç",
+        "features": {
+          "included": "Starter paketindeki her şey",
+          "monthlyCredits": "Aylık 2.000 üretim kredisi",
+          "imageModels": "Gelişmiş görsel modelleri",
+          "imageToVideo": "Image-to-video üretimi",
+          "videoQuality": "Daha yüksek kaliteli kısa video çıktıları",
+          "batchVariations": "Toplu varyasyon oluşturma",
+          "productDetail": "Ürün detayını koruyan gelişmiş düzenleme",
+          "queue": "Öncelikli üretim sırası",
+          "history": "90 gün proje geçmişi"
+        }
+      },
+      "studio": {
+        "name": "Studio",
+        "description": "Yüksek hacimli kampanya üretimi yapan markalar, ajanslar ve ekipler için.",
+        "credits": "6.000 üretim kredisi / ay",
+        "cta": "Studio’yu Seç",
+        "features": {
+          "included": "Creator paketindeki her şey",
+          "monthlyCredits": "Aylık 6.000 üretim kredisi",
+          "models": "En yüksek kaliteli görsel ve video modelleri",
+          "batchCampaigns": "Toplu kampanya üretimi",
+          "team": "Ekip üyeleri ve ortak çalışma alanı",
+          "brandAssets": "Marka varlıkları ve özel şablonlar",
+          "queue": "En yüksek öncelikli üretim sırası",
+          "history": "365 gün proje geçmişi",
+          "support": "Öncelikli destek"
+        }
+      }
+    }
+  },
+  "FaqSection": {
+    "eyebrow": "SIK SORULAN SORULAR",
+    "heading": "Başlamadan önce\nbilmeniz gerekenler.",
+    "description": "Üretim süreci, krediler ve ticari kullanım hakkında en sık sorulan soruların yanıtları.",
+    "supportText": "Başka bir sorunuz mu var?",
+    "supportLink": "Ekibimizle konuşun",
+    "items": {
+      "howItWorks": {
+        "question": "Creative AI tam olarak nasıl çalışır?",
+        "answer": "Ürün fotoğrafınızı yükler, hazır bir şablon seçer veya yaratıcı yönünüzü prompt ile tarif edersiniz. Sistem ürününüzü analiz eder ve seçtiğiniz formata göre kampanya görselleri ya da kısa video çıktıları oluşturur."
+      },
+      "productFidelity": {
+        "question": "Ürünümün tasarımı ve detayları korunur mu?",
+        "answer": "Sistem ürünün formunu, rengini, materyalini ve ayırt edici detaylarını korumaya odaklanır. Sonuç kalitesi yüklenen ürün fotoğrafının netliğine ve kullanılan üretim modeline göre değişebilir; nihai çıktılar yayınlanmadan önce kontrol edilmelidir."
+      },
+      "productPhotos": {
+        "question": "Hangi tür ürün fotoğrafları en iyi sonucu verir?",
+        "answer": "Ürünün tamamının net göründüğü, iyi aydınlatılmış ve mümkünse sade bir arka plana sahip yüksek çözünürlüklü fotoğraflar en iyi sonucu verir. Bulanık, aşırı sıkıştırılmış veya ürünün önemli bölümlerini gizleyen görseller sonuç kalitesini düşürebilir."
+      },
+      "creditUsage": {
+        "question": "Görsel ve video üretimleri aynı krediyi mi tüketir?",
+        "answer": "Hayır. Kredi tüketimi kullanılan modele, çözünürlüğe, video süresine ve üretim ayarlarına göre değişir. Video üretimleri genellikle standart görsel üretimlerinden daha fazla kredi kullanır."
+      },
+      "commercialUse": {
+        "question": "Ürettiğim içerikleri ticari olarak kullanabilir miyim?",
+        "answer": "Ücretli planlarda oluşturduğunuz çıktıları kendi markanızın kampanya, reklam, e-ticaret ve sosyal medya çalışmalarında ticari olarak kullanabilirsiniz. Yüklediğiniz ürünlerin ve marka varlıklarının kullanım haklarından siz sorumlusunuz."
+      },
+      "customPrompts": {
+        "question": "Kendi promptumu yazmak zorunda mıyım?",
+        "answer": "Hayır. Hazır yaratıcı şablonlardan biriyle başlayabilir, ardından sahne, ışık, model, kompozisyon ve format gibi ayrıntıları kendi promptunuzla özelleştirebilirsiniz."
+      },
+      "generationModels": {
+        "question": "Hangi görsel ve video modelleri kullanılıyor?",
+        "answer": "Creative AI tek bir modele bağlı değildir. Ürün analizi, görsel üretimi, düzenleme ve video oluşturma görevlerini ihtiyaca uygun farklı modellere yönlendiren çoklu model yaklaşımı kullanır. Kullanılabilir modeller zaman içinde kalite, maliyet ve performansa göre güncellenebilir."
+      },
+      "generationTime": {
+        "question": "Üretim ne kadar sürer?",
+        "answer": "Görsel üretimleri çoğunlukla kısa sürede tamamlanır. Video üretimleri, yüksek çözünürlüklü çıktılar ve yoğun sistem kullanımı daha uzun sürebilir. Öncelikli üretim sırası planlara göre değişir."
+      },
+      "creditRollover": {
+        "question": "Krediler sonraki aya devreder mi?",
+        "answer": "İlk sürümde aylık plan kredilerinin dönem sonunda yenilenmesi planlanmaktadır. Kredi devri ve ek kredi paketleriyle ilgili kesin kurallar beta sürecinde netleştirilecektir."
+      },
+      "subscription": {
+        "question": "Üyeliğimi istediğim zaman değiştirebilir veya iptal edebilir miyim?",
+        "answer": "Planınızı hesap ayarlarından yükseltebilir, düşürebilir veya yenilenmeden önce iptal edebilirsiniz. Faturalandırma ve plan değişikliği kuralları hizmet kullanıma açılmadan önce açıkça paylaşılacaktır."
+      }
+    }
   },
   "WorkspaceDemo": {
     "workspaceLabel": "Etkileşimli Creative AI kampanya çalışma alanı demosu",
