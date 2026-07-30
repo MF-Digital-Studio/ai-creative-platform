@@ -25,6 +25,55 @@
     "description": "Ürününüzü yükleyin, kampanyanızı tarif edin ve ürün detaylarını koruyan görseller ile kısa videolar üretin.",
     "primaryCta": "Ücretsiz Dene"
   },
+  "ModelEcosystem": {
+    "eyebrow": "MODEL EKOSİSTEMİ",
+    "titleLead": "En iyi modeller.",
+    "titleTrail": "Tek yaratıcı akış.",
+    "description": "Görsel, video ve ürün analizi için uzmanlaşmış modelleri tek platformda bir araya getiriyoruz.",
+    "status": "Planlanan model altyapısı",
+    "roles": {
+      "openai": "Analysis + Image",
+      "gemini": "Multimodal",
+      "flux": "Image",
+      "veo": "Video",
+      "runway": "Video",
+      "kling": "Image to Video",
+      "fal": "Infrastructure"
+    }
+  },
+  "HowItWorksSection": {
+    "eyebrow": "NASIL ÇALIŞIR",
+    "heading": "Üç adımda üretin.",
+    "description": "Yaratıcı yönünüzü tarif edin, ürününüzü yükleyin ve kampanyaya hazır görsel ya da video çıktılarınızı oluşturun.",
+    "cards": {
+      "idea": {
+        "number": "01",
+        "title": "Fikrini tarif et",
+        "description": "Ürününüz için istediğiniz sahneyi, modeli ve yaratıcı yönü doğal dille anlatın.",
+        "label": "CREATIVE PROMPT",
+        "prompt": "Kobalt mavi ceketi, güçlü gölgelerle modern bir stüdyo çekiminde göster.",
+        "response": "Yaratıcı yön hazır. Ürün görselinizi ekleyerek başlayabilirsiniz.",
+        "send": "Yaratıcı yönlendirmeyi gönder"
+      },
+      "product": {
+        "number": "02",
+        "title": "Ürününü yükle",
+        "description": "Temiz stüdyo çekiminizi yükleyin; renk, kesim ve materyal detaylarını üretim boyunca koruyalım.",
+        "productLabel": "Stüdyo Ürünü",
+        "outputLabel": "Model Üzerinde",
+        "studioAlt": "Nötr stüdyo fonunda tek başına duran kobalt mavi kısa ceket",
+        "outputAlt": "Modern beton mimaride kobalt mavi ceketi giyen model"
+      },
+      "video": {
+        "number": "03",
+        "title": "Görseli harekete geçir",
+        "description": "Aynı yaratıcı yönü kampanya görseline ve kısa video çıktısına dönüştürün.",
+        "label": "Kısa Video",
+        "fallbackLabel": "Video Önizlemesi",
+        "posterAlt": "Kobalt mavi ceketle merdivenlerde yürüyen modelin video önizleme karesi"
+      }
+    }
+  },
   "WorkspaceDemo": {
     "workspaceLabel": "Etkileşimli Creative AI kampanya çalışma alanı demosu",
     "canvasLabel": "Seçilebilir kampanya varlıkları",

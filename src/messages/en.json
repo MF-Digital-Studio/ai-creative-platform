@@ -25,6 +25,55 @@
     "description": "Upload your product, describe your campaign and create realistic visuals and short-form videos while preserving every product detail.",
     "primaryCta": "Try for Free"
   },
+  "ModelEcosystem": {
+    "eyebrow": "MODEL ECOSYSTEM",
+    "titleLead": "The best models.",
+    "titleTrail": "One creative workflow.",
+    "description": "We bring together specialized models for imagery, video and product analysis inside one platform.",
+    "status": "Designed for a multi-model workflow",
+    "roles": {
+      "openai": "Analysis + Image",
+      "gemini": "Multimodal",
+      "flux": "Image",
+      "veo": "Video",
+      "runway": "Video",
+      "kling": "Image to Video",
+      "fal": "Infrastructure"
+    }
+  },
+  "HowItWorksSection": {
+    "eyebrow": "HOW IT WORKS",
+    "heading": "Create in three steps.",
+    "description": "Describe the creative direction, upload your product and generate campaign-ready image or video outputs.",
+    "cards": {
+      "idea": {
+        "number": "01",
+        "title": "Describe your idea",
+        "description": "Describe the scene, model and creative direction you want for your product in natural language.",
+        "label": "CREATIVE PROMPT",
+        "prompt": "Show the cobalt-blue jacket in a modern studio shoot with strong shadows.",
+        "response": "The creative direction is ready. Add your product image to begin.",
+        "send": "Send creative direction"
+      },
+      "product": {
+        "number": "02",
+        "title": "Upload your product",
+        "description": "Upload a clean studio shot so its color, cut and material details can be preserved throughout generation.",
+        "productLabel": "Studio Product",
+        "outputLabel": "On-model Output",
+        "studioAlt": "Cobalt-blue cropped jacket shown alone on a neutral studio background",
+        "outputAlt": "Model wearing the cobalt-blue jacket in modern concrete architecture"
+      },
+      "video": {
+        "number": "03",
+        "title": "Bring the visual to life",
+        "description": "Turn the same creative direction into a campaign visual and short-form video output.",
+        "label": "Short Video",
+        "fallbackLabel": "Video Preview",
+        "posterAlt": "Video preview frame of a model walking on steps in the cobalt-blue jacket"
+      }
+    }
+  },
   "WorkspaceDemo": {
     "workspaceLabel": "Interactive Creative AI campaign workspace demo",
     "canvasLabel": "Selectable campaign assets",

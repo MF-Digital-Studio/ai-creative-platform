@@ -1,6 +1,8 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/sections/hero";
+import { HowItWorks } from "@/components/sections/how-it-works";
+import { ModelEcosystem } from "@/components/sections/model-ecosystem";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
@@ -24,6 +26,8 @@ export default async function Home({ params }: HomeProps) {
       <Navbar />
       <main>
         <Hero />
+        <ModelEcosystem />
+        <HowItWorks />
       </main>
       <Footer />
     </>
