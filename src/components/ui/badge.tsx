@@ -9,9 +9,12 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "border-transparent bg-[var(--surface-soft)] text-[var(--foreground)]",
-  accent: "border-transparent bg-[var(--accent-soft)] text-[var(--accent)]",
-  outline: "border-[var(--border)] bg-transparent text-[var(--foreground-muted)]",
+  default:
+    "border-transparent bg-[color-mix(in_srgb,var(--surface)_45%,var(--surface-soft))] text-[var(--foreground)]",
+  accent:
+    "border-transparent bg-[color-mix(in_srgb,var(--surface)_45%,var(--surface-soft))] text-[var(--foreground)]",
+  outline:
+    "border-transparent bg-[color-mix(in_srgb,var(--surface)_45%,var(--surface-soft))] text-[var(--foreground)]",
 };
 
 export function Badge({
@@ -22,7 +25,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[var(--radius-sm)] border px-3 py-1 text-xs font-medium leading-5 tracking-[-0.01em] shadow-[var(--shadow-subtle)]",
+        "inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium leading-5 tracking-[-0.01em]",
         variantClasses[variant],
         className,
       )}

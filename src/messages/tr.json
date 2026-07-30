@@ -74,6 +74,18 @@
       }
     }
   },
+  "BeforeAfterSection": {
+    "eyebrow": "ÜRÜN DOĞRULUĞU",
+    "heading": "Stüdyo çekiminden\nkampanya görseline.",
+    "description": "Ürününüzün formunu, materyalini ve karakterini koruyarak onu estetik bir kullanım sahnesine taşıyın.",
+    "beforeLabel": "Önce",
+    "afterLabel": "Sonra",
+    "beforeCaption": "Stüdyo Ürünü",
+    "afterCaption": "Kampanya Çıktısı",
+    "handleLabel": "Karşılaştırmayı sürükleyin",
+    "beforeAlt": "Açık stüdyo fonunda oval şampanya taşlı sarı altın yüzük",
+    "afterAlt": "Bir kadının parmağında oval şampanya taşlı sarı altın yüzük"
+  },
   "WorkspaceDemo": {
     "workspaceLabel": "Etkileşimli Creative AI kampanya çalışma alanı demosu",
     "canvasLabel": "Seçilebilir kampanya varlıkları",

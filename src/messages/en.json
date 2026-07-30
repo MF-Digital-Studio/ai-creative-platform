@@ -74,6 +74,18 @@
       }
     }
   },
+  "BeforeAfterSection": {
+    "eyebrow": "PRODUCT FIDELITY",
+    "heading": "From studio product shot\nto campaign visual.",
+    "description": "Preserve the form, material and identity of your product while placing it into an aesthetic campaign scene.",
+    "beforeLabel": "Before",
+    "afterLabel": "After",
+    "beforeCaption": "Studio Product",
+    "afterCaption": "Campaign Output",
+    "handleLabel": "Drag to compare",
+    "beforeAlt": "Yellow-gold ring with an oval champagne gemstone on a light studio background",
+    "afterAlt": "Yellow-gold ring with an oval champagne gemstone worn on a woman's finger"
+  },
   "WorkspaceDemo": {
     "workspaceLabel": "Interactive Creative AI campaign workspace demo",
     "canvasLabel": "Selectable campaign assets",

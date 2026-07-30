@@ -6,7 +6,7 @@
   --surface-soft: #eceae4;
 
   --foreground: #171717;
-  --foreground-muted: #6b6964;
+  --foreground-muted: #000000;
 
   --accent: #7257ff;
   --accent-soft: #e8e3ff;
@@ -137,6 +137,54 @@ video {
 ::selection {
   background: var(--accent);
   color: white;
+}
+
+.before-after-range {
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+  outline: none;
+  touch-action: pan-y;
+}
+
+.before-after-range::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+
+.before-after-range::-webkit-slider-thumb {
+  width: 3rem;
+  height: 100%;
+  appearance: none;
+  border: 0;
+  background: transparent;
+}
+
+.before-after-range::-moz-range-track {
+  height: 100%;
+  background: transparent;
+}
+
+.before-after-range::-moz-range-thumb {
+  width: 3rem;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.before-after-range:focus-visible
+  ~ .before-after-divider
+  .before-after-handle {
+  outline: 0.25rem solid var(--focus-ring);
+  outline-offset: 0.125rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .before-after-range:hover
+    ~ .before-after-divider
+    .before-after-handle {
+    background: var(--surface-soft);
+  }
 }
 
 .navbar-label-viewport {

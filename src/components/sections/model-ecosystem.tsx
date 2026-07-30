@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { getTranslations } from "next-intl/server";
 
+import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { modelRailItems } from "@/data/model-ecosystem";
@@ -17,9 +18,7 @@ export async function ModelEcosystem() {
       <Container>
         <header className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)] lg:items-end lg:gap-16">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
-              {t("eyebrow")}
-            </p>
+            <Badge>{t("eyebrow")}</Badge>
             <h2
               id="model-ecosystem-title"
               className="mt-5 text-[clamp(2.5rem,5.2vw,4rem)] font-medium leading-[0.96] tracking-[-0.06em] text-[var(--foreground)]"

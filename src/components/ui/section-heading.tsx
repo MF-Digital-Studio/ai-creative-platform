@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/cn";
 
 type SectionHeadingAlign = "left" | "center";
@@ -30,13 +31,9 @@ export function SectionHeading({
         className,
       )}
     >
-      {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
-          {eyebrow}
-        </p>
-      ) : null}
+      {eyebrow ? <Badge>{eyebrow}</Badge> : null}
       <h2
-        className="text-4xl leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl"
+        className="text-4xl font-medium leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {title}

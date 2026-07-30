@@ -112,7 +112,7 @@ export async function Footer() {
           >
             {footerNavigation.map((group) => (
               <div key={group.title}>
-                <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--footer-muted)]">
+                <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--footer-muted)]">
                   {group.title}
                 </h3>
                 <ul className="mt-4 space-y-2" role="list">

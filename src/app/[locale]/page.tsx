@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { BeforeAfter } from "@/components/sections/before-after";
 import { Hero } from "@/components/sections/hero";
 import { HowItWorks } from "@/components/sections/how-it-works";
 import { ModelEcosystem } from "@/components/sections/model-ecosystem";
@@ -28,6 +29,7 @@ export default async function Home({ params }: HomeProps) {
         <Hero />
         <ModelEcosystem />
         <HowItWorks />
+        <BeforeAfter />
       </main>
       <Footer />
     </>
