@@ -1,6 +1,9 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Button } from "@/components/ui/button";
+import { AnimatedHeading } from "@/components/motion/animated-heading";
+import { Reveal } from "@/components/motion/reveal";
+import { RevealGroup } from "@/components/motion/reveal-group";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
 import { navigationItems } from "@/data/navigation";
@@ -64,19 +67,18 @@ export async function Footer() {
       <Container>
         <section className="grid grid-cols-1 gap-10 border-b border-[var(--footer-border)] py-[var(--section-space)] lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.65fr)] lg:items-end lg:gap-16">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--footer-muted)]">
+            <Reveal variant="fade"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--footer-muted)]">
               {footerT("eyebrow")}
-            </p>
-            <h2
-              className="mt-5 max-w-full text-[clamp(2.25rem,4.1vw,4rem)] font-medium leading-[0.98] tracking-[-0.06em]"
+            </p></Reveal>
+            <AnimatedHeading
+              variant="footer"
+              lines={[footerT("ctaTitleLead"), footerT("ctaTitleTrail")]}
+              className="mt-5 max-w-full text-[clamp(2.25rem,4.1vw,4rem)] font-semibold leading-[0.98] tracking-[-0.06em]"
               style={{ fontFamily: "var(--font-display)" }}
-            >
-              <span className="block">{footerT("ctaTitleLead")}</span>
-              <span className="block">{footerT("ctaTitleTrail")}</span>
-            </h2>
+            />
           </div>
 
-          <div className="min-w-0 max-w-md lg:pb-1">
+          <Reveal delay={100} className="min-w-0 max-w-md lg:pb-1">
             <p className="text-base leading-7 text-[var(--footer-muted)]">
               {footerT("description")}
             </p>
@@ -90,10 +92,11 @@ export async function Footer() {
             >
               {footerT("cta")}
             </Button>
-          </div>
+          </Reveal>
         </section>
 
-        <section className="grid grid-cols-1 gap-12 border-b border-[var(--footer-border)] py-[var(--section-space-compact)] lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.55fr))] lg:gap-8">
+        <RevealGroup variant="rows" className="py-[var(--section-space-compact)]">
+        <section className="grid grid-cols-1 gap-12 border-b border-[var(--footer-border)] lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.55fr))] lg:gap-8">
           <div className="max-w-xs">
             <p
               className="text-sm font-bold tracking-[-0.025em]"
@@ -112,7 +115,7 @@ export async function Footer() {
           >
             {footerNavigation.map((group) => (
               <div key={group.title}>
-                <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--footer-muted)]">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--footer-muted)]">
                   {group.title}
                 </h3>
                 <ul className="mt-4 space-y-2" role="list">
@@ -126,8 +129,9 @@ export async function Footer() {
             ))}
           </nav>
         </section>
+        </RevealGroup>
 
-        <div className="overflow-hidden py-8 sm:py-10 lg:py-12">
+        <Reveal variant="clip" className="overflow-hidden py-8 sm:py-10 lg:py-12">
           <p
             aria-hidden="true"
             className="whitespace-nowrap text-center text-[clamp(1.875rem,9vw,10rem)] font-semibold leading-[0.82] tracking-[-0.075em] text-[var(--footer-wordmark)] sm:text-[clamp(2.25rem,11.25vw,10rem)]"
@@ -135,7 +139,7 @@ export async function Footer() {
           >
             {siteConfig.name}
           </p>
-        </div>
+        </Reveal>
 
         <div className="flex flex-col gap-5 border-t border-[var(--footer-border)] py-6 text-sm text-[var(--footer-muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>

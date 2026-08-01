@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { HeroWorkspace } from "@/components/sections/hero-workspace";
+import { AnimatedHeading } from "@/components/motion/animated-heading";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
@@ -20,14 +21,14 @@ export async function Hero() {
     >
       <Container>
         <header className="hero-heading mx-auto flex max-w-[82rem] flex-col items-center text-center">
-          <h1
+          <AnimatedHeading
+            as="h1"
             id="hero-title"
-            className="hero-title w-full max-w-[60rem] text-[clamp(2rem,10vw,4rem)] font-medium leading-[0.96] tracking-[-0.055em] text-[var(--foreground)]"
+            variant="section"
+            lines={[t("titleLead"), t("titleTrail")]}
+            className="hero-title w-full max-w-[60rem] text-[clamp(2rem,10vw,4rem)] font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--foreground)]"
             style={{ fontFamily: "var(--font-display)" }}
-          >
-            <span className="block whitespace-nowrap">{t("titleLead")}</span>
-            <span className="block whitespace-nowrap">{t("titleTrail")}</span>
-          </h1>
+          />
           <p className="hero-description max-w-2xl text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
             {t("description")}
           </p>

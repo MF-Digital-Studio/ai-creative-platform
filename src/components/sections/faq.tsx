@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
 import { FaqAccordion } from "@/components/sections/faq-accordion";
+import { AnimatedHeading } from "@/components/motion/animated-heading";
+import { Reveal } from "@/components/motion/reveal";
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
@@ -24,18 +26,17 @@ export async function Faq() {
       <Container>
         <div className="grid gap-12 lg:grid-cols-[minmax(0,0.62fr)_minmax(0,1fr)] lg:gap-20 xl:gap-28">
           <header className="min-w-0 max-w-xl">
-            <Badge>{t("eyebrow")}</Badge>
-            <h2
+            <Reveal variant="fade"><Badge>{t("eyebrow")}</Badge></Reveal>
+            <AnimatedHeading
               id="faq-title"
-              className="mt-5 whitespace-pre-line text-[clamp(2.5rem,4.5vw,4.5rem)] font-medium leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
+              lines={t("heading").split("\n")}
+              className="mt-5 whitespace-pre-line text-[clamp(2.5rem,4.5vw,4.5rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
               style={{ fontFamily: "var(--font-display)" }}
-            >
-              {t("heading")}
-            </h2>
-            <p className="mt-6 max-w-lg text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
+            />
+            <Reveal delay={100} className="mt-6 max-w-lg"><p className="text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
               {t("description")}
-            </p>
-            <div className="mt-7 max-w-xs">
+            </p></Reveal>
+            <Reveal delay={180} className="mt-7 max-w-xs">
               <p className="text-sm leading-6 text-[var(--foreground-muted)]">
                 {t("supportText")}
               </p>
@@ -46,12 +47,12 @@ export async function Faq() {
                 {t("supportLink")}
                 <span aria-hidden="true">→</span>
               </Link>
-            </div>
+            </Reveal>
           </header>
 
-          <div className="min-w-0">
+          <Reveal delay={130} className="min-w-0">
             <FaqAccordion items={translatedItems} />
-          </div>
+          </Reveal>
         </div>
       </Container>
     </Section>

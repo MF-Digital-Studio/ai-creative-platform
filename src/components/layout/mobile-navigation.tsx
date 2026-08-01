@@ -17,28 +17,79 @@ export function MobileNavigation() {
   const navigationT = useTranslations("Navigation");
   const commonT = useTranslations("Common");
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [openPath, setOpenPath] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const isOpen = openPath === pathname;
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setIsOpen(false);
+        setOpenPath(null);
+        triggerRef.current?.focus();
+      }
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !rootRef.current?.contains(event.target)
+      ) {
+        setOpenPath(null);
+      }
+    }
+
+    function handleTab(event: KeyboardEvent) {
+      if (event.key !== "Tab" || !panelRef.current) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements.at(-1);
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        triggerRef.current?.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
         triggerRef.current?.focus();
       }
     }
 
     document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleTab);
+    document.addEventListener("pointerdown", handlePointerDown);
 
-    return () => document.removeEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleTab);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
   }, [isOpen]);
 
   function closeMenu() {
-    setIsOpen(false);
+    setOpenPath(null);
   }
 
   function handleNavigation(key: (typeof navigationItems)[number]["key"]) {
@@ -50,15 +101,18 @@ export function MobileNavigation() {
   }
 
   return (
-    <div className="justify-self-end xl:hidden">
+    <div ref={rootRef} className="navbar-mobile-actions">
+      <LanguageSwitcher />
       <button
         ref={triggerRef}
         type="button"
-        className="group inline-flex h-11 items-center gap-3 rounded-[var(--radius-sm)] px-3 text-sm font-medium text-[var(--foreground)] shadow-[var(--shadow-subtle)] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
+        className="navbar-menu-trigger group"
         aria-controls={mobileMenuId}
         aria-expanded={isOpen}
         aria-label={isOpen ? commonT("closeMenu") : commonT("openMenu")}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() =>
+          setOpenPath((current) => (current === pathname ? null : pathname))
+        }
       >
         <span>{commonT("menu")}</span>
         <span aria-hidden="true" className="relative block h-4 w-5">
@@ -79,11 +133,12 @@ export function MobileNavigation() {
 
       {isOpen ? (
         <div
+          ref={panelRef}
           id={mobileMenuId}
-          className="absolute inset-x-0 top-full border-b border-[var(--border)] bg-[var(--surface)]"
+          className="navbar-mobile-panel"
         >
-          <div className="py-3">
-            <div className="flex flex-col">
+          <div className="p-3">
+            <div className="navbar-mobile-links">
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
@@ -94,7 +149,7 @@ export function MobileNavigation() {
                       : undefined
                   }
                   className={cn(
-                    "flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-base font-medium tracking-[-0.01em] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
+                    "navbar-mobile-link",
                     "activePath" in item &&
                       pathname === item.activePath &&
                       "font-semibold",
@@ -106,10 +161,10 @@ export function MobileNavigation() {
               ))}
             </div>
 
-            <div className="mt-3 flex items-center gap-3 border-t border-[var(--border)] px-3 pt-4">
+            <div className="navbar-mobile-footer">
               <Link
                 href={siteConfig.routes.login}
-                className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium transition-colors duration-(--transition-fast) hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
+                className="navbar-mobile-sign-in"
                 onClick={closeMenu}
               >
                 {navigationT("signIn")}
@@ -120,19 +175,14 @@ export function MobileNavigation() {
                   locale,
                 })}
                 variant="dark"
-                size="sm"
+                size="md"
+                className="flex-1"
                 onClick={closeMenu}
               >
                 {navigationT("tryForFree")}
               </Button>
             </div>
 
-            <div className="mt-3 border-t border-[var(--border)] px-3 pt-3">
-              <LanguageSwitcher
-                variant="mobile"
-                onLocaleChange={closeMenu}
-              />
-            </div>
           </div>
         </div>
       ) : null}

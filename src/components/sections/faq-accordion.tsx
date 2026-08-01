@@ -25,7 +25,7 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
         const panelId = `faq-panel-${item.id}`;
 
         return (
-          <div key={item.id}>
+          <div key={item.id} className="faq-row">
             <h3>
               <button
                 id={triggerId}

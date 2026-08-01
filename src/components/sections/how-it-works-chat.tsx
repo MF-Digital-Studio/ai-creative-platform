@@ -76,7 +76,7 @@ export function HowItWorksChat({
               }
 
               startTyping();
-              observer.disconnect();
+              observer?.disconnect();
             },
             { threshold: 0.45 },
           )

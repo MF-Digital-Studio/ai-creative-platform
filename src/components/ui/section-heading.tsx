@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { AnimatedHeading } from "@/components/motion/animated-heading";
+import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/cn";
 
 type SectionHeadingAlign = "left" | "center";
@@ -31,17 +33,16 @@ export function SectionHeading({
         className,
       )}
     >
-      {eyebrow ? <Badge>{eyebrow}</Badge> : null}
-      <h2
-        className="text-4xl font-medium leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl"
+      {eyebrow ? <Reveal variant="fade"><Badge>{eyebrow}</Badge></Reveal> : null}
+      <AnimatedHeading
+        lines={title.split("\n")}
+        className="text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl"
         style={{ fontFamily: "var(--font-display)" }}
-      >
-        {title}
-      </h2>
+      />
       {description ? (
-        <p className="max-w-2xl text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
+        <Reveal delay={100} className="max-w-2xl"><p className="text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
           {description}
-        </p>
+        </p></Reveal>
       ) : null}
     </header>
   );

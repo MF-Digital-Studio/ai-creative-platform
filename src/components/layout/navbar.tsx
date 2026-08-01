@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
@@ -45,6 +46,35 @@ export function Navbar() {
   const locale = useLocale();
   const navigationT = useTranslations("Navigation");
   const pathname = usePathname();
+  const [isCompact, setIsCompact] = useState(false);
+
+  useEffect(() => {
+    let frameId: number | undefined;
+
+    function updateState() {
+      frameId = undefined;
+      const nextIsCompact = window.scrollY > 32;
+      setIsCompact((current) =>
+        current === nextIsCompact ? current : nextIsCompact,
+      );
+    }
+
+    function handleScroll() {
+      if (frameId === undefined) {
+        frameId = window.requestAnimationFrame(updateState);
+      }
+    }
+
+    updateState();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frameId !== undefined) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, []);
 
   function scrollHomeToTop() {
     if (pathname === "/") {
@@ -53,22 +83,27 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[var(--navbar-surface)]">
-      <Container>
-        <nav
-          aria-label={navigationT("mainLabel")}
-          className="relative grid h-[var(--navbar-height)] grid-cols-[1fr_auto] items-center border-b border-[var(--border)] xl:grid-cols-[1fr_auto_1fr]"
-        >
+    <>
+      <header
+        className="navbar-shell navbar-intro"
+        data-state={isCompact ? "compact" : "top"}
+      >
+        <Container className="navbar-container">
+          <nav
+            aria-label={navigationT("mainLabel")}
+            className="navbar-bar"
+          >
           <Link
             href={siteConfig.routes.home}
             aria-label={navigationT("homeLabel", { brand: siteConfig.name })}
-            className="w-max whitespace-nowrap rounded-[var(--radius-sm)] py-2 pr-2 text-sm font-bold tracking-[-0.025em] transition-opacity duration-(--transition-fast) hover:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
+            className="navbar-brand"
             style={{ fontFamily: "var(--font-display)" }}
+            onClick={scrollHomeToTop}
           >
             {siteConfig.name}
           </Link>
 
-          <div className="hidden items-center justify-center gap-2 xl:flex">
+          <div className="navbar-desktop-nav">
             {navigationItems.map((item) => (
               <NavigationLink
                 key={item.href}
@@ -80,7 +115,7 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="hidden items-center justify-self-end gap-3 xl:flex">
+          <div className="navbar-desktop-actions">
             <Link
               href={siteConfig.routes.login}
               className="rounded-[var(--radius-sm)] px-2 py-2 text-sm font-medium transition-colors duration-(--transition-fast) hover:text-[var(--accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]"
@@ -95,14 +130,17 @@ export function Navbar() {
               })}
               variant="dark"
               size="sm"
+              className="navbar-cta"
             >
               {navigationT("tryForFree")}
             </Button>
           </div>
 
-          <MobileNavigation />
-        </nav>
-      </Container>
-    </header>
+            <MobileNavigation />
+          </nav>
+        </Container>
+      </header>
+      <div aria-hidden="true" className="navbar-spacer" />
+    </>
   );
 }

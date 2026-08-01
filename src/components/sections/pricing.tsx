@@ -1,6 +1,9 @@
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Badge } from "@/components/ui/badge";
+import { AnimatedHeading } from "@/components/motion/animated-heading";
+import { Reveal } from "@/components/motion/reveal";
+import { RevealGroup } from "@/components/motion/reveal-group";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
@@ -44,6 +47,7 @@ function PricingCard({ plan, locale, t }: PricingCardProps) {
   return (
     <article
       className={cn(
+        "motion-group-item",
         "flex min-w-0 flex-col rounded-[var(--radius-md)] border bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-7",
         plan.highlighted
           ? "border-[var(--accent)] shadow-[0_10px_28px_color-mix(in_srgb,var(--accent)_14%,transparent)]"
@@ -52,7 +56,7 @@ function PricingCard({ plan, locale, t }: PricingCardProps) {
     >
       <div className="flex min-h-8 flex-wrap items-start justify-between gap-3">
         <h3
-          className="text-2xl font-medium leading-tight tracking-[-0.04em] text-[var(--foreground)]"
+          className="text-2xl font-semibold leading-tight tracking-[-0.04em] text-[var(--foreground)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {t(plan.nameKey)}
@@ -132,31 +136,32 @@ export async function Pricing() {
       <Container>
         <header className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-end lg:gap-16">
           <div className="max-w-4xl">
-            <Badge>{t("eyebrow")}</Badge>
-            <h2
+            <Reveal variant="fade"><Badge>{t("eyebrow")}</Badge></Reveal>
+            <AnimatedHeading
               id="pricing-title"
-              className="mt-5 max-w-3xl text-[clamp(2.5rem,4.75vw,4.5rem)] font-medium leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
+              lines={t("heading").split("\n")}
+              className="mt-5 max-w-3xl text-[clamp(2.5rem,4.75vw,4.5rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
               style={{ fontFamily: "var(--font-display)" }}
-            >
-              {t("heading")}
-            </h2>
+            />
           </div>
 
-          <div className="max-w-xl lg:pb-1">
+          <Reveal delay={110} className="max-w-xl lg:pb-1">
             <p className="whitespace-pre-line text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
               {t("description")}
             </p>
             <p className="mt-5 text-sm font-medium leading-6 text-[var(--foreground)]">
               {t("startingCreditsNote")}
             </p>
-          </div>
+          </Reveal>
         </header>
 
-        <div className="mt-12 grid items-stretch gap-4 md:grid-cols-2 lg:mt-16 xl:grid-cols-3">
+        <RevealGroup className="mt-12 lg:mt-16" stagger={90}>
+        <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pricingPlans.map((plan) => (
             <PricingCard key={plan.id} plan={plan} locale={locale} t={t} />
           ))}
         </div>
+        </RevealGroup>
 
         <div className="mx-auto mt-6 max-w-3xl text-center text-xs leading-5 text-[var(--foreground-muted)] sm:text-sm sm:leading-6">
           <p>{t("footnote")}</p>

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 
 import { HowItWorksChat } from "@/components/sections/how-it-works-chat";
-import { HowItWorksReveal } from "@/components/sections/how-it-works-reveal";
+import { RevealGroup } from "@/components/motion/reveal-group";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -26,7 +26,7 @@ function StepHeader({ number, title, description }: StepHeaderProps) {
         {number}
       </p>
       <h3
-        className="mt-4 text-2xl font-medium leading-tight tracking-[-0.04em] text-[var(--foreground)]"
+        className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.04em] text-[var(--foreground)]"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {title}
@@ -48,7 +48,6 @@ export async function HowItWorks() {
       className="scroll-mt-[var(--navbar-height)] bg-[var(--background)]"
     >
       <Container>
-        <HowItWorksReveal>
           <SectionHeading
             eyebrow={t("eyebrow")}
             title={t("heading")}
@@ -56,8 +55,9 @@ export async function HowItWorks() {
             className="how-it-works-heading max-w-3xl gap-4"
           />
 
-          <ol className="mt-12 grid list-none gap-4 p-0 sm:mt-14 md:grid-cols-2 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.38fr)_minmax(0,1fr)]">
-          <li className="how-it-works-card group flex min-w-0 flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6">
+          <RevealGroup className="mt-12 sm:mt-14" stagger={85}>
+          <ol className="grid list-none gap-4 p-0 md:grid-cols-2 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.38fr)_minmax(0,1fr)]">
+          <li className="motion-group-item how-it-works-card group flex min-w-0 flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6">
             <StepHeader
               number={t("cards.idea.number")}
               title={t("cards.idea.title")}
@@ -88,7 +88,7 @@ export async function HowItWorks() {
             </div>
           </li>
 
-          <li className="how-it-works-card group flex min-w-0 flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6 md:col-span-2 lg:col-span-1">
+          <li className="motion-group-item how-it-works-card group flex min-w-0 flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6 md:col-span-2 lg:col-span-1">
             <StepHeader
               number={t("cards.product.number")}
               title={t("cards.product.title")}
@@ -135,7 +135,7 @@ export async function HowItWorks() {
             </div>
           </li>
 
-          <li className="how-it-works-card group flex min-w-0 flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6">
+          <li className="motion-group-item how-it-works-card group flex min-w-0 flex-col rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6">
             <StepHeader
               number={t("cards.video.number")}
               title={t("cards.video.title")}
@@ -174,7 +174,7 @@ export async function HowItWorks() {
             </figure>
           </li>
         </ol>
-        </HowItWorksReveal>
+        </RevealGroup>
       </Container>
     </Section>
   );
