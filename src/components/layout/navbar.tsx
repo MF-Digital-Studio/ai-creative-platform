@@ -8,7 +8,7 @@ import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
-import { navigationItems } from "@/data/navigation";
+import { navbarNavigationItems } from "@/data/navigation";
 import { getPathname, Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
 
@@ -18,7 +18,7 @@ function NavigationLink({
   label,
   onClick,
 }: {
-  href: (typeof navigationItems)[number]["href"];
+  href: (typeof navbarNavigationItems)[number]["href"];
   isActive: boolean;
   label: string;
   onClick?: () => void;
@@ -104,7 +104,7 @@ export function Navbar() {
           </Link>
 
           <div className="navbar-desktop-nav">
-            {navigationItems.map((item) => (
+            {navbarNavigationItems.map((item) => (
               <NavigationLink
                 key={item.href}
                 href={item.href}

@@ -8,9 +8,9 @@ import { Section } from "@/components/ui/section";
 import { SectionHeading } from "@/components/ui/section-heading";
 
 const media = {
-  product: "/workspace-demo/fashion/product.webp",
-  onModel: "/workspace-demo/fashion/campaign.webp",
-  videoPoster: "/workspace-demo/fashion/video-poster.webp",
+  product: "/auth/fashion-dress-product.webp",
+  onModel: "/auth/fashion-dress-campaign.webp",
+  videoPoster: "/auth/fashion-dress-campaign.webp",
 } as const;
 
 type StepHeaderProps = {

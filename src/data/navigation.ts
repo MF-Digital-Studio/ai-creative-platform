@@ -5,3 +5,8 @@ export const navigationItems = [
   { key: "showcase", href: "/showcase", activePath: "/showcase" },
   { key: "pricing", href: "/#pricing" },
 ] as const;
+
+export const navbarNavigationItems = [
+  navigationItems[0],
+  navigationItems[3],
+] as const;

@@ -62,6 +62,9 @@ export const workspaceGenerationConfig = {
   },
 } as const;
 
+const fashionCampaignImage = "/auth/fashion-dress-campaign.webp";
+const fashionProductImage = "/auth/fashion-dress-product.webp";
+
 export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
   {
     id: "jewelry",
@@ -154,7 +157,7 @@ export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
       {
         id: "fashion-product",
         type: "input",
-        src: "/workspace-demo/fashion/product.webp",
+        src: fashionProductImage,
         labelKey: "assets.fashion.product.label",
         altKey: "assets.fashion.product.alt",
         aspectRatio: "1 / 1",
@@ -165,7 +168,7 @@ export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
       {
         id: "fashion-model",
         type: "image",
-        src: "/workspace-demo/fashion/campaign.webp",
+        src: fashionCampaignImage,
         labelKey: "assets.fashion.model.label",
         altKey: "assets.fashion.model.alt",
         aspectRatio: "4 / 5",
@@ -176,7 +179,7 @@ export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
       {
         id: "fashion-detail",
         type: "image",
-        src: "/workspace-demo/fashion/fabric-detail.webp",
+        src: fashionProductImage,
         labelKey: "assets.fashion.detail.label",
         altKey: "assets.fashion.detail.alt",
         aspectRatio: "1 / 1",
@@ -187,7 +190,7 @@ export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
       {
         id: "fashion-social",
         type: "image",
-        src: "/workspace-demo/fashion/social.webp",
+        src: fashionCampaignImage,
         labelKey: "assets.fashion.social.label",
         altKey: "assets.fashion.social.alt",
         aspectRatio: "4 / 5",
@@ -198,7 +201,7 @@ export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
       {
         id: "fashion-campaign",
         type: "image",
-        src: "/workspace-demo/fashion/campaign-hero.webp",
+        src: fashionCampaignImage,
         labelKey: "assets.fashion.campaign.label",
         altKey: "assets.fashion.campaign.alt",
         aspectRatio: "16 / 9",
@@ -210,7 +213,7 @@ export const WORKSPACE_SCENARIOS: WorkspaceScenario[] = [
         id: "fashion-video",
         type: "video",
         src: null,
-        poster: "/workspace-demo/fashion/video-poster.webp",
+        poster: fashionCampaignImage,
         labelKey: "assets.fashion.video.label",
         altKey: "assets.fashion.video.alt",
         aspectRatio: "9 / 16",

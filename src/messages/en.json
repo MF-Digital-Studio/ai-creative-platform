@@ -58,7 +58,7 @@
         "title": "Describe your idea",
         "description": "Describe the scene, model and creative direction you want for your product in natural language.",
         "label": "CREATIVE PROMPT",
-        "prompt": "Show the cobalt-blue jacket in a modern studio shoot with strong shadows.",
+        "prompt": "Make the deep burgundy dress the focus of an elegant campaign shoot in warm stone architecture.",
         "response": "The creative direction is ready. Add your product image to begin.",
         "send": "Send creative direction"
       },
@@ -68,8 +68,8 @@
         "description": "Upload a clean studio shot so its color, cut and material details can be preserved throughout generation.",
         "productLabel": "Studio Product",
         "outputLabel": "On-model Output",
-        "studioAlt": "Cobalt-blue cropped jacket shown alone on a neutral studio background",
-        "outputAlt": "Model wearing the cobalt-blue jacket in modern concrete architecture"
+        "studioAlt": "Deep burgundy floor-length dress shown alone on a light studio background",
+        "outputAlt": "Adult model wearing a deep burgundy dress in warm stone architecture"
       },
       "video": {
         "number": "03",
@@ -77,7 +77,7 @@
         "description": "Turn the same creative direction into a campaign visual and short-form video output.",
         "label": "Short Video",
         "fallbackLabel": "Video Preview",
-        "posterAlt": "Video preview frame of a model walking on steps in the cobalt-blue jacket"
+        "posterAlt": "Video preview frame from a premium fashion campaign with a model in a deep burgundy dress"
       }
     }
   },
@@ -235,7 +235,7 @@
     },
     "prompts": {
       "jewelry": "Turn the organic gold ring into a quiet-luxury launch campaign with warm stone textures and close-up hand photography.",
-      "fashion": "Make the cobalt-blue jacket the focus of the new collection through bold architecture and modern editorial photography.",
+      "fashion": "Make the deep burgundy dress the focus of the new collection through warm stone architecture and modern editorial photography.",
       "cosmetics": "Create a warm launch for the amber serum bottle using travertine, water reflections and natural skin texture."
     },
     "agent": {
@@ -245,7 +245,7 @@
       },
       "fashion": {
         "default": "I turned the raw garment into an editorial set with a full-body model, fabric detail, horizontal campaign hero, vertical social image and short-video preview.",
-        "updated": "I applied your direction across six distinct fashion outputs. The jacket’s color and structure stay consistent across the model, detail, hero, social and short-video preview."
+        "updated": "I applied your direction across six distinct fashion outputs. The dress color and silhouette stay consistent across the model, detail, hero, social and short-video preview."
       },
       "cosmetics": {
         "default": "I expanded the raw product into a warm launch set with a product hero, texture macro, model usage, vertical social image and short-video preview.",
@@ -294,27 +294,27 @@
       },
       "fashion": {
         "product": {
-          "alt": "Raw product photograph of a cobalt-blue cropped jacket on a light studio background",
+          "alt": "Raw product photograph of a deep burgundy floor-length dress on a light studio background",
           "label": "Raw Product"
         },
         "model": {
-          "alt": "Full-length campaign photograph of a model wearing the cobalt-blue jacket",
+          "alt": "Full-length campaign photograph of a model wearing a deep burgundy dress",
           "label": "Full-body Model"
         },
         "detail": {
-          "alt": "Close crop showing the collar and fabric detail of the cobalt-blue jacket",
+          "alt": "Close crop showing the fabric and draping detail of the deep burgundy dress",
           "label": "Fabric Detail"
         },
         "campaign": {
-          "alt": "Horizontal campaign image of a cobalt-blue jacket in concrete architecture",
+          "alt": "Horizontal campaign image of a deep burgundy dress in warm stone architecture",
           "label": "Campaign Hero"
         },
         "social": {
-          "alt": "Vertical social composition from the cobalt-blue jacket campaign",
+          "alt": "Vertical social composition from the deep burgundy dress campaign",
           "label": "Vertical Social"
         },
         "video": {
-          "alt": "Vertical short-video concept preview for the cobalt-blue jacket campaign",
+          "alt": "Vertical short-video concept preview for the deep burgundy dress campaign",
           "label": "Short Video"
         }
       },
@@ -387,6 +387,201 @@
     "linkedinLabel": "LinkedIn",
     "xLabel": "X",
     "copyright": "© {year} {brand}. All rights reserved."
+  },
+  "SignupPage": {
+    "metadataTitle": "Create Account | Creative AI",
+    "metadataDescription": "Create your Creative AI account and start turning product photos into campaign-ready visuals and short-form videos.",
+    "heading": "Create your account",
+    "description": "Start creating your first campaign with your email address.",
+    "progressStepOne": "Signup step 1: Email",
+    "progressStepTwo": "Signup step 2: Password",
+    "emailLabel": "Work email",
+    "emailPlaceholder": "Enter your email to get started",
+    "emailRequired": "Enter your email address to continue.",
+    "emailInvalid": "Enter a valid email address.",
+    "continue": "Continue",
+    "divider": "or",
+    "continueWithGoogle": "Continue with Google",
+    "googleUnavailable": "Google signup is not available yet.",
+    "passwordHeading": "Create your password",
+    "passwordDescription": "Choose a strong password to protect your account.",
+    "passwordLabel": "Create a password",
+    "passwordPlaceholder": "At least 8 characters",
+    "passwordTooShort": "Your password must be at least 8 characters.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "changeEmail": "Change email",
+    "createAccount": "Create Account",
+    "submitting": "Creating account",
+    "existingAccount": "Already have an account?",
+    "signIn": "Sign In",
+    "unavailable": "Account creation will be available soon.",
+    "termsPrefix": "By creating an account, you agree to the ",
+    "termsLink": "Terms of Use",
+    "privacyLink": " and Privacy Policy",
+    "termsSuffix": ".",
+    "visualLabel": "Creative AI campaign preview",
+    "visualAlt": "Campaign photograph of an adult model wearing a deep burgundy floor-length dress in warm stone architecture",
+    "visualEyebrow": "FROM PRODUCT TO CAMPAIGN",
+    "visualHeading": "From one product photo to a complete campaign.",
+    "visualDescription": "Upload your product, describe the creative direction and generate image and short-form video outputs inside one workflow."
+  },
+  "LoginPage": {
+    "metadataTitle": "Sign In | Creative AI",
+    "metadataDescription": "Sign in to your Creative AI account and continue creating campaign-ready visuals and short-form videos.",
+    "heading": "Welcome back",
+    "description": "Sign in to your Creative AI account and continue where you left off.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email address",
+    "emailRequired": "Enter your email address to sign in.",
+    "emailInvalid": "Enter a valid email address.",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "passwordRequired": "Enter your password to sign in.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "signIn": "Sign In",
+    "divider": "or",
+    "continueWithGoogle": "Continue with Google",
+    "googleUnavailable": "Google sign-in is not available yet.",
+    "forgotPassword": "Forgot your password?",
+    "forgotUnavailable": "Password recovery will be available soon.",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create Account",
+    "unavailable": "Sign-in will be available soon.",
+    "visualLabel": "Creative AI fashion campaign preview",
+    "visualAlt": "Campaign photograph of an adult model wearing a deep burgundy floor-length dress in warm stone architecture",
+    "visualEyebrow": "CREATIVE WORKFLOW",
+    "visualHeading": "Turn your product photos into full campaigns.",
+    "visualDescription": "Sign in to your Creative AI account and continue building campaign-ready visuals and short-form videos."
+  },
+  "ContactPage": {
+    "metadataTitle": "Contact | Creative AI",
+    "metadataDescription": "Contact the Creative AI team to discuss pilot access, partnerships or anything you would like to know about the product.",
+    "heading": "Talk to our team",
+    "description": "Tell us about pilot access, pricing, partnerships or anything you would like to know about Creative AI.",
+    "helper": "We’ll review your message and get back to you as soon as possible.",
+    "nameLabel": "Full name",
+    "namePlaceholder": "Enter your full name",
+    "nameRequired": "Enter your full name to continue.",
+    "emailLabel": "Work email",
+    "emailPlaceholder": "you@yourbrand.com",
+    "emailRequired": "Enter your work email to continue.",
+    "emailInvalid": "Enter a valid email address.",
+    "companyLabel": "Company or brand",
+    "companyPlaceholder": "Your company name",
+    "optional": "Optional",
+    "topicLabel": "How can we help?",
+    "topicPlaceholder": "Select a topic",
+    "topicRequired": "Select a contact topic.",
+    "topics": {
+      "pilot": "Pilot access",
+      "pricing": "Pricing",
+      "partnership": "Partnership",
+      "technical": "Technical question",
+      "other": "Other"
+    },
+    "messageLabel": "Your message",
+    "messagePlaceholder": "Tell us briefly about your project, your needs or anything you would like to ask.",
+    "messageRequired": "Enter your message.",
+    "messageTooShort": "Your message must be at least {minimum} characters.",
+    "submit": "Send Message",
+    "submitting": "Sending",
+    "unavailable": "The contact form will be available soon.",
+    "visualLabel": "Creative AI fashion campaign",
+    "visualAlt": "Campaign photograph of an adult model wearing a burgundy floor-length dress in warm stone architecture",
+    "visualEyebrow": "LET’S CREATE TOGETHER",
+    "visualHeading": "Build a new creative workflow\nfor your brand.",
+    "visualDescription": "Talk to our team about pilot access, partnerships or anything you would like to know about the product."
+  },
+  "Dashboard": {
+    "metadata": {
+      "title": "Dashboard | Creative AI",
+      "description": "Manage your Creative AI projects, product assets and campaign generations."
+    },
+    "navigation": {
+      "label": "Dashboard navigation",
+      "home": "Home",
+      "projects": "Projects",
+      "create": "New Generation",
+      "files": "Files",
+      "usage": "Usage & Credits",
+      "settings": "Settings"
+    },
+    "topbar": {
+      "workspace": "Creative workspace",
+      "credits": "Credits",
+      "creditsDescription": "Available after plan setup"
+    },
+    "account": {
+      "label": "Account",
+      "description": "Your account menu will appear here"
+    },
+    "mobileNav": {
+      "label": "Dashboard menu",
+      "open": "Open dashboard menu",
+      "close": "Close dashboard menu"
+    },
+    "home": {
+      "eyebrow": "DASHBOARD",
+      "title": "Welcome to your creative workspace.",
+      "description": "This is where you’ll manage product assets, projects and campaign outputs.",
+      "createCampaign": "Create New Campaign",
+      "campaignEyebrow": "NEW GENERATION",
+      "campaignTitle": "Start with one product photo.",
+      "campaignDescription": "Upload your product, choose the creative direction and create a new campaign project.",
+      "summaryLabel": "Creative workspace summary",
+      "recentProjects": "Recent Projects",
+      "recentGenerations": "Recent Generations",
+      "viewAll": "View All"
+    },
+    "summary": {
+      "creditsLabel": "Remaining Credits",
+      "creditsDescription": "Available after plan and credit setup.",
+      "projectsLabel": "Projects",
+      "projectsDescription": "No projects created yet.",
+      "generationsLabel": "Generations",
+      "generationsDescription": "No generations yet."
+    },
+    "emptyStates": {
+      "projectsTitle": "You don’t have any projects yet.",
+      "projectsDescription": "Upload your first product photo and create a new campaign project.",
+      "projectsAction": "Create Your First Project",
+      "generationsTitle": "No images or videos have been generated yet.",
+      "generationsDescription": "Your outputs will appear here after you create your first campaign."
+    },
+    "placeholders": {
+      "projects": {
+        "eyebrow": "PROJECTS",
+        "title": "Projects",
+        "description": "All of your campaign projects will be listed here.",
+        "notice": "This area will be completed in the next product development phase."
+      },
+      "create": {
+        "eyebrow": "NEW GENERATION",
+        "title": "New Generation",
+        "description": "The product upload and generation workflow will be built here in the next phase.",
+        "notice": "This area will be completed in the next product development phase."
+      },
+      "files": {
+        "eyebrow": "FILES",
+        "title": "Files",
+        "description": "You’ll manage uploaded product images and media assets here.",
+        "notice": "This area will be completed in the next product development phase."
+      },
+      "usage": {
+        "eyebrow": "USAGE & CREDITS",
+        "title": "Usage & Credits",
+        "description": "Your credit balance and generation history will appear here.",
+        "notice": "This area will be completed in the next product development phase."
+      },
+      "settings": {
+        "eyebrow": "SETTINGS",
+        "title": "Settings",
+        "description": "Account, language and workspace settings will be managed here.",
+        "notice": "This area will be completed in the next product development phase."
+      }
+    }
   },
   "LanguageSwitcher": {
     "label": "Select language",

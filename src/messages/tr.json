@@ -58,7 +58,7 @@
         "title": "Fikrini tarif et",
         "description": "Ürününüz için istediğiniz sahneyi, modeli ve yaratıcı yönü doğal dille anlatın.",
         "label": "CREATIVE PROMPT",
-        "prompt": "Kobalt mavi ceketi, güçlü gölgelerle modern bir stüdyo çekiminde göster.",
+        "prompt": "Derin bordo elbiseyi, sıcak taş mimaride güçlü ve zarif bir kampanya çekiminin odağı yap.",
         "response": "Yaratıcı yön hazır. Ürün görselinizi ekleyerek başlayabilirsiniz.",
         "send": "Yaratıcı yönlendirmeyi gönder"
       },
@@ -68,8 +68,8 @@
         "description": "Temiz stüdyo çekiminizi yükleyin; renk, kesim ve materyal detaylarını üretim boyunca koruyalım.",
         "productLabel": "Stüdyo Ürünü",
         "outputLabel": "Model Üzerinde",
-        "studioAlt": "Nötr stüdyo fonunda tek başına duran kobalt mavi kısa ceket",
-        "outputAlt": "Modern beton mimaride kobalt mavi ceketi giyen model"
+        "studioAlt": "Açık stüdyo fonunda tek başına sergilenen derin bordo uzun elbise",
+        "outputAlt": "Sıcak taş mimaride derin bordo elbise giyen yetişkin model"
       },
       "video": {
         "number": "03",
@@ -77,7 +77,7 @@
         "description": "Aynı yaratıcı yönü kampanya görseline ve kısa video çıktısına dönüştürün.",
         "label": "Kısa Video",
         "fallbackLabel": "Video Önizlemesi",
-        "posterAlt": "Kobalt mavi ceketle merdivenlerde yürüyen modelin video önizleme karesi"
+        "posterAlt": "Derin bordo elbiseli modelin premium moda kampanyası video önizleme karesi"
       }
     }
   },
@@ -235,7 +235,7 @@
     },
     "prompts": {
       "jewelry": "Organik altın yüzüğü sıcak taş dokuları ve yakın plan el çekimleriyle sessiz lüks bir lansman kampanyasına dönüştür.",
-      "fashion": "Kobalt mavisi ceketi güçlü mimari kadrajlar ve modern editoryal çekimlerle yeni koleksiyonun odağı yap.",
+      "fashion": "Derin bordo elbiseyi sıcak taş mimaride güçlü ve modern editoryal kadrajlarla yeni koleksiyonun odağı yap.",
       "cosmetics": "Amber serum şişesi için traverten, su yansımaları ve doğal cilt dokusuyla sıcak bir ürün lansmanı hazırla."
     },
     "agent": {
@@ -245,7 +245,7 @@
       },
       "fashion": {
         "default": "Ham giysi girdisini tam boy model, kumaş detayı, yatay kampanya hero’su, dikey sosyal görsel ve kısa video önizlemesiyle tamamlayan editoryal bir set hazırladım.",
-        "updated": "Yönlendirmenizi altı farklı moda çıktısına uyguladım. Ceketin rengi ve yapısı korunurken model, detay, hero, sosyal ve kısa video önizlemesi canvas üzerinde yenilendi."
+        "updated": "Yönlendirmenizi altı farklı moda çıktısına uyguladım. Elbisenin rengi ve silüeti korunurken model, detay, hero, sosyal ve kısa video önizlemesi canvas üzerinde yenilendi."
       },
       "cosmetics": {
         "default": "Ham ürünü; ürün hero’su, doku makrosu, model üzerinde kullanım, dikey sosyal görsel ve kısa video önizlemesiyle tamamlayan sıcak bir lansman seti hazırladım.",
@@ -294,27 +294,27 @@
       },
       "fashion": {
         "product": {
-          "alt": "Açık stüdyo fonunda kobalt mavisi kısa ceket ürün fotoğrafı",
+          "alt": "Açık stüdyo fonunda derin bordo uzun elbise ürün fotoğrafı",
           "label": "Ham Ürün"
         },
         "model": {
-          "alt": "Kobalt mavisi ceketle tam boy model kampanya çekimi",
+          "alt": "Derin bordo uzun elbiseyle tam boy model kampanya çekimi",
           "label": "Tam Boy Model"
         },
         "detail": {
-          "alt": "Kobalt mavisi ceketin yaka ve kumaş detayını gösteren yakın plan",
+          "alt": "Derin bordo elbisenin kumaş ve drape detayını gösteren yakın plan",
           "label": "Kumaş Detayı"
         },
         "campaign": {
-          "alt": "Beton mimaride kobalt mavisi ceket için yatay kampanya görseli",
+          "alt": "Sıcak taş mimaride derin bordo elbise için yatay kampanya görseli",
           "label": "Kampanya Hero"
         },
         "social": {
-          "alt": "Kobalt mavisi ceket kampanyasının dikey sosyal medya kompozisyonu",
+          "alt": "Derin bordo elbise kampanyasının dikey sosyal medya kompozisyonu",
           "label": "Dikey Sosyal"
         },
         "video": {
-          "alt": "Kobalt mavisi ceket kampanyası için dikey kısa video konsept önizlemesi",
+          "alt": "Derin bordo elbise kampanyası için dikey kısa video konsept önizlemesi",
           "label": "Kısa Video"
         }
       },
@@ -387,6 +387,201 @@
     "linkedinLabel": "LinkedIn",
     "xLabel": "X",
     "copyright": "© {year} {brand}. Tüm hakları saklıdır."
+  },
+  "SignupPage": {
+    "metadataTitle": "Hesap Oluştur | Creative AI",
+    "metadataDescription": "Creative AI hesabınızı oluşturun ve ürün fotoğraflarınızı kampanyaya hazır görsellere ve kısa videolara dönüştürmeye başlayın.",
+    "heading": "Hesabınızı oluşturun",
+    "description": "İlk kampanyanızı oluşturmaya e-posta adresinizle başlayın.",
+    "progressStepOne": "Kayıt adımı 1: E-posta",
+    "progressStepTwo": "Kayıt adımı 2: Şifre",
+    "emailLabel": "İş e-postası",
+    "emailPlaceholder": "E-posta adresinizi girin",
+    "emailRequired": "Devam etmek için e-posta adresinizi girin.",
+    "emailInvalid": "Geçerli bir e-posta adresi girin.",
+    "continue": "Devam Et",
+    "divider": "veya",
+    "continueWithGoogle": "Google ile devam et",
+    "googleUnavailable": "Google ile kayıt henüz kullanıma açık değil.",
+    "passwordHeading": "Şifrenizi oluşturun",
+    "passwordDescription": "Hesabınızı korumak için güçlü bir şifre belirleyin.",
+    "passwordLabel": "Şifre oluşturun",
+    "passwordPlaceholder": "En az 8 karakter",
+    "passwordTooShort": "Şifreniz en az 8 karakter olmalı.",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle",
+    "changeEmail": "E-postayı değiştir",
+    "createAccount": "Hesap Oluştur",
+    "submitting": "Hesap oluşturuluyor",
+    "existingAccount": "Zaten hesabınız var mı?",
+    "signIn": "Giriş Yap",
+    "unavailable": "Kayıt sistemi yakında kullanıma açılacak.",
+    "termsPrefix": "Hesap oluşturarak ",
+    "termsLink": "Kullanım Şartları'nı",
+    "privacyLink": " ve Gizlilik Politikası'nı",
+    "termsSuffix": " kabul etmiş olursunuz.",
+    "visualLabel": "Creative AI kampanya önizlemesi",
+    "visualAlt": "Sıcak taş mimaride derin bordo uzun elbise giyen yetişkin modelin kampanya fotoğrafı",
+    "visualEyebrow": "ÜRÜNDEN KAMPANYAYA",
+    "visualHeading": "Bir ürün fotoğrafından eksiksiz bir kampanyaya.",
+    "visualDescription": "Ürününüzü yükleyin, yaratıcı yönünüzü tarif edin ve görsel ile kısa video çıktılarınızı tek akışta oluşturun."
+  },
+  "LoginPage": {
+    "metadataTitle": "Giriş Yap | Creative AI",
+    "metadataDescription": "Creative AI hesabınıza giriş yapın ve kampanyaya hazır görselleriniz ile kısa videolarınızı oluşturmaya devam edin.",
+    "heading": "Tekrar hoş geldiniz",
+    "description": "Creative AI hesabınıza giriş yaparak kampanyalarınıza kaldığınız yerden devam edin.",
+    "emailLabel": "E-posta",
+    "emailPlaceholder": "E-posta adresinizi girin",
+    "emailRequired": "Giriş yapmak için e-posta adresinizi girin.",
+    "emailInvalid": "Geçerli bir e-posta adresi girin.",
+    "passwordLabel": "Şifre",
+    "passwordPlaceholder": "Şifrenizi girin",
+    "passwordRequired": "Giriş yapmak için şifrenizi girin.",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle",
+    "signIn": "Giriş Yap",
+    "divider": "veya",
+    "continueWithGoogle": "Google ile devam et",
+    "googleUnavailable": "Google ile giriş henüz kullanıma açık değil.",
+    "forgotPassword": "Şifrenizi mi unuttunuz?",
+    "forgotUnavailable": "Şifre yenileme sistemi yakında kullanıma açılacak.",
+    "noAccount": "Hesabınız yok mu?",
+    "createAccount": "Hesap Oluştur",
+    "unavailable": "Giriş sistemi yakında kullanıma açılacak.",
+    "visualLabel": "Creative AI moda kampanyası önizlemesi",
+    "visualAlt": "Sıcak taş mimaride derin bordo uzun elbise giyen yetişkin modelin kampanya fotoğrafı",
+    "visualEyebrow": "CREATIVE WORKFLOW",
+    "visualHeading": "Ürün fotoğrafınızı kampanyaya dönüştürün.",
+    "visualDescription": "Creative AI hesabınıza giriş yapın ve ürün görsellerinizi yönetmeye devam edin."
+  },
+  "ContactPage": {
+    "metadataTitle": "İletişim | Creative AI",
+    "metadataDescription": "Creative AI hakkında konuşmak, pilot kullanıma katılmak veya iş birliği olanaklarını değerlendirmek için ekibimizle iletişime geçin.",
+    "heading": "Bizimle iletişime geçin",
+    "description": "Pilot kullanım, fiyatlandırma, iş birliği veya ürün hakkında merak ettiklerinizi paylaşın.",
+    "helper": "Mesajınızı inceleyip en kısa sürede dönüş yapacağız.",
+    "nameLabel": "Adınız",
+    "namePlaceholder": "Adınızı girin",
+    "nameRequired": "Devam etmek için adınızı girin.",
+    "emailLabel": "İş e-postası",
+    "emailPlaceholder": "siz@markaniz.com",
+    "emailRequired": "Devam etmek için iş e-postanızı girin.",
+    "emailInvalid": "Geçerli bir e-posta adresi girin.",
+    "companyLabel": "Şirket veya marka",
+    "companyPlaceholder": "Markanızın adı",
+    "optional": "İsteğe bağlı",
+    "topicLabel": "Size nasıl yardımcı olabiliriz?",
+    "topicPlaceholder": "Bir konu seçin",
+    "topicRequired": "Bir iletişim konusu seçin.",
+    "topics": {
+      "pilot": "Pilot kullanım",
+      "pricing": "Fiyatlandırma",
+      "partnership": "İş birliği",
+      "technical": "Teknik soru",
+      "other": "Diğer"
+    },
+    "messageLabel": "Mesajınız",
+    "messagePlaceholder": "Projenizden, ihtiyaçlarınızdan veya sormak istediklerinizden kısaca bahsedin.",
+    "messageRequired": "Mesajınızı yazın.",
+    "messageTooShort": "Mesajınız en az {minimum} karakter olmalı.",
+    "submit": "Mesaj Gönder",
+    "submitting": "Gönderiliyor",
+    "unavailable": "İletişim formu yakında kullanıma açılacak.",
+    "visualLabel": "Creative AI moda kampanyası",
+    "visualAlt": "Sıcak taş mimaride bordo uzun elbise giyen yetişkin modelin kampanya fotoğrafı",
+    "visualEyebrow": "BİRLİKTE ÜRETELİM",
+    "visualHeading": "Markanız için\nyeni bir üretim akışı kuralım.",
+    "visualDescription": "Pilot kullanım, iş birliği veya ürün hakkında konuşmak için ekibimizle iletişime geçin."
+  },
+  "Dashboard": {
+    "metadata": {
+      "title": "Dashboard | Creative AI",
+      "description": "Creative AI projelerinizi, ürün görsellerinizi ve üretimlerinizi yönetebileceğiniz çalışma alanı."
+    },
+    "navigation": {
+      "label": "Dashboard navigasyonu",
+      "home": "Ana Sayfa",
+      "projects": "Projeler",
+      "create": "Yeni Üretim",
+      "files": "Dosyalar",
+      "usage": "Kullanım ve Krediler",
+      "settings": "Ayarlar"
+    },
+    "topbar": {
+      "workspace": "Çalışma alanı",
+      "credits": "Krediler",
+      "creditsDescription": "Plan bağlandığında görünecek"
+    },
+    "account": {
+      "label": "Hesap",
+      "description": "Hesap menüsü yakında burada olacak"
+    },
+    "mobileNav": {
+      "label": "Dashboard menüsü",
+      "open": "Dashboard menüsünü aç",
+      "close": "Dashboard menüsünü kapat"
+    },
+    "home": {
+      "eyebrow": "DASHBOARD",
+      "title": "Üretim alanınıza hoş geldiniz.",
+      "description": "Ürün görsellerinizi, projelerinizi ve gelecekteki kampanya çıktılarını buradan yöneteceksiniz.",
+      "createCampaign": "Yeni Kampanya Oluştur",
+      "campaignEyebrow": "YENİ ÜRETİM",
+      "campaignTitle": "Bir ürün fotoğrafıyla başlayın.",
+      "campaignDescription": "Ürününüzü yükleyin, yaratıcı yönünüzü seçin ve yeni bir kampanya projesi oluşturun.",
+      "summaryLabel": "Çalışma alanı özeti",
+      "recentProjects": "Son Projeler",
+      "recentGenerations": "Son Üretimler",
+      "viewAll": "Tümünü Gör"
+    },
+    "summary": {
+      "creditsLabel": "Kalan Krediler",
+      "creditsDescription": "Plan ve kredi sistemi bağlandığında görünecek.",
+      "projectsLabel": "Projeler",
+      "projectsDescription": "Henüz proje oluşturulmadı.",
+      "generationsLabel": "Üretimler",
+      "generationsDescription": "Henüz üretim yapılmadı."
+    },
+    "emptyStates": {
+      "projectsTitle": "Henüz bir projeniz yok.",
+      "projectsDescription": "İlk ürün fotoğrafınızı yükleyerek yeni bir kampanya projesi oluşturun.",
+      "projectsAction": "İlk Projeyi Oluştur",
+      "generationsTitle": "Henüz bir görsel veya video oluşturulmadı.",
+      "generationsDescription": "İlk kampanyanızı oluşturduğunuzda çıktılarınız burada görünecek."
+    },
+    "placeholders": {
+      "projects": {
+        "eyebrow": "PROJELER",
+        "title": "Projeler",
+        "description": "Tüm kampanya projeleriniz burada listelenecek.",
+        "notice": "Bu alan bir sonraki geliştirme aşamasında tamamlanacak."
+      },
+      "create": {
+        "eyebrow": "YENİ ÜRETİM",
+        "title": "Yeni Üretim",
+        "description": "Ürün yükleme ve üretim akışı bir sonraki aşamada burada kurulacak.",
+        "notice": "Bu alan bir sonraki geliştirme aşamasında tamamlanacak."
+      },
+      "files": {
+        "eyebrow": "DOSYALAR",
+        "title": "Dosyalar",
+        "description": "Yüklediğiniz ürün görsellerini ve medya varlıklarını burada yöneteceksiniz.",
+        "notice": "Bu alan bir sonraki geliştirme aşamasında tamamlanacak."
+      },
+      "usage": {
+        "eyebrow": "KULLANIM VE KREDİLER",
+        "title": "Kullanım ve Krediler",
+        "description": "Kredi bakiyeniz ve üretim geçmişiniz burada görüntülenecek.",
+        "notice": "Bu alan bir sonraki geliştirme aşamasında tamamlanacak."
+      },
+      "settings": {
+        "eyebrow": "AYARLAR",
+        "title": "Ayarlar",
+        "description": "Hesap, dil ve çalışma alanı ayarlarınız burada yönetilecek.",
+        "notice": "Bu alan bir sonraki geliştirme aşamasında tamamlanacak."
+      }
+    }
   },
   "LanguageSwitcher": {
     "label": "Dil seç",

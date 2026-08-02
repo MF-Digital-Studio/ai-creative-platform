@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-import { navigationItems } from "@/data/navigation";
+import { navbarNavigationItems } from "@/data/navigation";
 import { getPathname, Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
 
@@ -92,7 +92,9 @@ export function MobileNavigation() {
     setOpenPath(null);
   }
 
-  function handleNavigation(key: (typeof navigationItems)[number]["key"]) {
+  function handleNavigation(
+    key: (typeof navbarNavigationItems)[number]["key"],
+  ) {
     closeMenu();
 
     if (key === "home" && pathname === "/") {
@@ -139,7 +141,7 @@ export function MobileNavigation() {
         >
           <div className="p-3">
             <div className="navbar-mobile-links">
-              {navigationItems.map((item) => (
+              {navbarNavigationItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
