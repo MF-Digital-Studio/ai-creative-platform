@@ -494,6 +494,153 @@
     "visualHeading": "Build a new creative workflow\nfor your brand.",
     "visualDescription": "Talk to our team about pilot access, partnerships or anything you would like to know about the product."
   },
+  "Dashboard": {
+    "metadataTitle": "Creative Workspace | CREATIVE AI",
+    "metadataDescription": "Create campaign-ready product visuals and explore creative directions in the CREATIVE AI workspace.",
+    "navigation": {
+      "brand": "CREATIVE AI",
+      "homeLabel": "Return to the CREATIVE AI home page",
+      "primaryLabel": "Workspace navigation",
+      "secondaryLabel": "Workspace settings",
+      "unavailable": "This area will be available in a future update.",
+      "openMenu": "Open workspace navigation",
+      "closeMenu": "Close workspace navigation",
+      "items": {
+        "home": "Home",
+        "create": "Create",
+        "projects": "Projects",
+        "templates": "Templates",
+        "assets": "Assets",
+        "usage": "Usage",
+        "settings": "Settings",
+        "upgrade": "Upgrade",
+        "account": "Account"
+      }
+    },
+    "topbar": {
+      "workspace": "Creative Workspace",
+      "credits": "Credits —",
+      "creditsHint": "Available after plan setup",
+      "account": "Account"
+    },
+    "composer": {
+      "heading": "What would you like to create?",
+      "description": "Upload a product photo and describe the campaign direction.",
+      "eyebrow": "Product + Creative Direction",
+      "context": "New project",
+      "promptLabel": "Creative direction",
+      "promptPlaceholder": "Describe the visual direction for your product campaign...",
+      "addProduct": "Add product",
+      "addReference": "Add reference",
+      "uploadUnavailable": "Product upload will be available when the creation service is connected.",
+      "referenceUnavailable": "Reference upload will be available when the creation service is connected.",
+      "outputLabel": "Output type",
+      "outputTypes": {
+        "image": "Image",
+        "video": "Video",
+        "campaignSet": "Campaign Set"
+      },
+      "startCreating": "Start Creating",
+      "startDisabledHint": "Add a product photo and creative direction to continue.",
+      "quickStartLabel": "Quick starts",
+      "quickStarts": {
+        "studioProductShot": "Studio Product Shot",
+        "lifestyleCampaign": "Lifestyle Campaign",
+        "onModelFashion": "On-model Fashion",
+        "productCloseUp": "Product Close-up",
+        "shortVideo": "Short Video",
+        "socialCampaign": "Social Campaign"
+      },
+      "quickStartPrompts": {
+        "studioProductShot": "A precise studio product photograph with sculpted soft light, a calm neutral backdrop and premium material detail.",
+        "lifestyleCampaign": "A warm lifestyle campaign in natural architecture with believable daylight and quiet editorial styling.",
+        "onModelFashion": "An editorial on-model fashion campaign with confident posing, refined composition and true-to-product fabric detail.",
+        "productCloseUp": "A macro product close-up that highlights texture, finish and construction with controlled directional light.",
+        "shortVideo": "A concise product film with slow camera movement, considered reflections and a strong final hero frame.",
+        "socialCampaign": "A cohesive social campaign set with an attention-led hero image, detail crop and vertical story composition."
+      }
+    },
+    "templates": {
+      "heading": "Start with a template",
+      "description": "Choose a ready-made creative direction for your product.",
+      "useTemplate": "Use {title} template",
+      "types": {
+        "image": "Image",
+        "video": "Video",
+        "campaignSet": "Campaign set"
+      },
+      "items": {
+        "studioProductShot": "Studio Product Shot",
+        "editorialFashion": "Editorial Fashion",
+        "luxuryCosmetics": "Luxury Cosmetics",
+        "jewelryCloseUp": "Jewelry Close-up",
+        "lifestyleScene": "Lifestyle Scene",
+        "shortProductVideo": "Short Product Video"
+      },
+      "alts": {
+        "studioProductShot": "Minimal cosmetic bottle photographed in soft studio light",
+        "editorialFashion": "Tailored dark jacket styled in a bright architectural interior",
+        "luxuryCosmetics": "Amber skincare bottle staged with warm stone and sunlight",
+        "jewelryCloseUp": "Sculptural gold jewelry photographed in dramatic macro detail",
+        "lifestyleScene": "Adult model wearing a burgundy dress in warm stone architecture",
+        "shortProductVideo": "Dark blue fragrance bottle staged above reflective water"
+      }
+    },
+    "inspiration": {
+      "heading": "Explore creative directions",
+      "description": "Curated campaign references for fashion, cosmetics, jewelry and product motion.",
+      "filterLabel": "Filter creative directions",
+      "useDirection": "Use this direction",
+      "categories": {
+        "all": "All",
+        "fashion": "Fashion",
+        "cosmetics": "Cosmetics",
+        "jewelry": "Jewelry",
+        "productVideo": "Product Video"
+      },
+      "types": {
+        "image": "Image",
+        "video": "Video",
+        "campaignSet": "Campaign set"
+      },
+      "items": {
+        "architecturalFashion": "Architectural Poise",
+        "quietTailoring": "Quiet Tailoring",
+        "warmSkincare": "Sun-washed Skincare",
+        "textureStudy": "Texture Study",
+        "goldSculpture": "Sculpted Gold",
+        "softDaylightJewelry": "Soft Daylight Jewelry",
+        "midnightFragrance": "Midnight Fragrance",
+        "jewelryMotion": "Jewelry in Motion"
+      },
+      "alts": {
+        "architecturalFashion": "Adult model in a long burgundy dress framed by stone arches",
+        "quietTailoring": "Dark tailored jacket and light trousers in a minimal interior",
+        "warmSkincare": "Amber skincare bottle beside a model in warm directional sunlight",
+        "textureStudy": "Close-up study of glossy cosmetic texture in neutral tones",
+        "goldSculpture": "Curved polished gold jewelry on a dark textured surface",
+        "softDaylightJewelry": "Gold earrings with violet stones resting on warm limestone",
+        "midnightFragrance": "Blue glass fragrance bottle reflected in dark water",
+        "jewelryMotion": "Gold jewelry arranged as a cinematic vertical video frame"
+      },
+      "prompts": {
+        "architecturalFashion": "Create a poised editorial fashion campaign in warm monumental architecture with precise garment detail.",
+        "quietTailoring": "Use restrained daylight, modern tailoring and a minimal architectural setting with calm neutral tones.",
+        "warmSkincare": "Build a sun-washed skincare campaign with warm stone, subtle reflections and clean product focus.",
+        "textureStudy": "Create a tactile macro study that highlights material texture, sheen and soft tonal depth.",
+        "goldSculpture": "Photograph the jewelry as a sculptural object with dramatic black surfaces and controlled gold reflections.",
+        "softDaylightJewelry": "Create a refined daylight jewelry scene on pale stone with soft shadows and premium detail.",
+        "midnightFragrance": "Create a short fragrance film with dark water reflections, slow camera movement and a luminous hero frame.",
+        "jewelryMotion": "Create a vertical jewelry film with measured motion, close-up detail and warm directional light."
+      }
+    },
+    "recentWork": {
+      "heading": "Recent work",
+      "emptyHeading": "Your creations will appear here.",
+      "emptyDescription": "Start with a product photo to create your first campaign output.",
+      "startCreating": "Start Creating"
+    }
+  },
   "LanguageSwitcher": {
     "label": "Select language",
     "menuLabel": "Language options",

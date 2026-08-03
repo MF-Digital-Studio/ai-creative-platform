@@ -494,6 +494,153 @@
     "visualHeading": "Markanız için\nyeni bir üretim akışı kuralım.",
     "visualDescription": "Pilot kullanım, iş birliği veya ürün hakkında konuşmak için ekibimizle iletişime geçin."
   },
+  "Dashboard": {
+    "metadataTitle": "Yaratıcı Çalışma Alanı | CREATIVE AI",
+    "metadataDescription": "CREATIVE AI çalışma alanında kampanyaya hazır ürün görselleri oluşturun ve yaratıcı yönleri keşfedin.",
+    "navigation": {
+      "brand": "CREATIVE AI",
+      "homeLabel": "CREATIVE AI ana sayfasına dön",
+      "primaryLabel": "Çalışma alanı navigasyonu",
+      "secondaryLabel": "Çalışma alanı ayarları",
+      "unavailable": "Bu alan gelecek bir güncellemede kullanıma açılacak.",
+      "openMenu": "Çalışma alanı navigasyonunu aç",
+      "closeMenu": "Çalışma alanı navigasyonunu kapat",
+      "items": {
+        "home": "Ana Sayfa",
+        "create": "Üret",
+        "projects": "Projeler",
+        "templates": "Şablonlar",
+        "assets": "Varlıklar",
+        "usage": "Kullanım",
+        "settings": "Ayarlar",
+        "upgrade": "Planı Yükselt",
+        "account": "Hesap"
+      }
+    },
+    "topbar": {
+      "workspace": "Yaratıcı Çalışma Alanı",
+      "credits": "Krediler —",
+      "creditsHint": "Plan kurulumu tamamlandığında kullanılabilir",
+      "account": "Hesap"
+    },
+    "composer": {
+      "heading": "Ne oluşturmak istersiniz?",
+      "description": "Bir ürün fotoğrafı yükleyin ve kampanyanızın yaratıcı yönünü tarif edin.",
+      "eyebrow": "Ürün + Yaratıcı Yön",
+      "context": "Yeni proje",
+      "promptLabel": "Yaratıcı yön",
+      "promptPlaceholder": "Ürün kampanyanız için yaratıcı yönü tarif edin...",
+      "addProduct": "Ürün ekle",
+      "addReference": "Referans ekle",
+      "uploadUnavailable": "Ürün yükleme, üretim servisi bağlandığında kullanıma açılacak.",
+      "referenceUnavailable": "Referans yükleme, üretim servisi bağlandığında kullanıma açılacak.",
+      "outputLabel": "Çıktı türü",
+      "outputTypes": {
+        "image": "Görsel",
+        "video": "Video",
+        "campaignSet": "Kampanya Seti"
+      },
+      "startCreating": "Üretime Başla",
+      "startDisabledHint": "Devam etmek için bir ürün fotoğrafı ve yaratıcı yön ekleyin.",
+      "quickStartLabel": "Hızlı başlangıçlar",
+      "quickStarts": {
+        "studioProductShot": "Stüdyo Ürün Çekimi",
+        "lifestyleCampaign": "Yaşam Tarzı Kampanyası",
+        "onModelFashion": "Model Üzerinde Moda",
+        "productCloseUp": "Ürün Yakın Planı",
+        "shortVideo": "Kısa Video",
+        "socialCampaign": "Sosyal Medya Kampanyası"
+      },
+      "quickStartPrompts": {
+        "studioProductShot": "Yumuşak ve biçimlendirilmiş ışık, sakin nötr fon ve premium malzeme detayıyla hassas bir stüdyo ürün fotoğrafı.",
+        "lifestyleCampaign": "Doğal mimari, gerçekçi gün ışığı ve sade editorial stille sıcak bir yaşam tarzı kampanyası.",
+        "onModelFashion": "Güçlü pozlar, rafine kompozisyon ve ürüne sadık kumaş detayıyla model üzerinde editorial moda kampanyası.",
+        "productCloseUp": "Kontrollü yönlü ışıkla doku, yüzey ve işçiliği öne çıkaran makro ürün yakın planı.",
+        "shortVideo": "Yavaş kamera hareketi, özenli yansımalar ve güçlü bir final karesiyle kısa ürün filmi.",
+        "socialCampaign": "Dikkat çekici ana görsel, detay kadrajı ve dikey hikâye kompozisyonundan oluşan tutarlı sosyal medya seti."
+      }
+    },
+    "templates": {
+      "heading": "Bir şablonla başlayın",
+      "description": "Ürününüz için hazır bir yaratıcı yön seçin.",
+      "useTemplate": "{title} şablonunu kullan",
+      "types": {
+        "image": "Görsel",
+        "video": "Video",
+        "campaignSet": "Kampanya seti"
+      },
+      "items": {
+        "studioProductShot": "Stüdyo Ürün Çekimi",
+        "editorialFashion": "Editorial Moda",
+        "luxuryCosmetics": "Lüks Kozmetik",
+        "jewelryCloseUp": "Takı Yakın Planı",
+        "lifestyleScene": "Yaşam Tarzı Sahnesi",
+        "shortProductVideo": "Kısa Ürün Videosu"
+      },
+      "alts": {
+        "studioProductShot": "Yumuşak stüdyo ışığında fotoğraflanmış minimal kozmetik şişesi",
+        "editorialFashion": "Aydınlık mimari iç mekânda stillenmiş koyu renk özel dikim ceket",
+        "luxuryCosmetics": "Sıcak taş ve gün ışığıyla kurgulanmış amber cilt bakım şişesi",
+        "jewelryCloseUp": "Dramatik makro detayla fotoğraflanmış heykelsi altın takı",
+        "lifestyleScene": "Sıcak taş mimaride bordo elbise giyen yetişkin model",
+        "shortProductVideo": "Yansıtıcı su üzerinde kurgulanmış koyu mavi parfüm şişesi"
+      }
+    },
+    "inspiration": {
+      "heading": "Yaratıcı yönleri keşfedin",
+      "description": "Moda, kozmetik, takı ve ürün videoları için seçilmiş kampanya referansları.",
+      "filterLabel": "Yaratıcı yönleri filtrele",
+      "useDirection": "Bu yönü kullan",
+      "categories": {
+        "all": "Tümü",
+        "fashion": "Moda",
+        "cosmetics": "Kozmetik",
+        "jewelry": "Takı",
+        "productVideo": "Ürün Videosu"
+      },
+      "types": {
+        "image": "Görsel",
+        "video": "Video",
+        "campaignSet": "Kampanya seti"
+      },
+      "items": {
+        "architecturalFashion": "Mimari Duruş",
+        "quietTailoring": "Sade Terzilik",
+        "warmSkincare": "Güneşli Cilt Bakımı",
+        "textureStudy": "Doku Çalışması",
+        "goldSculpture": "Heykelsi Altın",
+        "softDaylightJewelry": "Yumuşak Gün Işığında Takı",
+        "midnightFragrance": "Gece Parfümü",
+        "jewelryMotion": "Hareketli Takı"
+      },
+      "alts": {
+        "architecturalFashion": "Taş kemerlerle çevrelenmiş uzun bordo elbiseli yetişkin model",
+        "quietTailoring": "Minimal iç mekânda koyu renk özel dikim ceket ve açık renk pantolon",
+        "warmSkincare": "Sıcak yönlü ışıkta model yanında amber cilt bakım şişesi",
+        "textureStudy": "Nötr tonlarda parlak kozmetik dokusunun yakın plan çalışması",
+        "goldSculpture": "Koyu dokulu yüzey üzerinde kıvrımlı parlak altın takı",
+        "softDaylightJewelry": "Sıcak kireç taşı üzerinde mor taşlı altın küpeler",
+        "midnightFragrance": "Koyu suda yansıyan mavi cam parfüm şişesi",
+        "jewelryMotion": "Sinematik dikey video karesi olarak düzenlenmiş altın takı"
+      },
+      "prompts": {
+        "architecturalFashion": "Sıcak anıtsal mimaride, hassas giysi detayıyla güçlü bir editorial moda kampanyası oluştur.",
+        "quietTailoring": "Sade gün ışığı, modern terzilik ve sakin nötr tonlarda minimal bir mimari ortam kullan.",
+        "warmSkincare": "Sıcak taş, hafif yansımalar ve temiz ürün odağıyla güneşli bir cilt bakım kampanyası oluştur.",
+        "textureStudy": "Malzeme dokusunu, parlaklığı ve yumuşak ton derinliğini öne çıkaran dokunsal bir makro çalışma oluştur.",
+        "goldSculpture": "Takıyı dramatik siyah yüzeyler ve kontrollü altın yansımalarla heykelsi bir nesne olarak fotoğrafla.",
+        "softDaylightJewelry": "Açık renk taş üzerinde yumuşak gölgeler ve premium detayla rafine bir gün ışığı takı sahnesi oluştur.",
+        "midnightFragrance": "Koyu su yansımaları, yavaş kamera hareketi ve ışıklı bir final karesiyle kısa parfüm filmi oluştur.",
+        "jewelryMotion": "Ölçülü hareket, yakın plan detay ve sıcak yönlü ışıkla dikey bir takı filmi oluştur."
+      }
+    },
+    "recentWork": {
+      "heading": "Son çalışmalar",
+      "emptyHeading": "Üretimleriniz burada görünecek.",
+      "emptyDescription": "İlk kampanya çıktınızı oluşturmak için bir ürün fotoğrafıyla başlayın.",
+      "startCreating": "Üretime Başla"
+    }
+  },
   "LanguageSwitcher": {
     "label": "Dil seç",
     "menuLabel": "Dil seçenekleri",
