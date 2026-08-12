@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -7,6 +8,7 @@ import { AuthVisual } from "@/components/auth/auth-visual";
 import { SignupForm } from "@/components/auth/signup-form";
 import { Navbar } from "@/components/layout/navbar";
 import { isSupportedLocale } from "@/i18n/routing";
+import { createClient } from "@/lib/supabase/server";
 
 type SignupPageProps = {
   params: Promise<{ locale: string }>;
@@ -39,6 +41,20 @@ export default async function SignupPage({
 
   if (!isSupportedLocale(locale)) {
     notFound();
+  }
+
+  let isAuthenticated = false;
+
+  try {
+    const supabase = await createClient();
+    const {data, error} = await supabase.auth.getClaims();
+    isAuthenticated = !error && Boolean(data?.claims);
+  } catch {
+    // Auth failures should leave the public signup page available.
+  }
+
+  if (isAuthenticated) {
+    redirect(`/${locale}/dashboard`);
   }
 
   setRequestLocale(locale);

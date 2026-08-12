@@ -7,17 +7,20 @@ import { useTranslations } from "next-intl";
 import { GoogleButton } from "@/components/auth/google-button";
 import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function LoginForm() {
   const t = useTranslations("LoginPage");
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string>();
   const [passwordError, setPasswordError] = useState<string>();
   const [notice, setNotice] = useState<string>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
@@ -25,8 +28,11 @@ export function LoginForm() {
     document.documentElement.dataset.motion = "ready";
   }, []);
 
-  function handleSignIn(event: FormEvent<HTMLFormElement>) {
+  async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSubmitting) return;
+
     setNotice(undefined);
 
     const normalizedEmail = email.trim();
@@ -54,7 +60,48 @@ export function LoginForm() {
     setEmail(normalizedEmail);
     setEmailError(undefined);
     setPasswordError(undefined);
-    setNotice(t("unavailable"));
+    setIsSubmitting(true);
+
+    try {
+      const supabase = createClient();
+      const {error} = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (error) {
+        const errorMessage = error.message.toLowerCase();
+        const isRateLimited =
+          error.status === 429 ||
+          /rate limit|too many|request limit/.test(errorMessage);
+        const isUnconfirmed =
+          error.code === "email_not_confirmed" ||
+          /email not confirmed|email.*confirm/.test(errorMessage);
+
+        if (isRateLimited) {
+          setNotice(t("rateLimitError"));
+        } else if (isUnconfirmed) {
+          setNotice(t("emailNotConfirmed"));
+        } else if (
+          error.code === "invalid_credentials" ||
+          error.status === 400
+        ) {
+          setNotice(t("invalidCredentials"));
+        } else {
+          setNotice(t("genericError"));
+        }
+
+        return;
+      }
+
+      setPassword("");
+      router.replace("/dashboard");
+      router.refresh();
+    } catch {
+      setNotice(t("genericError"));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleGoogleContinue() {
@@ -131,8 +178,15 @@ export function LoginForm() {
             }}
           />
 
-          <Button type="submit" variant="dark" size="lg" className="w-full">
-            {t("signIn")}
+          <Button
+            type="submit"
+            variant="dark"
+            size="lg"
+            className="w-full"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
+            {isSubmitting ? t("signingIn") : t("signIn")}
           </Button>
 
           <div className="signup-divider" aria-hidden="true">
@@ -153,7 +207,7 @@ export function LoginForm() {
       </form>
 
       {notice ? (
-        <p className="signup-notice" role="status">
+        <p className="signup-notice" role="alert" aria-live="polite">
           {notice}
         </p>
       ) : null}

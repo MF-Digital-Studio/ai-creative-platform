@@ -12,7 +12,11 @@ import { cn } from "@/lib/cn";
 
 const mobileMenuId = "mobile-navigation-panel";
 
-export function MobileNavigation() {
+type MobileNavigationProps = {
+  isAuthenticated: boolean;
+};
+
+export function MobileNavigation({isAuthenticated}: MobileNavigationProps) {
   const locale = useLocale();
   const navigationT = useTranslations("Navigation");
   const commonT = useTranslations("Common");
@@ -164,24 +168,23 @@ export function MobileNavigation() {
             </div>
 
             <div className="navbar-mobile-footer">
-              <Link
-                href={siteConfig.routes.login}
-                className="navbar-mobile-sign-in"
-                onClick={closeMenu}
-              >
-                {navigationT("signIn")}
-              </Link>
+              {!isAuthenticated ? (
+                <Link
+                  href={siteConfig.routes.login}
+                  className="navbar-mobile-sign-in"
+                  onClick={closeMenu}
+                >
+                  {navigationT("signIn")}
+                </Link>
+              ) : null}
               <Button
-                href={getPathname({
-                  href: siteConfig.routes.signup,
-                  locale,
-                })}
+                href={isAuthenticated ? getPathname({href: "/dashboard", locale}) : getPathname({href: siteConfig.routes.signup, locale})}
                 variant="dark"
                 size="md"
                 className="flex-1"
                 onClick={closeMenu}
               >
-                {navigationT("tryForFree")}
+                {navigationT(isAuthenticated ? "workspace" : "tryForFree")}
               </Button>
             </div>
 
