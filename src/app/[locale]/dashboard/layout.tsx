@@ -23,8 +23,8 @@ export default async function DashboardLayout({ children, params }: DashboardLay
     redirect(`/${locale}/login`);
   }
 
-  await getOrCreateProfile(userId);
+  const profile = await getOrCreateProfile(userId);
 
   setRequestLocale(locale);
-  return <DashboardShell>{children}</DashboardShell>;
+  return <DashboardShell displayName={profile.display_name}>{children}</DashboardShell>;
 }

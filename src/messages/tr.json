@@ -535,7 +535,20 @@
       "credits": "Krediler —",
       "creditsHint": "Plan kurulumu tamamlandığında kullanılabilir",
       "account": "Hesap",
+      "profile": "Profil",
       "signOut": "Çıkış Yap"
+    },
+    "account": {
+      "eyebrow": "HESAP",
+      "heading": "Profil",
+      "description": "Creative AI çalışma alanınızda görünen adı yönetin.",
+      "displayNameLabel": "Görünen ad",
+      "displayNameHelper": "Bu ad çalışma alanınızda kullanılır.",
+      "save": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor…",
+      "validationError": "Görünen ad 80 karakter veya daha kısa olmalıdır.",
+      "saveError": "Profiliniz kaydedilemedi. Lütfen tekrar deneyin.",
+      "saveSuccess": "Profil kaydedildi."
     },
     "composer": {
       "heading": "Ne oluşturmak istersiniz?",

@@ -535,7 +535,20 @@
       "credits": "Credits —",
       "creditsHint": "Available after plan setup",
       "account": "Account",
+      "profile": "Profile",
       "signOut": "Sign Out"
+    },
+    "account": {
+      "eyebrow": "ACCOUNT",
+      "heading": "Profile",
+      "description": "Manage the name shown in your Creative AI workspace.",
+      "displayNameLabel": "Display name",
+      "displayNameHelper": "This name is used inside your workspace.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "validationError": "Display name must be 80 characters or fewer.",
+      "saveError": "We couldn’t save your profile. Please try again.",
+      "saveSuccess": "Profile saved."
     },
     "composer": {
       "heading": "What would you like to create?",
