@@ -3,7 +3,8 @@ import { setRequestLocale } from "next-intl/server";
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { isSupportedLocale } from "@/i18n/routing";
-import { hasAuthenticatedUser } from "@/lib/auth/require-user";
+import { getAuthenticatedUserId } from "@/lib/auth/require-user";
+import { getOrCreateProfile } from "@/lib/profile/get-or-create-profile";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -16,11 +17,13 @@ export default async function DashboardLayout({ children, params }: DashboardLay
     notFound();
   }
 
-  const isAuthenticated = await hasAuthenticatedUser();
+  const userId = await getAuthenticatedUserId();
 
-  if (!isAuthenticated) {
+  if (!userId) {
     redirect(`/${locale}/login`);
   }
+
+  await getOrCreateProfile(userId);
 
   setRequestLocale(locale);
   return <DashboardShell>{children}</DashboardShell>;
