@@ -534,7 +534,8 @@
       "workspace": "Yaratıcı Çalışma Alanı",
       "credits": "Krediler —",
       "creditsHint": "Plan kurulumu tamamlandığında kullanılabilir",
-      "account": "Hesap"
+      "account": "Hesap",
+      "signOut": "Çıkış Yap"
     },
     "composer": {
       "heading": "Ne oluşturmak istersiniz?",

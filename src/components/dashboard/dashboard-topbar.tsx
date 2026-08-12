@@ -1,10 +1,11 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 export async function DashboardTopbar() {
   const t = await getTranslations("Dashboard.topbar");
+  const locale = await getLocale();
 
   return (
     <header className="dashboard-topbar">
@@ -19,9 +20,14 @@ export async function DashboardTopbar() {
             <small>{t("creditsHint")}</small>
           </span>
           <LanguageSwitcher />
-          <button type="button" aria-disabled="true" className="dashboard-account-button">
-            {t("account")}
-          </button>
+          <details className="dashboard-account-menu">
+            <summary className="dashboard-account-button">{t("account")}</summary>
+            <form action={`/${locale}/auth/signout`} method="post">
+              <button type="submit" className="dashboard-sign-out-button">
+                {t("signOut")}
+              </button>
+            </form>
+          </details>
         </div>
       </div>
     </header>

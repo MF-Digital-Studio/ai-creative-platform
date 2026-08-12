@@ -534,7 +534,8 @@
       "workspace": "Creative Workspace",
       "credits": "Credits —",
       "creditsHint": "Available after plan setup",
-      "account": "Account"
+      "account": "Account",
+      "signOut": "Sign Out"
     },
     "composer": {
       "heading": "What would you like to create?",
