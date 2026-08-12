@@ -10,6 +10,7 @@ import { isSupportedLocale } from "@/i18n/routing";
 
 type SignupPageProps = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ error?: string }>;
 };
 
 export async function generateMetadata({
@@ -29,8 +30,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function SignupPage({ params }: SignupPageProps) {
+export default async function SignupPage({
+  params,
+  searchParams,
+}: SignupPageProps) {
   const { locale } = await params;
+  const { error } = await searchParams;
 
   if (!isSupportedLocale(locale)) {
     notFound();
@@ -54,7 +59,7 @@ export default async function SignupPage({ params }: SignupPageProps) {
             />
           }
         >
-          <SignupForm />
+          <SignupForm showConfirmationError={error === "confirmation"} />
         </AuthShell>
       </main>
     </>

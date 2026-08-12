@@ -2,31 +2,47 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { GoogleButton } from "@/components/auth/google-button";
 import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { createClient } from "@/lib/supabase/client";
 
-type SignupStep = "email" | "password";
+type SignupStep = "email" | "password" | "verify";
+
+type SignupFormProps = {
+  showConfirmationError?: boolean;
+};
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function SignupForm() {
+export function SignupForm({showConfirmationError = false}: SignupFormProps) {
   const t = useTranslations("SignupPage");
+  const locale = useLocale();
   const [step, setStep] = useState<SignupStep>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string>();
   const [passwordError, setPasswordError] = useState<string>();
-  const [notice, setNotice] = useState<string>();
+  const [notice, setNotice] = useState<string | undefined>(
+    showConfirmationError ? t("confirmationError") : undefined,
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const verificationRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     document.documentElement.dataset.motion = "ready";
   }, []);
+
+  useEffect(() => {
+    if (step === "verify") {
+      verificationRef.current?.focus();
+    }
+  }, [step]);
 
   function focusOnNextFrame(target: "email" | "password") {
     window.requestAnimationFrame(() => {
@@ -58,8 +74,11 @@ export function SignupForm() {
     focusOnNextFrame("password");
   }
 
-  function handleCreateAccount(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSubmitting) return;
+
     setNotice(undefined);
 
     if (password.length < 8) {
@@ -69,7 +88,36 @@ export function SignupForm() {
     }
 
     setPasswordError(undefined);
-    setNotice(t("unavailable"));
+    setIsSubmitting(true);
+
+    const callbackPath = `/${locale}/auth/callback?next=${encodeURIComponent(
+      `/${locale}/dashboard`,
+    )}`;
+
+    try {
+      const supabase = createClient();
+      const {error} = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}${callbackPath}`,
+        },
+      });
+
+      if (error) {
+        const isRateLimited =
+          error.status === 429 || /rate limit|too many/i.test(error.message);
+        setNotice(t(isRateLimited ? "rateLimitError" : "signupError"));
+        return;
+      }
+
+      setPassword("");
+      setStep("verify");
+    } catch {
+      setNotice(t("signupError"));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleGoogleContinue() {
@@ -85,6 +133,28 @@ export function SignupForm() {
   }
 
   const isEmailStep = step === "email";
+
+  if (step === "verify") {
+    return (
+      <section
+        ref={verificationRef}
+        className="signup-form-wrap"
+        tabIndex={-1}
+        aria-live="polite"
+      >
+        <div className="signup-form-stage">
+          <div className="signup-form-heading">
+            <p className="signup-eyebrow">{t("verifyEyebrow")}</p>
+            <h1>{t("verifyHeading")}</h1>
+            <p>{t("verifyDescription", {email})}</p>
+          </div>
+          <p className="signup-notice" role="status">
+            {t("verifyHelper")}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="signup-form-wrap">
@@ -195,8 +265,15 @@ export function SignupForm() {
               }}
             />
 
-            <Button type="submit" variant="dark" size="lg" className="w-full">
-              {t("createAccount")}
+            <Button
+              type="submit"
+              variant="dark"
+              size="lg"
+              className="w-full"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? t("submitting") : t("createAccount")}
             </Button>
 
             <p className="signup-terms">
