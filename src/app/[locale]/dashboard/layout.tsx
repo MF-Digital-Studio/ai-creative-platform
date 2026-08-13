@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 import { setRequestLocale } from "next-intl/server";
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -16,6 +17,8 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   if (!isSupportedLocale(locale)) {
     notFound();
   }
+
+  await connection();
 
   const userId = await getAuthenticatedUserId();
 
