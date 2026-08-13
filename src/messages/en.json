@@ -684,6 +684,18 @@
       "created": "Created {date}",
       "workspaceHeading": "Project workspace",
       "workspaceDescription": "Your product assets and generations will appear here.",
+      "upload": {
+        "heading": "Product image",
+        "description": "Upload the product photo you want to use for this project.",
+        "dropzone": "Drop an image here or choose a file.",
+        "helper": "JPEG, PNG or WebP · Max 20 MB",
+        "uploading": "Uploading…",
+        "invalidType": "Please upload a JPEG, PNG, or WebP image.",
+        "tooLarge": "Image must be 20 MB or smaller.",
+        "uploadError": "We couldn’t upload the image. Please try again.",
+        "success": "Product image uploaded",
+        "previewAlt": "Uploaded product image"
+      },
       "status": {
         "draft": "Draft",
         "active": "Active",

@@ -684,6 +684,18 @@
       "created": "Oluşturulma: {date}",
       "workspaceHeading": "Proje çalışma alanı",
       "workspaceDescription": "Ürün varlıklarınız ve üretimleriniz burada görünecek.",
+      "upload": {
+        "heading": "Ürün görseli",
+        "description": "Bu projede kullanmak istediğiniz ürün fotoğrafını yükleyin.",
+        "dropzone": "Görseli buraya bırakın veya dosya seçin.",
+        "helper": "JPEG, PNG veya WebP · Maks. 20 MB",
+        "uploading": "Yükleniyor…",
+        "invalidType": "Lütfen JPEG, PNG veya WebP görsel yükleyin.",
+        "tooLarge": "Görsel 20 MB veya daha küçük olmalıdır.",
+        "uploadError": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
+        "success": "Ürün görseli yüklendi",
+        "previewAlt": "Yüklenen ürün görseli"
+      },
       "status": {
         "draft": "Taslak",
         "active": "Aktif",

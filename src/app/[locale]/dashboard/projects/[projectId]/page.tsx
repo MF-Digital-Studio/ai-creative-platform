@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link, getPathname } from "@/i18n/navigation";
+import { ProductImageUpload } from "@/components/projects/product-image-upload";
 import { isSupportedLocale } from "@/i18n/routing";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
 import { getProject } from "@/lib/projects/get-project";
@@ -86,6 +87,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--dashboard-muted)]">
               {t("workspaceDescription")}
             </p>
+
+            <div className="mt-6">
+              <ProductImageUpload projectId={project.id} userId={userId} />
+            </div>
           </div>
         </section>
       </div>
