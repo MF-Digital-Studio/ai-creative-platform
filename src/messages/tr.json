@@ -697,6 +697,16 @@
         "success": "Ürün görseli yüklendi",
         "previewAlt": "Yüklenen ürün görseli"
       },
+      "creativeDirection": {
+        "label": "Yaratıcı yönlendirme",
+        "description": "İstediğiniz sahneyi, atmosferi, ışığı, stili ve kampanya yönünü açıklayın.",
+        "placeholder": "Örnek: Sıcak mermer yüzeyler, yumuşak sabah ışığı, hafif gölgeler ve premium minimal stille lüks bir editoryal ürün kampanyası.",
+        "save": "Yönlendirmeyi kaydet",
+        "saving": "Kaydediliyor…",
+        "validationError": "Yaratıcı yönlendirme 4.000 karakter veya daha kısa olmalıdır.",
+        "saveError": "Yaratıcı yönlendirme kaydedilemedi. Lütfen tekrar deneyin.",
+        "saveSuccess": "Yaratıcı yönlendirme kaydedildi."
+      },
       "status": {
         "draft": "Taslak",
         "active": "Aktif",

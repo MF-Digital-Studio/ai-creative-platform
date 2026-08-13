@@ -697,6 +697,16 @@
         "success": "Product image uploaded",
         "previewAlt": "Uploaded product image"
       },
+      "creativeDirection": {
+        "label": "Creative direction",
+        "description": "Describe the scene, mood, lighting, styling, and campaign direction you want.",
+        "placeholder": "Example: A luxury editorial product campaign with warm marble, soft morning light, subtle shadows, and premium minimal styling.",
+        "save": "Save direction",
+        "saving": "Saving…",
+        "validationError": "Creative direction must be 4,000 characters or fewer.",
+        "saveError": "We couldn’t save the creative direction. Please try again.",
+        "saveSuccess": "Creative direction saved."
+      },
       "status": {
         "draft": "Draft",
         "active": "Active",

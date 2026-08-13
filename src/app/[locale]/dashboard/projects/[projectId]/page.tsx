@@ -11,6 +11,8 @@ import { getAuthenticatedUserId } from "@/lib/auth/require-user";
 import { getProject } from "@/lib/projects/get-project";
 import { createClient } from "@/lib/supabase/server";
 
+import { CreativeDirectionForm } from "./creative-direction-form";
+
 type ProjectPageProps = {
   params: Promise<{ locale: string; projectId: string }>;
 };
@@ -116,6 +118,24 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 userId={userId}
                 initialAsset={initialAsset}
                 registerAsset={registerProductAsset.bind(null, locale)}
+              />
+            </div>
+
+            <div className="mt-6">
+              <CreativeDirectionForm
+                creativeDirection={project.creative_direction}
+                projectId={project.id}
+                locale={locale}
+                messages={{
+                  label: t("creativeDirection.label"),
+                  description: t("creativeDirection.description"),
+                  placeholder: t("creativeDirection.placeholder"),
+                  save: t("creativeDirection.save"),
+                  saving: t("creativeDirection.saving"),
+                  validationError: t("creativeDirection.validationError"),
+                  saveError: t("creativeDirection.saveError"),
+                  saveSuccess: t("creativeDirection.saveSuccess"),
+                }}
               />
             </div>
           </div>
