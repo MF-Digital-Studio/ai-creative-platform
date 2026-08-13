@@ -707,6 +707,29 @@
         "saveError": "Yaratıcı yönlendirme kaydedilemedi. Lütfen tekrar deneyin.",
         "saveSuccess": "Yaratıcı yönlendirme kaydedildi."
       },
+      "outputs": {
+        "heading": "Üretilen çıktılar",
+        "description": "Bu proje için en son görsel ve video üretim sonuçlarınız.",
+        "empty": "Henüz üretim yok.",
+        "previewAlt": "Üretilen çıktı önizlemesi",
+        "noPreview": "Önizleme kullanılamıyor",
+        "provider": "Sağlayıcı",
+        "model": "Model",
+        "created": "Oluşturulma",
+        "cost": "Maliyet",
+        "direction": "Yaratıcı yön",
+        "error": "Hata",
+        "types": {
+          "image": "Görsel",
+          "video": "Video"
+        },
+        "status": {
+          "queued": "Sırada",
+          "processing": "İşleniyor",
+          "succeeded": "Tamamlandı",
+          "failed": "Başarısız"
+        }
+      },
       "status": {
         "draft": "Taslak",
         "active": "Aktif",

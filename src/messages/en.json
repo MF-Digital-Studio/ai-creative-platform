@@ -707,6 +707,29 @@
         "saveError": "We couldn’t save the creative direction. Please try again.",
         "saveSuccess": "Creative direction saved."
       },
+      "outputs": {
+        "heading": "Generated outputs",
+        "description": "Your latest image and video generation results for this project.",
+        "empty": "No generations yet.",
+        "previewAlt": "Generated output preview",
+        "noPreview": "Preview unavailable",
+        "provider": "Provider",
+        "model": "Model",
+        "created": "Created",
+        "cost": "Cost",
+        "direction": "Creative direction",
+        "error": "Error",
+        "types": {
+          "image": "Image",
+          "video": "Video"
+        },
+        "status": {
+          "queued": "Queued",
+          "processing": "Processing",
+          "succeeded": "Succeeded",
+          "failed": "Failed"
+        }
+      },
       "status": {
         "draft": "Draft",
         "active": "Active",
