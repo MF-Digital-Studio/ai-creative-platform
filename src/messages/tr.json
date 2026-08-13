@@ -665,7 +665,16 @@
       "heading": "Son çalışmalar",
       "emptyHeading": "Üretimleriniz burada görünecek.",
       "emptyDescription": "İlk kampanya çıktınızı oluşturmak için bir ürün fotoğrafıyla başlayın.",
-      "startCreating": "Üretime Başla"
+      "startCreating": "Üretime Başla",
+      "newProject": "Yeni proje",
+      "creating": "Oluşturuluyor…",
+      "createError": "Proje oluşturulamadı. Lütfen tekrar deneyin.",
+      "untitledProject": "İsimsiz Proje",
+      "status": {
+        "draft": "Taslak",
+        "active": "Aktif",
+        "completed": "Tamamlandı"
+      }
     }
   },
   "LanguageSwitcher": {

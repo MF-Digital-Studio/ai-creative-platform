@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Instrument_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -8,7 +8,7 @@ import { isSupportedLocale, routing } from "@/i18n/routing";
 
 import "../globals.css";
 
-const instrumentSans = Instrument_Sans({
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -55,7 +55,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className={instrumentSans.variable}>
+      <body className={inter.variable}>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>

@@ -6,6 +6,8 @@ import { CreativeComposer } from "@/components/dashboard/creative-composer";
 import { InspirationGrid } from "@/components/dashboard/inspiration-grid";
 import { RecentWork } from "@/components/dashboard/recent-work";
 import { TemplateRail } from "@/components/dashboard/template-rail";
+import { getAuthenticatedUserId } from "@/lib/auth/require-user";
+import { getProjects } from "@/lib/projects/get-projects";
 import { isSupportedLocale } from "@/i18n/routing";
 
 type DashboardPageProps = {
@@ -33,13 +35,16 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
   setRequestLocale(locale);
 
+  const userId = await getAuthenticatedUserId();
+  const projects = userId ? await getProjects(userId) : [];
+
   return (
     <main className="dashboard-main">
       <div className="dashboard-main-inner">
         <CreativeComposer />
         <TemplateRail />
         <InspirationGrid />
-        <RecentWork locale={locale} />
+        <RecentWork locale={locale} projects={projects} />
       </div>
     </main>
   );

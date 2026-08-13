@@ -665,7 +665,16 @@
       "heading": "Recent work",
       "emptyHeading": "Your creations will appear here.",
       "emptyDescription": "Start with a product photo to create your first campaign output.",
-      "startCreating": "Start Creating"
+      "startCreating": "Start Creating",
+      "newProject": "New project",
+      "creating": "Creating…",
+      "createError": "We couldn’t create the project. Please try again.",
+      "untitledProject": "Untitled Project",
+      "status": {
+        "draft": "Draft",
+        "active": "Active",
+        "completed": "Completed"
+      }
     }
   },
   "LanguageSwitcher": {
