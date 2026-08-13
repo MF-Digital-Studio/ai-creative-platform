@@ -675,6 +675,20 @@
         "active": "Aktif",
         "completed": "Tamamlandı"
       }
+    },
+    "project": {
+      "metadataTitle": "Proje Çalışma Alanı | CREATIVE AI",
+      "metadataDescription": "CREATIVE AI çalışma alanınızdaki bir projenin ayrıntılarını görüntüleyin.",
+      "backToWorkspace": "Çalışma Alanına Dön",
+      "untitledProject": "İsimsiz Proje",
+      "created": "Oluşturulma: {date}",
+      "workspaceHeading": "Proje çalışma alanı",
+      "workspaceDescription": "Ürün varlıklarınız ve üretimleriniz burada görünecek.",
+      "status": {
+        "draft": "Taslak",
+        "active": "Aktif",
+        "completed": "Tamamlandı"
+      }
     }
   },
   "LanguageSwitcher": {

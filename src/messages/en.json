@@ -675,6 +675,20 @@
         "active": "Active",
         "completed": "Completed"
       }
+    },
+    "project": {
+      "metadataTitle": "Project Workspace | CREATIVE AI",
+      "metadataDescription": "View the details of a project in your CREATIVE AI workspace.",
+      "backToWorkspace": "Back to Workspace",
+      "untitledProject": "Untitled Project",
+      "created": "Created {date}",
+      "workspaceHeading": "Project workspace",
+      "workspaceDescription": "Your product assets and generations will appear here.",
+      "status": {
+        "draft": "Draft",
+        "active": "Active",
+        "completed": "Completed"
+      }
     }
   },
   "LanguageSwitcher": {

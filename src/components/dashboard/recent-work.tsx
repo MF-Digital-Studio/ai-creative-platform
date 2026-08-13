@@ -4,7 +4,7 @@ import { createProject } from "@/app/[locale]/dashboard/actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { NewProjectButton } from "@/components/dashboard/new-project-button";
 import { Button } from "@/components/ui/button";
-import { getPathname } from "@/i18n/navigation";
+import { Link, getPathname } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
 import type { Project } from "@/lib/projects/get-projects";
 
@@ -50,13 +50,18 @@ export async function RecentWork({ locale, projects }: RecentWorkProps) {
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <li key={project.id} className="rounded-[var(--radius-md)] border border-[var(--dashboard-border)] bg-[var(--dashboard-surface)] p-4">
-              <p className="truncate text-sm font-medium text-[var(--dashboard-foreground)]">
-                {project.title ?? t("untitledProject")}
-              </p>
-              <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--dashboard-muted)]">
-                <span>{t(`status.${project.status}`)}</span>
-                <time dateTime={project.created_at}>{dateFormatter.format(new Date(project.created_at))}</time>
-              </div>
+              <Link
+                href={`/dashboard/projects/${project.id}`}
+                className="block rounded-[var(--radius-sm)] outline-none transition-colors hover:text-[var(--dashboard-foreground)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dashboard-focus)]"
+              >
+                <p className="truncate text-sm font-medium text-[var(--dashboard-foreground)]">
+                  {project.title ?? t("untitledProject")}
+                </p>
+                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--dashboard-muted)]">
+                  <span>{t(`status.${project.status}`)}</span>
+                  <time dateTime={project.created_at}>{dateFormatter.format(new Date(project.created_at))}</time>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>
