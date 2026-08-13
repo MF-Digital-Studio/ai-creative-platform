@@ -3,6 +3,7 @@
 import { type ChangeEvent, type DragEvent, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import type { RegisterProductAssetResult } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
@@ -18,19 +19,29 @@ type SupportedFileType = keyof typeof fileExtensions;
 type ProductImageUploadProps = {
   projectId: string;
   userId: string;
+  registerAsset: (projectId: string, objectPath: string) => Promise<RegisterProductAssetResult>;
+  initialAsset: {
+    objectPath: string;
+    signedUrl: string;
+  } | null;
 };
 
 function isSupportedFileType(fileType: string): fileType is SupportedFileType {
   return Object.prototype.hasOwnProperty.call(fileExtensions, fileType);
 }
 
-export function ProductImageUpload({ projectId, userId }: ProductImageUploadProps) {
+export function ProductImageUpload({
+  projectId,
+  userId,
+  initialAsset,
+  registerAsset,
+}: ProductImageUploadProps) {
   const t = useTranslations("Dashboard.project.upload");
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(initialAsset?.signedUrl ?? null);
 
   async function uploadFile(file: File) {
     if (isUploading) {
@@ -38,8 +49,6 @@ export function ProductImageUpload({ projectId, userId }: ProductImageUploadProp
     }
 
     setError(null);
-    setSignedUrl(null);
-
     if (!isSupportedFileType(file.type)) {
       setError(t("invalidType"));
       return;
@@ -63,6 +72,12 @@ export function ProductImageUpload({ projectId, userId }: ProductImageUploadProp
 
       if (uploadError) {
         throw uploadError;
+      }
+
+      const registration = await registerAsset(projectId, path);
+      if (registration.status !== "success") {
+        setError(t("metadataError"));
+        return;
       }
 
       const { data, error: signedUrlError } = await supabase.storage

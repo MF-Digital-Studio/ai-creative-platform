@@ -4,9 +4,12 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link, getPathname } from "@/i18n/navigation";
 import { ProductImageUpload } from "@/components/projects/product-image-upload";
+import { registerProductAsset } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { isSupportedLocale } from "@/i18n/routing";
+import { getProjectProductAsset } from "@/lib/assets/get-project-product-asset";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
 import { getProject } from "@/lib/projects/get-project";
+import { createClient } from "@/lib/supabase/server";
 
 type ProjectPageProps = {
   params: Promise<{ locale: string; projectId: string }>;
@@ -50,6 +53,25 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
+  const persistedAsset = await getProjectProductAsset(userId, projectId);
+  let initialAsset: { objectPath: string; signedUrl: string } | null = null;
+
+  if (persistedAsset) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.storage
+      .from("product-assets")
+      .createSignedUrl(persistedAsset.object_path, 3600);
+
+    if (error || !data?.signedUrl) {
+      throw new Error("Unable to load product asset preview.");
+    }
+
+    initialAsset = {
+      objectPath: persistedAsset.object_path,
+      signedUrl: data.signedUrl,
+    };
+  }
+
   setRequestLocale(locale);
 
   const workspaceHref = getPathname({ href: "/dashboard", locale });
@@ -89,7 +111,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </p>
 
             <div className="mt-6">
-              <ProductImageUpload projectId={project.id} userId={userId} />
+              <ProductImageUpload
+                projectId={project.id}
+                userId={userId}
+                initialAsset={initialAsset}
+                registerAsset={registerProductAsset.bind(null, locale)}
+              />
             </div>
           </div>
         </section>

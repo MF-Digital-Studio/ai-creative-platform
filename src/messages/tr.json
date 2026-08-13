@@ -693,6 +693,7 @@
         "invalidType": "Lütfen JPEG, PNG veya WebP görsel yükleyin.",
         "tooLarge": "Görsel 20 MB veya daha küçük olmalıdır.",
         "uploadError": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
+        "metadataError": "Görsel yüklendi ancak projeye kaydedilemedi. Lütfen tekrar deneyin.",
         "success": "Ürün görseli yüklendi",
         "previewAlt": "Yüklenen ürün görseli"
       },

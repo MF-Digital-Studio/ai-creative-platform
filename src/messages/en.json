@@ -693,6 +693,7 @@
         "invalidType": "Please upload a JPEG, PNG, or WebP image.",
         "tooLarge": "Image must be 20 MB or smaller.",
         "uploadError": "We couldn’t upload the image. Please try again.",
+        "metadataError": "The image was uploaded, but we couldn’t save it to the project. Please try again.",
         "success": "Product image uploaded",
         "previewAlt": "Uploaded product image"
       },
