@@ -707,6 +707,17 @@
         "saveError": "Yaratıcı yönlendirme kaydedilemedi. Lütfen tekrar deneyin.",
         "saveSuccess": "Yaratıcı yönlendirme kaydedildi."
       },
+      "generation": {
+        "generate": "Görsel üret",
+        "creating": "Oluşturuluyor…",
+        "missingProductImage": "Üretim oluşturmadan önce bir ürün görseli yükleyin.",
+        "missingCreativeDirection": "Üretim oluşturmadan önce yaratıcı yönlendirme ekleyin.",
+        "creationFailed": "Üretim oluşturulamadı. Lütfen tekrar deneyin.",
+        "run": "Üretimi çalıştır",
+        "running": "Üretiliyor…",
+        "generationFailed": "Görsel üretimi tamamlanamadı. Lütfen tekrar deneyin.",
+        "notQueued": "Bu üretim artık sırada değil. Sayfayı yenileyip tekrar deneyin."
+      },
       "outputs": {
         "heading": "Üretilen çıktılar",
         "description": "Bu proje için en son görsel ve video üretim sonuçlarınız.",

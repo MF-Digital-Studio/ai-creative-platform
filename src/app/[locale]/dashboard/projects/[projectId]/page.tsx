@@ -4,7 +4,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link, getPathname } from "@/i18n/navigation";
 import { ProductImageUpload } from "@/components/projects/product-image-upload";
-import { registerProductAsset } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import {
+  createQueuedImageGeneration,
+  registerProductAsset,
+  runQueuedImageGeneration,
+} from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { isSupportedLocale } from "@/i18n/routing";
 import { getProjectProductAsset } from "@/lib/assets/get-project-product-asset";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
@@ -13,6 +17,8 @@ import { getProject } from "@/lib/projects/get-project";
 import { createClient } from "@/lib/supabase/server";
 
 import { CreativeDirectionForm } from "./creative-direction-form";
+import { GenerateImageForm } from "./generate-image-form";
+import { RunGenerationButton } from "./run-generation-button";
 
 type ProjectPageProps = {
   params: Promise<{ locale: string; projectId: string }>;
@@ -147,6 +153,19 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 }}
               />
             </div>
+
+            <div className="mt-6">
+              <GenerateImageForm
+                action={createQueuedImageGeneration.bind(null, locale, project.id)}
+                messages={{
+                  generate: t("generation.generate"),
+                  creating: t("generation.creating"),
+                  missingProductImage: t("generation.missingProductImage"),
+                  missingCreativeDirection: t("generation.missingCreativeDirection"),
+                  creationFailed: t("generation.creationFailed"),
+                }}
+              />
+            </div>
           </div>
 
           <section aria-labelledby="generated-outputs-heading" className="rounded-[var(--radius-md)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-surface)] p-5 sm:p-6">
@@ -223,10 +242,22 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                           {directionPreview}
                         </p>
 
+                        {generation.generation_type === "image" && generation.status === "queued" ? (
+                          <RunGenerationButton
+                            action={runQueuedImageGeneration.bind(null, project.id, generation.id)}
+                            messages={{
+                              run: t("generation.run"),
+                              running: t("generation.running"),
+                              generationFailed: t("generation.generationFailed"),
+                              notQueued: t("generation.notQueued"),
+                            }}
+                          />
+                        ) : null}
+
                         {generation.status === "failed" && generation.error_message ? (
                           <p role="alert" className="rounded-[var(--radius-sm)] border border-[var(--dashboard-border)] bg-[var(--dashboard-surface-raised)] p-3 text-sm leading-6 text-[var(--dashboard-foreground)]">
                             <span className="font-medium">{t("outputs.error")}: </span>
-                            {generation.error_message}
+                            {t("generation.generationFailed")}
                           </p>
                         ) : null}
                       </div>

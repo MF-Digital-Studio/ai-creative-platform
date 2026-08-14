@@ -707,6 +707,17 @@
         "saveError": "We couldn’t save the creative direction. Please try again.",
         "saveSuccess": "Creative direction saved."
       },
+      "generation": {
+        "generate": "Generate image",
+        "creating": "Creating…",
+        "missingProductImage": "Upload a product image before creating a generation.",
+        "missingCreativeDirection": "Add a creative direction before creating a generation.",
+        "creationFailed": "We couldn’t create the generation. Please try again.",
+        "run": "Run generation",
+        "running": "Generating…",
+        "generationFailed": "We couldn’t complete the image generation. Please try again.",
+        "notQueued": "This generation is no longer queued. Refresh the page and try again."
+      },
       "outputs": {
         "heading": "Generated outputs",
         "description": "Your latest image and video generation results for this project.",
