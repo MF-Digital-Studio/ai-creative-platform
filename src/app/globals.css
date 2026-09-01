@@ -2450,11 +2450,81 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .creative-product-field,
-.creative-prompt-field {
+.creative-prompt-field,
+.creative-reference-field {
   display: grid;
   min-width: 0;
   align-content: start;
   gap: 0.625rem;
+}
+
+.creative-reference-field {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--dashboard-border);
+  padding-top: 1rem;
+}
+
+.creative-reference-field > p,
+.creative-reference-count {
+  color: var(--dashboard-muted-soft);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.creative-reference-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.creative-reference-thumbnail,
+.creative-reference-add {
+  position: relative;
+  display: grid;
+  width: 5.25rem;
+  height: 4rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--radius-sm);
+  background: var(--dashboard-background);
+}
+
+.creative-reference-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creative-reference-thumbnail button {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dashboard-foreground) 85%, transparent);
+  color: var(--dashboard-background);
+  cursor: pointer;
+}
+
+.creative-reference-add {
+  gap: 0.25rem;
+  color: var(--dashboard-muted);
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.creative-reference-add svg { width: 1rem; height: 1rem; }
+
+.creative-reference-add:focus-visible,
+.creative-reference-thumbnail button:focus-visible {
+  outline: 2px solid var(--dashboard-focus);
+  outline-offset: 2px;
 }
 
 .creative-field-label {

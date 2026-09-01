@@ -21,6 +21,7 @@ export async function getProjectProductAsset(
     .select(assetFields)
     .eq("user_id", userId)
     .eq("project_id", projectId)
+    .eq("asset_type", "product")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

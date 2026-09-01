@@ -1,10 +1,29 @@
 import type { CreativePreset } from "./creative-presets";
+import { renderCreativeBrief } from "@/lib/generation/prompts/creative-brief";
+
+export function renderPresetCreativeDirection(
+  preset: Pick<CreativePreset, "creativeDirection">,
+  userCreativeDirection = "",
+): string {
+  const userNote = userCreativeDirection.trim();
+  const renderedPreset = renderCreativeBrief(preset.creativeDirection);
+
+  if (!userNote) {
+    return renderedPreset;
+  }
+
+  return `${renderedPreset}\n\nUser customization: Apply this request only to the relevant creative fields while preserving all other preset defaults: ${userNote}`;
+}
 
 export function buildCreativePresetDirection(
   userCreativeDirection: string,
-  preset: Pick<CreativePreset, "promptSeed"> | null,
+  preset: Pick<CreativePreset, "creativeDirection"> | null,
 ): string {
-  return [preset?.promptSeed.trim(), userCreativeDirection.trim()].filter(Boolean).join("\n\n");
+  if (!preset) {
+    return userCreativeDirection.trim();
+  }
+
+  return renderPresetCreativeDirection(preset, userCreativeDirection);
 }
 
 export function createCreativePresetMetadata(preset: CreativePreset | null) {

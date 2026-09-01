@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/fidelity.test.ts tests/creative-presets.test.ts"
+    "test": "tsx --test tests/fidelity.test.ts tests/creative-presets.test.ts tests/reference-images.test.ts"
   },
   "dependencies": {
     "@fal-ai/client": "^1.10.1",

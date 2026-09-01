@@ -567,7 +567,12 @@
       "replaceProduct": "Değiştir",
       "removeProduct": "Kaldır",
       "addReference": "Referans ekle",
-      "referenceUnavailable": "Referans yükleme, üretim servisi bağlandığında kullanıma açılacak.",
+      "referenceLabel": "Görsel referanslar",
+      "referenceHelper": "Işık, kompozisyon ve atmosfer için en fazla 3 kampanya görseli ekleyin. Referanslar ürününüzü değil, görsel yönü etkiler.",
+      "referenceCount": "{count}/3 görsel seçildi",
+      "referenceLimit": "En fazla 3 referans görseli ekleyebilirsiniz.",
+      "referencePreviewAlt": "Görsel referans {index}",
+      "removeReference": "Görsel referans {index} kaldır",
       "invalidProductType": "Lütfen JPEG, PNG veya WebP görsel seçin.",
       "productTooLarge": "Görsel 20 MB veya daha küçük olmalıdır.",
       "selectedProductAlt": "Seçilen ürün görseli",
@@ -662,7 +667,9 @@
         "tabletop-lifestyle": { "title": "Tabletop Lifestyle", "description": "Özenli bir ortamda doğal biçimde konumlanan ürün.", "alt": "Masa üstü yaşam tarzı ortamında ürün" },
         "reflective-luxury-surface": { "title": "Reflective Luxury", "description": "Kontrollü yansımalara sahip zarif lüks ürün sahnesi.", "alt": "Yansıtıcı lüks yüzeyde ürün" },
         "minimal-catalog-plus": { "title": "Minimal Commercial", "description": "Premium dokunuşlu temiz ticari ürün çekimi.", "alt": "Temiz premium ticari ürün çekimi" },
-        "tech-launch-hero": { "title": "Tech Launch Hero", "description": "Rafine dramatik etkiye sahip amiral gemisi teknoloji kampanyası.", "alt": "Teknoloji ürün lansman kampanyası" }
+        "tech-launch-hero": { "title": "Tech Launch Hero", "description": "Rafine dramatik etkiye sahip amiral gemisi teknoloji kampanyası.", "alt": "Teknoloji ürün lansman kampanyası" },
+        "editorial-flash": { "title": "Editorial Flash", "description": "Ham, direkt flaş karakterli premium streetwear fotoğrafı.", "alt": "Direkt flaşla çekilmiş streetwear kampanyası" },
+        "coastal-editorial": { "title": "Coastal Editorial", "description": "Rüzgar ve gerçek mekan dokusuyla doğal sahil streetwear kampanyası.", "alt": "Doğal sahil editorial ortamında streetwear model" }
       }
     },
     "inspiration": {
@@ -772,6 +779,11 @@
         "metadataError": "Görsel yüklendi ancak projeye kaydedilemedi. Lütfen tekrar deneyin.",
         "success": "Ürün görseli yüklendi",
         "previewAlt": "Yüklenen ürün görseli"
+      },
+      "references": {
+        "heading": "Görsel referanslar",
+        "description": "Bu görseller ışık, kompozisyon ve atmosferi yönlendirir; ürününüzün yerini almaz.",
+        "previewAlt": "Görsel referans {index}"
       },
       "creativeDirection": {
         "label": "Yaratıcı yönlendirme",

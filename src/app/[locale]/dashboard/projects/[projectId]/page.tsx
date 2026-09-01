@@ -15,6 +15,7 @@ import { ProductImageUpload } from "@/components/projects/product-image-upload";
 import { Link } from "@/i18n/navigation";
 import { isSupportedLocale } from "@/i18n/routing";
 import { getProjectProductAsset } from "@/lib/assets/get-project-product-asset";
+import { getProjectReferenceAssets } from "@/lib/assets/reference-assets";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
 import { getProjectGenerations } from "@/lib/generations/get-project-generations";
 import { getProject } from "@/lib/projects/get-project";
@@ -63,8 +64,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  const [persistedAsset, generations] = await Promise.all([
+  const [persistedAsset, persistedReferences, generations] = await Promise.all([
     getProjectProductAsset(userId, projectId),
+    getProjectReferenceAssets(userId, projectId),
     getProjectGenerations(userId, projectId),
   ]);
   let initialAsset: { objectPath: string; signedUrl: string } | null = null;
@@ -84,6 +86,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       signedUrl: data.signedUrl,
     };
   }
+
+  const referencePreviewUrls = persistedReferences.length
+    ? await (async () => {
+      const supabase = await createClient();
+      return Promise.all(persistedReferences.map(async (reference) => {
+        const { data, error } = await supabase.storage
+          .from("product-assets")
+          .createSignedUrl(reference.object_path, 3600);
+        return error || !data?.signedUrl ? null : data.signedUrl;
+      }));
+    })()
+    : [];
 
   setRequestLocale(locale);
 
@@ -218,6 +232,22 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 registerAsset={registerProductAsset.bind(null, locale)}
               />
             </div>
+
+            {referencePreviewUrls.some(Boolean) ? (
+              <section className="project-setting-block" aria-labelledby="project-references-heading">
+                <h3 id="project-references-heading" className="text-base font-semibold tracking-[-0.02em] text-[var(--dashboard-foreground)]">
+                  {t("references.heading")}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-[var(--dashboard-muted)]">{t("references.description")}</p>
+                <div className="mt-3 flex gap-2">
+                  {referencePreviewUrls.map((signedUrl, index) => signedUrl ? (
+                    // Signed Storage URLs are intentionally loaded directly, without Next's image optimizer.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={persistedReferences[index]?.id} src={signedUrl} alt={t("references.previewAlt", { index: index + 1 })} className="size-14 rounded-[var(--radius-sm)] object-cover" />
+                  ) : null)}
+                </div>
+              </section>
+            ) : null}
 
             <div className="project-setting-block">
               <CreativeDirectionForm

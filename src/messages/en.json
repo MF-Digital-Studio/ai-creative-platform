@@ -567,7 +567,12 @@
       "replaceProduct": "Replace",
       "removeProduct": "Remove",
       "addReference": "Add reference",
-      "referenceUnavailable": "Reference upload will be available when the creation service is connected.",
+      "referenceLabel": "Visual references",
+      "referenceHelper": "Use up to 3 campaign images to guide lighting, composition and mood. They guide visual direction, not your product.",
+      "referenceCount": "{count}/3 images selected",
+      "referenceLimit": "You can add up to 3 reference images.",
+      "referencePreviewAlt": "Visual reference {index}",
+      "removeReference": "Remove visual reference {index}",
       "invalidProductType": "Please select a JPEG, PNG, or WebP image.",
       "productTooLarge": "The image must be 20 MB or smaller.",
       "selectedProductAlt": "Selected product image",
@@ -651,6 +656,8 @@
         "minimal-studio-fashion": { "title": "Minimal Studio Fashion", "description": "Soft studio setup for clean apparel presentation.", "alt": "Minimal studio apparel photograph" },
         "back-print-focus": { "title": "Back Print Focus", "description": "Designed for back-graphic apparel campaigns.", "alt": "Back-focused apparel campaign photograph" },
         "front-hero-apparel": { "title": "Front Hero Apparel", "description": "Front-facing garment-focused model shot.", "alt": "Front-facing apparel campaign photograph" },
+        "editorial-flash": { "title": "Editorial Flash", "description": "Raw premium streetwear photography with authentic direct-flash character.", "alt": "Streetwear campaign photographed with direct flash" },
+        "coastal-editorial": { "title": "Coastal Editorial", "description": "Natural coastal streetwear campaign with wind and real location texture.", "alt": "Streetwear model in a natural coastal editorial setting" },
         "luxury-macro-jewelry": { "title": "Luxury Macro", "description": "Close-up luxury jewelry campaign with rich detail.", "alt": "Luxury jewelry macro detail" },
         "soft-daylight-jewelry": { "title": "Soft Daylight Jewelry", "description": "Elegant jewelry photography in soft natural light.", "alt": "Jewelry in soft daylight" },
         "black-luxury-jewelry": { "title": "Black Luxury", "description": "Dark premium jewelry campaign with dramatic lighting.", "alt": "Dark luxury jewelry campaign" },
@@ -772,6 +779,11 @@
         "metadataError": "The image was uploaded, but we couldn’t save it to the project. Please try again.",
         "success": "Product image uploaded",
         "previewAlt": "Uploaded product image"
+      },
+      "references": {
+        "heading": "Visual references",
+        "description": "These images guide lighting, composition and mood. They never replace your product.",
+        "previewAlt": "Visual reference {index}"
       },
       "creativeDirection": {
         "label": "Creative direction",

@@ -5,6 +5,7 @@ import { toFile } from "openai";
 import { getOpenAIClient } from "@/lib/openai/client";
 
 import { resolveImageGenerationOutputCanvas, type GenerationOutputCanvas } from "../output-canvas";
+import { normalizeImageInputForOpenAI } from "./normalize-image-input";
 import {
   GenerationProviderError,
   type AspectRatio,
@@ -56,8 +57,12 @@ function getProviderRequestId(response: unknown): string | null {
 export class OpenAIImageProvider implements ImageGenerationProviderClient {
   async generate(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
     try {
-      const imageFile = await toFile(request.sourceAsset.data, "product-image", {
-        type: request.sourceAsset.mimeType || "image/png",
+      const sourceImage = await normalizeImageInputForOpenAI(
+        request.sourceAsset.data,
+        request.sourceAsset.mimeType,
+      );
+      const imageFile = await toFile(sourceImage.data, "product-image", {
+        type: sourceImage.mimeType,
       });
       const size = resolveOpenAIImageSize(request.aspectRatio);
       const quality = resolveOpenAIImageQuality(request.quality);

@@ -8,6 +8,7 @@ import { DASHBOARD_PRESET_EVENT } from "@/components/dashboard/creative-preset-r
 import {
   createQueuedImageGeneration,
   registerProductAsset,
+  registerReferenceAsset,
   runQueuedImageGeneration,
   updateCreativeDirection,
 } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
@@ -53,6 +54,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const statusId = useId();
   const disabledHintId = useId();
   const productInputRef = useRef<HTMLInputElement>(null);
+  const referenceInputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const composerRef = useRef<HTMLElement>(null);
   const [prompt, setPrompt] = useState("");
@@ -60,6 +62,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const [statusMessage, setStatusMessage] = useState("");
   const [productFile, setProductFile] = useState<File | null>(null);
   const [productPreviewUrl, setProductPreviewUrl] = useState<string | null>(null);
+  const [referenceFiles, setReferenceFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
+  const referenceFilesRef = useRef(referenceFiles);
   const [isCreating, setIsCreating] = useState(false);
   const [enhanceWithAI, setEnhanceWithAI] = useState(true);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
@@ -111,6 +115,14 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     };
   }, [productPreviewUrl]);
 
+  useEffect(() => {
+    referenceFilesRef.current = referenceFiles;
+  }, [referenceFiles]);
+
+  useEffect(() => () => {
+    referenceFilesRef.current.forEach((reference) => URL.revokeObjectURL(reference.previewUrl));
+  }, []);
+
   function selectProduct(file: File) {
     if (!isSupportedProductImageType(file.type)) {
       setStatusMessage(t("invalidProductType"));
@@ -149,6 +161,36 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     setStatusMessage("");
   }
 
+  function selectReferences(files: File[]) {
+    const availableSlots = 3 - referenceFilesRef.current.length;
+    const accepted = files.slice(0, availableSlots).filter((file) => {
+      if (!isSupportedProductImageType(file.type)) {
+        setStatusMessage(t("invalidProductType"));
+        return false;
+      }
+      if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
+        setStatusMessage(t("productTooLarge"));
+        return false;
+      }
+      return true;
+    });
+    if (!accepted.length) return;
+    setReferenceFiles((current) => [
+      ...current,
+      ...accepted.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
+    ]);
+    setStatusMessage(availableSlots < files.length ? t("referenceLimit") : "");
+  }
+
+  function removeReference(index: number) {
+    setReferenceFiles((current) => {
+      const reference = current[index];
+      if (reference) URL.revokeObjectURL(reference.previewUrl);
+      return current.filter((_, currentIndex) => currentIndex !== index);
+    });
+    setStatusMessage("");
+  }
+
   async function startImageCreation() {
     const creativeDirection = prompt.trim();
     if (
@@ -184,6 +226,23 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       const registration = await registerProductAsset(locale, project.projectId, objectPath);
       if (registration.status !== "success") {
         throw new Error("Unable to register the product asset.");
+      }
+
+      for (const reference of referenceFiles) {
+        if (!isSupportedProductImageType(reference.file.type)) {
+          throw new Error("Invalid reference image type.");
+        }
+        const referenceExtension = productImageExtensions[reference.file.type];
+        const referencePath = `${userId}/${project.projectId}/reference-${crypto.randomUUID()}.${referenceExtension}`;
+        const { error: referenceUploadError } = await supabase.storage
+          .from("product-assets")
+          .upload(referencePath, reference.file, { contentType: reference.file.type, upsert: false });
+        if (referenceUploadError) throw referenceUploadError;
+
+        const referenceRegistration = await registerReferenceAsset(locale, project.projectId, referencePath);
+        if (referenceRegistration.status !== "success") {
+          throw new Error("Unable to register the reference asset.");
+        }
       }
 
       const directionFormData = new FormData();
@@ -305,6 +364,43 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             className="sr-only"
             aria-label={t("addProduct")}
             onChange={handleProductChange}
+          />
+
+          <div className="creative-reference-field">
+            <span className="creative-field-label">{t("referenceLabel")}</span>
+            <p>{t("referenceHelper")}</p>
+            <div className="creative-reference-list" aria-live="polite">
+              {referenceFiles.map((reference, index) => (
+                <div key={reference.previewUrl} className="creative-reference-thumbnail">
+                  {/* Local object URLs are used only before creation starts. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} />
+                  <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })}>
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              ))}
+              {referenceFiles.length < 3 ? (
+                <button type="button" className="creative-reference-add" onClick={() => referenceInputRef.current?.click()}>
+                  <DashboardIcon name="plus" />
+                  <span>{t("addReference")}</span>
+                </button>
+              ) : null}
+            </div>
+            <span className="creative-reference-count">{t("referenceCount", { count: referenceFiles.length })}</span>
+          </div>
+
+          <input
+            ref={referenceInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            multiple
+            aria-label={t("addReference")}
+            onChange={(event) => {
+              selectReferences(Array.from(event.target.files ?? []));
+              event.target.value = "";
+            }}
           />
 
           <div className="creative-prompt-field">

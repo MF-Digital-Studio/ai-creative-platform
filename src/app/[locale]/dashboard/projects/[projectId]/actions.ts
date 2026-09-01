@@ -21,9 +21,25 @@ import {
   createCreativePresetMetadata,
 } from "@/lib/creative-presets/creative-preset-context";
 import { getCreativePreset } from "@/lib/creative-presets/creative-presets";
+import {
+  getProjectReferenceAssets,
+  isReferenceImageMimeType,
+  MAX_PROJECT_REFERENCE_IMAGES,
+} from "@/lib/assets/reference-assets";
+import {
+  analyzeReferenceImages,
+  getReferenceAnalysisModel,
+  REFERENCE_ANALYSIS_VERSION,
+} from "@/lib/generation/references/reference-analysis";
 import { resolveImageGenerationOutputCanvas } from "@/lib/generation/output-canvas";
-import { buildImageGenerationPrompt } from "@/lib/generation/prompts/build-image-generation-prompt";
+import {
+  buildImageGenerationPromptWithPolicy,
+} from "@/lib/generation/prompts/build-image-generation-prompt";
 import { enhanceCreativeDirection } from "@/lib/generation/prompts/enhance-creative-direction";
+import {
+  getGenerationStrategyCategory,
+  resolveGenerationStrategy,
+} from "@/lib/generation/strategy/generation-strategy";
 import { FalBirefnetProvider } from "@/lib/generation/segmentation/providers/fal-birefnet-provider";
 import type {
   AspectRatio,
@@ -37,6 +53,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export type RegisterProductAssetResult = {
   status: "error" | "success";
+};
+
+export type RegisterReferenceAssetResult = {
+  status: "error" | "limit" | "success";
 };
 
 export type UpdateCreativeDirectionState = {
@@ -78,6 +98,7 @@ const queuedGenerationFields = [
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const generatedAssetsBucket = "generated-assets";
 const generationFailureCode = "generationFailed";
+const supportedReferenceFilePattern = /^reference-[0-9a-f-]{36}\.(jpg|png|webp)$/i;
 
 function logDevelopmentGenerationEvent(
   event: string,
@@ -189,6 +210,7 @@ export async function registerProductAsset(
       project_id: projectId,
       bucket_id: "product-assets",
       object_path: objectPath,
+      asset_type: "product",
     });
 
     if (assetError) {
@@ -200,6 +222,62 @@ export async function registerProductAsset(
 
   revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
 
+  return { status: "success" };
+}
+
+export async function registerReferenceAsset(
+  locale: AppLocale,
+  projectId: unknown,
+  objectPath: unknown,
+): Promise<RegisterReferenceAssetResult> {
+  if (!isSupportedLocale(locale) || typeof projectId !== "string" || typeof objectPath !== "string") {
+    return { status: "error" };
+  }
+
+  const userId = await getAuthenticatedUserId();
+  if (
+    !userId ||
+    !hasValidObjectPath(userId, projectId, objectPath) ||
+    !supportedReferenceFilePattern.test(objectPath.split("/")[2] ?? "")
+  ) {
+    return { status: "error" };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (projectError || !project) return { status: "error" };
+
+    const existingReferences = await getProjectReferenceAssets(userId, projectId);
+    if (existingReferences.length >= MAX_PROJECT_REFERENCE_IMAGES) return { status: "limit" };
+
+    const admin = getSupabaseAdminClient();
+    const { data: referenceImage, error: downloadError } = await admin.storage
+      .from("product-assets")
+      .download(objectPath);
+    if (downloadError || !referenceImage || !isReferenceImageMimeType(referenceImage.type)) {
+      return { status: "error" };
+    }
+    if (referenceImage.size > 20 * 1024 * 1024) return { status: "error" };
+
+    const { error: assetError } = await admin.from("assets").insert({
+      user_id: userId,
+      project_id: projectId,
+      bucket_id: "product-assets",
+      object_path: objectPath,
+      asset_type: "reference_image",
+    });
+    if (assetError) return { status: "error" };
+  } catch {
+    return { status: "error" };
+  }
+
+  revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
   return { status: "success" };
 }
 
@@ -288,12 +366,17 @@ export async function createQueuedImageGeneration(
     if (!creativeDirection || Array.from(userCreativeDirection).length > 4000) {
       return { ok: false, message: "missingCreativeDirection" };
     }
+    const strategyResolution = resolveGenerationStrategy({
+      preset,
+      userPrompt: userCreativeDirection || creativeDirection,
+    });
 
     const { data: asset, error: assetError } = await supabase
       .from("assets")
       .select(productAssetGenerationFields)
       .eq("project_id", project.id)
       .eq("user_id", userId)
+      .eq("asset_type", "product")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -308,6 +391,7 @@ export async function createQueuedImageGeneration(
       return { ok: false, message: "missingProductImage" };
     }
 
+    const references = await getProjectReferenceAssets(userId, project.id);
     const admin = getSupabaseAdminClient();
     const { data: generation, error: generationError } = await admin
       .from("generations")
@@ -320,8 +404,11 @@ export async function createQueuedImageGeneration(
         model: "gpt-image-2",
         quality: "standard",
         aspect_ratio: "1:1",
-        preservation_mode: "pixel_lock",
-        fidelity_status: "not_checked",
+        preservation_mode: strategyResolution.effectivePreservationMode,
+        fidelity_status:
+          strategyResolution.effectivePreservationMode === "reference_edit"
+            ? "not_available"
+            : "not_checked",
         creative_direction_snapshot: creativeDirection,
         provider_metadata: {
           prompt_enhancement: {
@@ -331,6 +418,22 @@ export async function createQueuedImageGeneration(
             user_prompt: userCreativeDirection,
           },
           ...(preset ? { preset: createCreativePresetMetadata(preset) } : {}),
+          strategy: {
+            effective_preservation_mode: strategyResolution.effectivePreservationMode,
+            reason: strategyResolution.reason,
+            selected: strategyResolution.strategy,
+          },
+          references: {
+            requested_count: references.length,
+            usable_count: 0,
+            asset_ids: references.map((reference) => reference.id),
+            analysis: {
+              enabled: references.length > 0,
+              succeeded: false,
+              model: references.length > 0 ? getReferenceAnalysisModel() : null,
+              version: REFERENCE_ANALYSIS_VERSION,
+            },
+          },
         },
       })
       .select("id")
@@ -458,6 +561,37 @@ export async function runQueuedImageGeneration(
         : null;
     const preset = getCreativePreset(presetId);
     const metadataEnhancement = queuedGeneration.provider_metadata?.prompt_enhancement;
+    const metadataReferences = queuedGeneration.provider_metadata?.references;
+    const requestedReferenceAssetIds = metadataReferences && typeof metadataReferences === "object" && "asset_ids" in metadataReferences && Array.isArray(metadataReferences.asset_ids)
+      ? metadataReferences.asset_ids.filter((id): id is string => typeof id === "string").slice(0, MAX_PROJECT_REFERENCE_IMAGES)
+      : [];
+    const projectReferences = requestedReferenceAssetIds.length
+      ? (await getProjectReferenceAssets(userId, project.id)).filter((reference) => requestedReferenceAssetIds.includes(reference.id))
+      : [];
+    const referenceImages = await Promise.all(projectReferences.map(async (reference) => {
+      try {
+        const { data, error } = await admin.storage.from(reference.bucket_id).download(reference.object_path);
+        if (error || !data || !isReferenceImageMimeType(data.type)) return null;
+        return { data: Buffer.from(await data.arrayBuffer()), mimeType: data.type };
+      } catch {
+        return null;
+      }
+    }));
+    const usableReferenceImages = referenceImages.filter(
+      (image): image is NonNullable<typeof image> => image !== null,
+    );
+    if (requestedReferenceAssetIds.length && process.env.NODE_ENV === "development") {
+      console.info("[reference] analysis_started", { generationId: queuedGeneration.id, requestedCount: requestedReferenceAssetIds.length, usableCount: usableReferenceImages.length });
+    }
+    const referenceAnalysis = await analyzeReferenceImages(usableReferenceImages);
+    if (process.env.NODE_ENV === "development" && requestedReferenceAssetIds.length) {
+      console.info(referenceAnalysis.styleBrief ? "[reference] analysis_completed" : "[reference] analysis_failed", {
+        generationId: queuedGeneration.id,
+        model: getReferenceAnalysisModel(),
+        ...(referenceAnalysis.diagnostic ?? {}),
+        version: REFERENCE_ANALYSIS_VERSION,
+      });
+    }
     const metadataUserPrompt =
       metadataEnhancement &&
       typeof metadataEnhancement === "object" &&
@@ -470,7 +604,21 @@ export async function runQueuedImageGeneration(
       throw new Error("The generation prompt is unavailable.");
     }
 
-    const requestedPreservationMode = resolvePreservationMode(queuedGeneration.preservation_mode);
+    const strategyResolution = resolveGenerationStrategy({
+      preset,
+      requestedPreservationMode: resolvePreservationMode(queuedGeneration.preservation_mode),
+      userPrompt: metadataUserPrompt || fallbackCreativeDirection,
+    });
+    const strategyCategory = getGenerationStrategyCategory(strategyResolution.strategy);
+    const requestedPreservationMode = strategyResolution.effectivePreservationMode;
+    const usesReferenceEditing = requestedPreservationMode === "reference_edit";
+    logDevelopmentGenerationEvent("strategy_resolved", {
+      effectivePreservationMode: strategyResolution.effectivePreservationMode,
+      generationId: queuedGeneration.id,
+      presetId: preset?.id ?? null,
+      reason: strategyResolution.reason,
+      strategy: strategyResolution.strategy,
+    });
     const enhancementEnabled = !(
       metadataEnhancement &&
       typeof metadataEnhancement === "object" &&
@@ -481,21 +629,27 @@ export async function runQueuedImageGeneration(
       enabled: enhancementEnabled,
       generationType: queuedGeneration.generation_type,
       preservationMode: requestedPreservationMode,
+      productCategory: strategyCategory,
       userCreativeDirection: metadataUserPrompt,
       presetId: preset?.id,
       presetTitle: preset?.title,
       presetDescription: preset?.shortDescription,
-      presetPromptSeed: preset?.promptSeed,
-      useCase: preset?.useCase,
+      presetCreativeDirection: preset?.creativeDirection,
+      referenceStyle: referenceAnalysis.styleBrief,
+      useCase: strategyCategory,
       generationMode: preset?.generationMode,
     });
     logDevelopmentGenerationEvent("prompt_enhanced", {
+      captureProfile: preset?.creativeDirection.capture?.profile ?? null,
+      enhancedCreativeDirection: promptEnhancement.prompt,
       enabled: enhancementEnabled,
       generationId: queuedGeneration.id,
+      presetId: preset?.id ?? null,
       success: promptEnhancement.succeeded,
+      userNote: promptEnhancement.userPrompt || null,
     });
     let effectivePreservationMode = requestedPreservationMode;
-    let fidelityStatus: FidelityStatus = "not_checked";
+    let fidelityStatus: FidelityStatus = usesReferenceEditing ? "not_available" : "not_checked";
     let fidelityScore: number | null = null;
     const fidelityMetadata: {
       effective_mode: ProductPreservationMode;
@@ -507,12 +661,17 @@ export async function runQueuedImageGeneration(
       mask_source?: Exclude<ProductMaskResolution["source"], null>;
       product_placement?: { height: number; left: number; top: number; width: number };
       requested_mode: ProductPreservationMode;
-      unavailable_reason?: "mask_not_available" | "preparation_failed" | "verification_failed";
+      unavailable_reason?:
+        | "reference_edit_strategy"
+        | "mask_not_available"
+        | "preparation_failed"
+        | "verification_failed";
       verification_score?: number;
     } = {
       requested_mode: requestedPreservationMode,
       effective_mode: effectivePreservationMode,
       guaranteed: false,
+      ...(usesReferenceEditing ? { unavailable_reason: "reference_edit_strategy" as const } : {}),
     };
     const aspectRatio = resolveAspectRatio(queuedGeneration.aspect_ratio);
     const outputCanvas = resolveImageGenerationOutputCanvas(aspectRatio);
@@ -577,6 +736,23 @@ export async function runQueuedImageGeneration(
     }
 
     fidelityMetadata.effective_mode = effectivePreservationMode;
+    const finalPrompt = buildImageGenerationPromptWithPolicy(
+      promptEnhancement.prompt,
+      effectivePreservationMode,
+      { strategy: strategyResolution.strategy, useCase: strategyCategory },
+    );
+    logDevelopmentGenerationEvent("provider_prompt_ready", {
+      categoryRealism: finalPrompt.layers.categoryRealismApplied,
+      captureProfile: preset?.creativeDirection.capture?.profile ?? null,
+      fidelityPolicy: finalPrompt.layers.fidelityPolicy,
+      finalProviderPrompt: finalPrompt.prompt,
+      generationId: queuedGeneration.id,
+      globalRealism: finalPrompt.layers.globalRealismApplied,
+      preset: preset?.id ?? null,
+      strategy: strategyResolution.strategy,
+      userNote: promptEnhancement.userPrompt || null,
+      visualIntent: finalPrompt.layers.visualIntent,
+    });
     const result = await getImageGenerationProvider(queuedGeneration.provider).generate({
       generationId: queuedGeneration.id,
       projectId: project.id,
@@ -587,7 +763,7 @@ export async function runQueuedImageGeneration(
         data: pixelLockInput?.productCanvas ?? inputImage,
         mimeType: pixelLockInput ? "image/png" : inputImage.type || "image/png",
       },
-      prompt: buildImageGenerationPrompt(promptEnhancement.prompt, effectivePreservationMode),
+      prompt: finalPrompt.prompt,
       provider: queuedGeneration.provider,
       model: queuedGeneration.model,
       quality: resolveGenerationQuality(queuedGeneration.quality),
@@ -653,7 +829,7 @@ export async function runQueuedImageGeneration(
         preservation_mode: requestedPreservationMode,
         fidelity_status: fidelityStatus,
         fidelity_score: fidelityScore,
-        provider_metadata: {
+      provider_metadata: {
           ...(result.providerMetadata ?? {}),
           fidelity: fidelityMetadata,
           prompt_enhancement: {
@@ -663,6 +839,23 @@ export async function runQueuedImageGeneration(
             user_prompt: promptEnhancement.userPrompt,
           },
           ...(preset ? { preset: createCreativePresetMetadata(preset) } : {}),
+          strategy: {
+            effective_preservation_mode: strategyResolution.effectivePreservationMode,
+            reason: strategyResolution.reason,
+            selected: strategyResolution.strategy,
+          },
+          references: {
+            requested_count: requestedReferenceAssetIds.length,
+            usable_count: referenceAnalysis.usableCount,
+            asset_ids: requestedReferenceAssetIds,
+            analysis: {
+              enabled: requestedReferenceAssetIds.length > 0,
+              succeeded: referenceAnalysis.styleBrief !== null,
+              model: requestedReferenceAssetIds.length > 0 ? getReferenceAnalysisModel() : null,
+              version: REFERENCE_ANALYSIS_VERSION,
+            },
+            ...(referenceAnalysis.styleBrief ? { style_brief: referenceAnalysis.styleBrief } : {}),
+          },
         },
         processing_completed_at: processingCompletedAt.toISOString(),
         processing_duration_ms: processingCompletedAt.getTime() - processingStartedAt.getTime(),
@@ -678,8 +871,10 @@ export async function runQueuedImageGeneration(
     }
 
     logDevelopmentGenerationEvent("succeeded", {
+      effectivePreservationMode,
+      fidelityStatus,
       generationId: queuedGeneration.id,
-      preservationMode: requestedPreservationMode,
+      requestedPreservationMode,
     });
 
     return { ok: true };

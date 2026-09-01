@@ -1,17 +1,15 @@
 import type { ProductPreservationMode } from "../types";
+import {
+  renderReferenceStyleBrief,
+  type ReferenceStyleBrief,
+} from "../references/reference-style-brief";
+import {
+  isCreativeBrief,
+  renderCreativeBrief,
+  type CreativeBrief,
+} from "./creative-brief";
 
-export type CreativeBrief = {
-  subject: string;
-  pose: string;
-  environment: string;
-  composition: string;
-  camera: string;
-  lighting: string;
-  mood: string;
-  realism: string;
-  productTreatment: string;
-  negativeConstraints: string;
-};
+export type { CreativeBrief } from "./creative-brief";
 
 export type PromptEnhancementInput = {
   enabled: boolean;
@@ -21,7 +19,8 @@ export type PromptEnhancementInput = {
   presetId?: string | null;
   presetTitle?: string | null;
   presetDescription?: string | null;
-  presetPromptSeed?: string | null;
+  presetCreativeDirection?: CreativeBrief | null;
+  referenceStyle?: ReferenceStyleBrief | null;
   useCase?: string | null;
   generationMode?: "image" | "video" | null;
   userCreativeDirection: string;
@@ -38,44 +37,17 @@ export type PromptEnhancementClient = {
   createCreativeBrief(input: PromptEnhancementInput): Promise<unknown>;
 };
 
-const creativeBriefFields = [
-  "subject",
-  "pose",
-  "environment",
-  "composition",
-  "camera",
-  "lighting",
-  "mood",
-  "realism",
-  "productTreatment",
-  "negativeConstraints",
-] as const;
+export const renderEnhancedCreativePrompt = renderCreativeBrief;
 
-function isCreativeBrief(value: unknown): value is CreativeBrief {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return false;
+function preserveFashionCaptureProfile(
+  input: PromptEnhancementInput,
+  brief: CreativeBrief,
+): CreativeBrief {
+  if (input.useCase !== "fashion" || !input.presetCreativeDirection?.capture) {
+    return brief;
   }
 
-  const candidate = value as Record<string, unknown>;
-  return creativeBriefFields.every(
-    (field) => typeof candidate[field] === "string" && candidate[field].trim().length > 0,
-  );
-}
-
-export function renderEnhancedCreativePrompt(brief: CreativeBrief): string {
-  return [
-    "Professional creative direction:",
-    `Subject: ${brief.subject.trim()}`,
-    `Pose and action: ${brief.pose.trim()}`,
-    `Environment: ${brief.environment.trim()}`,
-    `Composition: ${brief.composition.trim()}`,
-    `Camera: ${brief.camera.trim()}`,
-    `Lighting: ${brief.lighting.trim()}`,
-    `Mood: ${brief.mood.trim()}`,
-    `Realism: ${brief.realism.trim()}`,
-    `Product treatment: ${brief.productTreatment.trim()}`,
-    `Negative constraints: ${brief.negativeConstraints.trim()}`,
-  ].join("\n");
+  return { ...brief, capture: input.presetCreativeDirection.capture };
 }
 
 export async function enhanceCreativeDirectionWithClient(
@@ -83,8 +55,21 @@ export async function enhanceCreativeDirectionWithClient(
   client: PromptEnhancementClient,
 ): Promise<PromptEnhancementResult> {
   const userPrompt = input.userCreativeDirection.trim();
-  const presetPromptSeed = input.presetPromptSeed?.trim() ?? "";
-  const rawPrompt = [presetPromptSeed, userPrompt].filter(Boolean).join("\n\n");
+  const presetDirection = input.presetCreativeDirection
+    ? renderCreativeBrief(input.presetCreativeDirection)
+    : "";
+  const referenceDirection = input.referenceStyle
+    ? renderReferenceStyleBrief(input.referenceStyle)
+    : "";
+  const rawPrompt = [
+    presetDirection,
+    referenceDirection,
+    userPrompt
+      ? input.presetCreativeDirection || input.referenceStyle
+        ? `User customization (highest creative priority): Apply this request to the relevant creative fields while preserving compatible preset defaults and reference photographic direction: ${userPrompt}`
+        : userPrompt
+      : "",
+  ].filter(Boolean).join("\n\n");
 
   if (!input.enabled || !rawPrompt) {
     return { enhancedPrompt: null, prompt: rawPrompt, succeeded: false, userPrompt };
@@ -96,7 +81,9 @@ export async function enhanceCreativeDirectionWithClient(
       return { enhancedPrompt: null, prompt: rawPrompt, succeeded: false, userPrompt };
     }
 
-    const enhancedPrompt = renderEnhancedCreativePrompt(brief).trim();
+    const enhancedPrompt = renderEnhancedCreativePrompt(
+      preserveFashionCaptureProfile(input, brief),
+    ).trim();
     if (!enhancedPrompt) {
       return { enhancedPrompt: null, prompt: rawPrompt, succeeded: false, userPrompt };
     }
