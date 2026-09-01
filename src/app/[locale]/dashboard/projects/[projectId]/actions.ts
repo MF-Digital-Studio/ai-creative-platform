@@ -1,11 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { toFile } from "openai";
 
 import { isSupportedLocale, type AppLocale } from "@/i18n/routing";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
-import { getOpenAIClient } from "@/lib/openai/client";
+import {
+  compositeLockedProduct,
+  preparePixelLockInput,
+  verifyLockedProduct,
+} from "@/lib/generation/fidelity/pixel-lock";
+import { ProductMaskCacheRepository } from "@/lib/generation/fidelity/product-mask-cache-repository";
+import {
+  resolveProductMask,
+  segmentationCacheIdentity,
+  type ProductMaskResolution,
+} from "@/lib/generation/fidelity/product-mask-resolver";
+import { getImageGenerationProvider } from "@/lib/generation/registry";
+import {
+  buildCreativePresetDirection,
+  createCreativePresetMetadata,
+} from "@/lib/creative-presets/creative-preset-context";
+import { getCreativePreset } from "@/lib/creative-presets/creative-presets";
+import { resolveImageGenerationOutputCanvas } from "@/lib/generation/output-canvas";
+import { buildImageGenerationPrompt } from "@/lib/generation/prompts/build-image-generation-prompt";
+import { enhanceCreativeDirection } from "@/lib/generation/prompts/enhance-creative-direction";
+import { FalBirefnetProvider } from "@/lib/generation/segmentation/providers/fal-birefnet-provider";
+import type {
+  AspectRatio,
+  FidelityStatus,
+  GenerationProvider,
+  ImageGenerationQuality,
+  ProductPreservationMode,
+} from "@/lib/generation/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,13 +67,26 @@ const queuedGenerationFields = [
   "input_asset_id",
   "generation_type",
   "status",
+  "provider",
   "model",
+  "quality",
+  "aspect_ratio",
+  "preservation_mode",
   "creative_direction_snapshot",
+  "provider_metadata",
 ].join(", ");
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const generatedAssetsBucket = "generated-assets";
 const generationFailureCode = "generationFailed";
-const maxGeneratedImageBytes = 20 * 1024 * 1024;
+
+function logDevelopmentGenerationEvent(
+  event: string,
+  details: Record<string, boolean | number | string | null>,
+) {
+  if (process.env.NODE_ENV === "development") {
+    console.info(`[generation] ${event}`, details);
+  }
+}
 
 type QueuedImageGenerationRow = {
   id: string;
@@ -55,8 +94,13 @@ type QueuedImageGenerationRow = {
   input_asset_id: string | null;
   generation_type: "image" | "video";
   status: "queued" | "processing" | "succeeded" | "failed";
+  provider: GenerationProvider;
   model: string;
+  quality: ImageGenerationQuality | null;
+  aspect_ratio: AspectRatio | null;
+  preservation_mode: ProductPreservationMode | null;
   creative_direction_snapshot: string;
+  provider_metadata: Record<string, unknown> | null;
 };
 
 function hasValidObjectPath(userId: string, projectId: string, objectPath: string) {
@@ -70,25 +114,38 @@ function hasValidObjectPath(userId: string, projectId: string, objectPath: strin
   );
 }
 
-function getProviderRequestId(response: unknown) {
-  if (
-    response &&
-    typeof response === "object" &&
-    "_request_id" in response &&
-    typeof response._request_id === "string"
-  ) {
-    return response._request_id.slice(0, 255);
-  }
-
-  return null;
+function isGenerationProvider(value: unknown): value is GenerationProvider {
+  return value === "openai";
 }
 
-async function markGenerationFailed(generationId: string) {
+function resolveGenerationQuality(value: unknown): ImageGenerationQuality {
+  return value === "preview" || value === "high" || value === "standard"
+    ? value
+    : "standard";
+}
+
+function resolveAspectRatio(value: unknown): AspectRatio {
+  return value === "4:5" || value === "3:4" || value === "16:9" || value === "9:16"
+    ? value
+    : "1:1";
+}
+
+function resolvePreservationMode(value: unknown): ProductPreservationMode {
+  return value === "pixel_lock" ? "pixel_lock" : "reference_edit";
+}
+
+async function markGenerationFailed(generationId: string, processingStartedAt: Date) {
   try {
     const admin = getSupabaseAdminClient();
+    const completedAt = new Date();
     await admin
       .from("generations")
-      .update({ status: "failed", error_message: generationFailureCode })
+      .update({
+        status: "failed",
+        error_message: generationFailureCode,
+        processing_completed_at: completedAt.toISOString(),
+        processing_duration_ms: completedAt.getTime() - processingStartedAt.getTime(),
+      })
       .eq("id", generationId)
       .eq("status", "processing");
   } catch {
@@ -199,8 +256,9 @@ export async function createQueuedImageGeneration(
   locale: AppLocale,
   projectId: string,
   _previousState: CreateQueuedImageGenerationResult | null,
+  formData?: FormData,
 ): Promise<CreateQueuedImageGenerationResult> {
-  void _previousState;
+  const enhancementEnabled = formData ? formData.get("enhance_with_ai") === "on" : true;
 
   if (!isSupportedLocale(locale) || typeof projectId !== "string") {
     return { ok: false, message: "creationFailed" };
@@ -224,8 +282,10 @@ export async function createQueuedImageGeneration(
       return { ok: false, message: "creationFailed" };
     }
 
-    const creativeDirection = project.creative_direction?.trim() ?? "";
-    if (!creativeDirection || Array.from(creativeDirection).length > 4000) {
+    const userCreativeDirection = project.creative_direction?.trim() ?? "";
+    const preset = getCreativePreset(formData?.get("preset_id"));
+    const creativeDirection = buildCreativePresetDirection(userCreativeDirection, preset);
+    if (!creativeDirection || Array.from(userCreativeDirection).length > 4000) {
       return { ok: false, message: "missingCreativeDirection" };
     }
 
@@ -258,7 +318,20 @@ export async function createQueuedImageGeneration(
         status: "queued",
         provider: "openai",
         model: "gpt-image-2",
+        quality: "standard",
+        aspect_ratio: "1:1",
+        preservation_mode: "pixel_lock",
+        fidelity_status: "not_checked",
         creative_direction_snapshot: creativeDirection,
+        provider_metadata: {
+          prompt_enhancement: {
+            enabled: enhancementEnabled,
+            enhanced_prompt: null,
+            succeeded: false,
+            user_prompt: userCreativeDirection,
+          },
+          ...(preset ? { preset: createCreativePresetMetadata(preset) } : {}),
+        },
       })
       .select("id")
       .single();
@@ -288,7 +361,7 @@ export async function runQueuedImageGeneration(
     return { ok: false, message: "generationFailed" };
   }
 
-  let processingStarted = false;
+  let processingStartedAt: Date | null = null;
 
   try {
     const supabase = await createClient();
@@ -317,6 +390,7 @@ export async function runQueuedImageGeneration(
       queuedGeneration.project_id !== project.id ||
       queuedGeneration.generation_type !== "image" ||
       queuedGeneration.status !== "queued" ||
+      !isGenerationProvider(queuedGeneration.provider) ||
       !queuedGeneration.input_asset_id
     ) {
       return { ok: false, message: "notQueued" };
@@ -347,9 +421,16 @@ export async function runQueuedImageGeneration(
     }
 
     const admin = getSupabaseAdminClient();
+    processingStartedAt = new Date();
     const { data: processingGeneration, error: processingError } = await admin
       .from("generations")
-      .update({ status: "processing", error_message: null })
+      .update({
+        status: "processing",
+        error_message: null,
+        processing_started_at: processingStartedAt.toISOString(),
+        processing_completed_at: null,
+        processing_duration_ms: null,
+      })
       .eq("id", queuedGeneration.id)
       .eq("project_id", project.id)
       .eq("status", "queued")
@@ -359,7 +440,6 @@ export async function runQueuedImageGeneration(
     if (processingError || !processingGeneration) {
       return { ok: false, message: "notQueued" };
     }
-    processingStarted = true;
 
     const { data: inputImage, error: downloadError } = await admin.storage
       .from(asset.bucket_id)
@@ -368,48 +448,225 @@ export async function runQueuedImageGeneration(
       throw new Error("Unable to download the input image.");
     }
 
-    const prompt = queuedGeneration.creative_direction_snapshot.trim();
-    if (!prompt) {
+    const metadataPreset = queuedGeneration.provider_metadata?.preset;
+    const presetId =
+      metadataPreset &&
+      typeof metadataPreset === "object" &&
+      "id" in metadataPreset &&
+      typeof metadataPreset.id === "string"
+        ? metadataPreset.id
+        : null;
+    const preset = getCreativePreset(presetId);
+    const metadataEnhancement = queuedGeneration.provider_metadata?.prompt_enhancement;
+    const metadataUserPrompt =
+      metadataEnhancement &&
+      typeof metadataEnhancement === "object" &&
+      "user_prompt" in metadataEnhancement &&
+      typeof metadataEnhancement.user_prompt === "string"
+        ? metadataEnhancement.user_prompt.trim()
+        : queuedGeneration.creative_direction_snapshot.trim();
+    const fallbackCreativeDirection = buildCreativePresetDirection(metadataUserPrompt, preset);
+    if (!fallbackCreativeDirection) {
       throw new Error("The generation prompt is unavailable.");
     }
 
-    const imageFile = await toFile(inputImage, "product-image", {
-      type: inputImage.type || "image/png",
+    const requestedPreservationMode = resolvePreservationMode(queuedGeneration.preservation_mode);
+    const enhancementEnabled = !(
+      metadataEnhancement &&
+      typeof metadataEnhancement === "object" &&
+      "enabled" in metadataEnhancement &&
+      metadataEnhancement.enabled === false
+    );
+    const promptEnhancement = await enhanceCreativeDirection({
+      enabled: enhancementEnabled,
+      generationType: queuedGeneration.generation_type,
+      preservationMode: requestedPreservationMode,
+      userCreativeDirection: metadataUserPrompt,
+      presetId: preset?.id,
+      presetTitle: preset?.title,
+      presetDescription: preset?.shortDescription,
+      presetPromptSeed: preset?.promptSeed,
+      useCase: preset?.useCase,
+      generationMode: preset?.generationMode,
     });
-    const imageResponse = await getOpenAIClient().images.edit({
-      model: queuedGeneration.model,
-      image: imageFile,
-      prompt,
-      n: 1,
-      output_format: "png",
+    logDevelopmentGenerationEvent("prompt_enhanced", {
+      enabled: enhancementEnabled,
+      generationId: queuedGeneration.id,
+      success: promptEnhancement.succeeded,
     });
-    const imageBase64 = imageResponse.data?.[0]?.b64_json;
-    if (typeof imageBase64 !== "string" || imageBase64.length === 0) {
-      throw new Error("The image provider returned no image data.");
+    let effectivePreservationMode = requestedPreservationMode;
+    let fidelityStatus: FidelityStatus = "not_checked";
+    let fidelityScore: number | null = null;
+    const fidelityMetadata: {
+      effective_mode: ProductPreservationMode;
+      guaranteed: boolean;
+      mask_cached?: boolean;
+      mask_failure_reason?:
+        | Exclude<ProductMaskResolution["failureReason"], null>
+        | "mask_preparation_failed";
+      mask_source?: Exclude<ProductMaskResolution["source"], null>;
+      product_placement?: { height: number; left: number; top: number; width: number };
+      requested_mode: ProductPreservationMode;
+      unavailable_reason?: "mask_not_available" | "preparation_failed" | "verification_failed";
+      verification_score?: number;
+    } = {
+      requested_mode: requestedPreservationMode,
+      effective_mode: effectivePreservationMode,
+      guaranteed: false,
+    };
+    const aspectRatio = resolveAspectRatio(queuedGeneration.aspect_ratio);
+    const outputCanvas = resolveImageGenerationOutputCanvas(aspectRatio);
+    let pixelLockInput = null;
+
+    if (requestedPreservationMode === "pixel_lock") {
+      try {
+        const sourceImage = Buffer.from(await inputImage.arrayBuffer());
+        const maskResolution = await resolveProductMask({
+          sourceImage,
+          mimeType: inputImage.type || "image/png",
+          cache: new ProductMaskCacheRepository({
+            ...segmentationCacheIdentity,
+            projectId: project.id,
+            sourceAssetId: asset.id,
+            userId,
+          }),
+          segmentationProvider: new FalBirefnetProvider(),
+        });
+
+        if (!maskResolution.mask || !maskResolution.source) {
+          effectivePreservationMode = "reference_edit";
+          fidelityStatus = "not_available";
+          fidelityMetadata.mask_failure_reason =
+            maskResolution.failureReason ?? "segmentation_provider_unavailable";
+          fidelityMetadata.unavailable_reason = "mask_not_available";
+          logDevelopmentGenerationEvent("mask_unavailable", {
+            generationId: queuedGeneration.id,
+            maskFailureReason: fidelityMetadata.mask_failure_reason ?? null,
+            preservationMode: requestedPreservationMode,
+          });
+        } else {
+          fidelityMetadata.mask_source = maskResolution.source;
+          fidelityMetadata.mask_cached = maskResolution.cached;
+          logDevelopmentGenerationEvent("mask_resolved", {
+            generationId: queuedGeneration.id,
+            maskCached: maskResolution.cached,
+            maskSource: maskResolution.source,
+            preservationMode: requestedPreservationMode,
+          });
+          pixelLockInput = await preparePixelLockInput({
+            mask: maskResolution.mask,
+            originalProduct: sourceImage,
+            targetWidth: outputCanvas.width,
+            targetHeight: outputCanvas.height,
+          });
+          if (!pixelLockInput) {
+            effectivePreservationMode = "reference_edit";
+            fidelityStatus = "not_available";
+            fidelityMetadata.mask_failure_reason = "mask_preparation_failed";
+            fidelityMetadata.unavailable_reason = "preparation_failed";
+          } else {
+            fidelityMetadata.product_placement = pixelLockInput.placement;
+          }
+        }
+      } catch {
+        effectivePreservationMode = "reference_edit";
+        fidelityStatus = "not_available";
+        fidelityMetadata.mask_failure_reason = "mask_preparation_failed";
+        fidelityMetadata.unavailable_reason = "preparation_failed";
+      }
     }
 
-    const imageBytes = Buffer.from(imageBase64, "base64");
-    if (imageBytes.length === 0 || imageBytes.length > maxGeneratedImageBytes) {
-      throw new Error("The generated image is invalid.");
+    fidelityMetadata.effective_mode = effectivePreservationMode;
+    const result = await getImageGenerationProvider(queuedGeneration.provider).generate({
+      generationId: queuedGeneration.id,
+      projectId: project.id,
+      sourceAsset: {
+        id: asset.id,
+        bucketId: asset.bucket_id,
+        objectPath: asset.object_path,
+        data: pixelLockInput?.productCanvas ?? inputImage,
+        mimeType: pixelLockInput ? "image/png" : inputImage.type || "image/png",
+      },
+      prompt: buildImageGenerationPrompt(promptEnhancement.prompt, effectivePreservationMode),
+      provider: queuedGeneration.provider,
+      model: queuedGeneration.model,
+      quality: resolveGenerationQuality(queuedGeneration.quality),
+      aspectRatio,
+    });
+
+    let finalImageData = result.imageData;
+    if (pixelLockInput && effectivePreservationMode === "pixel_lock") {
+      try {
+        finalImageData = await compositeLockedProduct({
+          generatedImage: result.imageData,
+          preparedInput: pixelLockInput,
+        });
+        const verification = await verifyLockedProduct({
+          expectedProductCanvas: pixelLockInput.productCanvas,
+          finalImage: finalImageData,
+          mask: pixelLockInput.mask,
+        });
+        fidelityScore = verification.score;
+        fidelityMetadata.verification_score = verification.score;
+        fidelityStatus = verification.score >= 0.999 ? "locked" : "failed";
+        fidelityMetadata.guaranteed = fidelityStatus === "locked";
+        logDevelopmentGenerationEvent("fidelity_verified", {
+          fidelityScore: verification.score,
+          generationId: queuedGeneration.id,
+          fidelityStatus,
+        });
+      } catch {
+        finalImageData = result.imageData;
+        effectivePreservationMode = "reference_edit";
+        fidelityStatus = "failed";
+        fidelityMetadata.effective_mode = effectivePreservationMode;
+        fidelityMetadata.unavailable_reason = "verification_failed";
+      }
     }
 
     const { error: uploadError } = await admin.storage
       .from(generatedAssetsBucket)
-      .upload(outputObjectPath, imageBytes, {
-        contentType: "image/png",
+      .upload(outputObjectPath, finalImageData, {
+        contentType:
+          pixelLockInput && effectivePreservationMode === "pixel_lock" ? "image/png" : result.mimeType,
         upsert: false,
       });
     if (uploadError) {
       throw new Error("Unable to upload the generated image.");
     }
 
+    const processingCompletedAt = new Date();
     const { data: completedGeneration, error: completionError } = await admin
       .from("generations")
       .update({
         status: "succeeded",
         output_bucket_id: generatedAssetsBucket,
         output_object_path: outputObjectPath,
-        provider_request_id: getProviderRequestId(imageResponse),
+        output_mime_type:
+          pixelLockInput && effectivePreservationMode === "pixel_lock"
+            ? "image/png"
+            : result.mimeType,
+        provider_request_id:
+          typeof result.providerMetadata?.requestId === "string"
+            ? result.providerMetadata.requestId
+            : null,
+        preservation_mode: requestedPreservationMode,
+        fidelity_status: fidelityStatus,
+        fidelity_score: fidelityScore,
+        provider_metadata: {
+          ...(result.providerMetadata ?? {}),
+          fidelity: fidelityMetadata,
+          prompt_enhancement: {
+            enabled: enhancementEnabled,
+            enhanced_prompt: promptEnhancement.enhancedPrompt,
+            succeeded: promptEnhancement.succeeded,
+            user_prompt: promptEnhancement.userPrompt,
+          },
+          ...(preset ? { preset: createCreativePresetMetadata(preset) } : {}),
+        },
+        processing_completed_at: processingCompletedAt.toISOString(),
+        processing_duration_ms: processingCompletedAt.getTime() - processingStartedAt.getTime(),
+        cost_usd: null,
         error_message: null,
       })
       .eq("id", queuedGeneration.id)
@@ -420,10 +677,16 @@ export async function runQueuedImageGeneration(
       throw new Error("Unable to save the generated image.");
     }
 
+    logDevelopmentGenerationEvent("succeeded", {
+      generationId: queuedGeneration.id,
+      preservationMode: requestedPreservationMode,
+    });
+
     return { ok: true };
   } catch {
-    if (processingStarted) {
-      await markGenerationFailed(generationId);
+    logDevelopmentGenerationEvent("failed", { generationId });
+    if (processingStartedAt) {
+      await markGenerationFailed(generationId, processingStartedAt);
     }
 
     return { ok: false, message: "generationFailed" };

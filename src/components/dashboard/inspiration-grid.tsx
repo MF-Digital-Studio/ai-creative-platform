@@ -20,10 +20,10 @@ export function InspirationGrid() {
   );
 
   return (
-    <section id="inspiration" className="dashboard-content-section" aria-labelledby="dashboard-inspiration-heading">
+    <div id="inspiration" className="dashboard-preset-explorer" aria-labelledby="dashboard-inspiration-heading">
       <div className="dashboard-section-heading dashboard-inspiration-heading">
         <div>
-          <h2 id="dashboard-inspiration-heading">{t("heading")}</h2>
+          <h3 id="dashboard-inspiration-heading">{t("heading")}</h3>
           <p>{t("description")}</p>
         </div>
         <div className="dashboard-filter-list" role="group" aria-label={t("filterLabel")}>
@@ -54,6 +54,6 @@ export function InspirationGrid() {
           />
         ))}
       </div>
-    </section>
+    </div>
   );
 }

@@ -6,15 +6,15 @@ import { useTranslations } from "next-intl";
 import type { RegisterProductAssetResult } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { createClient } from "@/lib/supabase/client";
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+export const MAX_PRODUCT_IMAGE_FILE_SIZE = 20 * 1024 * 1024;
 
-const fileExtensions = {
+export const productImageExtensions = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 } as const;
 
-type SupportedFileType = keyof typeof fileExtensions;
+export type SupportedProductImageType = keyof typeof productImageExtensions;
 
 type ProductImageUploadProps = {
   projectId: string;
@@ -26,8 +26,8 @@ type ProductImageUploadProps = {
   } | null;
 };
 
-function isSupportedFileType(fileType: string): fileType is SupportedFileType {
-  return Object.prototype.hasOwnProperty.call(fileExtensions, fileType);
+export function isSupportedProductImageType(fileType: string): fileType is SupportedProductImageType {
+  return Object.prototype.hasOwnProperty.call(productImageExtensions, fileType);
 }
 
 export function ProductImageUpload({
@@ -49,12 +49,12 @@ export function ProductImageUpload({
     }
 
     setError(null);
-    if (!isSupportedFileType(file.type)) {
+    if (!isSupportedProductImageType(file.type)) {
       setError(t("invalidType"));
       return;
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
       setError(t("tooLarge"));
       return;
     }
@@ -62,7 +62,7 @@ export function ProductImageUpload({
     setIsUploading(true);
 
     try {
-      const extension = fileExtensions[file.type];
+      const extension = productImageExtensions[file.type];
       const path = `${userId}/${projectId}/${crypto.randomUUID()}.${extension}`;
       const supabase = createClient();
       const { error: uploadError } = await supabase.storage.from("product-assets").upload(path, file, {

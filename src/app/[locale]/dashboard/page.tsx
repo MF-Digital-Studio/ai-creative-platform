@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { CreativeComposer } from "@/components/dashboard/creative-composer";
-import { InspirationGrid } from "@/components/dashboard/inspiration-grid";
 import { RecentWork } from "@/components/dashboard/recent-work";
 import { TemplateRail } from "@/components/dashboard/template-rail";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
@@ -36,15 +35,16 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   setRequestLocale(locale);
 
   const userId = await getAuthenticatedUserId();
-  const projects = userId ? await getProjects(userId) : [];
+  const loadedProjects = userId ? await getProjects(userId, 7) : [];
+  const hasMoreProjects = loadedProjects.length > 6;
+  const projects = loadedProjects.slice(0, 6);
 
   return (
     <main className="dashboard-main">
       <div className="dashboard-main-inner">
-        <CreativeComposer />
+        <CreativeComposer locale={locale} userId={userId} />
         <TemplateRail />
-        <InspirationGrid />
-        <RecentWork locale={locale} projects={projects} />
+        <RecentWork locale={locale} projects={projects} hasMore={hasMoreProjects} />
       </div>
     </main>
   );

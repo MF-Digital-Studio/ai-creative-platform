@@ -29,6 +29,7 @@ export async function TemplateCard({ template }: { template: DashboardTemplate }
         <span>
           <small>{t(`types.${template.typeKey}`)}</small>
           <strong>{title}</strong>
+          <span>{t(template.descriptorKey)}</span>
         </span>
         <DashboardIcon name="arrow" />
       </span>

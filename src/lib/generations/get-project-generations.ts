@@ -10,11 +10,21 @@ const generationFields = [
   "status",
   "provider",
   "model",
+  "quality",
+  "aspect_ratio",
+  "preservation_mode",
+  "fidelity_status",
+  "fidelity_score",
   "creative_direction_snapshot",
   "output_bucket_id",
   "output_object_path",
   "error_message",
   "cost_usd",
+  "output_mime_type",
+  "processing_started_at",
+  "processing_completed_at",
+  "processing_duration_ms",
+  "provider_metadata",
   "created_at",
   "updated_at",
 ].join(", ");
@@ -30,11 +40,21 @@ type ProjectGenerationRow = {
   status: GenerationStatus;
   provider: string;
   model: string;
+  quality: "preview" | "standard" | "high" | null;
+  aspect_ratio: "1:1" | "4:5" | "3:4" | "16:9" | "9:16" | null;
+  preservation_mode: "reference_edit" | "pixel_lock" | null;
+  fidelity_status: "not_checked" | "locked" | "failed" | "not_available" | null;
+  fidelity_score: number | null;
   creative_direction_snapshot: string;
   output_bucket_id: string | null;
   output_object_path: string | null;
   error_message: string | null;
   cost_usd: number | null;
+  output_mime_type: string | null;
+  processing_started_at: string | null;
+  processing_completed_at: string | null;
+  processing_duration_ms: number | null;
+  provider_metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };

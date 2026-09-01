@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { Link, getPathname } from "@/i18n/navigation";
-import { ProductImageUpload } from "@/components/projects/product-image-upload";
 import {
   createQueuedImageGeneration,
   registerProductAsset,
   runQueuedImageGeneration,
 } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import {
+  GenerationGallery,
+  type GenerationGalleryItem,
+} from "@/components/projects/generation-gallery";
+import { ProductImageUpload } from "@/components/projects/product-image-upload";
+import { Link } from "@/i18n/navigation";
 import { isSupportedLocale } from "@/i18n/routing";
 import { getProjectProductAsset } from "@/lib/assets/get-project-product-asset";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
@@ -41,10 +45,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { locale, projectId } = await params;
-  if (!isSupportedLocale(locale)) {
-    notFound();
-  }
-  if (!uuidPattern.test(projectId)) {
+  if (!isSupportedLocale(locale) || !uuidPattern.test(projectId)) {
     notFound();
   }
 
@@ -86,7 +87,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   setRequestLocale(locale);
 
-  const workspaceHref = getPathname({ href: "/dashboard", locale });
   const createdDate = new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
     new Date(project.created_at),
   );
@@ -95,39 +95,122 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     style: "currency",
     currency: "USD",
   });
+  const visualGenerations: GenerationGalleryItem[] = generations
+    .filter((generation) => Boolean(generation.preview_url))
+    .map((generation, index) => ({
+      id: generation.id,
+      previewUrl: generation.preview_url as string,
+      alt: `${t("outputs.previewAlt")} ${index + 1}`,
+      typeLabel: t(`outputs.types.${generation.generation_type}`),
+      statusLabel: t(`outputs.status.${generation.status}`),
+      createdAt: dateFormatter.format(new Date(generation.created_at)),
+      provider: generation.provider,
+      model: generation.model,
+      cost: generation.cost_usd === null ? null : costFormatter.format(generation.cost_usd),
+      direction: generation.creative_direction_snapshot,
+    }));
+  const statusGenerations = generations.filter((generation) => !generation.preview_url);
 
   return (
     <main className="dashboard-main">
-      <div className="dashboard-main-inner">
-        <section className="mx-auto grid w-full max-w-3xl gap-8" aria-labelledby="project-heading">
-          <div className="grid gap-5">
-            <Link
-              href={workspaceHref}
-              className="w-fit text-sm font-medium text-[var(--dashboard-muted)] transition-colors hover:text-[var(--dashboard-foreground)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dashboard-focus)]"
-            >
-              {t("backToWorkspace")}
-            </Link>
-
-            <div className="grid gap-3">
-              <h1 id="project-heading" className="font-[family-name:var(--font-display)] text-4xl font-medium tracking-[-0.045em] text-[var(--dashboard-foreground)] sm:text-5xl">
-                {project.title ?? t("untitledProject")}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--dashboard-muted)]">
-                <span>{t(`status.${project.status}`)}</span>
-                <time dateTime={project.created_at}>{t("created", { date: createdDate })}</time>
-              </div>
+      <div className="dashboard-main-inner project-page-shell">
+        <header className="project-page-header">
+          <Link href="/dashboard" className="project-back-link">
+            <span aria-hidden="true">←</span>
+            {t("backToWorkspace")}
+          </Link>
+          <div className="project-title-row">
+            <div>
+              <span className="project-page-eyebrow">{t("outputs.heading")}</span>
+              <h1 id="project-heading">{project.title ?? t("untitledProject")}</h1>
+            </div>
+            <div className="project-page-meta">
+              <span>{t(`status.${project.status}`)}</span>
+              <time dateTime={project.created_at}>{t("created", { date: createdDate })}</time>
             </div>
           </div>
+        </header>
 
-          <div className="rounded-[var(--radius-md)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-surface)] p-5 sm:p-6">
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--dashboard-foreground)]">
-              {t("workspaceHeading")}
-            </h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--dashboard-muted)]">
-              {t("workspaceDescription")}
-            </p>
+        <div className="project-workspace-layout">
+          <section className="project-output-panel" aria-labelledby="generated-outputs-heading">
+            <div className="project-panel-heading">
+              <div>
+                <span>{t("outputs.galleryEyebrow")}</span>
+                <h2 id="generated-outputs-heading">{t("outputs.heading")}</h2>
+              </div>
+              <p>{t("outputs.description")}</p>
+            </div>
 
-            <div className="mt-6">
+            <GenerationGallery
+              items={visualGenerations}
+              messages={{
+                featured: t("outputs.featured"),
+                openFullscreen: t("outputs.openFullscreen"),
+                closeFullscreen: t("outputs.closeFullscreen"),
+                galleryLabel: t("outputs.galleryLabel"),
+                selectOutput: t("outputs.selectOutput"),
+                details: t("outputs.details"),
+                direction: t("outputs.direction"),
+                provider: t("outputs.provider"),
+                model: t("outputs.model"),
+                created: t("outputs.created"),
+                cost: t("outputs.cost"),
+                emptyHeading: t("outputs.emptyHeading"),
+                emptyDescription: t("outputs.emptyDescription"),
+              }}
+            />
+
+            {statusGenerations.length > 0 ? (
+              <section className="project-generation-history" aria-labelledby="generation-history-heading">
+                <h3 id="generation-history-heading">{t("outputs.historyHeading")}</h3>
+                <ul>
+                  {statusGenerations.map((generation) => (
+                    <li key={generation.id}>
+                      <div className="project-generation-history-copy">
+                        <div>
+                          <span>{t(`outputs.types.${generation.generation_type}`)}</span>
+                          <span>{t(`outputs.status.${generation.status}`)}</span>
+                          <time dateTime={generation.created_at}>
+                            {dateFormatter.format(new Date(generation.created_at))}
+                          </time>
+                        </div>
+                        <p>{generation.creative_direction_snapshot}</p>
+                      </div>
+
+                      {generation.generation_type === "image" && generation.status === "queued" ? (
+                        <RunGenerationButton
+                          action={runQueuedImageGeneration.bind(null, project.id, generation.id)}
+                          messages={{
+                            run: t("generation.run"),
+                            running: t("generation.running"),
+                            generationFailed: t("generation.generationFailed"),
+                            notQueued: t("generation.notQueued"),
+                          }}
+                        />
+                      ) : null}
+
+                      {generation.status === "failed" && generation.error_message ? (
+                        <p role="alert" className="project-generation-error">
+                          {t("generation.generationFailed")}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+          </section>
+
+          <aside className="project-settings-panel" aria-labelledby="project-settings-heading">
+            <div className="project-panel-heading is-compact">
+              <div>
+                <span>{t("settingsEyebrow")}</span>
+                <h2 id="project-settings-heading">{t("workspaceHeading")}</h2>
+              </div>
+            </div>
+            <p className="project-settings-description">{t("workspaceDescription")}</p>
+
+            <div className="project-setting-block">
               <ProductImageUpload
                 projectId={project.id}
                 userId={userId}
@@ -136,7 +219,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               />
             </div>
 
-            <div className="mt-6">
+            <div className="project-setting-block">
               <CreativeDirectionForm
                 creativeDirection={project.creative_direction}
                 projectId={project.id}
@@ -154,7 +237,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               />
             </div>
 
-            <div className="mt-6">
+            <div className="project-setting-block">
               <GenerateImageForm
                 action={createQueuedImageGeneration.bind(null, locale, project.id)}
                 messages={{
@@ -163,119 +246,14 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   missingProductImage: t("generation.missingProductImage"),
                   missingCreativeDirection: t("generation.missingCreativeDirection"),
                   creationFailed: t("generation.creationFailed"),
+                  enhanceWithAI: t("generation.enhanceWithAI"),
+                  enhanceWithAIHelper: t("generation.enhanceWithAIHelper"),
                 }}
               />
             </div>
-          </div>
-
-          <section aria-labelledby="generated-outputs-heading" className="rounded-[var(--radius-md)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-surface)] p-5 sm:p-6">
-            <div>
-              <h2 id="generated-outputs-heading" className="text-lg font-semibold tracking-[-0.02em] text-[var(--dashboard-foreground)]">
-                {t("outputs.heading")}
-              </h2>
-              <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--dashboard-muted)]">
-                {t("outputs.description")}
-              </p>
-            </div>
-
-            {generations.length === 0 ? (
-              <p className="mt-6 rounded-[var(--radius-sm)] border border-[var(--dashboard-border)] bg-[var(--dashboard-background)] p-4 text-sm text-[var(--dashboard-muted)]">
-                {t("outputs.empty")}
-              </p>
-            ) : (
-              <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-                {generations.map((generation) => {
-                  const createdAt = dateFormatter.format(new Date(generation.created_at));
-                  const directionPreview = truncateText(generation.creative_direction_snapshot, 160);
-
-                  return (
-                    <li key={generation.id} className="overflow-hidden rounded-[var(--radius-sm)] border border-[var(--dashboard-border)] bg-[var(--dashboard-background)]">
-                      <div className="aspect-[4/3] bg-[var(--dashboard-surface-raised)]">
-                        {generation.preview_url ? (
-                          // Signed Storage URLs are intentionally loaded directly, without Next's image optimizer.
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={generation.preview_url} alt={t("outputs.previewAlt")} className="size-full object-cover" />
-                        ) : (
-                          <div className="grid size-full place-items-center p-4 text-center text-sm text-[var(--dashboard-muted)]">
-                            {t("outputs.noPreview")}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="grid gap-3 p-4">
-                        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--dashboard-muted)]">
-                          <span className="rounded-full border border-[var(--dashboard-border)] px-2 py-1">
-                            {t(`outputs.types.${generation.generation_type}`)}
-                          </span>
-                          <span className="rounded-full border border-[var(--dashboard-border)] px-2 py-1">
-                            {t(`outputs.status.${generation.status}`)}
-                          </span>
-                        </div>
-
-                        <dl className="grid gap-1 text-sm text-[var(--dashboard-muted)]">
-                          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
-                            <dt>{t("outputs.provider")}</dt>
-                            <dd className="font-medium text-[var(--dashboard-foreground)]">{generation.provider}</dd>
-                          </div>
-                          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
-                            <dt>{t("outputs.model")}</dt>
-                            <dd className="font-medium text-[var(--dashboard-foreground)]">{generation.model}</dd>
-                          </div>
-                          <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
-                            <dt>{t("outputs.created")}</dt>
-                            <dd className="font-medium text-[var(--dashboard-foreground)]">
-                              <time dateTime={generation.created_at}>{createdAt}</time>
-                            </dd>
-                          </div>
-                          {generation.cost_usd !== null ? (
-                            <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
-                              <dt>{t("outputs.cost")}</dt>
-                              <dd className="font-medium text-[var(--dashboard-foreground)]">
-                                {costFormatter.format(generation.cost_usd)}
-                              </dd>
-                            </div>
-                          ) : null}
-                        </dl>
-
-                        <p className="text-sm leading-6 text-[var(--dashboard-muted)]">
-                          <span className="font-medium text-[var(--dashboard-foreground)]">{t("outputs.direction")}: </span>
-                          {directionPreview}
-                        </p>
-
-                        {generation.generation_type === "image" && generation.status === "queued" ? (
-                          <RunGenerationButton
-                            action={runQueuedImageGeneration.bind(null, project.id, generation.id)}
-                            messages={{
-                              run: t("generation.run"),
-                              running: t("generation.running"),
-                              generationFailed: t("generation.generationFailed"),
-                              notQueued: t("generation.notQueued"),
-                            }}
-                          />
-                        ) : null}
-
-                        {generation.status === "failed" && generation.error_message ? (
-                          <p role="alert" className="rounded-[var(--radius-sm)] border border-[var(--dashboard-border)] bg-[var(--dashboard-surface-raised)] p-3 text-sm leading-6 text-[var(--dashboard-foreground)]">
-                            <span className="font-medium">{t("outputs.error")}: </span>
-                            {t("generation.generationFailed")}
-                          </p>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        </section>
+          </aside>
+        </div>
       </div>
     </main>
   );
-}
-
-function truncateText(value: string, maximumLength: number) {
-  const characters = Array.from(value);
-  return characters.length > maximumLength
-    ? `${characters.slice(0, maximumLength).join("")}…`
-    : value;
 }

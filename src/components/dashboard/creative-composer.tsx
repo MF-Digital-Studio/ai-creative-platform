@@ -1,12 +1,31 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { type ChangeEvent, type DragEvent, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { createWorkspaceProject } from "@/app/[locale]/dashboard/actions";
+import { DASHBOARD_PRESET_EVENT } from "@/components/dashboard/creative-preset-rail";
+import {
+  createQueuedImageGeneration,
+  registerProductAsset,
+  runQueuedImageGeneration,
+  updateCreativeDirection,
+} from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
+import {
+  isSupportedProductImageType,
+  MAX_PRODUCT_IMAGE_FILE_SIZE,
+  productImageExtensions,
+} from "@/components/projects/product-image-upload";
 import { Button } from "@/components/ui/button";
+import { EnhanceWithAIToggle } from "@/components/ui/enhance-with-ai-toggle";
 import { DASHBOARD_DIRECTION_EVENT } from "@/data/dashboard-inspiration";
+import { useRouter } from "@/i18n/navigation";
+import type { AppLocale } from "@/i18n/routing";
 import { cn } from "@/lib/cn";
+import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
+import { getCreativePreset } from "@/lib/creative-presets/creative-presets";
+import { createClient } from "@/lib/supabase/client";
 
 const outputTypes = ["image", "video", "campaignSet"] as const;
 const quickStarts = [
@@ -20,21 +39,38 @@ const quickStarts = [
 
 type OutputType = (typeof outputTypes)[number];
 
-export function CreativeComposer() {
+type CreativeComposerProps = {
+  locale: AppLocale;
+  userId: string | null;
+};
+
+export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const t = useTranslations("Dashboard.composer");
+  const presetT = useTranslations("Dashboard.presets");
+  const router = useRouter();
   const descriptionId = useId();
   const promptId = useId();
   const statusId = useId();
   const disabledHintId = useId();
+  const productInputRef = useRef<HTMLInputElement>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const composerRef = useRef<HTMLElement>(null);
   const [prompt, setPrompt] = useState("");
   const [outputType, setOutputType] = useState<OutputType>("image");
   const [statusMessage, setStatusMessage] = useState("");
+  const [productFile, setProductFile] = useState<File | null>(null);
+  const [productPreviewUrl, setProductPreviewUrl] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [enhanceWithAI, setEnhanceWithAI] = useState(true);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const selectedPreset = getCreativePreset(selectedPresetId);
 
   useEffect(() => {
     function handleDirection(event: Event) {
       if (event instanceof CustomEvent && typeof event.detail === "string") {
         setPrompt(event.detail);
         setStatusMessage("");
+        promptRef.current?.focus();
       }
     }
 
@@ -42,12 +78,166 @@ export function CreativeComposer() {
     return () => window.removeEventListener(DASHBOARD_DIRECTION_EVENT, handleDirection);
   }, []);
 
-  function showUnavailable(message: string) {
-    setStatusMessage(message);
+  useEffect(() => {
+    function handlePreset(event: Event) {
+      if (!(event instanceof CustomEvent)) {
+        return;
+      }
+
+      if (event.detail === null) {
+        setSelectedPresetId(null);
+        setStatusMessage("");
+        return;
+      }
+
+      const preset = getCreativePreset(event.detail);
+      if (!preset) return;
+
+      setSelectedPresetId(preset.id);
+      setStatusMessage("");
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      promptRef.current?.focus({ preventScroll: true });
+    }
+
+    window.addEventListener(DASHBOARD_PRESET_EVENT, handlePreset);
+    return () => window.removeEventListener(DASHBOARD_PRESET_EVENT, handlePreset);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (productPreviewUrl) {
+        URL.revokeObjectURL(productPreviewUrl);
+      }
+    };
+  }, [productPreviewUrl]);
+
+  function selectProduct(file: File) {
+    if (!isSupportedProductImageType(file.type)) {
+      setStatusMessage(t("invalidProductType"));
+      return;
+    }
+
+    if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
+      setStatusMessage(t("productTooLarge"));
+      return;
+    }
+
+    setProductFile(file);
+    setProductPreviewUrl(URL.createObjectURL(file));
+    setStatusMessage("");
   }
 
+  function handleProductChange(event: ChangeEvent<HTMLInputElement>) {
+    const [file] = Array.from(event.target.files ?? []);
+    if (file) {
+      selectProduct(file);
+    }
+    event.target.value = "";
+  }
+
+  function handleProductDrop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    const [file] = Array.from(event.dataTransfer.files);
+    if (file) {
+      selectProduct(file);
+    }
+  }
+
+  function removeProduct() {
+    setProductFile(null);
+    setProductPreviewUrl(null);
+    setStatusMessage("");
+  }
+
+  async function startImageCreation() {
+    const creativeDirection = prompt.trim();
+    if (
+      !userId ||
+      !productFile ||
+      (!creativeDirection && !selectedPreset) ||
+      outputType !== "image" ||
+      isCreating ||
+      !isSupportedProductImageType(productFile.type)
+    ) {
+      return;
+    }
+
+    setIsCreating(true);
+    setStatusMessage(t("creating"));
+
+    try {
+      const project = await createWorkspaceProject(locale);
+      if (!project.ok) {
+        throw new Error("Unable to create a project.");
+      }
+
+      const extension = productImageExtensions[productFile.type];
+      const objectPath = `${userId}/${project.projectId}/${crypto.randomUUID()}.${extension}`;
+      const supabase = createClient();
+      const { error: uploadError } = await supabase.storage
+        .from("product-assets")
+        .upload(objectPath, productFile, { contentType: productFile.type, upsert: false });
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const registration = await registerProductAsset(locale, project.projectId, objectPath);
+      if (registration.status !== "success") {
+        throw new Error("Unable to register the product asset.");
+      }
+
+      const directionFormData = new FormData();
+      directionFormData.set("creative_direction", creativeDirection);
+      const direction = await updateCreativeDirection(
+        locale,
+        project.projectId,
+        { status: "idle" },
+        directionFormData,
+      );
+      if (direction.status !== "success") {
+        throw new Error("Unable to save the creative direction.");
+      }
+
+      const generationFormData = new FormData();
+      generationFormData.set("enhance_with_ai", enhanceWithAI ? "on" : "off");
+      if (selectedPreset) {
+        generationFormData.set("preset_id", selectedPreset.id);
+      }
+      const generation = await createQueuedImageGeneration(
+        locale,
+        project.projectId,
+        null,
+        generationFormData,
+      );
+      if (!generation.ok) {
+        throw new Error("Unable to queue the image generation.");
+      }
+
+      const result = await runQueuedImageGeneration(project.projectId, generation.generationId);
+      if (!result.ok) {
+        throw new Error("Unable to run the image generation.");
+      }
+
+      router.push(`/dashboard/projects/${project.projectId}`, { locale });
+    } catch {
+      setStatusMessage(t("creationError"));
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  const canStartImageCreation =
+    outputType === "image" &&
+    canCreateImageWithPreset(Boolean(productFile), prompt, selectedPreset) &&
+    !isCreating;
+
   return (
-    <section id="composer" className="dashboard-composer-section" aria-labelledby="dashboard-composer-heading">
+    <section
+      ref={composerRef}
+      id="composer"
+      className="dashboard-composer-section"
+      aria-labelledby="dashboard-composer-heading"
+    >
       <div className="dashboard-composer-heading">
         <h1 id="dashboard-composer-heading">{t("heading")}</h1>
         <p id={descriptionId}>{t("description")}</p>
@@ -56,56 +246,84 @@ export function CreativeComposer() {
       <form
         className="creative-composer"
         aria-describedby={descriptionId}
-        onSubmit={(event) => event.preventDefault()}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void startImageCreation();
+        }}
       >
         <div className="creative-composer-meta">
           <span>{t("eyebrow")}</span>
-          <span>{t("context")}</span>
+          <span>
+            {selectedPreset
+              ? t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })
+              : t("context")}
+          </span>
         </div>
 
         <div className="creative-composer-body">
-          <button
-            type="button"
-            className="creative-product-upload"
-            aria-describedby={statusId}
-            onClick={() => showUnavailable(t("uploadUnavailable"))}
-          >
-            <span className="creative-product-upload-icon"><DashboardIcon name="plus" /></span>
-            <span>{t("addProduct")}</span>
-          </button>
+          <div className="creative-product-field">
+            <span className="creative-field-label">{t("productLabel")}</span>
+            {productPreviewUrl ? (
+              <div className="creative-selected-product">
+                <span className="creative-selected-product-media">
+                  {/* Local object URLs are used only before creation starts. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={productPreviewUrl} alt={t("selectedProductAlt")} />
+                </span>
+                <span className="creative-selected-product-copy">
+                  <strong title={productFile?.name}>{productFile?.name}</strong>
+                  <span>
+                    <button type="button" onClick={() => productInputRef.current?.click()}>
+                      {t("replaceProduct")}
+                    </button>
+                    <button type="button" onClick={removeProduct}>
+                      {t("removeProduct")}
+                    </button>
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="creative-product-upload"
+                aria-describedby={statusId}
+                onClick={() => productInputRef.current?.click()}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={handleProductDrop}
+              >
+                <span className="creative-product-upload-icon"><DashboardIcon name="plus" /></span>
+                <span>{t("addProduct")}</span>
+                <small>{t("productHelper")}</small>
+              </button>
+            )}
+          </div>
+
+          <input
+            ref={productInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            aria-label={t("addProduct")}
+            onChange={handleProductChange}
+          />
 
           <div className="creative-prompt-field">
-            <label htmlFor={promptId} className="sr-only">{t("promptLabel")}</label>
+            <label htmlFor={promptId} className="creative-field-label">{t("creativeNoteLabel")}</label>
             <textarea
+              ref={promptRef}
               id={promptId}
               value={prompt}
               placeholder={t("promptPlaceholder")}
               className="creative-prompt-textarea"
               onChange={(event) => setPrompt(event.target.value)}
             />
+            <p className="creative-prompt-helper">
+              {selectedPreset ? t("presetNoteHelper") : t("promptHelper")}
+            </p>
           </div>
         </div>
 
         <div className="creative-composer-controls">
-          <div className="creative-attachment-controls">
-            <button
-              type="button"
-              className="creative-utility-button"
-              onClick={() => showUnavailable(t("uploadUnavailable"))}
-            >
-              <DashboardIcon name="plus" />
-              <span>{t("addProduct")}</span>
-            </button>
-            <button
-              type="button"
-              className="creative-utility-button"
-              onClick={() => showUnavailable(t("referenceUnavailable"))}
-            >
-              <DashboardIcon name="assets" />
-              <span>{t("addReference")}</span>
-            </button>
-          </div>
-
           <fieldset className="creative-output-control">
             <legend className="sr-only">{t("outputLabel")}</legend>
             {outputTypes.map((type) => (
@@ -113,28 +331,43 @@ export function CreativeComposer() {
                 key={type}
                 type="button"
                 aria-pressed={outputType === type}
+                disabled={type !== "image"}
+                aria-describedby={type === "image" ? undefined : disabledHintId}
                 className={cn("creative-output-option", outputType === type && "is-active")}
                 onClick={() => setOutputType(type)}
               >
                 {t(`outputTypes.${type}`)}
+                {type !== "image" ? <small>{t("comingSoon")}</small> : null}
               </button>
             ))}
           </fieldset>
 
           <Button
             type="submit"
-            disabled
+            disabled={!canStartImageCreation}
             aria-describedby={disabledHintId}
             className="creative-start-button"
           >
-            <span>{t("startCreating")}</span>
+            <span>{isCreating ? t("creating") : t("createImage")}</span>
             <DashboardIcon name="arrow" className="creative-start-icon" />
           </Button>
         </div>
 
+        <div className="px-3">
+          <EnhanceWithAIToggle
+            checked={enhanceWithAI}
+            description={t("enhanceWithAIHelper")}
+            disabled={isCreating}
+            label={t("enhanceWithAI")}
+            onChange={setEnhanceWithAI}
+          />
+        </div>
+
         <div className="creative-composer-feedback">
           <p id={statusId} role="status" aria-live="polite">{statusMessage}</p>
-          <p id={disabledHintId}>{t("startDisabledHint")}</p>
+          <p id={disabledHintId}>
+            {outputType === "image" ? t("startDisabledHint") : t("modeUnavailable")}
+          </p>
         </div>
       </form>
 
