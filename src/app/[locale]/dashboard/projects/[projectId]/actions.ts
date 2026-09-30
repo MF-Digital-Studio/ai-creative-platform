@@ -20,7 +20,10 @@ import {
   buildCreativePresetDirection,
   createCreativePresetMetadata,
 } from "@/lib/creative-presets/creative-preset-context";
-import { getCreativePreset } from "@/lib/creative-presets/creative-presets";
+import {
+  getCreativePreset,
+  getHistoricalCreativePreset,
+} from "@/lib/creative-presets/creative-presets";
 import {
   getProjectReferenceAssets,
   isReferenceImageMimeType,
@@ -559,7 +562,9 @@ export async function runQueuedImageGeneration(
       typeof metadataPreset.id === "string"
         ? metadataPreset.id
         : null;
-    const preset = getCreativePreset(presetId);
+    // A queued generation can reference a preset that has since left the active UI.
+    // Resolve it only for replaying that historical generation, never for new selection.
+    const preset = getCreativePreset(presetId) ?? getHistoricalCreativePreset(presetId);
     const metadataEnhancement = queuedGeneration.provider_metadata?.prompt_enhancement;
     const metadataReferences = queuedGeneration.provider_metadata?.references;
     const requestedReferenceAssetIds = metadataReferences && typeof metadataReferences === "object" && "asset_ids" in metadataReferences && Array.isArray(metadataReferences.asset_ids)
@@ -610,6 +615,7 @@ export async function runQueuedImageGeneration(
       userPrompt: metadataUserPrompt || fallbackCreativeDirection,
     });
     const strategyCategory = getGenerationStrategyCategory(strategyResolution.strategy);
+    const qualityUseCase = preset?.useCase ?? strategyCategory;
     const requestedPreservationMode = strategyResolution.effectivePreservationMode;
     const usesReferenceEditing = requestedPreservationMode === "reference_edit";
     logDevelopmentGenerationEvent("strategy_resolved", {
@@ -629,19 +635,18 @@ export async function runQueuedImageGeneration(
       enabled: enhancementEnabled,
       generationType: queuedGeneration.generation_type,
       preservationMode: requestedPreservationMode,
-      productCategory: strategyCategory,
+      productCategory: qualityUseCase,
       userCreativeDirection: metadataUserPrompt,
       presetId: preset?.id,
       presetTitle: preset?.title,
       presetDescription: preset?.shortDescription,
       presetCreativeDirection: preset?.creativeDirection,
       referenceStyle: referenceAnalysis.styleBrief,
-      useCase: strategyCategory,
+      useCase: qualityUseCase,
       generationMode: preset?.generationMode,
     });
     logDevelopmentGenerationEvent("prompt_enhanced", {
       captureProfile: preset?.creativeDirection.capture?.profile ?? null,
-      enhancedCreativeDirection: promptEnhancement.prompt,
       enabled: enhancementEnabled,
       generationId: queuedGeneration.id,
       presetId: preset?.id ?? null,
@@ -739,19 +744,15 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy: strategyResolution.strategy, useCase: strategyCategory },
+      { strategy: strategyResolution.strategy, useCase: qualityUseCase },
     );
-    logDevelopmentGenerationEvent("provider_prompt_ready", {
-      categoryRealism: finalPrompt.layers.categoryRealismApplied,
-      captureProfile: preset?.creativeDirection.capture?.profile ?? null,
-      fidelityPolicy: finalPrompt.layers.fidelityPolicy,
-      finalProviderPrompt: finalPrompt.prompt,
+    logDevelopmentGenerationEvent("generation_policy_resolved", {
+      footwear_v2: finalPrompt.layers.footwearV2Applied,
       generationId: queuedGeneration.id,
-      globalRealism: finalPrompt.layers.globalRealismApplied,
-      preset: preset?.id ?? null,
-      strategy: strategyResolution.strategy,
-      userNote: promptEnhancement.userPrompt || null,
-      visualIntent: finalPrompt.layers.visualIntent,
+      jewelry_v2: finalPrompt.layers.jewelryV2Applied,
+      resolvedStrategy: strategyResolution.strategy,
+      resolvedVertical: finalPrompt.layers.vertical,
+      watch_v2: finalPrompt.layers.watchV2Applied,
     });
     const result = await getImageGenerationProvider(queuedGeneration.provider).generate({
       generationId: queuedGeneration.id,

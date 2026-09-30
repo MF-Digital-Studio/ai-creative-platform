@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -11,24 +13,30 @@ import {
   creativePresetCategories,
   creativePresets,
   getCreativePreset,
+  getHistoricalCreativePreset,
+  getHistoricalPresetMetadata,
+  historicalUnsupportedPresetIds,
 } from "../src/lib/creative-presets/creative-presets";
 import { creativeBriefFields, type CreativeBrief } from "../src/lib/generation/prompts/creative-brief";
+import { getVerticalQualityProfile } from "../src/lib/generation/quality/vertical-quality-profiles";
+import { resolveGenerationStrategy } from "../src/lib/generation/strategy/generation-strategy";
 import {
   enhanceCreativeDirectionWithClient,
   type PromptEnhancementClient,
 } from "../src/lib/generation/prompts/prompt-enhancement-core";
+import { supportedVerticals } from "../src/lib/verticals/supported-verticals";
 
 const validBrief: CreativeBrief = {
-  subject: "The supplied product in a premium campaign setting.",
-  pose: "A natural, product-led composition.",
-  environment: "A considered editorial environment.",
-  composition: "A balanced hero composition.",
-  camera: "Commercial photography with natural perspective.",
-  lighting: "Controlled premium lighting.",
-  mood: "Modern and refined.",
-  realism: "Photorealistic materials and detail.",
-  productTreatment: "Keep the supplied product visually central.",
-  negativeConstraints: "No product redesigns or added logos.",
+  subject: "The supplied product remains the single premium campaign subject.",
+  pose: "A natural product-led pose with clear, stable presentation.",
+  environment: "A restrained commercial environment with real material context.",
+  composition: "A clear and balanced commercial hero composition.",
+  camera: "Commercial photography with an accurate natural perspective.",
+  lighting: "Controlled premium lighting with physically plausible shadows.",
+  mood: "Modern, refined, and commercially focused.",
+  realism: "Photorealistic material detail and realistic surface interaction.",
+  productTreatment: "Keep the supplied product exact and visibly central.",
+  negativeConstraints: "No product redesigns, added logos, or duplicate products.",
   capture: null,
 };
 
@@ -47,247 +55,154 @@ function requiredPreset(id: string) {
   return preset;
 }
 
-test("all 20 presets contain complete, production-quality creative directions", () => {
-  assert.equal(creativePresets.length, 20);
-  assert.deepEqual(
-    new Set(creativePresets.map((preset) => preset.category)),
-    new Set(creativePresetCategories),
-  );
-  assert.equal(new Set(creativePresets.map((preset) => preset.id)).size, creativePresets.length);
+test("active registry contains exactly three complete presets for each supported vertical", () => {
+  assert.equal(creativePresets.length, 15);
+  assert.deepEqual(creativePresetCategories, supportedVerticals);
+  assert.equal(new Set(creativePresets.map((preset) => preset.id)).size, 15);
 
-  for (const preset of creativePresets) {
-    for (const field of creativeBriefFields) {
-      assert.ok(preset.creativeDirection[field].trim().length >= 25, `${preset.id}.${field} is too vague.`);
+  for (const vertical of supportedVerticals) {
+    const presets = creativePresets.filter((preset) => preset.vertical === vertical);
+    assert.equal(presets.length, 3, `${vertical} must expose exactly three active presets`);
+
+    for (const preset of presets) {
+      assert.equal(preset.category, vertical);
+      assert.equal(preset.useCase, vertical);
+      assert.equal(getVerticalQualityProfile(preset.vertical).vertical, vertical);
+      assert.ok(preset.shortDescription.length >= 35, `${preset.id} needs a clear card description`);
+      assert.ok(preset.generationStrategyHint.length > 0);
+      assert.ok(existsSync(resolve(process.cwd(), "public", preset.thumbnail.slice(1))), `${preset.id} cover is missing`);
+
+      for (const field of creativeBriefFields) {
+        assert.ok(preset.creativeDirection[field].trim().length >= 25, `${preset.id}.${field} is too vague`);
+      }
     }
   }
 });
 
-test("Urban Night includes deterministic on-model night-fashion production context", () => {
-  const direction = requiredPreset("urban-night").creativeDirection;
-  const rendered = renderPresetCreativeDirection(requiredPreset("urban-night")).toLowerCase();
-
-  assert.match(direction.subject, /one adult fashion model/i);
-  assert.match(direction.environment, /city street|storefront|architectural facade/i);
-  assert.match(direction.lighting, /street|storefront|architectural light/i);
-  assert.match(direction.pose, /standing editorial pose/i);
-  assert.match(direction.composition, /medium-to-full fashion framing/i);
-  assert.match(direction.productTreatment, /garment/i);
-  assert.match(direction.negativeConstraints, /cyberpunk|neon|second model/i);
-  assert.ok(rendered.split(/\s+/).length >= 150);
-  assert.equal(direction.capture?.profile, "urban_night_flash");
-});
-
-test("Back Print Focus explicitly protects the back-facing view and print visibility", () => {
-  const direction = requiredPreset("back-print-focus").creativeDirection;
-  assert.match(direction.subject, /back facing the camera/i);
-  assert.match(direction.composition, /print completely visible/i);
-  assert.match(direction.productTreatment, /back artwork/i);
-  assert.match(direction.negativeConstraints, /hair or hands covering/i);
-});
-
-test("Tech Launch Hero protects a single commercial hero product from clutter", () => {
-  const direction = requiredPreset("tech-launch-hero").creativeDirection;
-  assert.match(direction.subject, /one supplied technology product/i);
-  assert.match(direction.lighting, /low-key key light.*rim light/i);
-  assert.match(direction.negativeConstraints, /duplicate product.*random futuristic clutter/i);
-});
-
-test("direct preset rendering preserves distinct style directions", () => {
-  const urban = renderPresetCreativeDirection(requiredPreset("urban-night"));
-  const daylight = renderPresetCreativeDirection(requiredPreset("soft-daylight-product"));
-  const macro = renderPresetCreativeDirection(requiredPreset("luxury-macro-jewelry"));
-
-  assert.notEqual(urban, daylight);
-  assert.notEqual(daylight, macro);
-  assert.match(urban, /night/i);
-  assert.match(daylight, /bright diffused daylight/i);
-  assert.match(macro, /macro commercial photograph/i);
-});
-
-test("preset selection validation allows a preset or a note, but never product-only", () => {
-  const preset = requiredPreset("brutalist-streetwear");
-  assert.equal(canCreateImageWithPreset(true, "", preset), true);
-  assert.equal(canCreateImageWithPreset(true, "A seated model", null), true);
-  assert.equal(canCreateImageWithPreset(true, "A seated model", preset), true);
-  assert.equal(canCreateImageWithPreset(true, "", null), false);
-  assert.equal(canCreateImageWithPreset(false, "A seated model", preset), false);
-});
-
-test("preset renderer keeps defaults while adding a user customization", () => {
-  const preset = requiredPreset("brutalist-streetwear");
-  const direction = buildCreativePresetDirection(
-    "blond male model sitting on the ground with his back facing camera",
-    preset,
+test("active preset cards map one-to-one to distinct, sector-correct covers", () => {
+  assert.equal(new Set(creativePresets.map((preset) => preset.thumbnail)).size, 15);
+  assert.deepEqual(
+    creativePresets.map((preset) => preset.thumbnail),
+    [
+      "/presets/apparel-street-style.png",
+      "/presets/apparel-scenic-editorial.png",
+      "/presets/apparel-studio-style.png",
+      "/presets/jewelry-on-body.png",
+      "/presets/jewelry-studio.png",
+      "/presets/jewelry-scenic.png",
+      "/presets/watch-on-wrist.png",
+      "/presets/watch-bright-studio.png",
+      "/presets/watch-scenic-environment.png",
+      "/presets/footwear-hero-focus.png",
+      "/presets/footwear-studio.png",
+      "/presets/footwear-street-lifestyle.png",
+      "/presets/cosmetics-studio.png",
+      "/presets/cosmetics-aesthetic-setting.png",
+      "/presets/cosmetics-lifestyle-landscape.png",
+    ],
   );
+});
 
-  assert.match(direction, /brutalist concrete architecture/i);
-  assert.match(direction, /preserving all other preset defaults/i);
-  assert.match(direction, /blond male model sitting on the ground with his back facing camera/i);
-  assert.deepEqual(createCreativePresetMetadata(preset), {
-    id: "brutalist-streetwear",
-    title: "Brutalist Streetwear",
-    category: "fashion",
-    useCase: "fashion",
+test("specialist preset briefs retain deterministic fidelity and framing directions", () => {
+  const jewelryOnBody = renderPresetCreativeDirection(requiredPreset("jewelry-on-body"));
+  const watchOnWrist = renderPresetCreativeDirection(requiredPreset("watch-on-wrist"));
+  const footwearFocus = renderPresetCreativeDirection(requiredPreset("footwear-hero-focus"));
+  const cosmeticsStudio = renderPresetCreativeDirection(requiredPreset("cosmetics-studio"));
+
+  assert.match(jewelryOnBody, /fit the complete band precisely around a plausible finger/i);
+  assert.match(jewelryOnBody, /stone count and placement/i);
+  assert.match(watchOnWrist, /bracelet or strap naturally around the wrist/i);
+  assert.match(watchOnWrist, /dial layout, bezel, crown side/i);
+  assert.match(footwearFocus, /very close low-angle product-first frame/i);
+  assert.match(footwearFocus, /outsole and midsole geometry/i);
+  assert.match(cosmeticsStudio, /cap, pump, or dropper/i);
+  assert.match(cosmeticsStudio, /glass, plastic, metal, liquid/i);
+});
+
+test("historical IDs resolve only through the compatibility registry", () => {
+  assert.ok(historicalUnsupportedPresetIds.includes("urban-night"));
+  assert.equal(getCreativePreset("urban-night"), null);
+
+  const legacy = getHistoricalCreativePreset("urban-night");
+  assert.equal(legacy?.id, "urban-night");
+  assert.equal(legacy?.enabled, false);
+  assert.equal(legacy?.generationStrategyHint, "fashion_on_model");
+  assert.equal(legacy?.vertical, "apparel");
+
+  assert.deepEqual(getHistoricalPresetMetadata("tech-launch-hero"), {
+    id: "tech-launch-hero",
+    title: "Tech Launch Hero",
+    category: "product",
+    vertical: "product",
+    useCase: "product",
   });
 });
 
-test("preset-only enhance-off generation renders a complete professional direct prompt", async () => {
-  const preset = requiredPreset("urban-night");
-  const client = new CapturingEnhancementClient();
-  const result = await enhanceCreativeDirectionWithClient(
-    {
-      enabled: false,
-      generationType: "image",
-      preservationMode: "reference_edit",
-      userCreativeDirection: "",
-      presetCreativeDirection: preset.creativeDirection,
-    },
-    client,
-  );
+test("preset selection and metadata preserve optional user customization", () => {
+  const preset = requiredPreset("apparel-studio-style");
+  const note = "A seated model, three-quarter view, with the front graphic fully visible.";
+  const direction = buildCreativePresetDirection(note, preset);
 
-  assert.equal(result.succeeded, false);
-  assert.equal(client.input, null);
-  assert.match(result.prompt, /Professional creative direction/);
-  assert.match(result.prompt, /One adult fashion model/i);
-  assert.ok(result.prompt.split(/\s+/).length >= 150);
+  assert.equal(canCreateImageWithPreset(true, "", preset), true);
+  assert.equal(canCreateImageWithPreset(true, note, null), true);
+  assert.equal(canCreateImageWithPreset(true, "", null), false);
+  assert.match(direction, /seamless warm-neutral fashion studio/i);
+  assert.match(direction, /preserving all other preset defaults/i);
+  assert.match(direction, /front graphic fully visible/i);
+  assert.deepEqual(createCreativePresetMetadata(preset), {
+    id: "apparel-studio-style",
+    title: "Studio Style",
+    category: "apparel",
+    vertical: "apparel",
+    useCase: "apparel",
+  });
 });
 
-test("preset-only enhance-on generation sends the structured preset direction to the enhancer", async () => {
-  const preset = requiredPreset("urban-night");
+test("apparel capture remains preset-specific while other sectors have no fashion profile", () => {
+  assert.equal(requiredPreset("apparel-street-style").creativeDirection.capture?.profile, "urban_night_flash");
+  assert.equal(requiredPreset("apparel-scenic-editorial").creativeDirection.capture?.profile, "natural_editorial_daylight");
+  assert.equal(requiredPreset("apparel-studio-style").creativeDirection.capture?.profile, "soft_studio_fashion");
+
+  for (const preset of creativePresets.filter((candidate) => candidate.vertical !== "apparel")) {
+    assert.equal(preset.creativeDirection.capture, null, `${preset.id} should not receive a fashion capture profile`);
+  }
+});
+
+test("structured preset context is sent to the enhancer and keeps the capture profile", async () => {
+  const preset = requiredPreset("apparel-street-style");
   const client = new CapturingEnhancementClient();
   const result = await enhanceCreativeDirectionWithClient(
     {
       enabled: true,
       generationType: "image",
       preservationMode: "reference_edit",
-      userCreativeDirection: "",
       presetId: preset.id,
       presetTitle: preset.title,
       presetDescription: preset.shortDescription,
       presetCreativeDirection: preset.creativeDirection,
       useCase: preset.useCase,
       generationMode: preset.generationMode,
+      userCreativeDirection: "Keep the back panel visible.",
     },
     client,
   );
 
   assert.equal(result.succeeded, true);
   assert.equal(client.input?.presetId, preset.id);
-  assert.deepEqual(client.input?.presetCreativeDirection, preset.creativeDirection);
-  assert.equal(client.input?.userCreativeDirection, "");
-  assert.ok(result.enhancedPrompt);
-});
-
-test("preset plus user note retains structured defaults and passes customization separately", async () => {
-  const preset = requiredPreset("brutalist-streetwear");
-  const note = "blond male model sitting on the ground with his back facing camera";
-  const client = new CapturingEnhancementClient();
-
-  await enhanceCreativeDirectionWithClient(
-    {
-      enabled: true,
-      generationType: "image",
-      preservationMode: "reference_edit",
-      userCreativeDirection: note,
-      presetCreativeDirection: preset.creativeDirection,
-    },
-    client,
-  );
-
-  assert.equal(client.input?.userCreativeDirection, note);
-  assert.match(client.input?.presetCreativeDirection?.environment ?? "", /brutalist concrete architecture/i);
-  assert.match(client.input?.presetCreativeDirection?.realism ?? "", /Photorealistic/i);
-});
-
-test("every fashion preset has a typed capture profile", () => {
-  for (const preset of creativePresets.filter((candidate) => candidate.category === "fashion")) {
-    assert.ok(preset.creativeDirection.capture, `${preset.id} is missing a capture profile.`);
-  }
-});
-
-test("Editorial Flash contains direct flash, darker ambient exposure, and realistic grain", () => {
-  const direction = requiredPreset("editorial-flash").creativeDirection;
-  const rendered = renderPresetCreativeDirection(requiredPreset("editorial-flash"));
-
-  assert.equal(direction.capture?.profile, "editorial_flash");
-  assert.match(direction.capture?.flashBehavior ?? "", /direct on-camera flash/i);
-  assert.match(direction.capture?.ambientExposure ?? "", /one stop darker/i);
-  assert.match(direction.capture?.grain ?? "", /subtle realistic fine grain/i);
-  assert.match(rendered, /Capture profile: editorial_flash/i);
-});
-
-test("Minimal Studio Fashion keeps soft studio capture and never inherits night flash", () => {
-  const direction = requiredPreset("minimal-studio-fashion").creativeDirection;
-  const rendered = renderPresetCreativeDirection(requiredPreset("minimal-studio-fashion"));
-
-  assert.equal(direction.capture?.profile, "soft_studio_fashion");
-  assert.doesNotMatch(rendered, /urban_night_flash|high-ISO|city ambience/i);
-  assert.match(rendered, /large soft directional source/i);
-});
-
-test("different fashion capture profiles render meaningfully different photography directions", () => {
-  const flash = renderPresetCreativeDirection(requiredPreset("editorial-flash"));
-  const daylight = renderPresetCreativeDirection(requiredPreset("on-model-editorial"));
-  const studio = renderPresetCreativeDirection(requiredPreset("minimal-studio-fashion"));
-
-  assert.notEqual(flash, daylight);
-  assert.notEqual(daylight, studio);
-  assert.match(flash, /on-camera flash/i);
-  assert.match(daylight, /directional daylight/i);
-  assert.match(studio, /large soft directional source/i);
-});
-
-test("jewelry and product presets retain their existing prompt behavior without fashion capture context", () => {
-  for (const preset of creativePresets.filter((candidate) => candidate.category !== "fashion")) {
-    assert.equal(preset.creativeDirection.capture, null, `${preset.id} should not receive fashion capture context.`);
-    assert.doesNotMatch(renderPresetCreativeDirection(preset), /Capture profile:/i);
-  }
-});
-
-test("fashion user notes preserve the preset capture profile during enhancement", async () => {
-  const preset = requiredPreset("urban-night");
-  const client = new CapturingEnhancementClient();
-  const result = await enhanceCreativeDirectionWithClient(
-    {
-      enabled: true,
-      generationType: "image",
-      preservationMode: "reference_edit",
-      useCase: "fashion",
-      presetCreativeDirection: preset.creativeDirection,
-      userCreativeDirection: "blond male facing camera",
-    },
-    client,
-  );
-
   assert.equal(client.input?.presetCreativeDirection?.capture?.profile, "urban_night_flash");
   assert.match(result.prompt, /Capture profile: urban_night_flash/i);
 });
 
-test("no-preset custom prompt flow remains raw and unchanged", async () => {
-  const client = new CapturingEnhancementClient();
-  const note = "put it on a table in dim lighting";
-  const result = await enhanceCreativeDirectionWithClient(
-    {
-      enabled: false,
-      generationType: "image",
-      preservationMode: "reference_edit",
-      userCreativeDirection: note,
-    },
-    client,
-  );
+test("watch and footwear routing uses reference editing only for worn presets", () => {
+  const watchOnWrist = resolveGenerationStrategy({ preset: requiredPreset("watch-on-wrist"), userPrompt: "A warm wrist editorial." });
+  const watchStudio = resolveGenerationStrategy({ preset: requiredPreset("watch-bright-studio"), userPrompt: "A watch hero." });
+  const footwearStreet = resolveGenerationStrategy({ preset: requiredPreset("footwear-street-lifestyle"), userPrompt: "An on-foot editorial." });
+  const footwearStudio = resolveGenerationStrategy({ preset: requiredPreset("footwear-studio"), userPrompt: "A studio footwear hero." });
 
-  assert.equal(result.prompt, note);
-  assert.equal(client.input, null);
-});
-
-test("Tech Launch Hero direct renderer keeps table and dim-light customizations with campaign defaults", () => {
-  const direction = renderPresetCreativeDirection(
-    requiredPreset("tech-launch-hero"),
-    "put it on a table in dim lighting",
-  );
-
-  assert.match(direction, /technology product/i);
-  assert.match(direction, /low-key key light/i);
-  assert.match(direction, /table in dim lighting/i);
-  assert.match(direction, /single product|one hero product/i);
+  assert.equal(watchOnWrist.strategy, "watch_on_wrist");
+  assert.equal(watchOnWrist.effectivePreservationMode, "reference_edit");
+  assert.equal(watchStudio.effectivePreservationMode, "pixel_lock");
+  assert.equal(footwearStreet.strategy, "footwear_on_model");
+  assert.equal(footwearStreet.effectivePreservationMode, "reference_edit");
+  assert.equal(footwearStudio.effectivePreservationMode, "pixel_lock");
 });

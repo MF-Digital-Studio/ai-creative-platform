@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Creative AI — From Product Photo to Campaign",
-    "description": "An AI creative platform that turns jewelry, fashion and cosmetics products into realistic campaign visuals and short-form videos."
+    "description": "Premium AI campaign content for apparel, jewelry, watches, cosmetics, and footwear."
   },
   "Navigation": {
     "home": "Home",
@@ -369,7 +369,7 @@
     "eyebrow": "Create your campaign",
     "ctaTitleLead": "One product photo.",
     "ctaTitleTrail": "An entire campaign.",
-    "description": "Turn your jewelry, fashion and cosmetics products into realistic visuals and short-form videos.",
+    "description": "Create premium campaign visuals for apparel, jewelry, watches, cosmetics, and footwear.",
     "cta": "Try for Free →",
     "shortDescription": "Campaign-ready content from your product photos.",
     "platform": "PLATFORM",
@@ -552,12 +552,12 @@
     },
     "composer": {
       "heading": "What will you create today?",
-      "description": "Turn your product into campaign-ready visuals.",
+      "description": "Turn apparel, jewelry, watches, cosmetics, or footwear into campaign-ready visuals.",
       "eyebrow": "Product + Creative Direction",
       "context": "New project",
       "promptLabel": "Creative direction",
       "creativeNoteLabel": "Creative note",
-      "promptPlaceholder": "Describe the scene, model, setting or campaign you have in mind...",
+      "promptPlaceholder": "Example: Create a close wrist editorial with warm directional light...",
       "promptHelper": "Write naturally — we'll help turn your idea into a production-ready direction.",
       "presetNoteHelper": "Optional — add a detail for the selected preset, or leave this blank to use the preset direction.",
       "selectedPreset": "Selected preset: {title}",
@@ -648,41 +648,67 @@
       "description": "Choose a production-ready direction, then add an optional note.",
       "listLabel": "Creative preset library",
       "usePreset": "Select {title} preset",
-      "categories": { "fashion": "Fashion", "jewelry": "Jewelry", "product": "Product" },
+      "categories": { "apparel": "Apparel", "jewelry": "Jewelry", "watches": "Watches", "cosmetics": "Cosmetics", "footwear": "Footwear" },
       "items": {
-        "on-model-editorial": { "title": "On-model Editorial", "description": "Clean premium fashion editorial photograph.", "alt": "Premium on-model fashion editorial" },
+        "apparel-street-style": { "title": "Street Style", "description": "Product-led streetwear editorial in a real city setting.", "alt": "Product-led street-style apparel campaign in the city" },
+        "apparel-scenic-editorial": { "title": "Scenic Editorial", "description": "Outdoor fashion imagery where the landscape supports the garment.", "alt": "Product-led apparel editorial in a scenic landscape" },
+        "apparel-studio-style": { "title": "Studio Style", "description": "Clean premium fashion studio with preserved product detail.", "alt": "Clean premium studio apparel photograph" },
+        "jewelry-on-body": { "title": "On Body", "description": "Close editorial jewelry with natural skin contact and scale.", "alt": "Jewelry naturally worn on the hand or body" },
+        "jewelry-studio": { "title": "Studio", "description": "Luxury jewelry photography focused on material and craftsmanship.", "alt": "Premium jewelry product photograph in a clean studio" },
+        "jewelry-scenic": { "title": "Scenic Setting", "description": "A tactile natural setting that keeps jewelry in the lead.", "alt": "Hero jewelry product photograph on a stone surface" },
+        "watch-on-wrist": { "title": "On Wrist", "description": "Close premium editorial with a naturally fitted hero watch.", "alt": "Premium watch naturally fitted to a wrist" },
+        "watch-bright-studio": { "title": "Bright Studio", "description": "Clear watch campaign with readable dial and material detail.", "alt": "Premium watch product photograph in a bright studio" },
+        "watch-scenic-environment": { "title": "Scenic Environment", "description": "A refined lifestyle setting where the watch stays the hero.", "alt": "Premium watch as the hero product on a stone surface" },
+        "footwear-hero-focus": { "title": "Footwear Focus", "description": "Powerful close framing for silhouette, sole, and construction.", "alt": "Close campaign photograph focused on the footwear" },
+        "footwear-studio": { "title": "Studio", "description": "Premium footwear studio with clear material and sole definition.", "alt": "Premium footwear product photograph in a studio" },
+        "footwear-street-lifestyle": { "title": "Street Lifestyle", "description": "A natural city step that keeps the footwear in focus.", "alt": "Natural city step focused on the footwear" },
+        "cosmetics-studio": { "title": "Studio", "description": "Luminous beauty campaign with exact packaging detail.", "alt": "Premium cosmetic product photograph in a bright studio" },
+        "cosmetics-aesthetic-setting": { "title": "Aesthetic Setting", "description": "A refined tactile beauty setting that remains product-led.", "alt": "Cosmetic product photograph on an elegant stone surface" },
+        "cosmetics-lifestyle-landscape": { "title": "Lifestyle Landscape", "description": "A warm natural lifestyle scene with the product still dominant.", "alt": "Hero cosmetic product photograph in a natural setting" },
+        "on-model-editorial": { "title": "On-Model Editorial", "description": "Clean premium apparel editorial photograph.", "alt": "Premium on-model apparel editorial" },
         "brutalist-streetwear": { "title": "Brutalist Streetwear", "description": "Streetwear campaign with modern architectural mood.", "alt": "Streetwear editorial in modern architecture" },
-        "urban-night": { "title": "Urban Night", "description": "Cinematic night streetwear campaign.", "alt": "Cinematic urban night fashion campaign" },
+        "urban-night": { "title": "Urban Streetwear", "description": "Cinematic urban streetwear campaign.", "alt": "Cinematic urban streetwear campaign" },
         "minimal-studio-fashion": { "title": "Minimal Studio Fashion", "description": "Soft studio setup for clean apparel presentation.", "alt": "Minimal studio apparel photograph" },
         "back-print-focus": { "title": "Back Print Focus", "description": "Designed for back-graphic apparel campaigns.", "alt": "Back-focused apparel campaign photograph" },
         "front-hero-apparel": { "title": "Front Hero Apparel", "description": "Front-facing garment-focused model shot.", "alt": "Front-facing apparel campaign photograph" },
         "editorial-flash": { "title": "Editorial Flash", "description": "Raw premium streetwear photography with authentic direct-flash character.", "alt": "Streetwear campaign photographed with direct flash" },
         "coastal-editorial": { "title": "Coastal Editorial", "description": "Natural coastal streetwear campaign with wind and real location texture.", "alt": "Streetwear model in a natural coastal editorial setting" },
-        "luxury-macro-jewelry": { "title": "Luxury Macro", "description": "Close-up luxury jewelry campaign with rich detail.", "alt": "Luxury jewelry macro detail" },
-        "soft-daylight-jewelry": { "title": "Soft Daylight Jewelry", "description": "Elegant jewelry photography in soft natural light.", "alt": "Jewelry in soft daylight" },
+        "luxury-macro-jewelry": { "title": "Luxury Macro Still Life", "description": "Close-up luxury jewelry still life with rich detail.", "alt": "Luxury jewelry macro still life" },
+        "soft-daylight-jewelry": { "title": "Soft Editorial Jewelry", "description": "Elegant jewelry editorial in soft natural light.", "alt": "Jewelry editorial in soft daylight" },
         "black-luxury-jewelry": { "title": "Black Luxury", "description": "Dark premium jewelry campaign with dramatic lighting.", "alt": "Dark luxury jewelry campaign" },
-        "jewelry-on-model": { "title": "Jewelry on Model", "description": "Elegant on-model jewelry editorial image.", "alt": "Jewelry worn by an adult model" },
+        "jewelry-on-model": { "title": "Jewelry On Hand", "description": "Macro editorial jewelry worn naturally on the hand.", "alt": "Jewelry naturally worn on an adult hand" },
         "stone-surface-jewelry": { "title": "Stone Surface", "description": "Jewelry styled on elegant stone or marble surfaces.", "alt": "Jewelry arranged on stone" },
         "minimal-product-detail": { "title": "Minimal Detail", "description": "Clean and minimal close-up product presentation.", "alt": "Minimal jewelry close-up" },
-        "dark-premium-studio": { "title": "Dark Premium Studio", "description": "High-end studio product campaign with dark premium mood.", "alt": "Dark premium product studio" },
-        "soft-daylight-product": { "title": "Soft Daylight Product", "description": "Bright natural commercial product photography.", "alt": "Product in bright daylight" },
-        "tabletop-lifestyle": { "title": "Tabletop Lifestyle", "description": "Styled product placed naturally in a tasteful setting.", "alt": "Product in a tabletop lifestyle setting" },
-        "reflective-luxury-surface": { "title": "Reflective Luxury", "description": "Elegant luxury product scene with controlled reflections.", "alt": "Product on a reflective luxury surface" },
-        "minimal-catalog-plus": { "title": "Minimal Commercial", "description": "Clean commercial product shot with premium polish.", "alt": "Clean premium commercial product shot" },
-        "tech-launch-hero": { "title": "Tech Launch Hero", "description": "Flagship technology campaign image with refined drama.", "alt": "Technology product launch campaign" }
+        "dark-premium-studio": { "title": "Premium Beauty Editorial", "description": "Premium beauty editorial with controlled bottle reflections.", "alt": "Premium beauty product editorial" },
+        "soft-daylight-product": { "title": "Soft Daylight Beauty", "description": "Bright natural skincare photography.", "alt": "Beauty product in daylight" },
+        "tabletop-lifestyle": { "title": "Warm Luxury Vanity Scene", "description": "Beauty product in a warm refined vanity setting.", "alt": "Beauty product in a warm luxury vanity setting" },
+        "reflective-luxury-surface": { "title": "Reflective Cosmetics", "description": "Cosmetic packaging on a controlled reflective surface.", "alt": "Cosmetics on a reflective surface" },
+        "minimal-catalog-plus": { "title": "Clean Studio Product Shot", "description": "Clean premium beauty packaging studio shot.", "alt": "Clean premium beauty packaging studio shot" },
+        "watch-hero": { "title": "Watch Studio Close-up", "description": "Clean luxury watch studio close-up.", "alt": "Luxury watch studio close-up" },
+        "wrist-editorial": { "title": "Watch On Wrist Editorial", "description": "Premium editorial photography with a naturally worn watch.", "alt": "Watch naturally worn on a wrist" },
+        "macro-dial": { "title": "Macro Dial", "description": "Extreme close-up for dial, hands, indices, and finish.", "alt": "Watch dial macro detail" },
+        "dark-luxury-watch": { "title": "Luxury Watch Campaign", "description": "Controlled luxury watch campaign with restrained reflections.", "alt": "Luxury watch campaign" },
+        "reflective-metal-watch": { "title": "Reflective Metal", "description": "Premium metal and specular material study.", "alt": "Reflective metal watch detail" },
+        "on-foot-editorial": { "title": "On-foot Editorial", "description": "Shoes naturally worn by a model in editorial photography.", "alt": "Footwear naturally worn by a model" },
+        "street-footwear": { "title": "On-Foot Street Campaign", "description": "Urban street campaign focused on footwear.", "alt": "Footwear in an urban street campaign" },
+        "studio-footwear-hero": { "title": "Minimal Sneaker Studio", "description": "Clean minimal commercial sneaker studio shot.", "alt": "Minimal sneaker studio shot" },
+        "ground-level-campaign": { "title": "Ground-Level Campaign", "description": "Low camera angle emphasizing footwear.", "alt": "Ground-level footwear campaign" },
+        "motion-step": { "title": "Motion Step", "description": "Walking pose with realistic footwear-body interaction.", "alt": "Footwear during a natural step" },
+        "footwear-material-detail": { "title": "Footwear Hero Close-up", "description": "Close-up of footwear material, sole, and construction.", "alt": "Footwear hero close-up" }
       }
     },
     "inspiration": {
       "heading": "Explore creative directions",
-      "description": "Curated campaign references for fashion, cosmetics, jewelry and product motion.",
+      "description": "Curated campaign directions for apparel, jewelry, watches, cosmetics, and footwear.",
       "filterLabel": "Filter creative directions",
       "useDirection": "Use this direction",
       "categories": {
         "all": "All",
-        "fashion": "Fashion",
+        "apparel": "Apparel",
         "cosmetics": "Cosmetics",
         "jewelry": "Jewelry",
-        "productVideo": "Product Video"
+        "watches": "Watches",
+        "footwear": "Footwear"
       },
       "types": {
         "image": "Image",
@@ -696,8 +722,8 @@
         "textureStudy": "Texture Study",
         "goldSculpture": "Sculpted Gold",
         "softDaylightJewelry": "Soft Daylight Jewelry",
-        "midnightFragrance": "Midnight Fragrance",
-        "jewelryMotion": "Jewelry in Motion"
+        "warmWrist": "Warm Wrist Editorial",
+        "streetStep": "Street Step"
       },
       "alts": {
         "architecturalFashion": "Adult model in a long burgundy dress framed by stone arches",
@@ -706,8 +732,8 @@
         "textureStudy": "Close-up study of glossy cosmetic texture in neutral tones",
         "goldSculpture": "Curved polished gold jewelry on a dark textured surface",
         "softDaylightJewelry": "Gold earrings with violet stones resting on warm limestone",
-        "midnightFragrance": "Blue glass fragrance bottle reflected in dark water",
-        "jewelryMotion": "Gold jewelry arranged as a cinematic vertical video frame"
+        "warmWrist": "Premium watch naturally worn on a wrist in warm directional light",
+        "streetStep": "Sneakers in a natural walking step on city pavement"
       },
       "prompts": {
         "architecturalFashion": "Create a poised editorial fashion campaign in warm monumental architecture with precise garment detail.",
@@ -716,8 +742,8 @@
         "textureStudy": "Create a tactile macro study that highlights material texture, sheen and soft tonal depth.",
         "goldSculpture": "Photograph the jewelry as a sculptural object with dramatic black surfaces and controlled gold reflections.",
         "softDaylightJewelry": "Create a refined daylight jewelry scene on pale stone with soft shadows and premium detail.",
-        "midnightFragrance": "Create a short fragrance film with dark water reflections, slow camera movement and a luminous hero frame.",
-        "jewelryMotion": "Create a vertical jewelry film with measured motion, close-up detail and warm directional light."
+        "warmWrist": "Create a close wrist editorial with warm directional light and true watch detail.",
+        "streetStep": "Create a low-angle street campaign focused on the sneakers and natural floor contact."
       }
     },
     "recentWork": {

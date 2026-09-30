@@ -43,7 +43,7 @@ function preserveFashionCaptureProfile(
   input: PromptEnhancementInput,
   brief: CreativeBrief,
 ): CreativeBrief {
-  if (input.useCase !== "fashion" || !input.presetCreativeDirection?.capture) {
+  if (input.useCase !== "apparel" || !input.presetCreativeDirection?.capture) {
     return brief;
   }
 

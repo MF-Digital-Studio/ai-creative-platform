@@ -126,11 +126,11 @@ test("OpenAI diagnostics retain safe categories but never image data, URLs, or A
 
 test("reference visual direction cannot change generation strategy", () => {
   const dualSense = resolveGenerationStrategy({
-    productContext: { category: "product" },
+    productContext: { category: "cosmetics" },
     userPrompt: "Place the supplied controller on a desk.",
   });
   const hoodie = resolveGenerationStrategy({
-    productContext: { category: "fashion" },
+    productContext: { category: "apparel" },
     userPrompt: "A clean campaign image.",
   });
   const jewelry = resolveGenerationStrategy({

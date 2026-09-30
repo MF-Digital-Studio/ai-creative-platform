@@ -7,20 +7,27 @@ import {updateSession} from "@/lib/supabase/proxy";
 const intlMiddleware = createMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
-  const supabaseResponse = await updateSession(request);
   const response = intlMiddleware(request);
 
-  supabaseResponse.cookies.getAll().forEach(({name, value, ...options}) => {
-    response.cookies.set(name, value, options);
-  });
+  try {
+    const supabaseResponse = await updateSession(request);
 
-  ["cache-control", "expires", "pragma"].forEach((header) => {
-    const value = supabaseResponse.headers.get(header);
+    supabaseResponse.cookies.getAll().forEach(({name, value, ...options}) => {
+      response.cookies.set(name, value, options);
+    });
 
-    if (value) {
-      response.headers.set(header, value);
-    }
-  });
+    ["cache-control", "expires", "pragma"].forEach((header) => {
+      const value = supabaseResponse.headers.get(header);
+
+      if (value) {
+        response.headers.set(header, value);
+      }
+    });
+  } catch (error) {
+    // A temporary auth outage must not make public pages unavailable. Protected
+    // routes still verify the session in their server components.
+    console.error("Unable to refresh the Supabase session in proxy.", error);
+  }
 
   return response ?? NextResponse.next();
 }

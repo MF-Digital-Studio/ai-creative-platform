@@ -34,6 +34,8 @@ import {
 import { getCreativePreset } from "../src/lib/creative-presets/creative-presets";
 import { resolveGenerationStrategy } from "../src/lib/generation/strategy/generation-strategy";
 import { normalizeImageInputForOpenAI } from "../src/lib/generation/providers/normalize-image-input";
+import { verticalQualityProfiles } from "../src/lib/generation/quality/vertical-quality-profiles";
+import { supportedVerticals } from "../src/lib/verticals/supported-verticals";
 
 type CacheIdentity = {
   model: string;
@@ -554,7 +556,7 @@ test("fashion presets route to reference editing while rigid products retain Pix
 });
 
 test("strategy router prioritizes trusted fashion preset hints", () => {
-  const preset = getCreativePreset("urban-night");
+  const preset = getCreativePreset("apparel-street-style");
   assert.ok(preset);
   const result = resolveGenerationStrategy({
     preset,
@@ -586,8 +588,8 @@ test("strategy router prefers structured product context over conflicting prompt
   assert.equal(result.reason, "structured_product_context");
 });
 
-test("strategy router keeps Tech Launch Hero and product lifestyle scenes rigid", () => {
-  const preset = getCreativePreset("tech-launch-hero");
+test("strategy router keeps watch hero and cosmetics lifestyle scenes rigid", () => {
+  const preset = getCreativePreset("watch-bright-studio");
   assert.ok(preset);
   const presetResult = resolveGenerationStrategy({ preset, userPrompt: "Put it on a desk" });
   const lifestyleResult = resolveGenerationStrategy({
@@ -601,8 +603,8 @@ test("strategy router keeps Tech Launch Hero and product lifestyle scenes rigid"
 });
 
 test("strategy router distinguishes jewelry still life from on-model jewelry", () => {
-  const macroPreset = getCreativePreset("luxury-macro-jewelry");
-  const onModelPreset = getCreativePreset("jewelry-on-model");
+  const macroPreset = getCreativePreset("jewelry-studio");
+  const onModelPreset = getCreativePreset("jewelry-on-body");
   assert.ok(macroPreset);
   assert.ok(onModelPreset);
   const stillLife = resolveGenerationStrategy({ preset: macroPreset, userPrompt: "" });
@@ -621,17 +623,58 @@ test("strategy router distinguishes jewelry still life from on-model jewelry", (
   assert.equal(presetlessOnModel.strategy, "jewelry_on_model");
 });
 
-test("jewelry-on-model strategy uses reference instructions instead of flat Pixel Lock compositing", () => {
-  const prompt = buildImageGenerationPrompt(
+test("jewelry on-body policy preserves the exact design and physically correct placement", () => {
+  const result = buildImageGenerationPromptWithPolicy(
     "Show this ring naturally on a woman's hand",
     "reference_edit",
     { strategy: "jewelry_on_model" },
   );
+  const { prompt } = result;
 
   assert.match(prompt, /jewelry reference for a real person/i);
-  assert.match(prompt, /never paste, overlay, or composite the original jewelry image flat/i);
-  assert.match(prompt, /Jewelry realism policy/i);
+  assert.match(prompt, /Preserve the exact jewelry design/i);
+  assert.match(prompt, /gemstone count, placement, proportions, metal form, metal thickness/i);
+  assert.match(prompt, /Do not float, paste, overlay, fuse, composite, distort, redesign, or reinterpret/i);
+  assert.match(prompt, /Vertical realism \(jewelry\)/i);
+  assert.match(prompt, /complete band wrap naturally around one anatomically plausible finger/i);
+  assert.match(prompt, /neck and collarbone curvature, gravity, chain tension/i);
+  assert.match(prompt, /wrap or drape naturally around the wrist/i);
+  assert.match(prompt, /attach at a believable ear point/i);
+  assert.match(prompt, /macro hand close-up for rings/i);
+  assert.equal(result.layers.fidelityPolicy, "jewelry_on_model");
   assert.doesNotMatch(prompt, /product placement in the supplied canvas is intentional/i);
+});
+
+test("strategy router recognizes Turkish jewelry on-body intent for every wearable fixture", () => {
+  const scenarios = [
+    "Yüzüğü kadının parmağına doğal şekilde yerleştir.",
+    "Kolye boynunda doğal bir lifestyle çekimde dursun.",
+    "Bileklik modelin bileğinde premium editorial görünsün.",
+    "Küpe kulağa doğru şekilde takılmış yakın portrede görünsün.",
+  ];
+
+  for (const userPrompt of scenarios) {
+    const result = resolveGenerationStrategy({ userPrompt });
+
+    assert.equal(result.strategy, "jewelry_on_model", userPrompt);
+    assert.equal(result.effectivePreservationMode, "reference_edit", userPrompt);
+  }
+});
+
+test("jewelry still-life policy protects form and material detail without body placement", () => {
+  const result = buildImageGenerationPromptWithPolicy(
+    "A diamond ring on a warm ivory studio surface.",
+    "pixel_lock",
+    { strategy: "jewelry_still_life", useCase: "jewelry" },
+  );
+
+  assert.equal(result.layers.fidelityPolicy, "jewelry_still_life");
+  assert.match(result.prompt, /exact jewelry product to present as a premium commercial still life/i);
+  assert.match(result.prompt, /gemstone count, placement, proportions, metal form, metal thickness/i);
+  assert.match(result.prompt, /physically supported with truthful contact shadows/i);
+  assert.match(result.prompt, /no body or prop may obscure its full form/i);
+  assert.match(result.prompt, /close product-first luxury still life/i);
+  assert.match(result.prompt, /No extra or missing stones, incorrect stone placement/i);
 });
 
 test("strategy routing keeps explicit artistic intent while preserving the safe product fallback", () => {
@@ -657,12 +700,12 @@ test("fashion on-model prompts preserve garment identity without flat-product co
   assert.match(prompt, /never paste, overlay, or composite the original flat garment image/i);
   assert.match(prompt, /realistic human anatomy and fabric behavior/i);
   assert.match(prompt, /Global photorealism policy/i);
-  assert.match(prompt, /Fashion realism policy/i);
+  assert.match(prompt, /Vertical realism \(apparel\)/i);
   assert.equal(prompt.includes("The product placement in the supplied canvas is intentional"), false);
 });
 
-test("Editorial Flash golden context keeps user direction, capture behavior, and fashion realism", () => {
-  const preset = getCreativePreset("editorial-flash");
+test("Street Style regression keeps user direction, capture behavior, and apparel realism", () => {
+  const preset = getCreativePreset("apparel-street-style");
   assert.ok(preset);
   const context = buildCreativePresetDirection(
     "dark-haired male model standing near a city street, back facing camera",
@@ -674,11 +717,11 @@ test("Editorial Flash golden context keeps user direction, capture behavior, and
   assert.match(prompt, /back facing camera/i);
   assert.match(prompt, /city street/i);
   assert.match(prompt, /direct on-camera flash/i);
-  assert.match(prompt, /one stop darker/i);
+  assert.match(prompt, /darker than the subject/i);
   assert.match(prompt, /natural skin texture|skin pores/i);
-  assert.match(prompt, /subtle realistic fine grain/i);
-  assert.match(prompt, /natural drape/i);
-  assert.match(prompt, /real streetwear campaign photograph/i);
+  assert.match(prompt, /subtle realistic high-ISO grain/i);
+  assert.match(prompt, /cloth that responds naturally|fabric weight/i);
+  assert.match(prompt, /real night streetwear campaign photo/i);
   assert.match(prompt, /avoid CGI or 3D-render appearance/i);
 });
 
@@ -701,8 +744,8 @@ test("no-preset product prompts receive global and rigid-product realism", () =>
 
   assert.match(prompt, /real-world commercial photography/i);
   assert.match(prompt, /physically plausible lighting/i);
-  assert.match(prompt, /realistic contact shadows and reflections/i);
-  assert.match(prompt, /CGI-render appearance/i);
+  assert.match(prompt, /physically plausible lighting/i);
+  assert.match(prompt, /CGI or 3D-render appearance/i);
   assert.match(prompt, /table in dim lighting/i);
 });
 
@@ -712,7 +755,7 @@ test("no-preset fashion prompts receive fashion realism and garment fidelity", (
     "reference_edit",
   );
 
-  assert.match(prompt, /Fashion realism policy/i);
+  assert.match(prompt, /Vertical realism \(apparel\)/i);
   assert.match(prompt, /visible skin pores/i);
   assert.match(prompt, /natural drape/i);
   assert.match(prompt, /Preserve garment identity/i);
@@ -722,10 +765,10 @@ test("no-preset fashion prompts receive fashion realism and garment fidelity", (
 test("no-preset jewelry prompts receive jewelry realism", () => {
   const prompt = buildImageGenerationPrompt("Show this ring on a hand", "pixel_lock");
 
-  assert.match(prompt, /Jewelry realism policy/i);
+  assert.match(prompt, /Vertical realism \(jewelry\)/i);
   assert.match(prompt, /metal reflections/i);
-  assert.match(prompt, /realistic skin contact and hand anatomy/i);
-  assert.match(prompt, /true-to-scale macro or editorial photography/i);
+  assert.match(prompt, /strict in a supported still-life arrangement/i);
+  assert.match(prompt, /true-to-scale photography/i);
 });
 
 test("explicit artistic intent skips commercial photorealism without removing fidelity", () => {
@@ -749,4 +792,80 @@ test("global realism retains a user composition instruction", () => {
 
   assert.match(prompt, /lower-left corner/i);
   assert.match(prompt, /Global photorealism policy/i);
+});
+
+test("every supported vertical has a complete deterministic quality profile", () => {
+  assert.deepEqual(Object.keys(verticalQualityProfiles), supportedVerticals);
+
+  for (const profile of Object.values(verticalQualityProfiles)) {
+    assert.ok(profile.fidelityInvariants.length > 80);
+    assert.ok(profile.identityPriorities.includes("Identity-critical regions"));
+    assert.ok(profile.allowedTransformations.length > 60);
+    assert.ok(profile.onModelCompositionPolicy.length > 60);
+    assert.ok(profile.stillLifeCompositionPolicy.length > 60);
+    assert.ok(profile.artifactPrevention.startsWith("No "));
+  }
+});
+
+test("vertical profiles preserve identity regions ahead of conflicting creative styling", () => {
+  const prompt = buildImageGenerationPrompt(
+    "Use red futuristic sneaker styling and add glowing side graphics.",
+    "reference_edit",
+    { strategy: "footwear_on_model", useCase: "footwear" },
+  );
+
+  assert.match(prompt, /outsole, lacing and eyelet layout, logo, toe box, panel geometry/i);
+  assert.match(prompt, /No altered sole, extra panels or colors/i);
+  assert.ok(prompt.indexOf("Identity-critical regions") < prompt.indexOf("red futuristic sneaker styling"));
+});
+
+test("watch-on-wrist fidelity policy preserves the dial, wrist fit, and clean microtext fallback", () => {
+  const watch = buildImageGenerationPrompt("A warm wrist editorial.", "reference_edit", {
+    strategy: "watch_on_wrist", useCase: "watches",
+  });
+
+  assert.match(watch, /case shape, bezel, crown side, lugs, bracelet or strap structure/i);
+  assert.match(watch, /marker count, hand style, date-window position/i);
+  assert.match(watch, /clean believable dial instead of nonsense microtext/i);
+  assert.match(watch, /close wrist-led editorial frame/i);
+  assert.match(watch, /No extra crowns or pushers, missing crown detail/i);
+});
+
+test("footwear hero-composition policy keeps the shoe dominant without changing fidelity", () => {
+  const footwear = buildImageGenerationPrompt("A studio sneaker hero.", "pixel_lock", {
+    strategy: "rigid_product", useCase: "footwear",
+  });
+
+  assert.match(footwear, /outsole and midsole geometry.*lacing system.*eyelets/i);
+  assert.match(footwear, /shoe the dominant close hero/i);
+  assert.match(footwear, /outsole, laces, panel lines, color blocking, shape, and logo placement/i);
+  assert.match(footwear, /No altered sole, extra panels or colors/i);
+});
+
+test("cosmetics regression retains packaging fidelity and commercial material realism", () => {
+  const cosmetics = buildImageGenerationPrompt("A serum bottle on stone.", "pixel_lock", {
+    strategy: "rigid_product", useCase: "cosmetics",
+  });
+
+  assert.match(cosmetics, /cap, pump, or dropper.*label and logo placement/i);
+  assert.match(cosmetics, /glass refraction.*liquid translucency/i);
+  assert.match(cosmetics, /single clearly readable hero/i);
+});
+
+test("prompt layering keeps identity-critical policies ahead of creative direction", () => {
+  const result = buildImageGenerationPromptWithPolicy(
+    "Turn the ring into a fantasy accessory and add extra stones.",
+    "reference_edit",
+    { strategy: "jewelry_on_model", useCase: "jewelry" },
+  );
+
+  const { prompt } = result;
+  assert.ok(prompt.indexOf("The supplied image is a jewelry reference") < prompt.indexOf("Vertical fidelity (jewelry)"));
+  assert.ok(prompt.indexOf("Vertical fidelity (jewelry)") < prompt.indexOf("Global photorealism policy"));
+  assert.ok(prompt.indexOf("Global photorealism policy") < prompt.indexOf("Vertical realism (jewelry)"));
+  assert.ok(prompt.indexOf("Vertical realism (jewelry)") < prompt.indexOf("Vertical composition policy (jewelry)"));
+  assert.ok(prompt.indexOf("Vertical composition policy (jewelry)") < prompt.indexOf("Turn the ring into a fantasy accessory"));
+  assert.equal(result.layers.jewelryV2Applied, true);
+  assert.equal(result.layers.watchV2Applied, false);
+  assert.equal(result.layers.footwearV2Applied, false);
 });

@@ -22,7 +22,7 @@ export function CreativePresetRail() {
 
   return (
     <div className="dashboard-template-rail" aria-label={t("listLabel")}>
-      {creativePresets.map((preset) => (
+      {creativePresets.map((preset, index) => (
         <button
           key={preset.id}
           type="button"
@@ -36,6 +36,7 @@ export function CreativePresetRail() {
               src={preset.thumbnail}
               alt={t(`items.${preset.id}.alt`)}
               fill
+              loading={index === 0 ? "eager" : "lazy"}
               sizes="(min-width: 1280px) 230px, (min-width: 768px) 210px, 72vw"
               style={{ objectPosition: preset.objectPosition }}
             />

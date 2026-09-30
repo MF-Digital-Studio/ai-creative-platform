@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Creative AI — Ürün Fotoğrafından Kampanyaya",
-    "description": "Takı, giyim ve kozmetik ürünlerini gerçekçi kampanya görsellerine ve kısa videolara dönüştüren AI kreatif platformu."
+    "description": "Giyim, takı, saat, kozmetik ve ayakkabı için premium AI kampanya içerikleri."
   },
   "Navigation": {
     "home": "Ana Sayfa",
@@ -369,7 +369,7 @@
     "eyebrow": "Kampanyanı oluştur",
     "ctaTitleLead": "Bir ürün fotoğrafı.",
     "ctaTitleTrail": "Baştan sona bir kampanya.",
-    "description": "Takı, giyim ve kozmetik ürünlerinizi gerçekçi görsellere ve kısa videolara dönüştürün.",
+    "description": "Giyim, takı, saat, kozmetik ve ayakkabı için premium kampanya görselleri oluşturun.",
     "cta": "Ücretsiz Dene →",
     "shortDescription": "Ürün fotoğraflarından kampanyaya hazır içerikler.",
     "platform": "PLATFORM",
@@ -552,12 +552,12 @@
     },
     "composer": {
       "heading": "Bugün ne oluşturacaksınız?",
-      "description": "Ürününüzü kampanyaya hazır görsellere dönüştürün.",
+      "description": "Giyim, takı, saat, kozmetik veya ayakkabınızı kampanyaya hazır görsellere dönüştürün.",
       "eyebrow": "Ürün + Yaratıcı Yön",
       "context": "Yeni proje",
       "promptLabel": "Yaratıcı yön",
       "creativeNoteLabel": "Yaratıcı not",
-      "promptPlaceholder": "Aklınızdaki sahneyi, modeli, ortamı veya kampanyayı anlatın...",
+      "promptPlaceholder": "Örnek: Sıcak yönlü ışıkla yakın plan bir bilek editoriali oluşturun...",
       "promptHelper": "Doğal bir dille yazın — fikrinizi üretime hazır bir yöne dönüştürmenize yardımcı olacağız.",
       "presetNoteHelper": "İsteğe bağlı — seçili presete bir detay ekleyin veya preset yönünü kullanmak için boş bırakın.",
       "selectedPreset": "Seçili preset: {title}",
@@ -648,41 +648,67 @@
       "description": "Üretime hazır bir yön seçin, ardından isteğe bağlı notunuzu ekleyin.",
       "listLabel": "Yaratıcı preset kütüphanesi",
       "usePreset": "{title} presetini seç",
-      "categories": { "fashion": "Giyim", "jewelry": "Takı", "product": "Ürün" },
+      "categories": { "apparel": "Giyim", "jewelry": "Takı", "watches": "Saat", "cosmetics": "Kozmetik", "footwear": "Ayakkabı" },
       "items": {
-        "on-model-editorial": { "title": "On-model Editorial", "description": "Temiz ve premium moda editorial fotoğrafı.", "alt": "Model üzerinde premium moda editoriali" },
+        "apparel-street-style": { "title": "Sokak Stili", "description": "Gerçek şehir atmosferinde ürün odaklı streetwear editoriali.", "alt": "Şehirde ürün odaklı sokak stili giyim kampanyası" },
+        "apparel-scenic-editorial": { "title": "Estetik Manzara", "description": "Manzaranın ürünü desteklediği açık hava moda görseli.", "alt": "Manzara içinde ürün odaklı giyim editoriali" },
+        "apparel-studio-style": { "title": "Stüdyo Stili", "description": "Ürün detaylarını koruyan temiz premium moda stüdyosu.", "alt": "Temiz premium stüdyo giyim fotoğrafı" },
+        "jewelry-on-body": { "title": "Üzerinde", "description": "Takının ciltle doğal temasını gösteren yakın editorial.", "alt": "Takının elde veya vücutta doğal şekilde kullanımı" },
+        "jewelry-studio": { "title": "Stüdyo", "description": "Malzeme ve işçiliği öne çıkaran lüks takı çekimi.", "alt": "Temiz stüdyoda premium takı ürün fotoğrafı" },
+        "jewelry-scenic": { "title": "Estetik Ortam", "description": "Takıyı önde tutan dokulu, doğal premium ortam.", "alt": "Taş yüzeyde kahraman takı ürün çekimi" },
+        "watch-on-wrist": { "title": "Bilekte", "description": "Bileğe doğal oturan saati öne çıkaran yakın çekim.", "alt": "Bilekte doğal duran premium saat" },
+        "watch-bright-studio": { "title": "Aydınlık Stüdyo", "description": "Kadran ve materyal detaylarını gösteren net saat kampanyası.", "alt": "Aydınlık stüdyoda premium saat ürün çekimi" },
+        "watch-scenic-environment": { "title": "Estetik Ortam", "description": "Saatin kahraman kaldığı rafine lifestyle ortamı.", "alt": "Taş yüzeyde kahraman ürün olarak premium saat" },
+        "footwear-hero-focus": { "title": "Ayakkabı Odağı", "description": "Siluet, taban ve detayları öne çıkaran güçlü yakın plan.", "alt": "Ayakkabıyı öne çıkaran yakın plan kampanya çekimi" },
+        "footwear-studio": { "title": "Stüdyo", "description": "Materyal ve taban yapısını gösteren premium ayakkabı stüdyosu.", "alt": "Premium stüdyoda ayakkabı ürün çekimi" },
+        "footwear-street-lifestyle": { "title": "Sokak Yaşamı", "description": "Ayakkabının odağını koruyan doğal şehir adımı.", "alt": "Şehir zemininde ayakkabı odaklı doğal adım" },
+        "cosmetics-studio": { "title": "Stüdyo", "description": "Paketleme detaylarını koruyan aydınlık beauty kampanyası.", "alt": "Aydınlık stüdyoda premium kozmetik ürün çekimi" },
+        "cosmetics-aesthetic-setting": { "title": "Estetik Ortam", "description": "Ürünü önde tutan rafine, dokulu beauty ortamı.", "alt": "Şık taş yüzeyde kozmetik ürün çekimi" },
+        "cosmetics-lifestyle-landscape": { "title": "Yaşam Alanı", "description": "Ürünün baskın kaldığı sıcak doğal lifestyle sahnesi.", "alt": "Doğal ortamda kahraman kozmetik ürün çekimi" },
+        "on-model-editorial": { "title": "Model Üzerinde Editorial", "description": "Temiz ve premium giyim editorial fotoğrafı.", "alt": "Model üzerinde premium giyim editoriali" },
         "brutalist-streetwear": { "title": "Brutalist Streetwear", "description": "Modern mimari atmosferli streetwear kampanyası.", "alt": "Modern mimaride streetwear editoriali" },
-        "urban-night": { "title": "Urban Night", "description": "Sinematik gece streetwear kampanyası.", "alt": "Sinematik gece şehir moda kampanyası" },
+        "urban-night": { "title": "Şehir Streetwear", "description": "Sinematik şehir streetwear kampanyası.", "alt": "Sinematik şehir streetwear kampanyası" },
         "minimal-studio-fashion": { "title": "Minimal Studio Fashion", "description": "Temiz giyim sunumu için yumuşak stüdyo kurulumu.", "alt": "Minimal stüdyo giyim fotoğrafı" },
         "back-print-focus": { "title": "Back Print Focus", "description": "Arka grafik odaklı giyim kampanyaları için tasarlandı.", "alt": "Arka görünüş odaklı giyim kampanyası" },
         "front-hero-apparel": { "title": "Front Hero Apparel", "description": "Önden, giysiye odaklanan model çekimi.", "alt": "Önden giyim kampanyası fotoğrafı" },
-        "luxury-macro-jewelry": { "title": "Luxury Macro", "description": "Zengin detaylı yakın plan lüks takı kampanyası.", "alt": "Lüks takı makro detayı" },
-        "soft-daylight-jewelry": { "title": "Soft Daylight Jewelry", "description": "Yumuşak gün ışığında zarif takı fotoğrafı.", "alt": "Yumuşak gün ışığında takı" },
+        "luxury-macro-jewelry": { "title": "Lüks Makro Natürmort", "description": "Zengin detaylı yakın plan lüks takı natürmortu.", "alt": "Lüks takı makro natürmortu" },
+        "soft-daylight-jewelry": { "title": "Yumuşak Editorial Takı", "description": "Yumuşak gün ışığında zarif takı editoriali.", "alt": "Yumuşak gün ışığında takı editoriali" },
         "black-luxury-jewelry": { "title": "Black Luxury", "description": "Dramatik ışıklı koyu premium takı kampanyası.", "alt": "Koyu lüks takı kampanyası" },
-        "jewelry-on-model": { "title": "Jewelry on Model", "description": "Zarif model üzerinde takı editorial görseli.", "alt": "Yetişkin model üzerinde takı" },
+        "jewelry-on-model": { "title": "Elde Takı", "description": "Elde doğal duran takı için makro editorial.", "alt": "Yetişkin bir elde doğal duran takı" },
         "stone-surface-jewelry": { "title": "Stone Surface", "description": "Şık taş veya mermer yüzeylerde stillenmiş takı.", "alt": "Taş üzerinde düzenlenmiş takı" },
         "minimal-product-detail": { "title": "Minimal Detail", "description": "Temiz ve minimal yakın plan ürün sunumu.", "alt": "Minimal takı yakın planı" },
-        "dark-premium-studio": { "title": "Dark Premium Studio", "description": "Koyu premium atmosfere sahip üst segment stüdyo ürün kampanyası.", "alt": "Koyu premium ürün stüdyosu" },
-        "soft-daylight-product": { "title": "Soft Daylight Product", "description": "Aydınlık doğal ticari ürün fotoğrafı.", "alt": "Aydınlık gün ışığında ürün" },
-        "tabletop-lifestyle": { "title": "Tabletop Lifestyle", "description": "Özenli bir ortamda doğal biçimde konumlanan ürün.", "alt": "Masa üstü yaşam tarzı ortamında ürün" },
-        "reflective-luxury-surface": { "title": "Reflective Luxury", "description": "Kontrollü yansımalara sahip zarif lüks ürün sahnesi.", "alt": "Yansıtıcı lüks yüzeyde ürün" },
-        "minimal-catalog-plus": { "title": "Minimal Commercial", "description": "Premium dokunuşlu temiz ticari ürün çekimi.", "alt": "Temiz premium ticari ürün çekimi" },
-        "tech-launch-hero": { "title": "Tech Launch Hero", "description": "Rafine dramatik etkiye sahip amiral gemisi teknoloji kampanyası.", "alt": "Teknoloji ürün lansman kampanyası" },
+        "dark-premium-studio": { "title": "Premium Güzellik Editoriali", "description": "Kontrollü şişe yansımalarıyla premium güzellik editoriali.", "alt": "Premium güzellik ürünü editoriali" },
+        "soft-daylight-product": { "title": "Yumuşak Gün Işığı Güzellik", "description": "Aydınlık doğal cilt bakımı fotoğrafı.", "alt": "Gün ışığında güzellik ürünü" },
+        "tabletop-lifestyle": { "title": "Sıcak Lüks Makyaj Masası", "description": "Sıcak ve rafine makyaj masası ortamında güzellik ürünü.", "alt": "Sıcak lüks makyaj masasında güzellik ürünü" },
+        "reflective-luxury-surface": { "title": "Yansıtıcı Kozmetik", "description": "Kontrollü yansıtıcı yüzeyde kozmetik ambalajı.", "alt": "Yansıtıcı yüzeyde kozmetik" },
+        "minimal-catalog-plus": { "title": "Temiz Stüdyo Ürün Çekimi", "description": "Temiz premium güzellik ambalajı stüdyo çekimi.", "alt": "Temiz premium güzellik ambalajı stüdyo çekimi" },
+        "watch-hero": { "title": "Saat Stüdyo Yakın Planı", "description": "Temiz lüks saat stüdyo yakın planı.", "alt": "Lüks saat stüdyo yakın planı" },
+        "wrist-editorial": { "title": "Bilekte Saat Editoriali", "description": "Bilekte doğal duran saatle premium editorial fotoğraf.", "alt": "Bilekte doğal duran saat" },
+        "macro-dial": { "title": "Makro Kadran", "description": "Kadran, akrep-yelkovan ve indekslere yakın plan.", "alt": "Saat kadranı makro detayı" },
+        "dark-luxury-watch": { "title": "Lüks Saat Kampanyası", "description": "Kontrollü yansımalı lüks saat kampanyası.", "alt": "Lüks saat kampanyası" },
+        "reflective-metal-watch": { "title": "Yansıtıcı Metal", "description": "Premium metal ve parlak yüzey çalışması.", "alt": "Yansıtıcı metal saat detayı" },
+        "on-foot-editorial": { "title": "Ayakta Editorial", "description": "Model üzerinde doğal duran ayakkabı editoriali.", "alt": "Model üzerinde doğal duran ayakkabı" },
+        "street-footwear": { "title": "Ayakta Sokak Kampanyası", "description": "Ayakkabı odaklı şehir sokak kampanyası.", "alt": "Şehir sokak kampanyasında ayakkabı" },
+        "studio-footwear-hero": { "title": "Minimal Sneaker Stüdyosu", "description": "Temiz minimal ticari sneaker stüdyo çekimi.", "alt": "Minimal sneaker stüdyo çekimi" },
+        "ground-level-campaign": { "title": "Zemin Seviyesi Kampanya", "description": "Ayakkabıyı vurgulayan alçak kamera açısı.", "alt": "Zemin seviyesinde ayakkabı kampanyası" },
+        "motion-step": { "title": "Hareketli Adım", "description": "Gerçekçi ayakkabı-vücut etkileşimli yürüyüş pozu.", "alt": "Doğal adımda ayakkabı" },
+        "footwear-material-detail": { "title": "Ayakkabı Hero Yakın Planı", "description": "Ayakkabı malzemesi, tabanı ve yapısının yakın planı.", "alt": "Ayakkabı hero yakın planı" },
         "editorial-flash": { "title": "Editorial Flash", "description": "Ham, direkt flaş karakterli premium streetwear fotoğrafı.", "alt": "Direkt flaşla çekilmiş streetwear kampanyası" },
         "coastal-editorial": { "title": "Coastal Editorial", "description": "Rüzgar ve gerçek mekan dokusuyla doğal sahil streetwear kampanyası.", "alt": "Doğal sahil editorial ortamında streetwear model" }
       }
     },
     "inspiration": {
       "heading": "Yaratıcı yönleri keşfedin",
-      "description": "Moda, kozmetik, takı ve ürün videoları için seçilmiş kampanya referansları.",
+      "description": "Giyim, takı, saat, kozmetik ve ayakkabı için seçilmiş kampanya yönleri.",
       "filterLabel": "Yaratıcı yönleri filtrele",
       "useDirection": "Bu yönü kullan",
       "categories": {
         "all": "Tümü",
-        "fashion": "Moda",
+        "apparel": "Giyim",
         "cosmetics": "Kozmetik",
         "jewelry": "Takı",
-        "productVideo": "Ürün Videosu"
+        "watches": "Saat",
+        "footwear": "Ayakkabı"
       },
       "types": {
         "image": "Görsel",
@@ -696,8 +722,8 @@
         "textureStudy": "Doku Çalışması",
         "goldSculpture": "Heykelsi Altın",
         "softDaylightJewelry": "Yumuşak Gün Işığında Takı",
-        "midnightFragrance": "Gece Parfümü",
-        "jewelryMotion": "Hareketli Takı"
+        "warmWrist": "Sıcak Bilek Editoriali",
+        "streetStep": "Sokak Adımı"
       },
       "alts": {
         "architecturalFashion": "Taş kemerlerle çevrelenmiş uzun bordo elbiseli yetişkin model",
@@ -706,8 +732,8 @@
         "textureStudy": "Nötr tonlarda parlak kozmetik dokusunun yakın plan çalışması",
         "goldSculpture": "Koyu dokulu yüzey üzerinde kıvrımlı parlak altın takı",
         "softDaylightJewelry": "Sıcak kireç taşı üzerinde mor taşlı altın küpeler",
-        "midnightFragrance": "Koyu suda yansıyan mavi cam parfüm şişesi",
-        "jewelryMotion": "Sinematik dikey video karesi olarak düzenlenmiş altın takı"
+        "warmWrist": "Sıcak yönlü ışıkta bilekte doğal duran premium saat",
+        "streetStep": "Şehir zemininde doğal yürüyüş adımındaki sneakerlar"
       },
       "prompts": {
         "architecturalFashion": "Sıcak anıtsal mimaride, hassas giysi detayıyla güçlü bir editorial moda kampanyası oluştur.",
@@ -716,8 +742,8 @@
         "textureStudy": "Malzeme dokusunu, parlaklığı ve yumuşak ton derinliğini öne çıkaran dokunsal bir makro çalışma oluştur.",
         "goldSculpture": "Takıyı dramatik siyah yüzeyler ve kontrollü altın yansımalarla heykelsi bir nesne olarak fotoğrafla.",
         "softDaylightJewelry": "Açık renk taş üzerinde yumuşak gölgeler ve premium detayla rafine bir gün ışığı takı sahnesi oluştur.",
-        "midnightFragrance": "Koyu su yansımaları, yavaş kamera hareketi ve ışıklı bir final karesiyle kısa parfüm filmi oluştur.",
-        "jewelryMotion": "Ölçülü hareket, yakın plan detay ve sıcak yönlü ışıkla dikey bir takı filmi oluştur."
+        "warmWrist": "Sıcak yönlü ışık ve gerçek saat detaylarıyla yakın plan bir bilek editoriali oluştur.",
+        "streetStep": "Sneakerlara ve doğal zemin temasına odaklanan alçak açılı bir sokak kampanyası oluştur."
       }
     },
     "recentWork": {

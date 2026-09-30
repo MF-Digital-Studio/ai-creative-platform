@@ -70,7 +70,6 @@ export async function createWorkspaceProject(
       return { ok: false };
     }
 
-    revalidatePath(`/${locale}/dashboard`, "page");
     return { ok: true, projectId };
   } catch {
     return { ok: false };

@@ -12,6 +12,8 @@ import {
 import { creativeBriefFields } from "./creative-brief";
 import { fashionCaptureProfileIds } from "./fashion-capture-profiles";
 import { getPromptEnhancementModel } from "./prompt-enhancer-config";
+import { getVerticalQualityProfile } from "../quality/vertical-quality-profiles";
+import { isSupportedVertical } from "@/lib/verticals/supported-verticals";
 
 export type {
   CreativeBrief,
@@ -72,11 +74,15 @@ const creativeBriefInstructions = [
   "For fashion directions, preserve the preset capture object exactly when present. Do not replace its environment, flash behavior, ambient exposure, or realism constraints with generic cinematic or luxury studio language. Use believable editorial photography, natural anatomy, realistic fabric behavior, suitable framing, and grounded lighting.",
   "For product or studio directions, use commercial composition, appropriate surfaces, controlled lighting, contact shadows, reflections, and depth only when relevant to the request.",
   "The product must remain the visual focus. Do not request added logos, graphics, or unrequested product changes.",
+  "Vertical quality context is deterministic provider policy. Do not rewrite it, weaken it, or treat it as a creative preference; expand only creative direction around it.",
   "Use every field to create a concise, useful brief. The combined rendered prompt should be about 150 to 350 words.",
 ].join("\n");
 
 class OpenAIPromptEnhancementClient implements PromptEnhancementClient {
   async createCreativeBrief(input: PromptEnhancementInput): Promise<unknown> {
+    const qualityProfile = isSupportedVertical(input.useCase)
+      ? getVerticalQualityProfile(input.useCase)
+      : null;
     const response = await getOpenAIClient().responses.create({
       model: getPromptEnhancementModel(),
       instructions: creativeBriefInstructions,
@@ -91,6 +97,13 @@ class OpenAIPromptEnhancementClient implements PromptEnhancementClient {
         referenceStyle: input.referenceStyle ?? null,
         useCase: input.useCase ?? null,
         generationMode: input.generationMode ?? null,
+        verticalQualityContext: qualityProfile
+          ? {
+            vertical: qualityProfile.vertical,
+            identityPriorities: qualityProfile.identityPriorities,
+            allowedTransformations: qualityProfile.allowedTransformations,
+          }
+          : null,
         userCreativeDirection: input.userCreativeDirection,
       }),
       max_output_tokens: 900,
@@ -104,11 +117,12 @@ class OpenAIPromptEnhancementClient implements PromptEnhancementClient {
       }),
     });
 
-    if (!response.output_text) {
+    const outputText = response.output_text?.trim();
+    if (!outputText) {
       throw new Error("Prompt enhancement returned no text.");
     }
 
-    return JSON.parse(response.output_text) as unknown;
+    return JSON.parse(outputText) as unknown;
   }
 }
 

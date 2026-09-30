@@ -94,9 +94,10 @@ class OpenAIReferenceAnalysisClient implements ReferenceAnalysisClient {
       throw new ReferenceAnalysisRequestError("openai_request", error);
     }
 
-    if (!response.output_text) throw new ReferenceAnalysisRequestError("structured_parse", null);
+    const outputText = response.output_text?.trim();
+    if (!outputText) throw new ReferenceAnalysisRequestError("structured_parse", null);
     try {
-      return JSON.parse(response.output_text) as unknown;
+      return JSON.parse(outputText) as unknown;
     } catch (error) {
       throw new ReferenceAnalysisRequestError("structured_parse", error);
     }

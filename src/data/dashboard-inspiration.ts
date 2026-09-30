@@ -1,9 +1,6 @@
-export type InspirationCategory =
-  | "all"
-  | "fashion"
-  | "cosmetics"
-  | "jewelry"
-  | "productVideo";
+import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
+
+export type InspirationCategory = "all" | SupportedVertical;
 
 export type InspirationSize = "landscape" | "portrait" | "square" | "tall";
 
@@ -21,10 +18,11 @@ export type DashboardInspiration = {
 
 export const inspirationCategories: InspirationCategory[] = [
   "all",
-  "fashion",
+  "apparel",
   "cosmetics",
   "jewelry",
-  "productVideo",
+  "watches",
+  "footwear",
 ];
 
 export const DASHBOARD_DIRECTION_EVENT = "creative-ai:dashboard-direction";
@@ -32,7 +30,7 @@ export const DASHBOARD_DIRECTION_EVENT = "creative-ai:dashboard-direction";
 export const dashboardInspiration: DashboardInspiration[] = [
   {
     id: "architectural-fashion",
-    category: "fashion",
+    category: "apparel",
     titleKey: "items.architecturalFashion",
     typeKey: "campaignSet",
     altKey: "alts.architecturalFashion",
@@ -43,7 +41,7 @@ export const dashboardInspiration: DashboardInspiration[] = [
   },
   {
     id: "quiet-tailoring",
-    category: "fashion",
+    category: "apparel",
     titleKey: "items.quietTailoring",
     typeKey: "image",
     altKey: "alts.quietTailoring",
@@ -93,22 +91,22 @@ export const dashboardInspiration: DashboardInspiration[] = [
     size: "portrait",
   },
   {
-    id: "midnight-fragrance",
-    category: "productVideo",
-    titleKey: "items.midnightFragrance",
-    typeKey: "video",
-    altKey: "alts.midnightFragrance",
-    promptKey: "prompts.midnightFragrance",
+    id: "warm-wrist",
+    category: "watches",
+    titleKey: "items.warmWrist",
+    typeKey: "image",
+    altKey: "alts.warmWrist",
+    promptKey: "prompts.warmWrist",
     src: "/features/image-and-video/video-poster.webp",
     size: "tall",
   },
   {
-    id: "jewelry-motion",
-    category: "productVideo",
-    titleKey: "items.jewelryMotion",
-    typeKey: "video",
-    altKey: "alts.jewelryMotion",
-    promptKey: "prompts.jewelryMotion",
+    id: "street-step",
+    category: "footwear",
+    titleKey: "items.streetStep",
+    typeKey: "image",
+    altKey: "alts.streetStep",
+    promptKey: "prompts.streetStep",
     src: "/workspace-demo/jewelry/video-poster.webp",
     size: "portrait",
   },

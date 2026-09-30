@@ -1,17 +1,19 @@
 import type { CreativeBrief } from "@/lib/generation/prompts/creative-brief";
-import { getFashionCaptureProfile } from "@/lib/generation/prompts/fashion-capture-profiles";
+import { getFashionCaptureProfile, type FashionCaptureProfileId } from "@/lib/generation/prompts/fashion-capture-profiles";
 import type { GenerationStrategy } from "@/lib/generation/strategy/generation-strategy";
+import { supportedVerticals, type SupportedVertical } from "@/lib/verticals/supported-verticals";
 
-export const creativePresetCategories = ["fashion", "jewelry", "product"] as const;
-
-export type CreativePresetCategory = (typeof creativePresetCategories)[number];
+export const creativePresetCategories = supportedVerticals;
+export type CreativePresetCategory = SupportedVertical;
 
 export type CreativePreset = {
   id: string;
   slug: string;
   title: string;
   shortDescription: string;
+  /** Compatibility alias for existing UI; vertical is the registry source of truth. */
   category: CreativePresetCategory;
+  vertical: CreativePresetCategory;
   generationMode: "image";
   generationStrategyHint: GenerationStrategy;
   useCase: CreativePresetCategory;
@@ -23,360 +25,434 @@ export type CreativePreset = {
   enabled: boolean;
 };
 
-type CreativePresetDefinition = Omit<
-  CreativePreset,
-  | "enabled" | "generationMode" | "generationStrategyHint" | "slug" | "sortOrder" | "useCase" | "creativeDirection"
-> & {
-  creativeDirection: Omit<CreativeBrief, "capture"> & { capture?: CreativeBrief["capture"] };
+type PresetSeed = {
+  id: string;
+  title: string;
+  shortDescription: string;
+  vertical: CreativePresetCategory;
+  thumbnail: string;
+  generationStrategyHint: GenerationStrategy;
+  environment: string;
+  composition: string;
+  camera: string;
+  lighting: string;
+  mood: string;
+  direction: string;
+  capture?: FashionCaptureProfileId;
+  recommendedTags: readonly string[];
 };
 
-const imagePresets = [
-  {
-    id: "on-model-editorial", title: "On-model Editorial", shortDescription: "Clean premium fashion editorial photograph.", category: "fashion", thumbnail: "/features/templates/fashion-template.webp",
-    creativeDirection: {
-      subject: "One adult fashion model wearing the supplied garment, with the garment as the clear campaign hero.",
-      pose: "A relaxed natural standing editorial pose with open shoulders and no hands obscuring important garment details.",
-      environment: "A contemporary architectural editorial setting with restrained materials and no distracting props.",
-      composition: "A calm premium magazine composition using medium or full-body framing appropriate to the garment silhouette.",
-      camera: "Eye-level fashion photography with a believable 50mm perspective and clean vertical lines.",
-      lighting: "Soft directional daylight with gentle shadow definition and accurate garment color.",
-      mood: "Refined, contemporary, confident, and quietly premium.",
-      realism: "Photorealistic adult anatomy, natural skin texture, realistic fabric weight, folds, and gravity; no AI-art appearance.",
-      productTreatment: "Keep the supplied garment fully recognizable, clearly readable, and free from invented styling details.",
-      negativeConstraints: "No extra garments, added logos or graphics, distorted hands, text, crowd, or product redesign.",
-      capture: getFashionCaptureProfile("natural_editorial_daylight"),
-    },
-  },
-  {
-    id: "brutalist-streetwear", title: "Brutalist Streetwear", shortDescription: "Streetwear campaign with modern architectural mood.", category: "fashion", thumbnail: "/workspace-demo/fashion/campaign.webp",
-    creativeDirection: {
-      subject: "One adult fashion model wearing the supplied streetwear garment, presented as the hero of a premium campaign.",
-      pose: "A bold but believable relaxed editorial pose that supports an oversized streetwear silhouette without hiding the garment.",
-      environment: "Monumental brutalist concrete architecture with clean planes, structural shadow, and no graffiti unless requested.",
-      composition: "Graphic architectural geometry frames the model, with generous negative space and a strong garment-led silhouette.",
-      camera: "Slightly low or eye-level fashion camera, medium-full framing, natural perspective, and disciplined straight lines.",
-      lighting: "Natural directional daylight with defined but realistic shadows across concrete and fabric.",
-      mood: "Modern, assertive, architectural, and premium magazine campaign.",
-      realism: "Photorealistic adult anatomy, grounded stance, true fabric volume, natural folds, and believable urban scale.",
-      productTreatment: "Preserve the supplied garment exactly and keep its silhouette, color, design, and visible details central.",
-      negativeConstraints: "No graffiti, signage, random text, extra graphics, duplicate garments, second model, or AI-art styling.",
-      capture: getFashionCaptureProfile("natural_editorial_daylight"),
-    },
-  },
-  {
-    id: "urban-night", title: "Urban Night", shortDescription: "Cinematic night streetwear campaign.", category: "fashion", thumbnail: "/workspace-demo/fashion/social.webp",
-    creativeDirection: {
-      subject: "One adult fashion model wearing the supplied garment in a premium contemporary city streetwear campaign.",
-      pose: "A natural relaxed standing editorial pose with the garment unobstructed and the body positioned confidently toward the camera.",
-      environment: "A credible contemporary city street, storefront, or architectural facade at night, with subtle wet-ground reflections only when tasteful.",
-      composition: "Medium-to-full fashion framing keeps the garment readable while the restrained night environment provides depth and context.",
-      camera: "Eye-level 50mm fashion camera with shallow but believable depth of field and natural street-scale perspective.",
-      lighting: "Realistic storefront, street, and architectural light shaping the model with accurate skin tones and controlled reflected fill.",
-      mood: "Polished nocturnal urban editorial: confident, current, and premium rather than futuristic.",
-      realism: "Photorealistic adult anatomy, natural skin tones, believable fabric behavior, grounded shadows, and editorial photography realism.",
-      productTreatment: "The supplied garment remains crisp, color-accurate, and visibly dominant as the campaign hero.",
-      capture: getFashionCaptureProfile("urban_night_flash"),
-      negativeConstraints: "No cyberpunk clichés, neon overload, random signs or text, extra garment graphics, second model, or product redesign.",
-    },
-  },
-  {
-    id: "minimal-studio-fashion", title: "Minimal Studio Fashion", shortDescription: "Soft studio setup for clean apparel presentation.", category: "fashion", thumbnail: "/workspace-demo/fashion/product.webp",
-    creativeDirection: {
-      subject: "One adult model wearing the supplied garment for a clean, product-led studio fashion image.",
-      pose: "A simple relaxed editorial pose with arms and hands clear of the garment's important front details.",
-      environment: "A seamless neutral studio in warm white, pale gray, or soft stone tones with no unnecessary props.",
-      composition: "Balanced medium or full-body framing with ample quiet space and the garment clearly visible.",
-      camera: "Eye-level commercial fashion camera with a natural 50mm perspective and accurate proportions.",
-      lighting: "Soft large-source studio lighting, natural contact shadows, and gentle tonal separation from the backdrop.",
-      mood: "Restrained, polished, calm, and modern.",
-      realism: "Photorealistic skin and anatomy with true fabric texture, natural drape, folds, and gravity.",
-      productTreatment: "Prioritize garment color, construction, silhouette, and visible artwork without redesigning the supplied product.",
-      negativeConstraints: "No busy set, text, extra garments, accessories covering the product, artificial glossy skin, or AI-art look.",
-      capture: getFashionCaptureProfile("soft_studio_fashion"),
-    },
-  },
-  {
-    id: "back-print-focus", title: "Back Print Focus", shortDescription: "Designed for back-graphic apparel campaigns.", category: "fashion", thumbnail: "/workspace-demo/fashion/fabric-detail.webp",
-    creativeDirection: {
-      subject: "One adult model wearing the supplied garment with their back facing the camera; the back artwork is the primary visual focus.",
-      pose: "A relaxed upright standing pose, slightly offset only if it keeps the full back panel and artwork unobstructed.",
-      environment: "A clean contemporary editorial setting with restrained architectural texture and no competing visual elements.",
-      composition: "Medium-to-full back framing centered on the garment's rear panel, with the print completely visible and readable.",
-      camera: "Eye-level fashion camera with natural perspective and sufficient depth to keep the entire back artwork sharp.",
-      lighting: "Soft directional daylight or studio light revealing the garment texture without glare across the print.",
-      mood: "Confident, editorial, contemporary, and product-focused.",
-      realism: "Photorealistic adult anatomy, natural garment drape, realistic fabric folds, and physically plausible posture.",
-      productTreatment: "Preserve the exact back artwork, scale, color, and garment construction; keep hair and accessories away from the print.",
-      negativeConstraints: "No front-facing model, no hair or hands covering the artwork, no new print or text, no duplicate garment, or AI-art look.",
-      capture: getFashionCaptureProfile("natural_editorial_daylight"),
-    },
-  },
-  {
-    id: "front-hero-apparel", title: "Front Hero Apparel", shortDescription: "Front-facing garment-focused model shot.", category: "fashion", thumbnail: "/auth/fashion-dress-campaign.webp",
-    creativeDirection: {
-      subject: "One adult model wearing the supplied garment, facing the camera with the front design as the campaign hero.",
-      pose: "A relaxed premium editorial pose with hands kept clear of the chest and front artwork.",
-      environment: "A pared-back contemporary campaign setting that supports the garment without competing for attention.",
-      composition: "Medium fashion framing that clearly shows the front silhouette, chest details, and natural garment length.",
-      camera: "Eye-level commercial fashion camera with a natural perspective and clean, proportional framing.",
-      lighting: "Soft sculpted key light with gentle fill, accurate color, and readable front fabric detail.",
-      mood: "Confident, premium, direct, and contemporary.",
-      realism: "Photorealistic adult anatomy, natural expression, real fabric folds and weight, and editorial photographic finish.",
-      productTreatment: "Keep all supplied front artwork, color, construction, and proportions exact and prominently visible.",
-      negativeConstraints: "No hands covering artwork, extra layers, invented graphics or text, duplicate model, distorted anatomy, or product redesign.",
-      capture: getFashionCaptureProfile("natural_editorial_daylight"),
-    },
-  },
-  {
-    id: "editorial-flash", title: "Editorial Flash", shortDescription: "Raw premium streetwear photography with authentic direct-flash character.", category: "fashion", thumbnail: "/workspace-demo/fashion/social.webp",
-    creativeDirection: {
-      subject: "One adult fashion model naturally wearing the supplied garment as the clear hero of a real streetwear campaign.",
-      pose: "A confident but relaxed candid editorial pose with believable weight distribution and hands clear of important garment details.",
-      environment: "An authentic contemporary city street or lived-in urban lifestyle location with real texture and no artificial neon styling.",
-      composition: "A slightly imperfect medium-to-full editorial fashion frame that keeps the garment readable while retaining honest location context.",
-      camera: "Street-level editorial photography with a natural perspective and an immediate, documentary-adjacent camera presence.",
-      lighting: "Direct camera flash crisply defines the model against a visible, slightly darker ambient urban background.",
-      mood: "Raw, confident, current, and professionally photographed rather than polished into a studio campaign.",
-      realism: "Believable anatomy, natural skin texture, real hair flyaways, grounded posture, and cloth that responds naturally to the worn body.",
-      productTreatment: "Keep the supplied garment's identity, silhouette, color, print placement, and distinctive construction exact and clearly visible.",
-      negativeConstraints: "No CGI, 3D render, fashion mockup, plastic skin, fake bokeh, glossy synthetic fabric, duplicated body parts, floating clothing, or artificial neon.",
-      capture: getFashionCaptureProfile("editorial_flash"),
-    },
-  },
-  {
-    id: "coastal-editorial", title: "Coastal Editorial", shortDescription: "Natural coastal streetwear campaign with wind, texture, and real location character.", category: "fashion", thumbnail: "/workspace-demo/fashion/campaign.webp",
-    creativeDirection: {
-      subject: "One adult fashion model naturally wearing the supplied garment as the central subject of a premium location campaign.",
-      pose: "A relaxed standing or walking editorial pose with believable balance, natural wind response, and the garment fully legible.",
-      environment: "A rugged coastline, beach edge, or weathered natural setting with real sand, rock, vegetation, or sea texture and no fantasy landscape.",
-      composition: "An imperfect but intentional medium-to-full fashion composition that gives the model and natural setting authentic breathing room.",
-      camera: "Natural-perspective location fashion photography with a grounded documentary editorial distance and true environmental scale.",
-      lighting: "Overcast or late-day directional daylight shapes the model and garment naturally; use only restrained flash if the composition genuinely needs it.",
-      mood: "Wind-touched, tactile, confident, and authentic to a real premium streetwear location campaign.",
-      realism: "Natural skin, anatomy, wind-affected hair, real environmental texture, and fabric that moves and drapes plausibly in the coastal air.",
-      productTreatment: "Preserve the supplied garment's color, silhouette, print placement, and distinctive details while letting fabric move naturally on the body.",
-      negativeConstraints: "No fantasy seascape, glossy studio composite, CGI, 3D render, mockup appearance, plastic skin, floating fabric, or cinematic overprocessing.",
-      capture: getFashionCaptureProfile("natural_editorial_daylight"),
-    },
-  },
-  {
-    id: "luxury-macro-jewelry", title: "Luxury Macro", shortDescription: "Close-up luxury jewelry campaign with rich detail.", category: "jewelry", thumbnail: "/workspace-demo/jewelry/macro.webp",
-    creativeDirection: {
-      subject: "One supplied jewelry piece in a macro commercial photograph, dominating the frame as the sole hero product.",
-      pose: "Still-life placement with the piece naturally supported and its key form, setting, clasp, or gemstone detail clearly visible.",
-      environment: "A dark neutral premium background with minimal sculptural support and no unrelated decorative objects.",
-      composition: "Tight macro framing emphasizes craftsmanship, material transitions, and the jewelry's true scale.",
-      camera: "High-resolution macro product camera with selective but intentional shallow depth of field focused on the hero detail.",
-      lighting: "Controlled soft specular highlights that describe metal curvature and gemstones without clipping reflections.",
-      mood: "Precise, luxurious, intimate, and quietly dramatic.",
-      realism: "Photorealistic metal reflections, gemstone detail when present, accurate edges, and physically plausible shadow falloff.",
-      productTreatment: "Preserve exact jewelry geometry, material, stones, scale, and construction; show one product only.",
-      negativeConstraints: "No duplicate jewelry, invented stones, altered metal color, floating geometry, text, hands, or synthetic CGI finish.",
-    },
-  },
-  {
-    id: "soft-daylight-jewelry", title: "Soft Daylight Jewelry", shortDescription: "Elegant jewelry photography in soft natural light.", category: "jewelry", thumbnail: "/workspace-demo/jewelry/product.webp",
-    creativeDirection: {
-      subject: "One supplied jewelry product shown as an elegant commercial still life with its material and silhouette clearly legible.",
-      pose: "Naturally arranged on a pale tactile surface with a believable resting point and no strained or floating placement.",
-      environment: "An airy neutral daylight setting with pale stone, linen, or matte paper texture kept deliberately minimal.",
-      composition: "Close product-led framing with generous breathing room and a clear hierarchy around the single jewelry piece.",
-      camera: "Close commercial product camera with gentle depth of field and true-to-scale perspective.",
-      lighting: "Bright diffused window daylight, soft shadows, and restrained highlights that retain metal and gemstone detail.",
-      mood: "Fresh, gentle, airy, and refined.",
-      realism: "Photorealistic surface texture, controlled reflections, accurate material behavior, and natural contact shadow.",
-      productTreatment: "Preserve the supplied jewelry's geometry, finish, stones, and proportions without adding companion pieces.",
-      negativeConstraints: "No dark dramatic backdrop, duplicate jewelry, invented stones, text, heavy retouching, or unrealistic reflections.",
-    },
-  },
-  {
-    id: "black-luxury-jewelry", title: "Black Luxury", shortDescription: "Dark premium jewelry campaign with dramatic lighting.", category: "jewelry", thumbnail: "/workspace-demo/jewelry/campaign.webp",
-    creativeDirection: {
-      subject: "One supplied jewelry product presented as a high-end dark campaign hero, with its silhouette and material clearly defined.",
-      pose: "A stable still-life arrangement on a matte black or deep charcoal support with a believable contact point.",
-      environment: "A restrained black premium studio with subtle textured surface and no decorative clutter.",
-      composition: "Sculptural close framing uses negative space and controlled shadow to isolate the single jewelry piece.",
-      camera: "Close commercial camera with crisp hero detail and a measured shallow depth of field.",
-      lighting: "Dramatic but controlled key and edge light producing refined metal highlights without blown specular areas.",
-      mood: "Rich, composed, nocturnal, and luxurious.",
-      realism: "Physically plausible reflections, accurate precious-metal tones, natural shadow density, and high-resolution craft detail.",
-      productTreatment: "Keep the exact supplied jewelry design, stones, finish, and scale intact as the sole subject.",
-      negativeConstraints: "No duplicate pieces, invented gems, colored neon, random text, floating product, or plastic CGI materials.",
-    },
-  },
-  {
-    id: "jewelry-on-model", title: "Jewelry on Model", shortDescription: "Elegant on-model jewelry editorial image.", category: "jewelry", thumbnail: "/workspace-demo/jewelry/campaign-hero.webp",
-    creativeDirection: {
-      subject: "One adult model naturally wearing the supplied jewelry, with the jewelry clearly visible as the principal hero.",
-      pose: "A calm portrait or upper-body pose that presents the jewelry at its natural wearing position without hands covering it.",
-      environment: "A quiet premium editorial setting with neutral skin-adjacent tones and unobtrusive wardrobe styling.",
-      composition: "Close portrait or upper-body framing gives the jewelry enough scale while retaining natural human context.",
-      camera: "Refined portrait camera with believable perspective and focused detail on the jewelry's visible face.",
-      lighting: "Soft sculpted portrait light that preserves natural skin texture and controlled jewelry highlights.",
-      mood: "Elegant, intimate, modern, and understated.",
-      realism: "Photorealistic adult anatomy and skin, believable wearing scale, accurate metal reflections, and true material detail.",
-      productTreatment: "Preserve the exact jewelry geometry, stones, and placement; do not replace it with a different accessory.",
-      negativeConstraints: "No duplicate jewelry, obscuring hair or hands, invented stones, exaggerated retouching, text, or AI-art look.",
-    },
-  },
-  {
-    id: "stone-surface-jewelry", title: "Stone Surface", shortDescription: "Jewelry styled on elegant stone or marble surfaces.", category: "jewelry", thumbnail: "/features/templates/jewelry-template.webp",
-    creativeDirection: {
-      subject: "One supplied jewelry product styled as a sculptural still life with fine material detail and an accurate scale.",
-      pose: "Naturally resting on veined stone or honed marble with a convincing contact shadow and carefully visible profile.",
-      environment: "An elegant pale or warm mineral surface with restrained natural texture and no unrelated props.",
-      composition: "A deliberate sculptural arrangement, close enough to reveal craftsmanship while retaining serene negative space.",
-      camera: "Close product camera with natural perspective and a selective depth of field that keeps the hero form readable.",
-      lighting: "Soft side daylight with controlled highlight rolloff across stone, metal, and gemstones.",
-      mood: "Tactile, serene, sculptural, and quietly luxurious.",
-      realism: "Photorealistic stone grain, metal reflection, gemstone behavior, natural weight, and precise contact shadows.",
-      productTreatment: "Preserve the supplied jewelry exactly, including geometry, finish, stones, and material color; present a single product.",
-      negativeConstraints: "No duplicate jewelry, invented stones, warped reflections, text, hands, floral clutter, or synthetic CGI appearance.",
-    },
-  },
-  {
-    id: "minimal-product-detail", title: "Minimal Detail", shortDescription: "Clean and minimal close-up product presentation.", category: "jewelry", thumbnail: "/workspace-demo/jewelry/social.webp",
-    creativeDirection: {
-      subject: "One supplied jewelry item in a clean close-up commercial study, with its defining form and finish unobstructed.",
-      pose: "A simple stable still-life placement that reveals the most important product-facing detail.",
-      environment: "A seamless matte neutral backdrop with no set dressing, texture, or props competing with the jewelry.",
-      composition: "Minimal close framing with disciplined negative space and the jewelry held as the only visual focal point.",
-      camera: "Precise close product camera with crisp focal detail and a restrained natural depth of field.",
-      lighting: "Clean soft studio light with subtle shaping, accurate metal color, and reflection control.",
-      mood: "Quiet, modern, exacting, and premium.",
-      realism: "Photorealistic material finish, sharp geometry, natural contact shadow, and physically plausible highlights.",
-      productTreatment: "Keep the supplied jewelry unchanged and singular, with real scale, edges, stones, and surface detail preserved.",
-      negativeConstraints: "No duplicate product, invented gems, text, decorative clutter, distorted geometry, or CGI plastic sheen.",
-    },
-  },
-  {
-    id: "dark-premium-studio", title: "Dark Premium Studio", shortDescription: "High-end studio product campaign with dark premium mood.", category: "product", thumbnail: "/features/templates/cosmetics-template.webp",
-    creativeDirection: {
-      subject: "One supplied product presented as the hero of a refined dark premium studio campaign.",
-      pose: "A stable upright or naturally supported product placement that clearly reveals the front-facing product identity.",
-      environment: "A dark graphite, charcoal, or deep neutral studio stage with a refined matte or lightly textured surface.",
-      composition: "Strong centered or slightly asymmetric hero composition with deliberate negative space around the single product.",
-      camera: "Commercial product camera at a natural hero angle with clean perspective and full product readability.",
-      lighting: "Controlled directional key light with soft fill and a restrained rim light, plus a realistic contact shadow.",
-      mood: "Sophisticated, focused, rich, and premium.",
-      realism: "Photorealistic materials, accurate surface texture, physically plausible reflections, and grounded product scale.",
-      productTreatment: "Preserve the exact supplied product geometry, packaging, labels, color, and finish as the sole hero object.",
-      negativeConstraints: "No duplicate product, random props, text overlays, hands, excessive fog, neon, or product redesign.",
-    },
-  },
-  {
-    id: "soft-daylight-product", title: "Soft Daylight Product", shortDescription: "Bright natural commercial product photography.", category: "product", thumbnail: "/workspace-demo/cosmetics/product.webp",
-    creativeDirection: {
-      subject: "One supplied product photographed as a bright, approachable commercial hero with all key details clearly visible.",
-      pose: "A natural upright or carefully supported placement with a believable contact point and no hands.",
-      environment: "An airy sunlit setting with pale stone, soft plaster, or matte neutral surface and restrained natural texture.",
-      composition: "Clean hero product composition with breathing room, a stable horizon, and no secondary product competing for attention.",
-      camera: "Natural commercial product camera angle with accurate perspective and enough depth for the complete product to read.",
-      lighting: "Bright diffused daylight with soft directional shadow, gentle reflected fill, and realistic surface highlights.",
-      mood: "Fresh, natural, optimistic, and polished.",
-      realism: "Photorealistic materials, true product color, plausible daylight reflection, and a grounded contact shadow.",
-      productTreatment: "Keep the supplied product exact, singular, and immediately recognizable without altering labels or packaging.",
-      negativeConstraints: "No dark moody treatment, duplicate product, text overlay, hands, clutter, surreal props, or altered packaging.",
-    },
-  },
-  {
-    id: "tabletop-lifestyle", title: "Tabletop Lifestyle", shortDescription: "Styled product placed naturally in a tasteful setting.", category: "product", thumbnail: "/workspace-demo/cosmetics/campaign.webp",
-    creativeDirection: {
-      subject: "One supplied product staged as the hero of a tasteful, lived-in tabletop lifestyle campaign.",
-      pose: "A naturally placed product on a table or counter, grounded by a precise contact shadow and not held by a hand.",
-      environment: "A warm, considered domestic or hospitality-inspired tabletop setting with a small number of relevant supporting textures.",
-      composition: "Product-first still life composition, with supporting objects pushed to the background and ample visual clarity around the hero.",
-      camera: "Commercial tabletop camera at a believable slightly elevated angle with natural perspective.",
-      lighting: "Soft directional daylight or warm practical light with gentle shadows and controlled reflections.",
-      mood: "Inviting, tactile, polished, and believable.",
-      realism: "Photorealistic scale, materials, contact shadows, and spatial relationships with no floating or warped objects.",
-      productTreatment: "Preserve the supplied product's exact shape, packaging, label, color, and proportions as the only product instance.",
-      negativeConstraints: "No duplicate product, random clutter, text overlay, hands, unrelated food, surreal props, or packaging redesign.",
-    },
-  },
-  {
-    id: "reflective-luxury-surface", title: "Reflective Luxury", shortDescription: "Elegant luxury product scene with controlled reflections.", category: "product", thumbnail: "/features/image-and-video/campaign-visual.webp",
-    creativeDirection: {
-      subject: "One supplied product as a polished luxury campaign hero on a refined reflective surface.",
-      pose: "A stable product placement with a physically plausible partial reflection and clear front-facing product detail.",
-      environment: "A restrained premium studio with smoked glass, polished stone, or dark reflective material and no excess set dressing.",
-      composition: "Sculptural hero composition uses reflection as a secondary accent while the real product remains unmistakably dominant.",
-      camera: "Commercial product camera at a low-to-eye-level hero angle with precise perspective control.",
-      lighting: "Controlled key and edge lighting creates elegant highlight lines and a subtle truthful reflection without glare.",
-      mood: "Elegant, precise, luxurious, and composed.",
-      realism: "Photorealistic reflected geometry, material response, contact shadow, and product scale with no mirror distortions.",
-      productTreatment: "Keep the supplied product exact and singular; reflections must not read as an extra physical product.",
-      negativeConstraints: "No duplicate product, impossible reflection, random luxury props, text, hands, neon, or altered packaging.",
-    },
-  },
-  {
-    id: "minimal-catalog-plus", title: "Minimal Commercial", shortDescription: "Clean commercial product shot with premium polish.", category: "product", thumbnail: "/features/product-fidelity/generated-scene.webp",
-    creativeDirection: {
-      subject: "One supplied product in a polished minimal commercial hero image with all product-facing details easy to inspect.",
-      pose: "A centered upright or naturally supported placement with stable contact shadow and no human interaction.",
-      environment: "A seamless light neutral or subtle gradient studio backdrop with no props or background distraction.",
-      composition: "Clean elevated catalog composition with balanced margins, clear silhouette, and an immediately readable product hierarchy.",
-      camera: "Straight-on or slight three-quarter commercial camera with accurate proportions and full product focus.",
-      lighting: "Soft even studio light with refined shaping, true color, and a restrained realistic shadow beneath the product.",
-      mood: "Clear, modern, trustworthy, and premium.",
-      realism: "Photorealistic packaging, material finish, label detail, surface response, and natural product scale.",
-      productTreatment: "Preserve the exact supplied product, including all packaging, logo, typography, color, and geometry; show one product only.",
-      negativeConstraints: "No duplicate item, hands, text overlays, busy styling, floating product, distorted labels, or redesign.",
-    },
-  },
-  {
-    id: "tech-launch-hero", title: "Tech Launch Hero", shortDescription: "Flagship technology campaign image with refined drama.", category: "product", thumbnail: "/features/image-and-video/vertical-social.webp",
-    creativeDirection: {
-      subject: "One supplied technology product presented as the exact flagship hero of a premium launch campaign.",
-      pose: "A stable hero placement on a sculpted refined stage or table surface, with the product's key face clearly readable.",
-      environment: "A minimal dark graphite or neutral premium technology stage with clean surfaces and no futuristic clutter.",
-      composition: "A decisive campaign hero composition isolates the single product with sculptural depth and purposeful negative space.",
-      camera: "Commercial product camera at a confident low three-quarter or eye-level hero angle with precise perspective.",
-      lighting: "Controlled low-key key light and narrow rim light with realistic contact shadow and subtle physically plausible reflection.",
-      mood: "Flagship, refined, modern, and quietly dramatic.",
-      realism: "Photorealistic materials, exact physical proportions, controlled reflections, and believable launch-photography finish.",
-      productTreatment: "Preserve the supplied product's exact geometry, labels, typography, material, color, and design; show one hero product only.",
-      negativeConstraints: "No text overlay, hands, duplicate product, random futuristic clutter, cyberpunk effects, neon overload, or product redesign.",
-    },
-  },
-] as const satisfies readonly CreativePresetDefinition[];
+type VerticalDefaults = Pick<
+  CreativeBrief,
+  "subject" | "pose" | "realism" | "productTreatment" | "negativeConstraints"
+>;
 
-const generationStrategyHints: Record<string, GenerationStrategy> = {
-  "on-model-editorial": "fashion_on_model",
-  "brutalist-streetwear": "fashion_on_model",
-  "urban-night": "fashion_on_model",
-  "minimal-studio-fashion": "fashion_on_model",
-  "back-print-focus": "fashion_on_model",
-  "front-hero-apparel": "fashion_on_model",
-  "editorial-flash": "fashion_on_model",
-  "coastal-editorial": "fashion_on_model",
-  "luxury-macro-jewelry": "jewelry_still_life",
-  "soft-daylight-jewelry": "jewelry_still_life",
-  "black-luxury-jewelry": "jewelry_still_life",
-  "jewelry-on-model": "jewelry_on_model",
-  "stone-surface-jewelry": "jewelry_still_life",
-  "minimal-product-detail": "jewelry_still_life",
-  "dark-premium-studio": "rigid_product",
-  "soft-daylight-product": "rigid_product",
-  "tabletop-lifestyle": "rigid_product",
-  "reflective-luxury-surface": "rigid_product",
-  "minimal-catalog-plus": "rigid_product",
-  "tech-launch-hero": "rigid_product",
+const verticalDefaults: Record<CreativePresetCategory, VerticalDefaults> = {
+  apparel: {
+    subject: "One adult fashion model naturally wearing the supplied garment as the clear campaign hero.",
+    pose: "Use a relaxed, believable editorial pose with open product-defining panels and no hands obscuring the garment.",
+    realism: "Use natural adult anatomy, visible skin and hair texture, credible posture, and fabric weight, drape, folds, seams, and print placement that follow the body.",
+    productTreatment: "Preserve the supplied garment's exact silhouette, color, fabric, seams, collar or hood, sleeve structure, logo, print placement, and front or back distinction.",
+    negativeConstraints: "No added garments, altered artwork, mirrored print, mannequin stiffness, pasted flat apparel, distorted hands, plastic skin, or CGI finish.",
+  },
+  jewelry: {
+    subject: "One supplied jewelry piece as the sole premium product hero, shown at a truthful and clearly legible scale.",
+    pose: "Use a naturally supported placement, or anatomically plausible body contact when the jewelry type is designed to be worn.",
+    realism: "Use physically believable metal reflections, restrained gemstone refraction, precise edges, natural contact shadows, and authentic material weight.",
+    productTreatment: "Preserve exact geometry, band or chain thickness, stone count and placement, setting structure, metal color, proportions, clasp details, and finish.",
+    negativeConstraints: "No floating jewelry, fused metal, malformed fingers, tangled impossible chain, extra stones, duplicate pieces, warped reflections, or chrome CGI.",
+  },
+  watches: {
+    subject: "One supplied watch as a precise, large, commercial hero with its construction and dial clearly readable.",
+    pose: "Use a stable supported placement, or a natural wrist fit with believable tension when the watch is worn.",
+    realism: "Use accurate dial geometry, marker positions, hands, date window, case proportions, crown, bracelet or strap construction, and physically plausible metal and glass reflections.",
+    productTreatment: "Preserve the exact dial layout, bezel, crown side, lugs, bracelet or strap, material, finish, color, and visible branding layout from the supplied watch.",
+    negativeConstraints: "No warped dial, nonsense microtext, altered complications, extra crown or pushers, missing links, duplicate watch, floating product, or CGI reflections.",
+  },
+  cosmetics: {
+    subject: "One supplied cosmetic package as the single, immediately recognizable premium beauty campaign hero.",
+    pose: "Use an upright or naturally supported product placement that keeps the package, cap or pump, and front label area clearly readable.",
+    realism: "Use physically plausible glass, plastic, metal, liquid, or translucent material response, controlled reflections, true label curvature, and grounded contact shadows.",
+    productTreatment: "Preserve the exact bottle, jar, or tube geometry; cap, pump, or dropper; label and logo layout; package color; transparency; fill level; and finish.",
+    negativeConstraints: "No duplicate packaging, warped cap or pump, altered labels, floating product, fake glass glow, generic clutter, text overlay, or waxy CGI gloss.",
+  },
+  footwear: {
+    subject: "The supplied footwear as the large, unmistakable commercial hero, with construction details remaining visibly coherent.",
+    pose: "Use a stable supported placement or a natural foot and ankle fit with credible weight distribution when the footwear is worn.",
+    realism: "Use accurate toe box, outsole and midsole geometry, panel alignment, lacing, material texture, natural creasing, and believable floor contact.",
+    productTreatment: "Preserve the exact silhouette, sole, heel structure, lacing and eyelets, tongue, logo placement, color blocking, panel layout, and material identity.",
+    negativeConstraints: "No shoe too small in frame, floating sole, broken ankles, distorted laces, extra panels or colors, duplicate footwear, flat compositing, or CGI plastic texture.",
+  },
 };
 
-export const creativePresets: readonly CreativePreset[] = imagePresets.map((preset, index) => ({
-  ...preset,
-  creativeDirection: {
-    ...preset.creativeDirection,
-    capture: "capture" in preset.creativeDirection ? preset.creativeDirection.capture ?? null : null,
+function createPreset(seed: PresetSeed, sortOrder: number): CreativePreset {
+  const defaults = verticalDefaults[seed.vertical];
+
+  return {
+    id: seed.id,
+    slug: seed.id,
+    title: seed.title,
+    shortDescription: seed.shortDescription,
+    category: seed.vertical,
+    vertical: seed.vertical,
+    generationMode: "image",
+    generationStrategyHint: seed.generationStrategyHint,
+    useCase: seed.vertical,
+    thumbnail: seed.thumbnail,
+    recommendedTags: seed.recommendedTags,
+    sortOrder,
+    enabled: true,
+    creativeDirection: {
+      subject: `${defaults.subject} ${seed.direction}`,
+      pose: defaults.pose,
+      environment: seed.environment,
+      composition: seed.composition,
+      camera: seed.camera,
+      lighting: seed.lighting,
+      mood: seed.mood,
+      realism: defaults.realism,
+      productTreatment: defaults.productTreatment,
+      negativeConstraints: defaults.negativeConstraints,
+      capture: seed.capture ? getFashionCaptureProfile(seed.capture) : null,
+    },
+  };
+}
+
+const activePresetSeeds = [
+  {
+    id: "apparel-street-style",
+    title: "Street Style",
+    shortDescription: "Garment-led editorial streetwear in a real city setting.",
+    vertical: "apparel",
+    thumbnail: "/presets/apparel-street-style.png",
+    generationStrategyHint: "fashion_on_model",
+    environment: "A real contemporary city street with restrained concrete or storefront architecture, visible texture, and no distracting crowd.",
+    composition: "Garment-led medium-to-full fashion framing with a clear silhouette; the urban context supports rather than competes with the product.",
+    camera: "Street-level 35mm to 50mm editorial photography with believable body proportions and true environmental scale.",
+    lighting: "Direct on-camera flash or a compact hard key on the model, balanced against darker believable city ambience.",
+    mood: "Current, confident, tactile, and premium without becoming cyberpunk or theatrical.",
+    direction: "Deliver a streetwear campaign image where the supplied garment is fully legible and commercially convincing.",
+    capture: "urban_night_flash",
+    recommendedTags: ["city", "streetwear", "editorial"],
   },
-  slug: preset.id,
-  generationMode: "image",
-  generationStrategyHint: generationStrategyHints[preset.id] ?? "rigid_product",
-  useCase: preset.category,
-  sortOrder: index + 1,
-  enabled: true,
-}));
+  {
+    id: "apparel-scenic-editorial",
+    title: "Scenic Editorial",
+    shortDescription: "Outdoor fashion imagery with a refined landscape supporting the garment.",
+    vertical: "apparel",
+    thumbnail: "/presets/apparel-scenic-editorial.png",
+    generationStrategyHint: "fashion_on_model",
+    environment: "A tactile coastal stone, open landscape, or calm natural architecture setting with authentic detail and no fantasy scenery.",
+    composition: "Medium-to-full editorial fashion framing gives the location breathing room while keeping the garment large, readable, and central.",
+    camera: "Natural 45mm to 55mm location-fashion perspective with grounded distance from the subject.",
+    lighting: "Soft directional late-day or overcast daylight that retains true garment color and realistic shadow transitions.",
+    mood: "Airy, elevated, tactile, and quietly expressive rather than cinematic or fantastical.",
+    direction: "Let the environment add atmosphere while the supplied garment stays the unmistakable hero.",
+    capture: "natural_editorial_daylight",
+    recommendedTags: ["outdoor", "landscape", "editorial"],
+  },
+  {
+    id: "apparel-studio-style",
+    title: "Studio Style",
+    shortDescription: "Clean premium studio fashion photography with product clarity.",
+    vertical: "apparel",
+    thumbnail: "/presets/apparel-studio-style.png",
+    generationStrategyHint: "fashion_on_model",
+    environment: "A seamless warm-neutral fashion studio with no props or background elements competing with the supplied garment.",
+    composition: "A balanced medium or full-body product-led fashion frame with the silhouette, fit, and identity-critical panels easy to inspect.",
+    camera: "Natural 50mm studio fashion perspective with clean vertical lines and a credible camera-to-model distance.",
+    lighting: "One large soft directional studio source with gentle fill, accurate color, restrained contrast, and a believable floor shadow.",
+    mood: "Clear, polished, modern, and premium with a real editorial production character.",
+    direction: "Produce clean commercial fashion imagery, not a mannequin render or an e-commerce cutout.",
+    capture: "soft_studio_fashion",
+    recommendedTags: ["studio", "fashion", "commercial"],
+  },
+  {
+    id: "jewelry-on-body",
+    title: "On Body",
+    shortDescription: "Close editorial jewelry worn with realistic skin contact and scale.",
+    vertical: "jewelry",
+    thumbnail: "/presets/jewelry-on-body.png",
+    generationStrategyHint: "jewelry_on_model",
+    environment: "A quiet premium editorial setting in neutral skin-adjacent tones with no competing wardrobe, props, or additional accessories.",
+    composition: "Macro or close body-led framing keeps the jewelry large, sharply readable, and dominant over the surrounding hand, neck, wrist, or ear.",
+    camera: "Refined macro editorial photography with truthful scale, natural body perspective, and critical focus on visible craftsmanship.",
+    lighting: "Soft sculpted directional light that preserves skin microtexture, contact shadows, metal reflections, and gemstone detail.",
+    mood: "Elegant, intimate, controlled, and premium without excessive sparkle or retouching.",
+    direction: "Preserve every stone, setting, metal proportion, and distinctive detail. For rings, fit the complete band precisely around a plausible finger with no gaps or skin intersection; for necklaces, follow neck curvature and gravity; for bracelets, show natural wrist contact; for earrings, use real ear attachment points and gravity.",
+    recommendedTags: ["hand", "neck", "ear", "editorial"],
+  },
+  {
+    id: "jewelry-studio",
+    title: "Studio",
+    shortDescription: "Clean luxury jewelry product photography with precise material detail.",
+    vertical: "jewelry",
+    thumbnail: "/presets/jewelry-studio.png",
+    generationStrategyHint: "jewelry_still_life",
+    environment: "A seamless warm ivory or restrained neutral studio surface with one subtle support at most and no unrelated decorative objects.",
+    composition: "Close product-first framing with the jewelry large, sharply readable, and surrounded by disciplined negative space.",
+    camera: "High-resolution macro product photography with true-to-scale perspective and selective optical depth of field.",
+    lighting: "Controlled soft studio highlights reveal metal curvature, gemstone detail, and contact shadows without clipping or mirror distortion.",
+    mood: "Precise, minimal, polished, and quietly luxurious.",
+    direction: "Show the full jewelry form, clasp or setting, and material detail as a single commercial product hero.",
+    recommendedTags: ["studio", "macro", "luxury"],
+  },
+  {
+    id: "jewelry-scenic",
+    title: "Scenic Setting",
+    shortDescription: "Jewelry as a hero product in a refined, tactile natural setting.",
+    vertical: "jewelry",
+    thumbnail: "/presets/jewelry-scenic.png",
+    generationStrategyHint: "jewelry_still_life",
+    environment: "A serene limestone, warm stone, or restrained botanical-shadow setting that supports the product without becoming a prop display.",
+    composition: "A close sculptural product composition where the jewelry remains large and dominant while the setting provides only calm context.",
+    camera: "Close commercial jewelry photography with natural perspective, clear material detail, and a measured shallow depth of field.",
+    lighting: "Soft warm directional daylight with controlled highlight rolloff across metal, stone, and gemstones.",
+    mood: "Tactile, serene, natural, and high-end.",
+    direction: "Keep the full jewelry form and craftsmanship unobstructed; the scenery must never make it small or secondary.",
+    recommendedTags: ["stone", "daylight", "scenic"],
+  },
+  {
+    id: "watch-on-wrist",
+    title: "On Wrist",
+    shortDescription: "A naturally fitted hero watch in a close premium wrist editorial.",
+    vertical: "watches",
+    thumbnail: "/presets/watch-on-wrist.png",
+    generationStrategyHint: "watch_on_wrist",
+    environment: "A quiet warm editorial setting with a restrained sleeve edge or subtle material context kept secondary to the watch.",
+    composition: "Close wrist-led framing where the watch is large, readable, and visually dominant at believable human scale.",
+    camera: "Natural close portrait perspective with crisp focus on the dial and accurate wrist-to-watch proportion.",
+    lighting: "Soft warm directional light with controlled crystal and metal reflections, honest skin texture, and restrained highlight edges.",
+    mood: "Refined, intimate, precise, and contemporary.",
+    direction: "Curve the bracelet or strap naturally around the wrist and keep the dial, crown side, lugs, and case unobstructed.",
+    recommendedTags: ["wrist", "editorial", "close-up"],
+  },
+  {
+    id: "watch-bright-studio",
+    title: "Bright Studio",
+    shortDescription: "A clean bright watch campaign with readable dial and material detail.",
+    vertical: "watches",
+    thumbnail: "/presets/watch-bright-studio.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A pale warm-grey seamless studio with one simple support at most and no unrelated luxury props.",
+    composition: "A close central product composition with refined negative space and the full watch construction immediately inspectable.",
+    camera: "Commercial close product camera with true-to-scale perspective, crisp dial focus, and controlled depth of field.",
+    lighting: "Bright sculpted studio lighting with soft fill and carefully shaped reflections on crystal, brushed metal, and polished surfaces.",
+    mood: "Clear, technical, premium, and confident.",
+    direction: "Keep the dial, bezel, crown, case, and bracelet or strap legible in a premium advertising image.",
+    recommendedTags: ["studio", "bright", "product"],
+  },
+  {
+    id: "watch-scenic-environment",
+    title: "Scenic Environment",
+    shortDescription: "A hero watch campaign with a refined setting that never steals focus.",
+    vertical: "watches",
+    thumbnail: "/presets/watch-scenic-environment.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A quiet sunlit stone terrace, refined architectural surface, or tasteful outdoor material context with no distracting objects.",
+    composition: "Close sculptural product framing: the environment supplies depth and mood while the watch stays large, sharp, and dominant.",
+    camera: "Premium product camera at a natural three-quarter angle with exact perspective and readable mechanical detail.",
+    lighting: "Soft late-day directional light with truthful crystal, metal, and shadow behavior; reflections remain controlled rather than theatrical.",
+    mood: "Elegant, grounded, composed, and quietly adventurous.",
+    direction: "Treat the watch as the only hero product; the setting should express lifestyle without adding visual clutter.",
+    recommendedTags: ["lifestyle", "stone", "campaign"],
+  },
+  {
+    id: "footwear-hero-focus",
+    title: "Footwear Focus",
+    shortDescription: "Close shoe-first framing that keeps construction and silhouette dominant.",
+    vertical: "footwear",
+    thumbnail: "/presets/footwear-hero-focus.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A restrained concrete or material-rich floor setting with no model, prop, or background element competing with the shoe.",
+    composition: "A very close low-angle product-first frame where the footwear fills the image and stays larger than any surrounding context.",
+    camera: "Ground-level commercial footwear photography with true product perspective and crisp focus on construction details.",
+    lighting: "Soft directional light with accurate material texture, believable floor contact, and a clear but natural cast shadow.",
+    mood: "Bold, tactile, modern, and premium.",
+    direction: "Reveal the toe box, upper panels, laces, sole edge, and overall silhouette in a decisive hero crop.",
+    recommendedTags: ["close-up", "hero", "construction"],
+  },
+  {
+    id: "footwear-studio",
+    title: "Studio",
+    shortDescription: "Premium studio footwear imagery with clean material and sole definition.",
+    vertical: "footwear",
+    thumbnail: "/presets/footwear-studio.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A seamless light concrete-grey studio with a subtle support or platform and no distracting commercial props.",
+    composition: "A close product-led hero frame with disciplined negative space and enough scale to inspect the footwear construction.",
+    camera: "True-to-product commercial footwear camera at a natural low three-quarter angle with exact perspective.",
+    lighting: "Bright, softly sculpted studio illumination with refined material detail, natural shadow, and no harsh reflective glare.",
+    mood: "Clean, confident, contemporary, and premium.",
+    direction: "Present one shoe as a real campaign product, never as a sterile cutout or a generic e-commerce image.",
+    recommendedTags: ["studio", "sneaker", "premium"],
+  },
+  {
+    id: "footwear-street-lifestyle",
+    title: "Street Lifestyle",
+    shortDescription: "A shoe-led urban lifestyle frame with natural movement and contact.",
+    vertical: "footwear",
+    thumbnail: "/presets/footwear-street-lifestyle.png",
+    generationStrategyHint: "footwear_on_model",
+    environment: "Real city pavement and calm contemporary architecture in daylight, kept authentic and visually secondary to the footwear.",
+    composition: "Low ground-level lower-body framing keeps both shoes large, readable, and more prominent than the torso or face.",
+    camera: "Low-angle street footwear photography with natural perspective, credible scale, and focused detail at shoe height.",
+    lighting: "Clean natural daylight with honest pavement texture, realistic material highlights, and strong believable contact shadows.",
+    mood: "Urban, active, confident, and premium.",
+    direction: "Show a believable standing or slow-step pose with correct ankle alignment, sole contact, and natural shoe flex.",
+    recommendedTags: ["street", "on-foot", "lifestyle"],
+  },
+  {
+    id: "cosmetics-studio",
+    title: "Studio",
+    shortDescription: "Luminous premium beauty product photography with exact packaging fidelity.",
+    vertical: "cosmetics",
+    thumbnail: "/presets/cosmetics-studio.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A seamless warm light-beige beauty studio with one subtle neutral plinth at most and no competing props.",
+    composition: "A close balanced product-first composition with elegant negative space, clear silhouette, and the package large in frame.",
+    camera: "Refined commercial beauty product camera with true packaging proportions and controlled close focus.",
+    lighting: "Luminous soft studio light with accurate glass, liquid, plastic, or metal response, gentle highlights, and a precise contact shadow.",
+    mood: "Fresh, polished, clean, and premium.",
+    direction: "Create a premium beauty campaign shot where package fidelity and material realism are more important than styling props.",
+    recommendedTags: ["beauty", "studio", "product"],
+  },
+  {
+    id: "cosmetics-aesthetic-setting",
+    title: "Aesthetic Setting",
+    shortDescription: "A refined beauty product setting that stays clean, tactile, and product-led.",
+    vertical: "cosmetics",
+    thumbnail: "/presets/cosmetics-aesthetic-setting.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A warm travertine vanity surface or quiet plaster interior with one restrained architectural detail and no clutter.",
+    composition: "A close product-forward campaign composition where environmental materials are soft, sparse, and secondary to the package.",
+    camera: "Commercial tabletop beauty camera at a believable slightly elevated angle with accurate geometry and no perspective distortion.",
+    lighting: "Warm side daylight with controlled soft shadows, truthful reflections, and material behavior appropriate to the supplied packaging.",
+    mood: "Tactile, refined, calm, and modern.",
+    direction: "Keep the product exact and singular while using the setting only to add tasteful premium context.",
+    recommendedTags: ["vanity", "stone", "beauty"],
+  },
+  {
+    id: "cosmetics-lifestyle-landscape",
+    title: "Lifestyle Landscape",
+    shortDescription: "Beauty product storytelling in a tasteful natural lifestyle environment.",
+    vertical: "cosmetics",
+    thumbnail: "/presets/cosmetics-lifestyle-landscape.png",
+    generationStrategyHint: "rigid_product",
+    environment: "A serene sunlit stone terrace or refined outdoor lifestyle surface with subtle botanical shadows and a softly defocused horizon.",
+    composition: "A close hero-product frame where the landscape gives warmth and atmosphere but never makes the package small or secondary.",
+    camera: "Elevated beauty campaign product photography with true package perspective, close detail, and restrained natural depth of field.",
+    lighting: "Golden but believable natural daylight with physically plausible glass, liquid, plastic, and stone reflections.",
+    mood: "Warm, healthy, serene, and premium.",
+    direction: "Make the supplied package the immediate focus of a tasteful lifestyle scene without crowded scenery or generic props.",
+    recommendedTags: ["outdoor", "lifestyle", "beauty"],
+  },
+] as const satisfies readonly PresetSeed[];
+
+export const creativePresets: readonly CreativePreset[] = activePresetSeeds.map((preset, index) =>
+  createPreset(preset, index + 1),
+);
+
+type ActivePresetId = (typeof activePresetSeeds)[number]["id"];
+type LegacyPresetDefinition = {
+  id: string;
+  title: string;
+  vertical: CreativePresetCategory;
+  generationStrategyHint: GenerationStrategy;
+  fallbackId: ActivePresetId;
+};
+
+const legacyPresetDefinitions: readonly LegacyPresetDefinition[] = [
+  { id: "on-model-editorial", title: "On-Model Editorial", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-studio-style" },
+  { id: "brutalist-streetwear", title: "Brutalist Streetwear", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-street-style" },
+  { id: "urban-night", title: "Urban Streetwear", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-street-style" },
+  { id: "minimal-studio-fashion", title: "Minimal Studio Fashion", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-studio-style" },
+  { id: "back-print-focus", title: "Back Print Focus", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-studio-style" },
+  { id: "front-hero-apparel", title: "Front Hero Apparel", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-studio-style" },
+  { id: "editorial-flash", title: "Editorial Flash", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-street-style" },
+  { id: "coastal-editorial", title: "Coastal Editorial", vertical: "apparel", generationStrategyHint: "fashion_on_model", fallbackId: "apparel-scenic-editorial" },
+  { id: "luxury-macro-jewelry", title: "Luxury Macro Still Life", vertical: "jewelry", generationStrategyHint: "jewelry_still_life", fallbackId: "jewelry-studio" },
+  { id: "soft-daylight-jewelry", title: "Soft Editorial Jewelry", vertical: "jewelry", generationStrategyHint: "jewelry_still_life", fallbackId: "jewelry-scenic" },
+  { id: "black-luxury-jewelry", title: "Black Luxury", vertical: "jewelry", generationStrategyHint: "jewelry_still_life", fallbackId: "jewelry-studio" },
+  { id: "jewelry-on-model", title: "Jewelry On Hand", vertical: "jewelry", generationStrategyHint: "jewelry_on_model", fallbackId: "jewelry-on-body" },
+  { id: "stone-surface-jewelry", title: "Stone Surface", vertical: "jewelry", generationStrategyHint: "jewelry_still_life", fallbackId: "jewelry-scenic" },
+  { id: "minimal-product-detail", title: "Minimal Detail", vertical: "jewelry", generationStrategyHint: "jewelry_still_life", fallbackId: "jewelry-studio" },
+  { id: "watch-hero", title: "Watch Studio Close-up", vertical: "watches", generationStrategyHint: "rigid_product", fallbackId: "watch-bright-studio" },
+  { id: "wrist-editorial", title: "Watch On Wrist Editorial", vertical: "watches", generationStrategyHint: "watch_on_wrist", fallbackId: "watch-on-wrist" },
+  { id: "macro-dial", title: "Macro Dial", vertical: "watches", generationStrategyHint: "rigid_product", fallbackId: "watch-bright-studio" },
+  { id: "dark-luxury-watch", title: "Luxury Watch Campaign", vertical: "watches", generationStrategyHint: "rigid_product", fallbackId: "watch-scenic-environment" },
+  { id: "reflective-metal-watch", title: "Reflective Metal", vertical: "watches", generationStrategyHint: "rigid_product", fallbackId: "watch-bright-studio" },
+  { id: "on-foot-editorial", title: "On-foot Editorial", vertical: "footwear", generationStrategyHint: "footwear_on_model", fallbackId: "footwear-street-lifestyle" },
+  { id: "street-footwear", title: "On-Foot Street Campaign", vertical: "footwear", generationStrategyHint: "footwear_on_model", fallbackId: "footwear-street-lifestyle" },
+  { id: "studio-footwear-hero", title: "Minimal Sneaker Studio", vertical: "footwear", generationStrategyHint: "rigid_product", fallbackId: "footwear-studio" },
+  { id: "ground-level-campaign", title: "Ground-Level Campaign", vertical: "footwear", generationStrategyHint: "footwear_on_model", fallbackId: "footwear-street-lifestyle" },
+  { id: "motion-step", title: "Motion Step", vertical: "footwear", generationStrategyHint: "footwear_on_model", fallbackId: "footwear-street-lifestyle" },
+  { id: "footwear-material-detail", title: "Footwear Hero Close-up", vertical: "footwear", generationStrategyHint: "rigid_product", fallbackId: "footwear-hero-focus" },
+  { id: "dark-premium-studio", title: "Premium Beauty Editorial", vertical: "cosmetics", generationStrategyHint: "rigid_product", fallbackId: "cosmetics-studio" },
+  { id: "soft-daylight-product", title: "Soft Daylight Beauty", vertical: "cosmetics", generationStrategyHint: "rigid_product", fallbackId: "cosmetics-aesthetic-setting" },
+  { id: "tabletop-lifestyle", title: "Warm Luxury Vanity Scene", vertical: "cosmetics", generationStrategyHint: "rigid_product", fallbackId: "cosmetics-aesthetic-setting" },
+  { id: "reflective-luxury-surface", title: "Reflective Cosmetics", vertical: "cosmetics", generationStrategyHint: "rigid_product", fallbackId: "cosmetics-studio" },
+  { id: "minimal-catalog-plus", title: "Clean Studio Product Shot", vertical: "cosmetics", generationStrategyHint: "rigid_product", fallbackId: "cosmetics-studio" },
+];
+
+export const historicalUnsupportedPresetIds = [
+  ...legacyPresetDefinitions.map((preset) => preset.id),
+  "tech-launch-hero",
+] as const;
+
+export type HistoricalPresetMetadata = Pick<CreativePreset, "category" | "id" | "title" | "useCase" | "vertical"> | {
+  category: "product";
+  id: "tech-launch-hero";
+  title: "Tech Launch Hero";
+  useCase: "product";
+  vertical: "product";
+};
+
+const legacyOnlyPresetMetadata: readonly HistoricalPresetMetadata[] = [{
+  id: "tech-launch-hero",
+  title: "Tech Launch Hero",
+  category: "product",
+  vertical: "product",
+  useCase: "product",
+}];
+
+/** Compatibility-only lookup for generations made before the active library was simplified. */
+export function getHistoricalCreativePreset(id: unknown): CreativePreset | null {
+  if (typeof id !== "string") return null;
+  const legacy = legacyPresetDefinitions.find((preset) => preset.id === id);
+  if (!legacy) return null;
+  const fallback = creativePresets.find((preset) => preset.id === legacy.fallbackId);
+  if (!fallback) return null;
+
+  return {
+    ...fallback,
+    id: legacy.id,
+    slug: legacy.id,
+    title: legacy.title,
+    category: legacy.vertical,
+    vertical: legacy.vertical,
+    useCase: legacy.vertical,
+    generationStrategyHint: legacy.generationStrategyHint,
+    enabled: false,
+  };
+}
+
+export function getHistoricalPresetMetadata(id: unknown): HistoricalPresetMetadata | null {
+  const preset = getHistoricalCreativePreset(id);
+  if (preset) {
+    return {
+      id: preset.id,
+      title: preset.title,
+      category: preset.category,
+      vertical: preset.vertical,
+      useCase: preset.useCase,
+    };
+  }
+
+  return typeof id === "string"
+    ? legacyOnlyPresetMetadata.find((presetMetadata) => presetMetadata.id === id) ?? null
+    : null;
+}
 
 export function getCreativePreset(id: unknown): CreativePreset | null {
   if (typeof id !== "string") return null;

@@ -35,6 +35,7 @@ export function createCreativePresetMetadata(preset: CreativePreset | null) {
     id: preset.id,
     title: preset.title,
     category: preset.category,
+    vertical: preset.vertical,
     useCase: preset.useCase,
   };
 }
