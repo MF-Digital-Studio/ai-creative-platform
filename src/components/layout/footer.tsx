@@ -74,7 +74,6 @@ export async function Footer() {
               variant="footer"
               lines={[footerT("ctaTitleLead"), footerT("ctaTitleTrail")]}
               className="mt-5 max-w-full text-[clamp(2.25rem,4.1vw,4rem)] font-semibold leading-[0.98] tracking-[-0.06em]"
-              style={{ fontFamily: "var(--font-display)" }}
             />
           </div>
 
@@ -100,7 +99,6 @@ export async function Footer() {
           <div className="max-w-xs">
             <p
               className="text-sm font-bold tracking-[-0.025em]"
-              style={{ fontFamily: "var(--font-display)" }}
             >
               {siteConfig.name}
             </p>
@@ -135,7 +133,6 @@ export async function Footer() {
           <p
             aria-hidden="true"
             className="whitespace-nowrap text-center text-[clamp(1.875rem,9vw,10rem)] font-semibold leading-[0.82] tracking-[-0.075em] text-[var(--footer-wordmark)] sm:text-[clamp(2.25rem,11.25vw,10rem)]"
-            style={{ fontFamily: "var(--font-display)" }}
           >
             {siteConfig.name}
           </p>

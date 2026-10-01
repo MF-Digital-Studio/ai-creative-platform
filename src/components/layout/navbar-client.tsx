@@ -100,7 +100,6 @@ export function NavbarClient({isAuthenticated}: NavbarClientProps) {
               href={siteConfig.routes.home}
               aria-label={navigationT("homeLabel", {brand: siteConfig.name})}
               className="navbar-brand"
-              style={{fontFamily: "var(--font-display)"}}
               onClick={scrollHomeToTop}
             >
               {siteConfig.name}

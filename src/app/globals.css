@@ -180,7 +180,7 @@ main section[id] {
 .contact-visual-heading {
   width: 100%;
   max-width: 15ch;
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2rem, 3.1vw, 3.5rem);
   font-weight: 600;
   line-height: 0.98;
@@ -222,7 +222,7 @@ main section[id] {
 }
 
 .contact-form-heading h1 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2rem, 3vw, 2.75rem);
   font-weight: 600;
   line-height: 1.02;
@@ -678,11 +678,11 @@ html[data-motion="ready"] .motion-reveal[data-motion-revealed="true"] .faq-row {
 @keyframes motion-workspace-enter { from { opacity: 0; transform: translateY(1.25rem) scale(0.985); clip-path: inset(0 0 7% 0 round var(--radius-lg)); } to { opacity: 1; transform: translateY(0) scale(1); clip-path: inset(0 round var(--radius-lg)); } }
 
 body {
-  --font-display: var(--font-sans);
+  --font-sans: var(--font-outfit);
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -1562,7 +1562,7 @@ html[data-motion="ready"] .workspace-frame { animation: motion-workspace-enter v
 
 .signup-visual-heading {
   max-width: 13ch;
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2rem, 3.2vw, 3.75rem);
   font-weight: 600;
   line-height: 0.98;
@@ -1628,7 +1628,7 @@ html[data-motion="ready"] .workspace-frame { animation: motion-workspace-enter v
 }
 
 .signup-form-heading h1 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2rem, 3vw, 2.75rem);
   font-weight: 600;
   line-height: 1.02;
@@ -2394,7 +2394,7 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .dashboard-composer-heading h1 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2.125rem, 4vw, 3.75rem);
   font-weight: 560;
   line-height: 0.98;
@@ -2801,7 +2801,7 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .dashboard-section-heading h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(1.5rem, 2.5vw, 2.125rem);
   font-weight: 580;
   line-height: 1.08;
@@ -2936,7 +2936,7 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .dashboard-inspiration-heading h3 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(1.25rem, 2vw, 1.625rem);
   font-weight: 580;
   line-height: 1.1;
@@ -3153,7 +3153,7 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .dashboard-project-index-header h1 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2.25rem, 4vw, 4rem);
   font-weight: 560;
   line-height: 0.98;
@@ -3219,7 +3219,7 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .dashboard-delete-dialog-content h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: 1.375rem;
   font-weight: 580;
   letter-spacing: -0.035em;
@@ -3391,7 +3391,7 @@ html[data-motion="ready"] .signup-form-wrap {
 
 .project-title-row h1 {
   max-width: 52rem;
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(2.25rem, 4vw, 4rem);
   font-weight: 560;
   line-height: 0.98;
@@ -3454,7 +3454,7 @@ html[data-motion="ready"] .signup-form-wrap {
 }
 
 .project-panel-heading h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-outfit), sans-serif;
   font-size: clamp(1.4rem, 2vw, 1.875rem);
   font-weight: 580;
   line-height: 1.08;

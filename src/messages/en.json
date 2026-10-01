@@ -1,6 +1,6 @@
 {
   "Metadata": {
-    "title": "Creative AI — From Product Photo to Campaign",
+    "title": "Klay.ai",
     "description": "Premium AI campaign content for apparel, jewelry, watches, cosmetics, and footwear."
   },
   "Navigation": {
@@ -24,7 +24,7 @@
   },
   "ShowcasePage": {
     "eyebrow": "SHOWCASE",
-    "heading": "Work created with Creative AI.",
+    "heading": "Work created with Klay.ai.",
     "description": "Our latest image and video generations will appear here soon."
   },
   "Hero": {
@@ -165,7 +165,7 @@
     "supportLink": "Talk to our team",
     "items": {
       "howItWorks": {
-        "question": "How does Creative AI work?",
+        "question": "How does Klay.ai work?",
         "answer": "Upload your product photo, choose a ready-made template or describe the creative direction with a prompt. The system analyzes the product and creates campaign visuals or short-form video outputs for the selected format."
       },
       "productFidelity": {
@@ -190,7 +190,7 @@
       },
       "generationModels": {
         "question": "Which image and video models are used?",
-        "answer": "Creative AI is not tied to one model. It uses a multi-model approach that routes product analysis, image generation, editing and video tasks to suitable models. Available models may change over time based on quality, cost and performance."
+        "answer": "Klay.ai is not tied to one model. It uses a multi-model approach that routes product analysis, image generation, editing and video tasks to suitable models. Available models may change over time based on quality, cost and performance."
       },
       "generationTime": {
         "question": "How long does generation take?",
@@ -207,7 +207,7 @@
     }
   },
   "WorkspaceDemo": {
-    "workspaceLabel": "Interactive Creative AI campaign workspace demo",
+    "workspaceLabel": "Interactive Klay.ai campaign workspace demo",
     "canvasLabel": "Selectable campaign assets",
     "chatLabel": "Creative Agent chat panel",
     "selectedPreviewLabel": "Selected campaign asset preview",
@@ -350,7 +350,7 @@
   "Preview": {
     "foundation": "FOUNDATION",
     "title": "UI Preview",
-    "description": "Consistent, minimal and content-focused interface components for the creative platform.",
+    "description": "Consistent, minimal and content-focused interface components for Klay.ai.",
     "ariaLabel": "UI Preview",
     "actions": "ACTIONS",
     "buttonVariants": "Button variants",
@@ -390,8 +390,8 @@
     "copyright": "© {year} {brand}. All rights reserved."
   },
   "SignupPage": {
-    "metadataTitle": "Create Account | Creative AI",
-    "metadataDescription": "Create your Creative AI account and start turning product photos into campaign-ready visuals and short-form videos.",
+    "metadataTitle": "Create Account",
+    "metadataDescription": "Create your Klay.ai account and start turning product photos into campaign-ready visuals and short-form videos.",
     "heading": "Create your account",
     "description": "Start creating your first campaign with your email address.",
     "progressStepOne": "Signup step 1: Email",
@@ -420,7 +420,7 @@
     "verifyEyebrow": "VERIFY YOUR EMAIL",
     "verifyHeading": "Check your email.",
     "verifyDescription": "We sent a confirmation link to {email}. Open it to finish creating your account.",
-    "verifyHelper": "After confirming your email, you'll be redirected to your Creative AI workspace.",
+    "verifyHelper": "After confirming your email, you'll be redirected to your Klay.ai workspace.",
     "existingAccount": "Already have an account?",
     "signIn": "Sign In",
     "unavailable": "Account creation will be available soon.",
@@ -428,17 +428,17 @@
     "termsLink": "Terms of Use",
     "privacyLink": " and Privacy Policy",
     "termsSuffix": ".",
-    "visualLabel": "Creative AI campaign preview",
+    "visualLabel": "Klay.ai campaign preview",
     "visualAlt": "Campaign photograph of an adult model wearing a deep burgundy floor-length dress in warm stone architecture",
     "visualEyebrow": "FROM PRODUCT TO CAMPAIGN",
     "visualHeading": "From one product photo to a complete campaign.",
     "visualDescription": "Upload your product, describe the creative direction and generate image and short-form video outputs inside one workflow."
   },
   "LoginPage": {
-    "metadataTitle": "Sign In | Creative AI",
-    "metadataDescription": "Sign in to your Creative AI account and continue creating campaign-ready visuals and short-form videos.",
+    "metadataTitle": "Sign In",
+    "metadataDescription": "Sign in to your Klay.ai account and continue creating campaign-ready visuals and short-form videos.",
     "heading": "Welcome back",
-    "description": "Sign in to your Creative AI account and continue where you left off.",
+    "description": "Sign in to your Klay.ai account and continue where you left off.",
     "emailLabel": "Email",
     "emailPlaceholder": "Enter your email address",
     "emailRequired": "Enter your email address to sign in.",
@@ -462,17 +462,17 @@
     "noAccount": "Don't have an account?",
     "createAccount": "Create Account",
     "unavailable": "Sign-in will be available soon.",
-    "visualLabel": "Creative AI fashion campaign preview",
+    "visualLabel": "Klay.ai fashion campaign preview",
     "visualAlt": "Campaign photograph of an adult model wearing a deep burgundy floor-length dress in warm stone architecture",
     "visualEyebrow": "CREATIVE WORKFLOW",
     "visualHeading": "Turn your product photos into full campaigns.",
-    "visualDescription": "Sign in to your Creative AI account and continue building campaign-ready visuals and short-form videos."
+    "visualDescription": "Sign in to your Klay.ai account and continue building campaign-ready visuals and short-form videos."
   },
   "ContactPage": {
-    "metadataTitle": "Contact | Creative AI",
-    "metadataDescription": "Contact the Creative AI team to discuss pilot access, partnerships or anything you would like to know about the product.",
+    "metadataTitle": "Contact",
+    "metadataDescription": "Contact the Klay.ai team to discuss pilot access, partnerships or anything you would like to know about the product.",
     "heading": "Talk to our team",
-    "description": "Tell us about pilot access, pricing, partnerships or anything you would like to know about Creative AI.",
+    "description": "Tell us about pilot access, pricing, partnerships or anything you would like to know about Klay.ai.",
     "helper": "We’ll review your message and get back to you as soon as possible.",
     "nameLabel": "Full name",
     "namePlaceholder": "Enter your full name",
@@ -501,18 +501,18 @@
     "submit": "Send Message",
     "submitting": "Sending",
     "unavailable": "The contact form will be available soon.",
-    "visualLabel": "Creative AI fashion campaign",
+    "visualLabel": "Klay.ai fashion campaign",
     "visualAlt": "Campaign photograph of an adult model wearing a burgundy floor-length dress in warm stone architecture",
     "visualEyebrow": "LET’S CREATE TOGETHER",
     "visualHeading": "Build a new creative workflow\nfor your brand.",
     "visualDescription": "Talk to our team about pilot access, partnerships or anything you would like to know about the product."
   },
   "Dashboard": {
-    "metadataTitle": "Creative Workspace | CREATIVE AI",
-    "metadataDescription": "Create campaign-ready product visuals and explore creative directions in the CREATIVE AI workspace.",
+    "metadataTitle": "Creative Workspace",
+    "metadataDescription": "Create campaign-ready product visuals and explore creative directions in the Klay.ai workspace.",
     "navigation": {
-      "brand": "CREATIVE AI",
-      "homeLabel": "Return to the CREATIVE AI home page",
+      "brand": "Klay.ai",
+      "homeLabel": "Return to the Klay.ai home page",
       "primaryLabel": "Workspace navigation",
       "secondaryLabel": "Workspace settings",
       "unavailable": "This area will be available in a future update.",
@@ -541,7 +541,7 @@
     "account": {
       "eyebrow": "ACCOUNT",
       "heading": "Profile",
-      "description": "Manage the name shown in your Creative AI workspace.",
+      "description": "Manage the name shown in your Klay.ai workspace.",
       "displayNameLabel": "Display name",
       "displayNameHelper": "This name is used inside your workspace.",
       "save": "Save changes",
@@ -751,7 +751,7 @@
       "viewAll": "View all projects",
       "allHeading": "All projects",
       "allEyebrow": "Project library",
-      "allMetadataTitle": "All Projects | CREATIVE AI",
+      "allMetadataTitle": "All Projects",
       "backToWorkspace": "Back to Workspace",
       "emptyHeading": "Your creations will appear here.",
       "emptyDescription": "Start with a product photo to create your first campaign output.",
@@ -785,8 +785,8 @@
       }
     },
     "project": {
-      "metadataTitle": "Project Workspace | CREATIVE AI",
-      "metadataDescription": "View the details of a project in your CREATIVE AI workspace.",
+      "metadataTitle": "Project Workspace",
+      "metadataDescription": "View the details of a project in your Klay.ai workspace.",
       "backToWorkspace": "Back to Workspace",
       "untitledProject": "Untitled Project",
       "created": "Created {date}",

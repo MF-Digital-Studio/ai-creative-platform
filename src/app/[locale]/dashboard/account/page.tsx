@@ -38,7 +38,7 @@ export default async function AccountPage({ params }: AccountPageProps) {
               {t("eyebrow")}
             </p>
             <div className="grid gap-3">
-              <h1 id="account-heading" className="font-[family-name:var(--font-display)] text-4xl font-medium tracking-[-0.045em] text-[var(--dashboard-foreground)] sm:text-5xl">
+              <h1 id="account-heading" className="text-4xl font-medium tracking-[-0.045em] text-[var(--dashboard-foreground)] sm:text-5xl">
                 {t("heading")}
               </h1>
               <p className="max-w-lg text-base leading-7 text-[var(--dashboard-muted)]">

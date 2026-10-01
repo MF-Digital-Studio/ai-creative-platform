@@ -27,7 +27,6 @@ export async function ModelEcosystem() {
               id="model-ecosystem-title"
               lines={[t("titleLead"), t("titleTrail")]}
               className="mt-5 text-[clamp(2.5rem,5.2vw,4rem)] font-semibold leading-[0.96] tracking-[-0.06em] text-[var(--foreground)]"
-              style={{ fontFamily: "var(--font-display)" }}
             />
           </div>
           <Reveal delay={110} className="max-w-xl lg:pb-1">

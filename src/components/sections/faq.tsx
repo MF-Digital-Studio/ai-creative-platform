@@ -31,7 +31,6 @@ export async function Faq() {
               id="faq-title"
               lines={t("heading").split("\n")}
               className="mt-5 whitespace-pre-line text-[clamp(2.5rem,4.5vw,4.5rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
-              style={{ fontFamily: "var(--font-display)" }}
             />
             <Reveal delay={100} className="mt-6 max-w-lg"><p className="text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
               {t("description")}

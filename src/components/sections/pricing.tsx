@@ -57,7 +57,6 @@ function PricingCard({ plan, locale, t }: PricingCardProps) {
       <div className="flex min-h-8 flex-wrap items-start justify-between gap-3">
         <h3
           className="text-2xl font-semibold leading-tight tracking-[-0.04em] text-[var(--foreground)]"
-          style={{ fontFamily: "var(--font-display)" }}
         >
           {t(plan.nameKey)}
         </h3>
@@ -78,7 +77,6 @@ function PricingCard({ plan, locale, t }: PricingCardProps) {
       <p className="mt-7 flex flex-wrap items-baseline gap-x-2 text-[var(--foreground)]">
         <span
           className="text-[clamp(2.75rem,4vw,3.75rem)] font-medium leading-none tracking-[-0.06em]"
-          style={{ fontFamily: "var(--font-display)" }}
         >
           {plan.price[locale]}
         </span>
@@ -141,7 +139,6 @@ export async function Pricing() {
               id="pricing-title"
               lines={t("heading").split("\n")}
               className="mt-5 max-w-3xl text-[clamp(2.5rem,4.75vw,4.5rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
-              style={{ fontFamily: "var(--font-display)" }}
             />
           </div>
 

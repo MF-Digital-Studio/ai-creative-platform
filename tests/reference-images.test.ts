@@ -121,6 +121,7 @@ test("OpenAI diagnostics retain safe categories but never image data, URLs, or A
   assert.equal(diagnostic.status, 400);
   assert.equal(diagnostic.errorType, "invalid_request_error");
   assert.equal(diagnostic.errorCode, "unsupported_parameter");
+  assert.equal(diagnostic.param, null);
   assert.doesNotMatch(diagnostic.safeMessage, /abc123|private\.example|sk-secret-token/);
 });
 

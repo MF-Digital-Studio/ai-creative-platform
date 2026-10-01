@@ -25,7 +25,6 @@ export async function BeforeAfter() {
               id="before-after-title"
               lines={t("heading").split("\n")}
               className="mt-5 whitespace-pre-line text-[clamp(2.5rem,4.75vw,4.5rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[var(--foreground)]"
-              style={{ fontFamily: "var(--font-display)" }}
             />
           </div>
           <Reveal delay={110} className="max-w-xl lg:pb-1"><p className="text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">

@@ -1,6 +1,6 @@
 {
   "Metadata": {
-    "title": "Creative AI — Ürün Fotoğrafından Kampanyaya",
+    "title": "Klay.ai",
     "description": "Giyim, takı, saat, kozmetik ve ayakkabı için premium AI kampanya içerikleri."
   },
   "Navigation": {
@@ -24,7 +24,7 @@
   },
   "ShowcasePage": {
     "eyebrow": "SHOWCASE",
-    "heading": "Creative AI ile üretilen çalışmalar.",
+    "heading": "Klay.ai ile üretilen çalışmalar.",
     "description": "Görsel ve video üretimlerimizi yakında burada paylaşacağız."
   },
   "Hero": {
@@ -165,7 +165,7 @@
     "supportLink": "Ekibimizle konuşun",
     "items": {
       "howItWorks": {
-        "question": "Creative AI tam olarak nasıl çalışır?",
+        "question": "Klay.ai tam olarak nasıl çalışır?",
         "answer": "Ürün fotoğrafınızı yükler, hazır bir şablon seçer veya yaratıcı yönünüzü prompt ile tarif edersiniz. Sistem ürününüzü analiz eder ve seçtiğiniz formata göre kampanya görselleri ya da kısa video çıktıları oluşturur."
       },
       "productFidelity": {
@@ -190,7 +190,7 @@
       },
       "generationModels": {
         "question": "Hangi görsel ve video modelleri kullanılıyor?",
-        "answer": "Creative AI tek bir modele bağlı değildir. Ürün analizi, görsel üretimi, düzenleme ve video oluşturma görevlerini ihtiyaca uygun farklı modellere yönlendiren çoklu model yaklaşımı kullanır. Kullanılabilir modeller zaman içinde kalite, maliyet ve performansa göre güncellenebilir."
+        "answer": "Klay.ai tek bir modele bağlı değildir. Ürün analizi, görsel üretimi, düzenleme ve video oluşturma görevlerini ihtiyaca uygun farklı modellere yönlendiren çoklu model yaklaşımı kullanır. Kullanılabilir modeller zaman içinde kalite, maliyet ve performansa göre güncellenebilir."
       },
       "generationTime": {
         "question": "Üretim ne kadar sürer?",
@@ -207,7 +207,7 @@
     }
   },
   "WorkspaceDemo": {
-    "workspaceLabel": "Etkileşimli Creative AI kampanya çalışma alanı demosu",
+    "workspaceLabel": "Etkileşimli Klay.ai kampanya çalışma alanı demosu",
     "canvasLabel": "Seçilebilir kampanya varlıkları",
     "chatLabel": "Creative Agent sohbet paneli",
     "selectedPreviewLabel": "Seçili kampanya varlığı önizlemesi",
@@ -350,7 +350,7 @@
   "Preview": {
     "foundation": "TEMEL",
     "title": "UI Önizleme",
-    "description": "Creative platform için tutarlı, sade ve içerik odaklı arayüz bileşenleri.",
+    "description": "Klay.ai için tutarlı, sade ve içerik odaklı arayüz bileşenleri.",
     "ariaLabel": "UI Önizleme",
     "actions": "AKSİYONLAR",
     "buttonVariants": "Buton varyantları",
@@ -390,8 +390,8 @@
     "copyright": "© {year} {brand}. Tüm hakları saklıdır."
   },
   "SignupPage": {
-    "metadataTitle": "Hesap Oluştur | Creative AI",
-    "metadataDescription": "Creative AI hesabınızı oluşturun ve ürün fotoğraflarınızı kampanyaya hazır görsellere ve kısa videolara dönüştürmeye başlayın.",
+    "metadataTitle": "Hesap Oluştur",
+    "metadataDescription": "Klay.ai hesabınızı oluşturun ve ürün fotoğraflarınızı kampanyaya hazır görsellere ve kısa videolara dönüştürmeye başlayın.",
     "heading": "Hesabınızı oluşturun",
     "description": "İlk kampanyanızı oluşturmaya e-posta adresinizle başlayın.",
     "progressStepOne": "Kayıt adımı 1: E-posta",
@@ -420,7 +420,7 @@
     "verifyEyebrow": "E-POSTANIZI DOĞRULAYIN",
     "verifyHeading": "E-postanızı kontrol edin.",
     "verifyDescription": "Hesabınızı tamamlamak için {email} adresine gönderdiğimiz doğrulama bağlantısına tıklayın.",
-    "verifyHelper": "E-postayı doğruladıktan sonra Creative AI çalışma alanınıza yönlendirileceksiniz.",
+    "verifyHelper": "E-postayı doğruladıktan sonra Klay.ai çalışma alanınıza yönlendirileceksiniz.",
     "existingAccount": "Zaten hesabınız var mı?",
     "signIn": "Giriş Yap",
     "unavailable": "Kayıt sistemi yakında kullanıma açılacak.",
@@ -428,17 +428,17 @@
     "termsLink": "Kullanım Şartları'nı",
     "privacyLink": " ve Gizlilik Politikası'nı",
     "termsSuffix": " kabul etmiş olursunuz.",
-    "visualLabel": "Creative AI kampanya önizlemesi",
+    "visualLabel": "Klay.ai kampanya önizlemesi",
     "visualAlt": "Sıcak taş mimaride derin bordo uzun elbise giyen yetişkin modelin kampanya fotoğrafı",
     "visualEyebrow": "ÜRÜNDEN KAMPANYAYA",
     "visualHeading": "Bir ürün fotoğrafından eksiksiz bir kampanyaya.",
     "visualDescription": "Ürününüzü yükleyin, yaratıcı yönünüzü tarif edin ve görsel ile kısa video çıktılarınızı tek akışta oluşturun."
   },
   "LoginPage": {
-    "metadataTitle": "Giriş Yap | Creative AI",
-    "metadataDescription": "Creative AI hesabınıza giriş yapın ve kampanyaya hazır görselleriniz ile kısa videolarınızı oluşturmaya devam edin.",
+    "metadataTitle": "Giriş Yap",
+    "metadataDescription": "Klay.ai hesabınıza giriş yapın ve kampanyaya hazır görselleriniz ile kısa videolarınızı oluşturmaya devam edin.",
     "heading": "Tekrar hoş geldiniz",
-    "description": "Creative AI hesabınıza giriş yaparak kampanyalarınıza kaldığınız yerden devam edin.",
+    "description": "Klay.ai hesabınıza giriş yaparak kampanyalarınıza kaldığınız yerden devam edin.",
     "emailLabel": "E-posta",
     "emailPlaceholder": "E-posta adresinizi girin",
     "emailRequired": "Giriş yapmak için e-posta adresinizi girin.",
@@ -462,15 +462,15 @@
     "noAccount": "Hesabınız yok mu?",
     "createAccount": "Hesap Oluştur",
     "unavailable": "Giriş sistemi yakında kullanıma açılacak.",
-    "visualLabel": "Creative AI moda kampanyası önizlemesi",
+    "visualLabel": "Klay.ai moda kampanyası önizlemesi",
     "visualAlt": "Sıcak taş mimaride derin bordo uzun elbise giyen yetişkin modelin kampanya fotoğrafı",
     "visualEyebrow": "CREATIVE WORKFLOW",
     "visualHeading": "Ürün fotoğrafınızı kampanyaya dönüştürün.",
-    "visualDescription": "Creative AI hesabınıza giriş yapın ve ürün görsellerinizi yönetmeye devam edin."
+    "visualDescription": "Klay.ai hesabınıza giriş yapın ve ürün görsellerinizi yönetmeye devam edin."
   },
   "ContactPage": {
-    "metadataTitle": "İletişim | Creative AI",
-    "metadataDescription": "Creative AI hakkında konuşmak, pilot kullanıma katılmak veya iş birliği olanaklarını değerlendirmek için ekibimizle iletişime geçin.",
+    "metadataTitle": "İletişim",
+    "metadataDescription": "Klay.ai hakkında konuşmak, pilot kullanıma katılmak veya iş birliği olanaklarını değerlendirmek için ekibimizle iletişime geçin.",
     "heading": "Bizimle iletişime geçin",
     "description": "Pilot kullanım, fiyatlandırma, iş birliği veya ürün hakkında merak ettiklerinizi paylaşın.",
     "helper": "Mesajınızı inceleyip en kısa sürede dönüş yapacağız.",
@@ -501,18 +501,18 @@
     "submit": "Mesaj Gönder",
     "submitting": "Gönderiliyor",
     "unavailable": "İletişim formu yakında kullanıma açılacak.",
-    "visualLabel": "Creative AI moda kampanyası",
+    "visualLabel": "Klay.ai moda kampanyası",
     "visualAlt": "Sıcak taş mimaride bordo uzun elbise giyen yetişkin modelin kampanya fotoğrafı",
     "visualEyebrow": "BİRLİKTE ÜRETELİM",
     "visualHeading": "Markanız için\nyeni bir üretim akışı kuralım.",
     "visualDescription": "Pilot kullanım, iş birliği veya ürün hakkında konuşmak için ekibimizle iletişime geçin."
   },
   "Dashboard": {
-    "metadataTitle": "Yaratıcı Çalışma Alanı | CREATIVE AI",
-    "metadataDescription": "CREATIVE AI çalışma alanında kampanyaya hazır ürün görselleri oluşturun ve yaratıcı yönleri keşfedin.",
+    "metadataTitle": "Yaratıcı Çalışma Alanı",
+    "metadataDescription": "Klay.ai çalışma alanında kampanyaya hazır ürün görselleri oluşturun ve yaratıcı yönleri keşfedin.",
     "navigation": {
-      "brand": "CREATIVE AI",
-      "homeLabel": "CREATIVE AI ana sayfasına dön",
+      "brand": "Klay.ai",
+      "homeLabel": "Klay.ai ana sayfasına dön",
       "primaryLabel": "Çalışma alanı navigasyonu",
       "secondaryLabel": "Çalışma alanı ayarları",
       "unavailable": "Bu alan gelecek bir güncellemede kullanıma açılacak.",
@@ -541,7 +541,7 @@
     "account": {
       "eyebrow": "HESAP",
       "heading": "Profil",
-      "description": "Creative AI çalışma alanınızda görünen adı yönetin.",
+      "description": "Klay.ai çalışma alanınızda görünen adı yönetin.",
       "displayNameLabel": "Görünen ad",
       "displayNameHelper": "Bu ad çalışma alanınızda kullanılır.",
       "save": "Değişiklikleri kaydet",
@@ -751,7 +751,7 @@
       "viewAll": "Tüm projeleri gör",
       "allHeading": "Tüm projeler",
       "allEyebrow": "Proje arşivi",
-      "allMetadataTitle": "Tüm Projeler | CREATIVE AI",
+      "allMetadataTitle": "Tüm Projeler",
       "backToWorkspace": "Çalışma Alanına Dön",
       "emptyHeading": "Üretimleriniz burada görünecek.",
       "emptyDescription": "İlk kampanya çıktınızı oluşturmak için bir ürün fotoğrafıyla başlayın.",
@@ -785,8 +785,8 @@
       }
     },
     "project": {
-      "metadataTitle": "Proje Çalışma Alanı | CREATIVE AI",
-      "metadataDescription": "CREATIVE AI çalışma alanınızdaki bir projenin ayrıntılarını görüntüleyin.",
+      "metadataTitle": "Proje Çalışma Alanı",
+      "metadataDescription": "Klay.ai çalışma alanınızdaki bir projenin ayrıntılarını görüntüleyin.",
       "backToWorkspace": "Çalışma Alanına Dön",
       "untitledProject": "İsimsiz Proje",
       "created": "Oluşturulma: {date}",

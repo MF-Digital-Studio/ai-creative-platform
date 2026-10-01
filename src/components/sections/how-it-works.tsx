@@ -27,7 +27,6 @@ function StepHeader({ number, title, description }: StepHeaderProps) {
       </p>
       <h3
         className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.04em] text-[var(--foreground)]"
-        style={{ fontFamily: "var(--font-display)" }}
       >
         {title}
       </h3>

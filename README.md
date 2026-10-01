@@ -1,4 +1,4 @@
-# Creative AI
+# Klay.ai
 
 Takı, giyim ve kozmetik ürün fotoğraflarını kampanyaya hazır görsellere ve kısa videolara dönüştürmeye odaklanan AI kreatif platformu. Şu anda arayüz temeli, navbar ve footer bileşenleri yer alıyor.
 
@@ -7,8 +7,7 @@ Takı, giyim ve kozmetik ürün fotoğraflarını kampanyaya hazır görsellere 
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- Google Sans
-- Roboto Slab
+- Outfit (via `next/font/google`)
 
 ## Getting Started
 

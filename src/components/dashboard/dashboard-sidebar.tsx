@@ -57,7 +57,7 @@ export async function DashboardSidebar() {
   return (
     <aside className="dashboard-sidebar">
       <Link href="/" aria-label={t("homeLabel")} className="dashboard-brand-mark">
-        <span aria-hidden="true">CA</span>
+        <span aria-hidden="true">Klay.ai</span>
       </Link>
 
       <nav aria-label={t("primaryLabel")} className="dashboard-sidebar-nav">

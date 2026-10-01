@@ -4,6 +4,7 @@ import {
   type GenerationVisualCategory,
   type VisualIntent,
 } from "../prompts/global-photorealism-policy";
+import { isProductProfile, type ProductProfile } from "@/lib/product-understanding/product-profile";
 
 export const generationStrategies = [
   "rigid_product",
@@ -18,6 +19,7 @@ export const generationStrategies = [
 export type GenerationStrategy = (typeof generationStrategies)[number];
 
 export type GenerationStrategyReason =
+  | "product_profile"
   | "preset_strategy_hint"
   | "structured_product_context"
   | "prompt_intent"
@@ -82,6 +84,41 @@ function resolveForCategory(
   return "rigid_product";
 }
 
+function hasOnBodyIntentForTargets(userPrompt: string, targets: ProductProfile["interactionTargets"]): boolean {
+  const targetPatterns: Record<ProductProfile["interactionTargets"][number], RegExp> = {
+    finger: /\b(?:finger|hand|parmak|elde|elinde)\b/i,
+    wrist: /\b(?:wrist|bilek|bileğ)\b/i,
+    neck: /\b(?:neck|boyun)\b/i,
+    ear: /\b(?:ear|kulak)\b/i,
+    foot: /\b(?:foot|feet|shoe|ayak)\b/i,
+    torso: /\b(?:torso|body|wearing|model|gövde|vücut|model)\b/i,
+    hand: /\b(?:hand|elde|elinde)\b/i,
+    none: /$^/,
+  };
+
+  return targets.some((target) => targetPatterns[target].test(userPrompt));
+}
+
+/**
+ * ProductProfile is advisory routing data: it establishes the product vertical
+ * and safe physical affordances, while the visible source image remains the
+ * fidelity authority for generated pixels.
+ */
+function resolveForProductProfile(profile: ProductProfile, userPrompt: string): GenerationStrategy {
+  const canBeWorn = profile.wearability !== "non_wearable" && profile.interactionTargets.some((target) => target !== "none");
+  const requestsOnBody = canBeWorn && hasOnBodyIntentForTargets(userPrompt, profile.interactionTargets);
+
+  if (profile.vertical === "apparel") {
+    return profile.wearability === "wearable" || profile.rigidity === "deformable"
+      ? "fashion_on_model"
+      : "rigid_product";
+  }
+  if (profile.vertical === "jewelry") return requestsOnBody ? "jewelry_on_model" : "jewelry_still_life";
+  if (profile.vertical === "watches") return requestsOnBody ? "watch_on_wrist" : "rigid_product";
+  if (profile.vertical === "footwear") return requestsOnBody ? "footwear_on_model" : "rigid_product";
+  return "rigid_product";
+}
+
 function resolution(
   strategy: GenerationStrategy,
   reason: GenerationStrategyReason,
@@ -97,11 +134,20 @@ function resolution(
 
 export function resolveGenerationStrategy(input: {
   preset?: GenerationStrategyPreset | null;
+  productProfile?: unknown;
   productContext?: GenerationProductContext | null;
   requestedPreservationMode?: ProductPreservationMode | null;
   userPrompt: string;
 }): GenerationStrategyResolution {
   const context = resolveImageGenerationContext(input.userPrompt, input.preset?.useCase);
+
+  if (isProductProfile(input.productProfile)) {
+    return resolution(
+      resolveForProductProfile(input.productProfile, input.userPrompt),
+      "product_profile",
+      context.visualIntent,
+    );
+  }
 
   if (input.preset?.generationStrategyHint) {
     return resolution(input.preset.generationStrategyHint, "preset_strategy_hint", context.visualIntent);

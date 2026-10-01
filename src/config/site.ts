@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "CREATIVE AI",
+  name: "Klay.ai",
   links: {
     instagram: "",
     linkedin: "",

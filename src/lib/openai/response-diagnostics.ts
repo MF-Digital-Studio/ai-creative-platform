@@ -1,5 +1,6 @@
 type OpenAIErrorLike = {
   code?: unknown;
+  param?: unknown;
   status?: unknown;
   type?: unknown;
   message?: unknown;
@@ -8,6 +9,7 @@ type OpenAIErrorLike = {
 export type OpenAIDiagnostic = {
   errorCode: string | null;
   errorType: string | null;
+  param: string | null;
   safeMessage: string;
   status: number | null;
 };
@@ -26,6 +28,7 @@ export function getOpenAIDiagnostic(error: unknown): OpenAIDiagnostic {
     status: typeof candidate?.status === "number" ? candidate.status : null,
     errorType: typeof candidate?.type === "string" ? candidate.type : null,
     errorCode: typeof candidate?.code === "string" ? candidate.code : null,
+    param: typeof candidate?.param === "string" ? candidate.param.slice(0, 120) : null,
     safeMessage,
   };
 }

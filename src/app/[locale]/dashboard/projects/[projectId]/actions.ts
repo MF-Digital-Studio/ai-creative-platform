@@ -53,6 +53,25 @@ import type {
 } from "@/lib/generation/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  analyzeProductAsset,
+  getProductProfileForAsset,
+  type ProductAnalysisResult,
+} from "@/lib/product-understanding/analyze-product-asset";
+import { compileProductProfilePrompt } from "@/lib/product-understanding/compile-product-profile-prompt";
+import { resolveSceneSuitability } from "@/lib/scene-suitability/resolve-scene-suitability";
+import { SCENE_SUITABILITY_VERSION } from "@/lib/scene-suitability/types";
+import { resolveComposition } from "@/lib/composition-intelligence/resolve-composition";
+import { COMPOSITION_INTELLIGENCE_VERSION } from "@/lib/composition-intelligence/types";
+import { resolveCreativeCompliance } from "@/lib/creative-direction-compliance/resolve-compliance";
+import { CREATIVE_DIRECTION_COMPLIANCE_VERSION } from "@/lib/creative-direction-compliance/compliance-version";
+import { triggerProductAnalysisAfterRegistration } from "@/lib/product-understanding/product-analysis-trigger";
+import { validateGeneratedImageBestEffort } from "@/lib/fidelity-validation/validate-generated-image";
+import { compileRepairInstructions } from "@/lib/auto-repair/compile-repair-instructions";
+import { resolveRepairPlan } from "@/lib/auto-repair/resolve-repair-plan";
+import { selectFinalAttempt } from "@/lib/auto-repair/select-final-attempt";
+import { AUTO_REPAIR_VERSION } from "@/lib/auto-repair/repair-version";
+import type { GenerationAttempt, RepairMetadata } from "@/lib/auto-repair/types";
 
 export type RegisterProductAssetResult = {
   status: "error" | "success";
@@ -105,7 +124,7 @@ const supportedReferenceFilePattern = /^reference-[0-9a-f-]{36}\.(jpg|png|webp)$
 
 function logDevelopmentGenerationEvent(
   event: string,
-  details: Record<string, boolean | number | string | null>,
+  details: Record<string, boolean | number | string | string[] | null>,
 ) {
   if (process.env.NODE_ENV === "development") {
     console.info(`[generation] ${event}`, details);
@@ -208,17 +227,23 @@ export async function registerProductAsset(
       return { status: "error" };
     }
 
-    const { error: assetError } = await supabase.from("assets").insert({
+    const { data: asset, error: assetError } = await supabase.from("assets").insert({
       user_id: userId,
       project_id: projectId,
       bucket_id: "product-assets",
       object_path: objectPath,
       asset_type: "product",
-    });
+    }).select("id").single();
 
-    if (assetError) {
+    if (assetError || !asset) {
       return { status: "error" };
     }
+
+    // Best-effort analysis is awaited inside this Server Action.
+    await triggerProductAnalysisAfterRegistration(
+      { assetId: asset.id, projectId, userId },
+      analyzeProductAsset,
+    );
   } catch {
     return { status: "error" };
   }
@@ -226,6 +251,15 @@ export async function registerProductAsset(
   revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
 
   return { status: "success" };
+}
+
+export async function reanalyzeProductAsset(assetId: unknown): Promise<ProductAnalysisResult> {
+  if (typeof assetId !== "string" || !uuidPattern.test(assetId)) {
+    return { status: "failed", reason: "asset_not_found" };
+  }
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { status: "failed", reason: "asset_not_found" };
+  return analyzeProductAsset({ assetId, force: true, userId });
 }
 
 export async function registerReferenceAsset(
@@ -504,7 +538,7 @@ export async function runQueuedImageGeneration(
 
     const { data: asset, error: assetError } = await supabase
       .from("assets")
-      .select("id, user_id, project_id, bucket_id, object_path")
+      .select("id, user_id, project_id, bucket_id, object_path, product_profile")
       .eq("id", queuedGeneration.input_asset_id)
       .eq("project_id", project.id)
       .eq("user_id", userId)
@@ -609,21 +643,77 @@ export async function runQueuedImageGeneration(
       throw new Error("The generation prompt is unavailable.");
     }
 
+    // This read validates both ownership and the persisted JSON before it can
+    // influence routing. A missing/invalid profile deliberately keeps legacy
+    // preset and prompt fallbacks available.
+    const productProfile = await getProductProfileForAsset(userId, asset.id);
     const strategyResolution = resolveGenerationStrategy({
       preset,
+      productProfile,
       requestedPreservationMode: resolvePreservationMode(queuedGeneration.preservation_mode),
       userPrompt: metadataUserPrompt || fallbackCreativeDirection,
     });
     const strategyCategory = getGenerationStrategyCategory(strategyResolution.strategy);
     const qualityUseCase = preset?.useCase ?? strategyCategory;
     const requestedPreservationMode = strategyResolution.effectivePreservationMode;
+    const sceneSuitability = resolveSceneSuitability({
+      preset,
+      productProfile,
+      strategy: strategyResolution.strategy,
+      userPrompt: metadataUserPrompt || fallbackCreativeDirection,
+      vertical: qualityUseCase === "product" ? null : qualityUseCase,
+    });
+    const composition = resolveComposition({
+      productProfile,
+      sceneFamily: sceneSuitability?.selectedSceneFamily,
+      strategy: strategyResolution.strategy,
+      userPrompt: metadataUserPrompt || fallbackCreativeDirection,
+      referenceStyle: referenceAnalysis.styleBrief,
+      presetId: preset?.id,
+    });
+    const creativeCompliance = resolveCreativeCompliance({
+      userPrompt: metadataUserPrompt || fallbackCreativeDirection,
+      productProfile,
+      composition,
+    });
     const usesReferenceEditing = requestedPreservationMode === "reference_edit";
     logDevelopmentGenerationEvent("strategy_resolved", {
       effectivePreservationMode: strategyResolution.effectivePreservationMode,
       generationId: queuedGeneration.id,
       presetId: preset?.id ?? null,
+      productProfileVertical: productProfile?.vertical ?? null,
       reason: strategyResolution.reason,
       strategy: strategyResolution.strategy,
+    });
+    if (sceneSuitability) {
+      logDevelopmentGenerationEvent("scene_suitability_resolved", {
+        confidence: sceneSuitability.confidence,
+        generationId: queuedGeneration.id,
+        selectedSceneFamily: sceneSuitability.selectedSceneFamily,
+        source: sceneSuitability.source,
+        subcategory: productProfile?.subcategory ?? null,
+        suitableFamilyCount: sceneSuitability.suitableSceneFamilies.length,
+        vertical: productProfile?.vertical ?? qualityUseCase,
+      });
+    }
+    if (composition) {
+      logDevelopmentGenerationEvent("composition_resolved", {
+        cameraDistance: composition.cameraDistance,
+        depthOfField: composition.depthOfField,
+        framing: composition.framing,
+        generationId: queuedGeneration.id,
+        productDominance: composition.productDominance,
+        sceneFamily: sceneSuitability?.selectedSceneFamily ?? null,
+        source: composition.source,
+        subjectScale: composition.subjectScale,
+      });
+    }
+    logDevelopmentGenerationEvent("creative_compliance_resolved", {
+      adjustedCompositionCount: creativeCompliance.adjustedForComposition.length,
+      appliedCount: creativeCompliance.applied.length,
+      generationId: queuedGeneration.id,
+      rejectedIdentityCount: creativeCompliance.requirements.filter(({ status }) => status === "rejected_identity_conflict").length,
+      totalRequirements: creativeCompliance.requirements.length,
     });
     const enhancementEnabled = !(
       metadataEnhancement &&
@@ -744,8 +834,20 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy: strategyResolution.strategy, useCase: qualityUseCase },
+      { strategy: strategyResolution.strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance },
     );
+    logDevelopmentGenerationEvent("product_profile_prompt", {
+      generationId: queuedGeneration.id,
+      vertical: productProfile?.vertical ?? null,
+      subcategory: productProfile?.subcategory ?? null,
+      identityRuleCount: finalPrompt.layers.productProfileApplied && productProfile
+        ? compileProductProfilePrompt(productProfile).identity.length : 0,
+      interactionRuleCount: finalPrompt.layers.productProfileApplied && productProfile
+        ? compileProductProfilePrompt(productProfile).interaction.length : 0,
+      forbiddenRuleCount: finalPrompt.layers.productProfileApplied && productProfile
+        ? compileProductProfilePrompt(productProfile).forbidden.length : 0,
+      status: finalPrompt.layers.productProfileApplied ? "applied" : asset.product_profile === null ? "missing" : "invalid",
+    });
     logDevelopmentGenerationEvent("generation_policy_resolved", {
       footwear_v2: finalPrompt.layers.footwearV2Applied,
       generationId: queuedGeneration.id,
@@ -801,11 +903,165 @@ export async function runQueuedImageGeneration(
       }
     }
 
+    const originalMimeType = pixelLockInput && effectivePreservationMode === "pixel_lock" ? "image/png" : result.mimeType;
+    const fidelityValidation = await validateGeneratedImageBestEffort({
+      originalProduct: Buffer.from(await inputImage.arrayBuffer()),
+      generatedImage: finalImageData,
+      originalMimeType: inputImage.type || "image/png",
+      generatedMimeType: originalMimeType,
+      productProfile,
+      vertical: productProfile?.vertical ?? (strategyCategory === "product" ? "product" : strategyCategory),
+      strategy: strategyResolution.strategy,
+      sceneSuitability,
+      composition,
+      creativeCompliance,
+      referenceStyleContext: referenceAnalysis.styleBrief ? JSON.stringify(referenceAnalysis.styleBrief) : null,
+    });
+    const originalValidationIssueCounts = {
+      critical: fidelityValidation.issues.filter(({ severity }) => severity === "critical").length,
+      major: fidelityValidation.issues.filter(({ severity }) => severity === "major").length,
+      minor: fidelityValidation.issues.filter(({ severity }) => severity === "minor").length,
+    };
+    if (fidelityValidation.status === "validation_unavailable") {
+      logDevelopmentGenerationEvent("fidelity_validation_unavailable", {
+        generationId: queuedGeneration.id,
+        reason: fidelityValidation.summary,
+      });
+    } else {
+      logDevelopmentGenerationEvent("fidelity_validation", {
+        generationId: queuedGeneration.id,
+        status: fidelityValidation.status,
+        criticalIssueCount: originalValidationIssueCounts.critical,
+        majorIssueCount: originalValidationIssueCounts.major,
+        minorIssueCount: originalValidationIssueCounts.minor,
+        retryRecommended: fidelityValidation.retryRecommended,
+      });
+    }
+
+    const repairPlan = resolveRepairPlan(fidelityValidation);
+    logDevelopmentGenerationEvent("auto_repair_decision", {
+      generationId: queuedGeneration.id,
+      shouldRetry: repairPlan.shouldRetry,
+      issueCodes: repairPlan.issueCodes,
+      categories: repairPlan.categories,
+    });
+
+    const originalAttempt: GenerationAttempt = {
+      attempt: 0,
+      imageData: finalImageData,
+      mimeType: originalMimeType,
+      validation: fidelityValidation,
+      providerRequestId: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null,
+      preservationMode: effectivePreservationMode,
+    };
+    let repairAttempt: GenerationAttempt | null = null;
+    let selectedProviderResult = result;
+
+    if (repairPlan.shouldRetry) {
+      logDevelopmentGenerationEvent("auto_repair_started", {
+        generationId: queuedGeneration.id,
+        attempt: 1,
+      });
+      try {
+        const repairResult = await getImageGenerationProvider(queuedGeneration.provider).generate({
+          generationId: queuedGeneration.id,
+          projectId: project.id,
+          sourceAsset: {
+            id: asset.id,
+            bucketId: asset.bucket_id,
+            objectPath: asset.object_path,
+            data: pixelLockInput?.productCanvas ?? inputImage,
+            mimeType: pixelLockInput ? "image/png" : inputImage.type || "image/png",
+          },
+          prompt: compileRepairInstructions(finalPrompt.prompt, repairPlan),
+          provider: queuedGeneration.provider,
+          model: queuedGeneration.model,
+          quality: resolveGenerationQuality(queuedGeneration.quality),
+          aspectRatio,
+        });
+        let repairImageData = repairResult.imageData;
+        let repairMimeType = repairResult.mimeType;
+        if (pixelLockInput && effectivePreservationMode === "pixel_lock") {
+          try {
+            repairImageData = await compositeLockedProduct({ generatedImage: repairResult.imageData, preparedInput: pixelLockInput });
+            await verifyLockedProduct({ expectedProductCanvas: pixelLockInput.productCanvas, finalImage: repairImageData, mask: pixelLockInput.mask });
+            repairMimeType = "image/png";
+          } catch {
+            repairImageData = repairResult.imageData;
+          }
+        }
+        const repairValidation = await validateGeneratedImageBestEffort({
+          originalProduct: Buffer.from(await inputImage.arrayBuffer()),
+          generatedImage: repairImageData,
+          originalMimeType: inputImage.type || "image/png",
+          generatedMimeType: repairMimeType,
+          productProfile,
+          vertical: productProfile?.vertical ?? (strategyCategory === "product" ? "product" : strategyCategory),
+          strategy: strategyResolution.strategy,
+          sceneSuitability,
+          composition,
+          creativeCompliance,
+          referenceStyleContext: referenceAnalysis.styleBrief ? JSON.stringify(referenceAnalysis.styleBrief) : null,
+        });
+        const repairIssueCounts = {
+          critical: repairValidation.issues.filter(({ severity }) => severity === "critical").length,
+          major: repairValidation.issues.filter(({ severity }) => severity === "major").length,
+          minor: repairValidation.issues.filter(({ severity }) => severity === "minor").length,
+        };
+        logDevelopmentGenerationEvent("auto_repair_validated", {
+          generationId: queuedGeneration.id,
+          status: repairValidation.status,
+          criticalIssueCount: repairIssueCounts.critical,
+          majorIssueCount: repairIssueCounts.major,
+          minorIssueCount: repairIssueCounts.minor,
+        });
+        repairAttempt = {
+          attempt: 1,
+          imageData: repairImageData,
+          mimeType: repairMimeType,
+          validation: repairValidation,
+          providerRequestId: typeof repairResult.providerMetadata?.requestId === "string" ? repairResult.providerMetadata.requestId : null,
+          preservationMode: effectivePreservationMode,
+        };
+      } catch {
+        logDevelopmentGenerationEvent("auto_repair_validated", {
+          generationId: queuedGeneration.id,
+          status: "validation_unavailable",
+          criticalIssueCount: 0,
+          majorIssueCount: 0,
+          minorIssueCount: 0,
+        });
+      }
+    }
+
+    const selectedAttempt = selectFinalAttempt(originalAttempt, repairAttempt);
+    if (selectedAttempt.attempt === 1 && repairAttempt) selectedProviderResult = { ...result, providerMetadata: repairAttempt.providerRequestId ? { requestId: repairAttempt.providerRequestId } : undefined };
+    finalImageData = selectedAttempt.imageData;
+    const selectedMimeType = selectedAttempt.mimeType;
+    const selectedValidation = selectedAttempt.validation;
+    const repairMetadata: RepairMetadata = {
+      version: AUTO_REPAIR_VERSION,
+      attempted: repairPlan.shouldRetry,
+      selectedAttempt: selectedAttempt.attempt,
+      repairCategories: repairPlan.categories,
+      originalValidationStatus: fidelityValidation.status,
+      repairValidationStatus: repairAttempt?.validation.status ?? null,
+    };
+    logDevelopmentGenerationEvent("auto_repair_selected", {
+      generationId: queuedGeneration.id,
+      selectedAttempt: selectedAttempt.attempt,
+    });
+    const validationIssueCounts = {
+      critical: selectedValidation.issues.filter(({ severity }) => severity === "critical").length,
+      major: selectedValidation.issues.filter(({ severity }) => severity === "major").length,
+      minor: selectedValidation.issues.filter(({ severity }) => severity === "minor").length,
+    };
+
     const { error: uploadError } = await admin.storage
       .from(generatedAssetsBucket)
       .upload(outputObjectPath, finalImageData, {
         contentType:
-          pixelLockInput && effectivePreservationMode === "pixel_lock" ? "image/png" : result.mimeType,
+          selectedMimeType,
         upsert: false,
       });
     if (uploadError) {
@@ -820,19 +1076,27 @@ export async function runQueuedImageGeneration(
         output_bucket_id: generatedAssetsBucket,
         output_object_path: outputObjectPath,
         output_mime_type:
-          pixelLockInput && effectivePreservationMode === "pixel_lock"
-            ? "image/png"
-            : result.mimeType,
+          selectedMimeType,
         provider_request_id:
-          typeof result.providerMetadata?.requestId === "string"
-            ? result.providerMetadata.requestId
+          typeof selectedProviderResult.providerMetadata?.requestId === "string"
+            ? selectedProviderResult.providerMetadata.requestId
             : null,
         preservation_mode: requestedPreservationMode,
         fidelity_status: fidelityStatus,
         fidelity_score: fidelityScore,
       provider_metadata: {
-          ...(result.providerMetadata ?? {}),
+          ...(selectedProviderResult.providerMetadata ?? {}),
           fidelity: fidelityMetadata,
+          fidelity_validation: {
+            version: selectedValidation.version,
+            status: selectedValidation.status,
+            criticalIssueCount: validationIssueCounts.critical,
+            majorIssueCount: validationIssueCounts.major,
+            minorIssueCount: validationIssueCounts.minor,
+            retryRecommended: selectedValidation.retryRecommended,
+            issueCodes: selectedValidation.issues.map(({ code }) => code).slice(0, 20),
+          },
+          auto_repair: repairMetadata,
           prompt_enhancement: {
             enabled: enhancementEnabled,
             enhanced_prompt: promptEnhancement.enhancedPrompt,
@@ -845,6 +1109,30 @@ export async function runQueuedImageGeneration(
             reason: strategyResolution.reason,
             selected: strategyResolution.strategy,
           },
+          ...(sceneSuitability ? { scene_suitability: {
+            version: SCENE_SUITABILITY_VERSION,
+            selectedSceneFamily: sceneSuitability.selectedSceneFamily,
+            source: sceneSuitability.source,
+          } } : {}),
+          ...(composition ? { composition: {
+            version: COMPOSITION_INTELLIGENCE_VERSION,
+            framing: composition.framing,
+            productDominance: composition.productDominance,
+            source: composition.source,
+          } } : {}),
+          creative_compliance: {
+            version: CREATIVE_DIRECTION_COMPLIANCE_VERSION,
+            totalRequirements: creativeCompliance.requirements.length,
+            appliedCount: creativeCompliance.applied.length,
+            rejectedCount: creativeCompliance.rejected.length,
+          },
+          ...(productProfile ? { product_profile: {
+            assetId: asset.id,
+            schemaVersion: productProfile.schemaVersion,
+            analysisVersion: productProfile.analysisVersion,
+            vertical: productProfile.vertical,
+            subcategory: productProfile.subcategory,
+          } } : {}),
           references: {
             requested_count: requestedReferenceAssetIds.length,
             usable_count: referenceAnalysis.usableCount,

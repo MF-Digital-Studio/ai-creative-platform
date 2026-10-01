@@ -27,7 +27,6 @@ export async function Hero() {
             variant="section"
             lines={[t("titleLead"), t("titleTrail")]}
             className="hero-title w-full max-w-[60rem] text-[clamp(2rem,10vw,4rem)] font-semibold leading-[0.96] tracking-[-0.055em] text-[var(--foreground)]"
-            style={{ fontFamily: "var(--font-display)" }}
           />
           <p className="hero-description max-w-2xl text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">
             {t("description")}

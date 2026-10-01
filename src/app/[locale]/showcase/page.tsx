@@ -32,7 +32,6 @@ export default async function ShowcasePage({ params }: ShowcasePageProps) {
               <Badge>{t("eyebrow")}</Badge>
               <h1
                 className="mt-5 text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-[0.96] tracking-[-0.06em] text-[var(--foreground)]"
-                style={{ fontFamily: "var(--font-display)" }}
               >
                 {t("heading")}
               </h1>
