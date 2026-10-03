@@ -9,6 +9,7 @@ import {
 import { getOpenAIDiagnostic, type OpenAIDiagnostic } from "@/lib/openai/response-diagnostics";
 
 import { REFERENCE_ANALYSIS_VERSION } from "./reference-style-brief";
+import { REFERENCE_MATCH_VERSION } from "./reference-shot-profile";
 import {
   analyzePreparedReferenceImages,
   type ReferenceAnalysisClient,
@@ -30,7 +31,7 @@ export type ReferenceAnalysisResponse = Omit<ReferenceAnalysisResult, "failure">
 const referenceStyleBriefSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["visualIntent", "composition", "lighting", "environment", "color", "texture", "depthOfField", "poseLanguage", "realismCharacter"],
+  required: ["visualIntent", "composition", "lighting", "environment", "color", "texture", "depthOfField", "poseLanguage", "realismCharacter", "shotProfile"],
   properties: {
     visualIntent: { type: "string" },
     composition: { type: "object", additionalProperties: false, required: ["framing", "cameraAngle", "cameraDistance", "subjectPlacement"], properties: { framing: { type: "string" }, cameraAngle: { type: "string" }, cameraDistance: { type: "string" }, subjectPlacement: { type: "string" } } },
@@ -39,6 +40,9 @@ const referenceStyleBriefSchema = {
     color: { type: "object", additionalProperties: false, required: ["palette", "grading", "saturation"], properties: { palette: { type: "string" }, grading: { type: "string" }, saturation: { type: "string" } } },
     texture: { type: "object", additionalProperties: false, required: ["grain", "sharpness", "retouching"], properties: { grain: { type: "string" }, sharpness: { type: "string" }, retouching: { type: "string" } } },
     depthOfField: { type: "string" }, poseLanguage: { type: ["string", "null"] }, realismCharacter: { type: "string" },
+    shotProfile: { type: "object", additionalProperties: false, required: ["framing", "cameraAngle", "cameraDistance", "subjectPlacement", "productScale", "interaction", "humanPose", "handDirection", "lighting", "background", "environment", "surfaces", "props", "depthOfField", "negativeSpace", "realism", "compositionNotes", "nonTransferableIdentityFeatures"], properties: {
+      framing: { type: ["string", "null"] }, cameraAngle: { type: ["string", "null"] }, cameraDistance: { type: ["string", "null"] }, subjectPlacement: { type: ["string", "null"] }, productScale: { type: ["string", "null"] }, interaction: { type: ["string", "null"] }, humanPose: { type: ["string", "null"] }, handDirection: { type: ["string", "null"] }, lighting: { type: ["string", "null"] }, background: { type: ["string", "null"] }, environment: { type: ["string", "null"] }, surfaces: { type: ["string", "null"] }, props: { type: ["string", "null"] }, depthOfField: { type: ["string", "null"] }, negativeSpace: { type: ["string", "null"] }, realism: { type: ["string", "null"] }, compositionNotes: { type: ["string", "null"] }, nonTransferableIdentityFeatures: { type: "array", items: { type: "string" } },
+    } },
   },
 } as const;
 
@@ -46,7 +50,9 @@ const referenceAnalysisInstructions = [
   "Analyze supplied images only as photographic visual-direction references and return one concise combined style brief.",
   "Describe how the images are photographed and styled: composition, framing, camera, lighting, environment, color, texture, pose language, and realism.",
   "Do not identify people or preserve identities. Do not use reference products, garment designs, logos, text, trademarks, artwork, exact hairstyles, or exact compositions as generation requirements.",
-  "Resolve conflicting references into one balanced, coherent interpretation. This output must describe an original campaign image, not an image to copy.",
+  "Populate shotProfile with transferable scene structure only. Explicitly list reference product logos, brand names, labels, conflicting colors, geometry, stone layout, watch dial, shoe panels, garment artwork, and packaging identity in nonTransferableIdentityFeatures.",
+  "References have deterministic roles: image 1 is primary composition, image 2 may refine lighting/environment, and image 3 may refine texture/mood. Do not average conflicting compositions.",
+  `Analysis contract: ${REFERENCE_MATCH_VERSION}; return an original campaign direction, not an image to copy.`,
 ].join("\n");
 
 export { createReferenceAnalysisInput } from "./reference-analysis-input";
@@ -84,7 +90,7 @@ class OpenAIReferenceAnalysisClient implements ReferenceAnalysisClient {
         store: false,
         text: structuredResponseText({
           type: "json_schema",
-          name: "reference_style_brief",
+          name: "reference_style_brief_v2",
           description: "Combined photographic visual direction.",
           schema: referenceStyleBriefSchema,
           strict: true,

@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 import type { DashboardIconName } from "@/data/dashboard-navigation";
 
 type DashboardIconProps = SVGProps<SVGSVGElement> & {
-  name: DashboardIconName | "menu" | "close" | "plus" | "arrow";
+  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron";
 };
 
 export function DashboardIcon({ name, ...props }: DashboardIconProps) {
@@ -45,5 +45,13 @@ export function DashboardIcon({ name, ...props }: DashboardIconProps) {
       return <svg {...commonProps}><path d="M12 5v14M5 12h14" /></svg>;
     case "arrow":
       return <svg {...commonProps}><path d="M5 12h14M14 7l5 5-5 5" /></svg>;
+    case "collapse":
+      return <svg {...commonProps}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16m7-11-3 3 3 3" /></svg>;
+    case "expand":
+      return <svg {...commonProps}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16m4-11 3 3-3 3" /></svg>;
+    case "website":
+      return <svg {...commonProps}><path d="M13 5h6v6m0-6-9 9" /><path d="M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4" /></svg>;
+    case "chevron":
+      return <svg {...commonProps}><path d="m6 9 6 6 6-6" /></svg>;
   }
 }

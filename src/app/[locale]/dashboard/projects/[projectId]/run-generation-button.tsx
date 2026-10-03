@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { announceGenerationProgress } from "@/components/projects/generation-progress-event";
 
 import type { RunQueuedImageGenerationResult } from "./actions";
 
@@ -24,6 +25,7 @@ export function RunGenerationButton({ action, messages }: RunGenerationButtonPro
 
   function runGeneration() {
     setError(null);
+    announceGenerationProgress(true);
 
     startTransition(async () => {
       try {
@@ -36,6 +38,8 @@ export function RunGenerationButton({ action, messages }: RunGenerationButtonPro
         setError(messages[result.message]);
       } catch {
         setError(messages.generationFailed);
+      } finally {
+        announceGenerationProgress(false);
       }
     });
   }

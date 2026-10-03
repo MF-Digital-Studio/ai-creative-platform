@@ -1,25 +1,30 @@
 import type { GenerationAttempt } from "./types";
 
-const statusRank = { pass: 3, pass_with_warnings: 2, fail: 1, validation_unavailable: 0 } as const;
+const identityCodes = new Set(["product_identity_drift", "different_product", "identity_changed", "center_stone_shape_changed", "stone_count_changed", "stone_layout_changed", "setting_changed", "band_geometry_changed", "watch_dial_structure_changed", "changed_dial_layout", "footwear_panel_structure_changed", "package_geometry_changed", "garment_artwork_changed"]);
 
-function issueCounts(attempt: GenerationAttempt) {
-  return {
-    critical: attempt.validation.issues.filter(({ severity }) => severity === "critical").length,
-    major: attempt.validation.issues.filter(({ severity }) => severity === "major").length,
-    minor: attempt.validation.issues.filter(({ severity }) => severity === "minor").length,
-  };
+function priorityVector(attempt: GenerationAttempt): number[] {
+  const issues = attempt.validation.issues;
+  const count = (predicate: (issue: typeof issues[number]) => boolean) => issues.filter(predicate).length;
+  return [
+    count((issue) => issue.severity === "critical" && (issue.category === "product_identity" || identityCodes.has(issue.code.toLowerCase()))),
+    count((issue) => issue.severity === "major" && (issue.category === "product_identity" || identityCodes.has(issue.code.toLowerCase()))),
+    count((issue) => issue.category === "body_interaction"),
+    count((issue) => issue.category === "composition_visibility"),
+    count((issue) => issue.category === "reference_match"),
+    count((issue) => issue.category === "creative_requirement"),
+    count((issue) => issue.severity === "critical" || issue.severity === "major"),
+    count((issue) => issue.severity === "minor"),
+  ];
 }
 
 export function selectFinalAttempt(original: GenerationAttempt, repair: GenerationAttempt | null): GenerationAttempt {
   if (!repair || repair.validation.status === "validation_unavailable") return original;
-  if (statusRank[repair.validation.status] > statusRank[original.validation.status]) return repair;
-  if (statusRank[repair.validation.status] < statusRank[original.validation.status]) return original;
-
-  const originalCounts = issueCounts(original);
-  const repairCounts = issueCounts(repair);
-  for (const key of ["critical", "major", "minor"] as const) {
-    if (repairCounts[key] < originalCounts[key]) return repair;
-    if (repairCounts[key] > originalCounts[key]) return original;
+  if (original.validation.status === "validation_unavailable") return repair;
+  const originalPriorities = priorityVector(original);
+  const repairPriorities = priorityVector(repair);
+  for (let index = 0; index < originalPriorities.length; index += 1) {
+    if (repairPriorities[index]! < originalPriorities[index]!) return repair;
+    if (repairPriorities[index]! > originalPriorities[index]!) return original;
   }
   return original;
 }

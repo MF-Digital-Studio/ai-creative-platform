@@ -1,6 +1,7 @@
 "use client";
 
-import {useActionState, useRef, useState} from "react";
+import {useActionState, useEffect, useId, useRef, useState} from "react";
+import {useRouter} from "@/i18n/navigation";
 
 import type {DeleteProjectState} from "@/app/[locale]/dashboard/actions";
 import {Button} from "@/components/ui/button";
@@ -20,12 +21,17 @@ type DeleteProjectButtonProps = {
     deleting: string;
     error: string;
   };
+  trigger?: "button" | "menu";
 };
 
-export function DeleteProjectButton({action, messages}: DeleteProjectButtonProps) {
+export function DeleteProjectButton({action, messages, trigger = "button"}: DeleteProjectButtonProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
+  const dialogHeadingId = useId();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => { if (state.status === "success") router.refresh(); }, [state.status, router]);
 
   function openDialog() {
     const dialog = dialogRef.current;
@@ -46,7 +52,7 @@ export function DeleteProjectButton({action, messages}: DeleteProjectButtonProps
         type="button"
         variant="ghost"
         size="sm"
-        className="dashboard-project-delete-button"
+        className={trigger === "menu" ? "project-menu-delete-button" : "dashboard-project-delete-button"}
         onClick={openDialog}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -57,7 +63,7 @@ export function DeleteProjectButton({action, messages}: DeleteProjectButtonProps
       <dialog
         ref={dialogRef}
         className="dashboard-delete-dialog"
-        aria-labelledby="delete-project-heading"
+        aria-labelledby={dialogHeadingId}
         onClose={() => setIsOpen(false)}
         onClick={(event) => {
           if (event.target === event.currentTarget && !pending) {
@@ -66,7 +72,7 @@ export function DeleteProjectButton({action, messages}: DeleteProjectButtonProps
         }}
       >
         <div className="dashboard-delete-dialog-content">
-          <h2 id="delete-project-heading">{messages.confirmHeading}</h2>
+          <h2 id={dialogHeadingId}>{messages.confirmHeading}</h2>
           <p>{messages.confirm}</p>
           {state.status === "error" ? <p role="alert">{messages.error}</p> : null}
           <div className="dashboard-delete-dialog-actions">

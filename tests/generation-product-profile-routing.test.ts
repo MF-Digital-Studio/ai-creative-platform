@@ -62,6 +62,17 @@ test("a jewelry profile without on-body intent remains a still life", () => {
   assert.equal(result.strategy, "jewelry_still_life");
 });
 
+test("trusted reference hand interaction selects jewelry on model without changing identity routing", () => {
+  const result = resolveGenerationStrategy({
+    productProfile: ringProfile(),
+    referenceInteraction: "worn",
+    userPrompt: "Referanstaki kompozisyona yakın üret.",
+  });
+
+  assert.equal(result.strategy, "jewelry_on_model");
+  assert.equal(result.effectivePreservationMode, "reference_edit");
+});
+
 test("invalid or missing ProductProfile retains legacy prompt routing", () => {
   const missing = resolveGenerationStrategy({ userPrompt: "Put this hoodie on a model" });
   const invalid = resolveGenerationStrategy({ productProfile: { vertical: "jewelry" }, userPrompt: "Put this hoodie on a model" });

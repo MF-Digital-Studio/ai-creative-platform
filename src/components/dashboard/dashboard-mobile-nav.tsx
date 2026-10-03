@@ -2,19 +2,20 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import {
   dashboardFooterNavigation,
   dashboardPrimaryNavigation,
-  dashboardUtilityNavigation,
   type DashboardNavigationItem,
 } from "@/data/dashboard-navigation";
 import { Link, usePathname } from "@/i18n/navigation";
 
 export function DashboardMobileNav() {
   const t = useTranslations("Dashboard.navigation");
+  const topbar = useTranslations("Dashboard.topbar");
+  const locale = useLocale();
   const drawerId = useId();
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -164,11 +165,12 @@ export function DashboardMobileNav() {
             </div>
 
             <nav aria-label={t("primaryLabel")} className="dashboard-drawer-nav">
-              {dashboardPrimaryNavigation.map((item, index) => renderItem(item, index === 0))}
+              {dashboardPrimaryNavigation.map((item) => renderItem(item, item.key === "home" ? pathname === "/dashboard" : item.key === "projects" ? pathname.startsWith("/dashboard/projects") : false))}
             </nav>
             <nav aria-label={t("secondaryLabel")} className="dashboard-drawer-nav dashboard-drawer-nav-secondary">
-              {dashboardUtilityNavigation.map((item) => renderItem(item))}
-              {dashboardFooterNavigation.map((item) => renderItem(item))}
+              {dashboardFooterNavigation.map((item) => renderItem(item, pathname === item.href))}
+              <Link href="/" className="dashboard-mobile-nav-item" onClick={() => closeDrawer()}><DashboardIcon name="website" className="dashboard-mobile-nav-icon" /><span>{t("returnToWebsite")}</span></Link>
+              <form action={`/${locale}/auth/signout`} method="post"><button type="submit" className="dashboard-mobile-nav-item"><DashboardIcon name="account" className="dashboard-mobile-nav-icon" /><span>{topbar("signOut")}</span></button></form>
             </nav>
           </aside>
         </div>

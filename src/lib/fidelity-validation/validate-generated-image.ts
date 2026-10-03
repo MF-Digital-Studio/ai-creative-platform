@@ -21,7 +21,7 @@ const validationSchema = {
         required: ["code", "category", "severity", "finding", "expected"],
         properties: {
           code: { type: "string" },
-          category: { type: "string", enum: ["product_identity", "geometry", "color_material", "branding_text", "body_interaction", "composition_visibility", "creative_requirement", "realism", "duplication", "structural_integrity"] },
+          category: { type: "string", enum: ["product_identity", "geometry", "color_material", "branding_text", "body_interaction", "composition_visibility", "creative_requirement", "realism", "duplication", "structural_integrity", "reference_match"] },
           severity: { type: "string", enum: ["critical", "major", "minor"] },
           finding: { type: "string" },
           expected: { type: "string" },
@@ -45,8 +45,9 @@ class OpenAIFidelityValidationClient implements FidelityValidationClient {
       model: getFidelityValidationModel(),
       instructions: renderValidationInstructions(brief),
       input: [{ role: "user", content: [
-        { type: "input_text", text: "Image 1 is the authoritative source product. Image 2 is the generated output. Identify only material deviations under the supplied validation policy." },
+        { type: "input_text", text: input.referenceBaseScene ? "Image 1 is the authoritative source product. Image 2 is the authoritative reference base scene. Image 3 is the edited output. Check product identity against Image 1 and scene preservation against Image 2." : "Image 1 is the authoritative source product. Image 2 is the generated output. Identify only material deviations under the supplied validation policy." },
         imageInput(input.originalProduct, input.originalMimeType),
+        ...(input.referenceBaseScene ? [imageInput(input.referenceBaseScene, input.referenceBaseSceneMimeType ?? "image/png")] : []),
         imageInput(input.generatedImage, input.generatedMimeType),
       ] }],
       max_output_tokens: 1800,
@@ -66,7 +67,7 @@ class OpenAIFidelityValidationClient implements FidelityValidationClient {
 }
 
 export async function validateGeneratedImage(input: FidelityValidationInput, client: FidelityValidationClient = new OpenAIFidelityValidationClient()): Promise<FidelityValidationResult> {
-  const brief = buildValidationBrief(input);
+  const brief = buildValidationBrief({ ...input, referencePreservation: Boolean(input.referenceBaseScene) });
   const raw = await client.validate(input, brief);
   const result = resolveQualityGate(mapStructuredValidationOutput(raw));
   return { ...result, version: FIDELITY_VALIDATION_VERSION };

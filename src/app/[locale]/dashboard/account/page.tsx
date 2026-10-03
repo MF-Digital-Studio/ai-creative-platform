@@ -31,14 +31,14 @@ export default async function AccountPage({ params }: AccountPageProps) {
 
   return (
     <main className="dashboard-main">
-      <div className="dashboard-main-inner">
-        <section className="mx-auto grid w-full max-w-xl gap-8" aria-labelledby="account-heading">
+      <div className="dashboard-main-inner dashboard-container">
+        <section className="dashboard-settings" aria-labelledby="account-heading">
           <div className="grid gap-3">
             <p className="text-xs font-semibold tracking-[0.12em] text-[var(--dashboard-muted)]">
               {t("eyebrow")}
             </p>
             <div className="grid gap-3">
-              <h1 id="account-heading" className="text-4xl font-medium tracking-[-0.045em] text-[var(--dashboard-foreground)] sm:text-5xl">
+              <h1 id="account-heading" className="dashboard-settings-title">
                 {t("heading")}
               </h1>
               <p className="max-w-lg text-base leading-7 text-[var(--dashboard-muted)]">
@@ -47,8 +47,11 @@ export default async function AccountPage({ params }: AccountPageProps) {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-surface)] p-5 sm:p-6">
-            <ProfileForm
+          <div className="dashboard-settings-layout">
+            <nav className="dashboard-settings-nav" aria-label={t("heading")}><a href="#profile-settings" aria-current="page">{t("heading")}</a></nav>
+            <div id="profile-settings" className="dashboard-settings-card">
+              <h2>{t("heading")}</h2>
+              <ProfileForm
               displayName={profile.display_name}
               messages={{
                 displayNameLabel: t("displayNameLabel"),
@@ -59,7 +62,8 @@ export default async function AccountPage({ params }: AccountPageProps) {
                 saveError: t("saveError"),
                 saveSuccess: t("saveSuccess"),
               }}
-            />
+              />
+            </div>
           </div>
         </section>
       </div>

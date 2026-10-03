@@ -16,15 +16,30 @@ export type ImageGenerationSourceAsset = {
   mimeType: string;
 };
 
+export type GenerationImageRole =
+  | "product_identity_source"
+  | "reference_base_scene"
+  | "scene_reference"
+  | "style_reference"
+  | "mask"
+  | "generated_attempt";
+
+export type GenerationImageInput = ImageGenerationSourceAsset & {
+  role: GenerationImageRole;
+  order: number;
+};
+
 export type ImageGenerationRequest = {
   generationId: string;
   projectId: string;
   sourceAsset: ImageGenerationSourceAsset;
+  images?: readonly GenerationImageInput[];
   prompt: string;
   provider: GenerationProvider;
   model: string;
   quality: ImageGenerationQuality;
   aspectRatio: AspectRatio;
+  operation?: "edit" | "scene_preparation" | "identity_placement" | "reference_product_replacement";
 };
 
 export type ImageGenerationUsage = {

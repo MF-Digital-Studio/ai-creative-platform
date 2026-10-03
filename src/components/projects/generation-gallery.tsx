@@ -1,156 +1,135 @@
 "use client";
 
-import { useRef, useState } from "react";
-
-import { cn } from "@/lib/cn";
+import { useRef, useState, type ReactNode } from "react";
+import type { GenerationStatus } from "@/lib/projects/get-projects";
 
 export type GenerationGalleryItem = {
   id: string;
-  previewUrl: string;
+  previewUrl: string | null;
   alt: string;
   typeLabel: string;
+  status: GenerationStatus;
   statusLabel: string;
   createdAt: string;
+  createdDateTime: string;
   provider: string;
   model: string;
   cost: string | null;
   direction: string;
 };
 
-type GenerationGalleryProps = {
-  items: GenerationGalleryItem[];
-  messages: {
-    featured: string;
-    openFullscreen: string;
-    closeFullscreen: string;
-    galleryLabel: string;
-    selectOutput: string;
-    details: string;
-    direction: string;
-    provider: string;
-    model: string;
-    created: string;
-    cost: string;
-    emptyHeading: string;
-    emptyDescription: string;
-  };
+type GalleryMessages = {
+  openFullscreen: string;
+  closeFullscreen: string;
+  galleryLabel: string;
+  selectOutput: string;
+  details: string;
+  status: string;
+  advancedDetails: string;
+  direction: string;
+  provider: string;
+  model: string;
+  created: string;
+  cost: string;
+  emptyHeading: string;
+  emptyDescription: string;
+  noPreview: string;
+  noPreviewDescription: string;
+  goToControls: string;
+  failedHeading: string;
+  failedDescription: string;
+  queuedHeading: string;
+  queuedDescription: string;
+  processingHeading: string;
+  processingDescription: string;
+  historyHeading: string;
 };
 
-export function GenerationGallery({ items, messages }: GenerationGalleryProps) {
-  const [selectedId, setSelectedId] = useState(items[0]?.id ?? "");
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const selected = items.find((item) => item.id === selectedId) ?? items[0];
+type GenerationGalleryProps = {
+  items: GenerationGalleryItem[];
+  controls: ReactNode;
+  runActions: { id: string; node: ReactNode }[];
+  messages: GalleryMessages;
+};
 
-  if (!selected) {
-    return (
-      <div className="project-gallery-empty">
-        <span className="project-gallery-empty-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="m12 3 1.3 4.2a5.2 5.2 0 0 0 3.5 3.5L21 12l-4.2 1.3a5.2 5.2 0 0 0-3.5 3.5L12 21l-1.3-4.2a5.2 5.2 0 0 0-3.5-3.5L3 12l4.2-1.3a5.2 5.2 0 0 0 3.5-3.5L12 3Z" />
-          </svg>
-        </span>
-        <div>
-          <h3>{messages.emptyHeading}</h3>
-          <p>{messages.emptyDescription}</p>
-        </div>
-      </div>
-    );
-  }
+function OutputState({ heading, description, busy = false, action }: { heading: string; description: string; busy?: boolean; action?: string }) {
+  return <div className="project-viewer-state" aria-busy={busy} role={busy ? "status" : undefined} aria-live={busy ? "polite" : undefined}>
+    <span className="project-viewer-state-mark" aria-hidden="true" />
+    <h3>{heading}</h3><p>{description}</p>{action ? <a href="#project-controls-heading" className="project-viewer-empty-action">{action}</a> : null}
+  </div>;
+}
+
+function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messages: GalleryMessages }) {
+  return <div className="project-output-disclosures">
+    <details className="project-output-disclosure">
+      <summary>{messages.details}</summary>
+      <dl><div><dt>{messages.created}</dt><dd><time dateTime={item.createdDateTime}>{item.createdAt}</time></dd></div><div><dt>{messages.status}</dt><dd>{item.statusLabel}</dd></div></dl>
+    </details>
+    <details className="project-output-disclosure">
+      <summary>{messages.advancedDetails}</summary>
+      <dl><div><dt>{messages.provider}</dt><dd>{item.provider}</dd></div><div><dt>{messages.model}</dt><dd>{item.model}</dd></div>{item.cost ? <div><dt>{messages.cost}</dt><dd>{item.cost}</dd></div> : null}</dl>
+      <div className="project-output-advanced-direction"><strong>{messages.direction}</strong><p>{item.direction}</p></div>
+    </details>
+  </div>;
+}
+
+export function GenerationGallery({ items, controls, runActions, messages }: GenerationGalleryProps) {
+  const [selection, setSelection] = useState<{ id: string; latestId: string } | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const latestId = items[0]?.id ?? "";
+  const selected = selection?.latestId === latestId ? items.find((item) => item.id === selection.id) ?? items[0] : items[0];
+  const previewItems = items.filter((item) => item.previewUrl);
 
   function openFullscreen() {
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) {
-      dialog.showModal();
-    }
+    if (selected?.previewUrl && dialogRef.current && !dialogRef.current.open) dialogRef.current.showModal();
   }
 
-  return (
-    <div className="project-generation-gallery">
-      <div className="project-featured-stage">
-        <span className="project-featured-label">{messages.featured}</span>
-        <button
-          type="button"
-          className="project-featured-image-button"
-          aria-label={messages.openFullscreen}
-          onClick={openFullscreen}
-        >
-          {/* Private signed URLs intentionally bypass the public image optimizer. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={selected.previewUrl} alt={selected.alt} />
-        </button>
-        <button
-          type="button"
-          className="project-fullscreen-trigger"
-          onClick={openFullscreen}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-            <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span>{messages.openFullscreen}</span>
-        </button>
-      </div>
-
-      {items.length > 1 ? (
-        <div className="project-gallery-strip" role="group" aria-label={messages.galleryLabel}>
-          {items.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              className={cn("project-gallery-thumbnail", item.id === selected.id && "is-active")}
-              aria-pressed={item.id === selected.id}
-              aria-label={`${messages.selectOutput} ${index + 1}`}
-              onClick={() => setSelectedId(item.id)}
-            >
+  return <>
+    <div className="project-workspace-layout">
+      <section className="project-review-panel" aria-label={messages.galleryLabel}>
+        <div className="project-featured-stage">
+          {selected?.previewUrl ? <>
+            <button type="button" className="project-featured-image-button" aria-label={messages.openFullscreen} onClick={openFullscreen}>
+              {/* Private signed URLs intentionally bypass the public image optimizer. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.previewUrl} alt="" />
+              <img src={selected.previewUrl} alt={selected.alt} />
             </button>
-          ))}
+            <button type="button" className="project-fullscreen-trigger" onClick={openFullscreen}>{messages.openFullscreen}</button>
+          </> : selected?.status === "failed" ? <OutputState heading={messages.failedHeading} description={messages.failedDescription} />
+            : selected?.status === "processing" ? <OutputState heading={messages.processingHeading} description={messages.processingDescription} busy />
+              : selected?.status === "queued" ? <OutputState heading={messages.queuedHeading} description={messages.queuedDescription} />
+                : selected ? <OutputState heading={messages.noPreview} description={messages.noPreviewDescription} />
+                  : <OutputState heading={messages.emptyHeading} description={messages.emptyDescription} action={messages.goToControls} />}
         </div>
-      ) : null}
-
-      <section className="project-output-details" aria-labelledby="selected-output-details">
-        <div className="project-output-details-heading">
-          <div>
-            <span>{selected.typeLabel} · {selected.statusLabel}</span>
-            <h3 id="selected-output-details">{messages.details}</h3>
-          </div>
-          <time>{selected.createdAt}</time>
-        </div>
-        <dl>
-          <div><dt>{messages.provider}</dt><dd>{selected.provider}</dd></div>
-          <div><dt>{messages.model}</dt><dd>{selected.model}</dd></div>
-          <div><dt>{messages.created}</dt><dd>{selected.createdAt}</dd></div>
-          {selected.cost ? <div><dt>{messages.cost}</dt><dd>{selected.cost}</dd></div> : null}
-        </dl>
-        <div className="project-output-direction">
-          <span>{messages.direction}</span>
-          <p>{selected.direction}</p>
-        </div>
+        {previewItems.length > 1 ? <div className="project-gallery-strip" role="group" aria-label={messages.galleryLabel}>
+          {previewItems.map((item, index) => <button key={item.id} type="button" className="project-gallery-thumbnail" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput} ${index + 1}`} onClick={() => setSelection({ id: item.id, latestId })}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.previewUrl as string} alt="" />
+          </button>)}
+        </div> : null}
+        {selected ? <OutputDetails item={selected} messages={messages} /> : null}
       </section>
-
-      <dialog
-        ref={dialogRef}
-        className="project-lightbox"
-        aria-label={messages.openFullscreen}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) {
-            event.currentTarget.close();
-          }
-        }}
-      >
-        <button
-          type="button"
-          className="project-lightbox-close"
-          aria-label={messages.closeFullscreen}
-          onClick={() => dialogRef.current?.close()}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-            <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
-          </svg>
-        </button>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={selected.previewUrl} alt={selected.alt} />
-      </dialog>
+      {controls}
     </div>
-  );
+    {items.length > 0 ? <section className="project-generation-history" aria-labelledby="project-generation-history-heading">
+      <div className="dashboard-section-heading"><h2 id="project-generation-history-heading">{messages.historyHeading}</h2></div>
+      <ul className="project-generation-history-list">{items.map((item) => <li key={item.id} className="project-generation-history-item">
+        <button type="button" className="project-generation-history-select" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput}: ${item.createdAt}`} onClick={() => setSelection({ id: item.id, latestId })}>
+          <span className="project-generation-history-media">{item.previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.previewUrl} alt="" />
+          ) : <span aria-hidden="true" />}</span>
+          <span className="project-generation-history-copy"><strong>{item.typeLabel}</strong><time dateTime={item.createdDateTime}>{item.createdAt}</time><span className="dashboard-status" data-status={item.status}><span aria-hidden="true" />{item.statusLabel}</span></span>
+        </button>
+        {runActions.find((action) => action.id === item.id)?.node}
+      </li>)}</ul>
+    </section> : null}
+    <dialog ref={dialogRef} className="project-lightbox" aria-label={messages.openFullscreen} onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
+      <button type="button" className="project-lightbox-close" aria-label={messages.closeFullscreen} onClick={() => dialogRef.current?.close()}>×</button>
+      {selected?.previewUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={selected.previewUrl} alt={selected.alt} />
+      ) : null}
+    </dialog>
+  </>;
 }

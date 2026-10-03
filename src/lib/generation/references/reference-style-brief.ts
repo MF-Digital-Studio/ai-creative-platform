@@ -1,5 +1,8 @@
 export const REFERENCE_ANALYSIS_VERSION = 1;
 
+import type { ReferenceShotProfile } from "./reference-shot-profile";
+import { isReferenceShotProfile } from "./reference-shot-profile";
+
 export type ReferenceStyleBrief = {
   visualIntent: string;
   composition: {
@@ -33,6 +36,8 @@ export type ReferenceStyleBrief = {
   depthOfField: string;
   poseLanguage: string | null;
   realismCharacter: string;
+  /** V2 structured shot semantics; legacy briefs may omit this and are safely derived. */
+  shotProfile?: ReferenceShotProfile;
 };
 
 function isNonEmptyString(value: unknown): value is string {
@@ -52,6 +57,7 @@ export function isReferenceStyleBrief(value: unknown): value is ReferenceStyleBr
   const environment = brief.environment as Record<string, unknown> | undefined;
   const color = brief.color as Record<string, unknown> | undefined;
   const texture = brief.texture as Record<string, unknown> | undefined;
+  const shotProfile = brief.shotProfile;
 
   return Boolean(
     isNonEmptyString(brief.visualIntent) &&
@@ -68,7 +74,8 @@ export function isReferenceStyleBrief(value: unknown): value is ReferenceStyleBr
     texture && ["grain", "sharpness", "retouching"].every((key) => isNonEmptyString(texture[key])) &&
     isNonEmptyString(brief.depthOfField) &&
     isNullableString(brief.poseLanguage) &&
-    isNonEmptyString(brief.realismCharacter),
+    isNonEmptyString(brief.realismCharacter) &&
+    (shotProfile === undefined || isReferenceShotProfile(shotProfile)),
   );
 }
 

@@ -43,6 +43,8 @@ export type GenerationStrategyResolution = {
   visualIntent: VisualIntent;
 };
 
+export type TrustedReferenceInteraction = "none" | "held" | "worn" | "near_face" | "on_pedestal" | "stacked" | "unknown";
+
 export function getGenerationStrategyCategory(
   strategy: GenerationStrategy,
 ): GenerationVisualCategory {
@@ -104,7 +106,11 @@ function hasOnBodyIntentForTargets(userPrompt: string, targets: ProductProfile["
  * and safe physical affordances, while the visible source image remains the
  * fidelity authority for generated pixels.
  */
-function resolveForProductProfile(profile: ProductProfile, userPrompt: string): GenerationStrategy {
+function resolveForProductProfile(
+  profile: ProductProfile,
+  userPrompt: string,
+  referenceInteraction?: TrustedReferenceInteraction | null,
+): GenerationStrategy {
   const canBeWorn = profile.wearability !== "non_wearable" && profile.interactionTargets.some((target) => target !== "none");
   const requestsOnBody = canBeWorn && hasOnBodyIntentForTargets(userPrompt, profile.interactionTargets);
 
@@ -113,7 +119,9 @@ function resolveForProductProfile(profile: ProductProfile, userPrompt: string): 
       ? "fashion_on_model"
       : "rigid_product";
   }
-  if (profile.vertical === "jewelry") return requestsOnBody ? "jewelry_on_model" : "jewelry_still_life";
+  // Reference analysis may guide pose/interaction, never product identity or vertical.
+  const referenceRequestsOnBody = referenceInteraction === "held" || referenceInteraction === "worn";
+  if (profile.vertical === "jewelry") return requestsOnBody || (canBeWorn && referenceRequestsOnBody) ? "jewelry_on_model" : "jewelry_still_life";
   if (profile.vertical === "watches") return requestsOnBody ? "watch_on_wrist" : "rigid_product";
   if (profile.vertical === "footwear") return requestsOnBody ? "footwear_on_model" : "rigid_product";
   return "rigid_product";
@@ -137,13 +145,14 @@ export function resolveGenerationStrategy(input: {
   productProfile?: unknown;
   productContext?: GenerationProductContext | null;
   requestedPreservationMode?: ProductPreservationMode | null;
+  referenceInteraction?: TrustedReferenceInteraction | null;
   userPrompt: string;
 }): GenerationStrategyResolution {
   const context = resolveImageGenerationContext(input.userPrompt, input.preset?.useCase);
 
   if (isProductProfile(input.productProfile)) {
     return resolution(
-      resolveForProductProfile(input.productProfile, input.userPrompt),
+      resolveForProductProfile(input.productProfile, input.userPrompt, input.referenceInteraction),
       "product_profile",
       context.visualIntent,
     );

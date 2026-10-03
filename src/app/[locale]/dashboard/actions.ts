@@ -9,10 +9,11 @@ import {createClient} from "@/lib/supabase/server";
 
 export type CreateProjectState = {
   status: "idle" | "error";
+  projectId?: string;
 };
 
 export type DeleteProjectState = {
-  status: "idle" | "error";
+  status: "idle" | "error" | "success";
 };
 
 export type CreateWorkspaceProjectResult =
@@ -44,16 +45,16 @@ export async function createProject(
   }
 
   try {
-    if (!await createProjectForUser(userId)) {
+    const projectId = await createProjectForUser(userId);
+    if (!projectId) {
       return {status: "error"};
     }
+    revalidatePath(`/${locale}/dashboard`, "page");
+    revalidatePath(`/${locale}/dashboard/projects`, "page");
+    return {status: "idle", projectId};
   } catch {
     return {status: "error"};
   }
-
-  revalidatePath(`/${locale}/dashboard`, "page");
-
-  return {status: "idle"};
 }
 
 export async function createWorkspaceProject(
@@ -109,5 +110,6 @@ export async function deleteProject(
   }
 
   revalidatePath(`/${locale}/dashboard`, "page");
-  return {status: "idle"};
+  revalidatePath(`/${locale}/dashboard/projects`, "page");
+  return {status: "success"};
 }

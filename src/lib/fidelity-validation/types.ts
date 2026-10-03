@@ -4,10 +4,12 @@ import type { ProductProfile } from "@/lib/product-understanding/product-profile
 import type { GenerationStrategy } from "@/lib/generation/strategy/generation-strategy";
 import type { SceneSuitabilityResolution } from "@/lib/scene-suitability/types";
 import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
+import type { ReferenceMatchResolution } from "@/lib/generation/references/resolve-reference-match";
+import type { ProductIdentityManifest } from "@/lib/product-identity/types";
 
 export const fidelityValidationCategories = [
   "product_identity", "geometry", "color_material", "branding_text", "body_interaction",
-  "composition_visibility", "creative_requirement", "realism", "duplication", "structural_integrity",
+  "composition_visibility", "creative_requirement", "realism", "duplication", "structural_integrity", "reference_match",
 ] as const;
 export type FidelityValidationCategory = (typeof fidelityValidationCategories)[number];
 export type FidelityIssueSeverity = "critical" | "major" | "minor";
@@ -43,18 +45,23 @@ export type FidelityValidationBrief = {
   vertical: SupportedVertical | "product";
   strategy: GenerationStrategy;
   sourceAuthority: string;
+  referencePreservation: boolean;
   productProfile: ProductProfile | null;
   sceneSuitability: SceneSuitabilityResolution | null;
   composition: CompositionProfile | null;
   appliedRequirements: CreativeComplianceResolution["applied"];
   allowedTransformations: string[];
   verticalChecks: string[];
+  referenceMatch?: ReferenceMatchResolution | null;
+  identityManifest?: ProductIdentityManifest | null;
 };
 
 export type FidelityValidationInput = {
   originalProduct: Buffer;
   generatedImage: Buffer;
   originalMimeType: string;
+  referenceBaseScene?: Buffer;
+  referenceBaseSceneMimeType?: string;
   generatedMimeType: string;
   productProfile: ProductProfile | null;
   vertical: SupportedVertical | "product";
@@ -63,6 +70,8 @@ export type FidelityValidationInput = {
   composition: CompositionProfile | null;
   creativeCompliance: CreativeComplianceResolution | null;
   referenceStyleContext?: string | null;
+  referenceMatch?: ReferenceMatchResolution | null;
+  identityManifest?: ProductIdentityManifest | null;
 };
 
 export type FidelityValidationClient = {

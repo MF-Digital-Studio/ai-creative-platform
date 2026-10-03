@@ -13,32 +13,19 @@ import {
   updateCreativeDirection,
 } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
+import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
 import {
   isSupportedProductImageType,
   MAX_PRODUCT_IMAGE_FILE_SIZE,
   productImageExtensions,
 } from "@/components/projects/product-image-upload";
 import { Button } from "@/components/ui/button";
-import { EnhanceWithAIToggle } from "@/components/ui/enhance-with-ai-toggle";
 import { DASHBOARD_DIRECTION_EVENT } from "@/data/dashboard-inspiration";
 import { useRouter } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
-import { cn } from "@/lib/cn";
 import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
 import { getCreativePreset } from "@/lib/creative-presets/creative-presets";
 import { createClient } from "@/lib/supabase/client";
-
-const outputTypes = ["image", "video", "campaignSet"] as const;
-const quickStarts = [
-  "studioProductShot",
-  "lifestyleCampaign",
-  "onModelFashion",
-  "productCloseUp",
-  "shortVideo",
-  "socialCampaign",
-] as const;
-
-type OutputType = (typeof outputTypes)[number];
 
 type CreativeComposerProps = {
   locale: AppLocale;
@@ -58,14 +45,13 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const composerRef = useRef<HTMLElement>(null);
   const [prompt, setPrompt] = useState("");
-  const [outputType, setOutputType] = useState<OutputType>("image");
   const [statusMessage, setStatusMessage] = useState("");
   const [productFile, setProductFile] = useState<File | null>(null);
   const [productPreviewUrl, setProductPreviewUrl] = useState<string | null>(null);
   const [referenceFiles, setReferenceFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
   const referenceFilesRef = useRef(referenceFiles);
-  const [isCreating, setIsCreating] = useState(false);
-  const [enhanceWithAI, setEnhanceWithAI] = useState(true);
+  const [generationState, setGenerationState] = useState<"idle" | "pending" | "failed">("idle");
+  const isCreating = generationState === "pending";
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const selectedPreset = getCreativePreset(selectedPresetId);
 
@@ -197,14 +183,13 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       !userId ||
       !productFile ||
       (!creativeDirection && !selectedPreset) ||
-      outputType !== "image" ||
       isCreating ||
       !isSupportedProductImageType(productFile.type)
     ) {
       return;
     }
 
-    setIsCreating(true);
+    setGenerationState("pending");
     setStatusMessage(t("creating"));
 
     try {
@@ -258,7 +243,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       }
 
       const generationFormData = new FormData();
-      generationFormData.set("enhance_with_ai", enhanceWithAI ? "on" : "off");
+      generationFormData.set("enhance_with_ai", "on");
       if (selectedPreset) {
         generationFormData.set("preset_id", selectedPreset.id);
       }
@@ -279,18 +264,16 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
 
       router.push(`/dashboard/projects/${project.projectId}`, { locale });
     } catch {
+      setGenerationState("failed");
       setStatusMessage(t("creationError"));
-    } finally {
-      setIsCreating(false);
+      setGenerationState("idle");
     }
   }
 
-  const canStartImageCreation =
-    outputType === "image" &&
-    canCreateImageWithPreset(Boolean(productFile), prompt, selectedPreset) &&
-    !isCreating;
+  const canStartImageCreation = canCreateImageWithPreset(Boolean(productFile), prompt, selectedPreset) && !isCreating;
 
   return (
+    <>
     <section
       ref={composerRef}
       id="composer"
@@ -310,18 +293,9 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
           void startImageCreation();
         }}
       >
-        <div className="creative-composer-meta">
-          <span>{t("eyebrow")}</span>
-          <span>
-            {selectedPreset
-              ? t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })
-              : t("context")}
-          </span>
-        </div>
-
         <div className="creative-composer-body">
           <div className="creative-product-field">
-            <span className="creative-field-label">{t("productLabel")}</span>
+            <span className="creative-field-label"><span className="creative-step-number">01</span>{t("productLabel")}</span>
             {productPreviewUrl ? (
               <div className="creative-selected-product">
                 <span className="creative-selected-product-media">
@@ -367,7 +341,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
           />
 
           <div className="creative-reference-field">
-            <span className="creative-field-label">{t("referenceLabel")}</span>
+            <span className="creative-field-label"><span className="creative-step-number">02</span>{t("referenceLabel")}</span>
             <p>{t("referenceHelper")}</p>
             <div className="creative-reference-list" aria-live="polite">
               {referenceFiles.map((reference, index) => (
@@ -381,7 +355,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
                 </div>
               ))}
               {referenceFiles.length < 3 ? (
-                <button type="button" className="creative-reference-add" onClick={() => referenceInputRef.current?.click()}>
+                <button type="button" className="creative-reference-add" onClick={() => referenceInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); selectReferences(Array.from(event.dataTransfer.files)); }}>
                   <DashboardIcon name="plus" />
                   <span>{t("addReference")}</span>
                 </button>
@@ -404,7 +378,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
           />
 
           <div className="creative-prompt-field">
-            <label htmlFor={promptId} className="creative-field-label">{t("creativeNoteLabel")}</label>
+            <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
             <textarea
               ref={promptRef}
               id={promptId}
@@ -413,34 +387,16 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
               className="creative-prompt-textarea"
               onChange={(event) => setPrompt(event.target.value)}
             />
-            <p className="creative-prompt-helper">
-              {selectedPreset ? t("presetNoteHelper") : t("promptHelper")}
-            </p>
+            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
           </div>
         </div>
 
         <div className="creative-composer-controls">
-          <fieldset className="creative-output-control">
-            <legend className="sr-only">{t("outputLabel")}</legend>
-            {outputTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={outputType === type}
-                disabled={type !== "image"}
-                aria-describedby={type === "image" ? undefined : disabledHintId}
-                className={cn("creative-output-option", outputType === type && "is-active")}
-                onClick={() => setOutputType(type)}
-              >
-                {t(`outputTypes.${type}`)}
-                {type !== "image" ? <small>{t("comingSoon")}</small> : null}
-              </button>
-            ))}
-          </fieldset>
-
+          <span className="creative-generate-label"><span className="creative-step-number">03</span>{t("generateStep")}</span>
           <Button
             type="submit"
             disabled={!canStartImageCreation}
+            aria-busy={isCreating}
             aria-describedby={disabledHintId}
             className="creative-start-button"
           >
@@ -449,39 +405,13 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
           </Button>
         </div>
 
-        <div className="px-3">
-          <EnhanceWithAIToggle
-            checked={enhanceWithAI}
-            description={t("enhanceWithAIHelper")}
-            disabled={isCreating}
-            label={t("enhanceWithAI")}
-            onChange={setEnhanceWithAI}
-          />
-        </div>
-
         <div className="creative-composer-feedback">
           <p id={statusId} role="status" aria-live="polite">{statusMessage}</p>
-          <p id={disabledHintId}>
-            {outputType === "image" ? t("startDisabledHint") : t("modeUnavailable")}
-          </p>
+          <p id={disabledHintId} className="sr-only">{!canStartImageCreation && !isCreating ? t("startDisabledHint") : null}</p>
         </div>
       </form>
-
-      <div className="creative-quick-starts" aria-label={t("quickStartLabel")}>
-        {quickStarts.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className="creative-quick-start"
-            onClick={() => {
-              setPrompt(t(`quickStartPrompts.${item}`));
-              setStatusMessage("");
-            }}
-          >
-            {t(`quickStarts.${item}`)}
-          </button>
-        ))}
-      </div>
     </section>
+    <GenerationProgressModal open={generationState === "pending"} title={t("progressTitle")} description={t("progressDescription")} statuses={[t("progressStatuses.preparing"), t("progressStatuses.scene"), t("progressStatuses.generating"), t("progressStatuses.finalizing")]} />
+    </>
   );
 }

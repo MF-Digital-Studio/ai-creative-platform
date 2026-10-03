@@ -1,6 +1,7 @@
 "use client";
 
-import {useActionState} from "react";
+import {useActionState, useEffect} from "react";
+import {useRouter} from "@/i18n/navigation";
 
 import {Button} from "@/components/ui/button";
 import type {CreateProjectState} from "@/app/[locale]/dashboard/actions";
@@ -17,15 +18,21 @@ type NewProjectButtonProps = {
     creating: string;
     error: string;
   };
+  variant?: "primary" | "secondary";
+  className?: string;
 };
 
-export function NewProjectButton({action, messages}: NewProjectButtonProps) {
+export function NewProjectButton({action, messages, variant = "secondary", className}: NewProjectButtonProps) {
   const [state, formAction, pending] = useActionState(action, initialCreateProjectState);
+  const router = useRouter();
+  useEffect(() => {
+    if (state.projectId) router.push(`/dashboard/projects/${state.projectId}`);
+  }, [router, state.projectId]);
   const hasError = state.status === "error";
 
   return (
     <form action={formAction} className="flex flex-col items-start gap-2">
-      <Button type="submit" variant="secondary" size="sm" disabled={pending} aria-busy={pending}>
+      <Button type="submit" variant={variant} size="sm" className={className} disabled={pending} aria-busy={pending}>
         {pending ? messages.creating : messages.create}
       </Button>
       {hasError ? (

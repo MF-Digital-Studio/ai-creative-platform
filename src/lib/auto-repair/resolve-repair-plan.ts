@@ -22,13 +22,40 @@ const mappings: Record<string, RepairMapping> = {
   color_material_drift: { category: "color_material_repair", instructions: ["Restore the source dominant colors and material appearance; do not recolor or redesign the product."] },
   branding_corrupted: { category: "branding_structure_repair", instructions: ["Preserve visible logo, artwork, label, and branding region placement without inventing or moving branding."] },
   structural_drift: { category: "branding_structure_repair", instructions: ["Restore the source structural and branding details without adding, removing, or relocating product elements."] },
+  product_identity_drift: { category: "identity_reinforcement", instructions: ["REPAIR PRIORITY — SOURCE PRODUCT IDENTITY DRIFT: The previous attempt changed the uploaded product. Recreate the scene using the exact source product design; do not invent or substitute a similar product."] },
+  center_stone_shape_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source center-stone shape, orientation, relative scale, and setting; preserve all visible side and shoulder stones."] },
+  stone_count_changed: { category: "identity_reinforcement", instructions: ["Restore the exact visible source stone count and positions; do not remove, add, simplify, or duplicate stones."] },
+  setting_changed: { category: "identity_reinforcement", instructions: ["Restore the exact visible source prong and setting architecture without substituting a similar ring design."] },
+  band_geometry_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source band width, profile, shoulders, symmetry, and complete ring geometry while preserving natural finger occlusion."] },
+  watch_dial_structure_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source dial layout, indices, crown side, date window, subdials, bezel, and bracelet/strap structure."] },
+  footwear_panel_structure_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source footwear panel boundaries, toe box, sole geometry, lacing, tongue, heel, and logo placement."] },
+  garment_artwork_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source garment artwork, placement, closures, pockets, and construction while allowing only natural folds and drape."] },
+  apparel_artwork_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 1 — Restore the exact source apparel artwork composition and major graphic shapes. Do not substitute, simplify, redraw, or reinterpret the print."] },
+  apparel_artwork_placement_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 2 — Restore the artwork to its exact source position and scale relative to collar, hem, and garment seams. Allow only natural folds and perspective."] },
+  apparel_text_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 3 — Preserve every visible source text region, typography presence, content, and location; do not invent or remove text."] },
+  apparel_color_drift: { category: "color_material_repair", instructions: ["PRIORITY 4 — Restore the source garment color and material appearance."] },
+  apparel_silhouette_drift: { category: "geometry_reinforcement", instructions: ["PRIORITY 5 — Restore garment silhouette, sleeve, collar, fit, and construction; allow only natural drape and body curvature."] },
+  apparel_scale_drift: { category: "identity_reinforcement", instructions: ["Restore the source artwork scale relative to the full garment; do not shrink or enlarge the print."] },
+  reference_composition_missed: { category: "composition_repair", instructions: ["Restore the compatible reference framing, camera angle, and subject placement while keeping the uploaded product large and fully visible."] },
+  reference_hand_direction_missed: { category: "body_interaction_repair", instructions: ["Restore the compatible reference hand-entry direction and pose structure without copying person identity or changing product identity."] },
+  reference_background_missed: { category: "creative_requirement_repair", instructions: ["Restore the compatible reference background and lighting structure without copying reference branding or product identity."] },
 };
 
 function mappingsFor(issues: FidelityValidationIssue[]): RepairMapping[] {
   const selected = new Map<RepairCategory, RepairMapping>();
-  for (const issue of issues) {
+  const apparelPriority = ["apparel_artwork_drift", "apparel_artwork_placement_drift", "apparel_text_drift", "apparel_color_drift", "apparel_silhouette_drift", "apparel_scale_drift"];
+  const orderedIssues = [...issues].sort((left, right) => {
+    const leftIndex = apparelPriority.indexOf(left.code.toLowerCase());
+    const rightIndex = apparelPriority.indexOf(right.code.toLowerCase());
+    return (leftIndex < 0 ? apparelPriority.length : leftIndex) - (rightIndex < 0 ? apparelPriority.length : rightIndex);
+  });
+  for (const issue of orderedIssues) {
     const mapping = mappings[issue.code];
-    if (mapping && !selected.has(mapping.category)) selected.set(mapping.category, mapping);
+    if (mapping) {
+      const existing = selected.get(mapping.category);
+      if (existing) existing.instructions.push(...mapping.instructions);
+      else selected.set(mapping.category, { ...mapping, instructions: [...mapping.instructions] });
+    }
   }
   return [...selected.values()];
 }

@@ -4,6 +4,7 @@ import { createProject, deleteProject } from "@/app/[locale]/dashboard/actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { DeleteProjectButton } from "@/components/dashboard/delete-project-button";
 import { NewProjectButton } from "@/components/dashboard/new-project-button";
+import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
 import { Link, getPathname } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
@@ -40,14 +41,14 @@ export async function RecentWork({
               <DashboardIcon name="arrow" />
             </Link>
           ) : null}
-          <NewProjectButton
+          {sectionId === "all-projects" ? <NewProjectButton
             action={createProjectAction}
             messages={{
-              create: t("newProject"),
+              create: t("newBlankProject"),
               creating: t("creating"),
               error: t("createError"),
             }}
-          />
+          /> : null}
         </div>
       </div>
       {projects.length === 0 ? (
@@ -84,20 +85,12 @@ export async function RecentWork({
                         <i />
                       </span>
                     )}
-                    <span className="dashboard-project-type-badge">
-                      {project.latest_generation
-                        ? t(`types.${project.latest_generation.generation_type}`)
-                        : t("types.project")}
-                    </span>
+                    <span className="dashboard-project-type-badge">{project.thumbnail_source === "generation" ? t("types.image") : t("types.project")}</span>
                   </span>
                   <span className="dashboard-project-copy">
                     <strong title={title}>{title}</strong>
                     <span className="dashboard-project-meta">
-                      <span>
-                        {project.latest_generation
-                          ? `${t(`types.${project.latest_generation.generation_type}`)} · ${t(`generationStatus.${project.latest_generation.status}`)}`
-                          : `${t("types.project")} · ${t(`status.${project.status}`)}`}
-                      </span>
+                      <StatusBadge status={project.latest_generation?.status ?? project.status} kind={project.latest_generation ? "generation" : "project"} />
                       <time dateTime={activityDate}>{dateFormatter.format(new Date(activityDate))}</time>
                     </span>
                   </span>

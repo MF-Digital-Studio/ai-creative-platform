@@ -48,25 +48,21 @@ export function CreativeDirectionForm({
   const isError = state.status === "validation" || state.status === "error";
 
   return (
-    <form action={formAction} className="grid gap-4 border-t border-[var(--dashboard-border)] pt-6">
+    <form action={formAction} className="project-control-section project-direction-form">
       <div className="grid gap-2">
         <label htmlFor="creative-direction" className="text-sm font-medium text-[var(--dashboard-foreground)]">
           {messages.label}
         </label>
-        <p id="creative-direction-description" className="text-sm leading-6 text-[var(--dashboard-muted)]">
-          {messages.description}
-        </p>
         <textarea
           key={creativeDirection ?? "empty"}
           id="creative-direction"
           name="creative_direction"
           defaultValue={creativeDirection ?? ""}
           maxLength={4000}
-          rows={5}
-          aria-describedby="creative-direction-description"
+          rows={4}
           aria-invalid={isError || undefined}
           placeholder={messages.placeholder}
-          className="min-h-32 w-full resize-y rounded-[var(--radius-sm)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-background)] px-3 py-2.5 text-sm leading-6 text-[var(--dashboard-foreground)] outline-none transition-colors placeholder:text-[var(--dashboard-muted-soft)] focus-visible:border-[var(--accent)] focus-visible:ring-4 focus-visible:ring-[var(--dashboard-focus)]"
+          className="project-direction-textarea"
         />
       </div>
 
@@ -74,13 +70,13 @@ export function CreativeDirectionForm({
         <p
           role={isError ? "alert" : "status"}
           aria-live={isError ? "assertive" : "polite"}
-          className={isError ? "text-sm text-red-300" : "text-sm text-emerald-300"}
+          className="project-direction-message"
         >
           {message}
         </p>
       ) : null}
 
-      <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>
+      <Button type="submit" variant="secondary" size="sm" disabled={pending} aria-busy={pending} className="project-direction-save">
         {pending ? messages.saving : messages.save}
       </Button>
     </form>
