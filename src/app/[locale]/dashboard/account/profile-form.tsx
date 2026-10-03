@@ -51,7 +51,7 @@ export function ProfileForm({ displayName, messages }: ProfileFormProps) {
           defaultValue={displayName ?? ""}
           aria-invalid={isError || undefined}
           aria-describedby="display-name-helper"
-          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-background)] px-3 text-sm text-[var(--dashboard-foreground)] outline-none transition-colors placeholder:text-[var(--dashboard-muted-soft)] focus-visible:border-[var(--accent)] focus-visible:ring-4 focus-visible:ring-[var(--dashboard-focus)]"
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-background)] px-3 text-sm text-[var(--dashboard-foreground)] outline-none transition-colors placeholder:text-[var(--dashboard-muted-soft)] focus-visible:border-[var(--dashboard-foreground)] focus-visible:ring-4 focus-visible:ring-[var(--dashboard-focus)]"
         />
         <p id="display-name-helper" className="text-sm leading-6 text-[var(--dashboard-muted)]">
           {messages.displayNameHelper}
@@ -62,7 +62,7 @@ export function ProfileForm({ displayName, messages }: ProfileFormProps) {
         <p
           role={isError ? "alert" : "status"}
           aria-live={isError ? "assertive" : "polite"}
-          className={isError ? "text-sm text-red-300" : "text-sm text-emerald-300"}
+          className={isError ? "text-sm text-[var(--dashboard-danger)]" : "text-sm text-[var(--dashboard-success)]"}
         >
           {message}
         </p>

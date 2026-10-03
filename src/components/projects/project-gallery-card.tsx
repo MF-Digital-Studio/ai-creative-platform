@@ -1,5 +1,4 @@
-import {deleteProject} from "@/app/[locale]/dashboard/actions";
-import {DeleteProjectButton} from "@/components/dashboard/delete-project-button";
+import {ProjectCardMenu} from "@/components/projects/project-card-menu";
 import {StatusBadge} from "@/components/dashboard/status-badge";
 import {Link} from "@/i18n/navigation";
 import type {AppLocale} from "@/i18n/routing";
@@ -13,11 +12,12 @@ type ProjectGalleryCardProps = {
     previewAlt: string;
     noPreview: string;
     open: string;
-    actionsFor: string;
+    projectActions: string;
     updated: string;
     delete: string;
+    deleteProject: string;
     deleteHeading: string;
-    deleteConfirm: string;
+    deleteDescription: string;
     cancel: string;
     deleting: string;
     deleteError: string;
@@ -45,13 +45,7 @@ export function ProjectGalleryCard({project, locale, messages, verticals}: Proje
           <StatusBadge status={project.latest_generation?.status ?? project.status} kind={project.latest_generation ? "generation" : "project"} />
         </span>
       </Link>
-      <details className="projects-card-menu">
-        <summary aria-label={messages.actionsFor.replace("{title}", title)} title={messages.actionsFor.replace("{title}", title)}>···</summary>
-        <div className="projects-card-menu-content">
-          <Link href={href}>{messages.open}</Link>
-          <DeleteProjectButton action={deleteProject.bind(null, locale, project.id)} trigger="menu" messages={{label: messages.delete, confirmHeading: messages.deleteHeading, confirm: messages.deleteConfirm.replace("{title}", title), cancel: messages.cancel, deleting: messages.deleting, error: messages.deleteError}} />
-        </div>
-      </details>
+      <ProjectCardMenu projectId={project.id} locale={locale} menuLabel={messages.projectActions} deleteMessages={{title: messages.deleteHeading, description: messages.deleteDescription, menuItem: messages.deleteProject, cancel: messages.cancel, confirm: messages.deleteProject, deleting: messages.deleting, error: messages.deleteError}} />
     </li>
   );
 }

@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
-import { createProject, deleteProject } from "@/app/[locale]/dashboard/actions";
+import { createProject } from "@/app/[locale]/dashboard/actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
-import { DeleteProjectButton } from "@/components/dashboard/delete-project-button";
+import { ProjectCardMenu } from "@/components/projects/project-card-menu";
 import { NewProjectButton } from "@/components/dashboard/new-project-button";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
@@ -95,17 +95,7 @@ export async function RecentWork({
                     </span>
                   </span>
                 </Link>
-                <DeleteProjectButton
-                  action={deleteProject.bind(null, locale, project.id)}
-                  messages={{
-                    label: t("delete"),
-                    confirmHeading: t("deleteHeading"),
-                    confirm: t("deleteConfirm", {title}),
-                    cancel: t("cancel"),
-                    deleting: t("deleting"),
-                    error: t("deleteError"),
-                  }}
-                />
+                <ProjectCardMenu projectId={project.id} locale={locale} menuLabel={t("projectActions")} deleteMessages={{title: t("deleteHeading"), description: t("deleteDescription"), menuItem: t("deleteProject"), cancel: t("cancel"), confirm: t("deleteProject"), deleting: t("deleting"), error: t("deleteError")}} />
               </li>
             );
           })}
