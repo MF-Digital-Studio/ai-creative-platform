@@ -16,9 +16,9 @@ export async function RecentGenerations({ generations }: { generations: Dashboar
           <span className="dashboard-generation-media">{generation.previewUrl ? (
             // Private Storage previews use short-lived signed URLs.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={generation.previewUrl} alt={t("previewAlt", { title: generation.projectTitle ?? t("untitled") })} />
+            <img src={generation.previewUrl} alt={t("previewAlt", { title: generation.projectTitle?.trim() || t("untitled") })} />
           ) : <DashboardIcon name="assets" />}</span>
-          <span className="dashboard-generation-copy"><strong>{generation.projectTitle ?? t("untitled")}</strong><time dateTime={generation.createdAt}>{dateFormatter.format(new Date(generation.createdAt))}</time><StatusBadge status={generation.status} /></span>
+          <span className="dashboard-generation-copy"><strong>{generation.projectTitle?.trim() || t("untitled")}</strong><time dateTime={generation.createdAt}>{dateFormatter.format(new Date(generation.createdAt))}</time><StatusBadge status={generation.status} /></span>
         </Link>
       </li>)}</ul>}
   </section>;

@@ -20,11 +20,11 @@ export type CreateWorkspaceProjectResult =
   | { ok: false }
   | { ok: true; projectId: string };
 
-async function createProjectForUser(userId: string) {
+async function createProjectForUser(userId: string, title?: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("projects")
-    .insert({ user_id: userId })
+    .insert({ user_id: userId, title: title?.trim() || "İsimsiz Proje" })
     .select("id")
     .single();
 
@@ -37,15 +37,13 @@ export async function createProject(
   formData: FormData,
 ): Promise<CreateProjectState> {
   void previousState;
-  void formData;
-
   const userId = await getAuthenticatedUserId();
   if (!userId || !isSupportedLocale(locale)) {
     return {status: "error"};
   }
 
   try {
-    const projectId = await createProjectForUser(userId);
+    const projectId = await createProjectForUser(userId, String(formData.get("title") ?? ""));
     if (!projectId) {
       return {status: "error"};
     }
@@ -59,6 +57,7 @@ export async function createProject(
 
 export async function createWorkspaceProject(
   locale: AppLocale,
+  title?: string,
 ): Promise<CreateWorkspaceProjectResult> {
   const userId = await getAuthenticatedUserId();
   if (!userId || !isSupportedLocale(locale)) {
@@ -66,7 +65,7 @@ export async function createWorkspaceProject(
   }
 
   try {
-    const projectId = await createProjectForUser(userId);
+    const projectId = await createProjectForUser(userId, title);
     if (!projectId) {
       return { ok: false };
     }

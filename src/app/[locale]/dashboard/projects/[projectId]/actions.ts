@@ -24,9 +24,28 @@ export type UpdateCreativeDirectionState = {
   status: "error" | "idle" | "success" | "validation";
 };
 
+export type RenameProjectState = { status: "idle" | "error" | "success" | "validation" };
+
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const supportedReferenceFilePattern = /^reference-[0-9a-f-]{36}\.(jpg|png|webp)$/i;
+
+export async function renameProject(locale: AppLocale, projectId: string, _previousState: RenameProjectState, formData: FormData): Promise<RenameProjectState> {
+  if (!isSupportedLocale(locale) || !uuidPattern.test(projectId)) return { status: "error" };
+  const title = formData.get("title");
+  if (typeof title !== "string" || Array.from(title.trim()).length > 120) return { status: "validation" };
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { status: "error" };
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("projects").update({ title: title.trim() || "İsimsiz Proje" }).eq("id", projectId).eq("user_id", userId).select("id").maybeSingle();
+    if (error || !data) return { status: "error" };
+  } catch { return { status: "error" }; }
+  revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
+  revalidatePath(`/${locale}/dashboard/projects`, "page");
+  revalidatePath(`/${locale}/dashboard`, "page");
+  return { status: "success" };
+}
 
 function hasValidObjectPath(userId: string, projectId: string, objectPath: string) {
   const segments = objectPath.split("/");

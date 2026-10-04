@@ -97,7 +97,7 @@
   "PricingSection": {
     "eyebrow": "PRICING",
     "heading": "Choose a plan that fits your production volume.",
-    "description": "Manage your brand’s image and video production with one credit system.\nMove to higher capacity, stronger models and team features as your needs grow.",
+    "description": "Manage your brandâ€™s image and video production with one credit system.\nMove to higher capacity, stronger models and team features as your needs grow.",
     "billingPeriod": "month",
     "startingCreditsNote": "Start with trial credits. No credit card required.",
     "mostPopular": "Most Popular",
@@ -170,7 +170,7 @@
       },
       "productFidelity": {
         "question": "Will the design and details of my product be preserved?",
-        "answer": "The system is designed to preserve the product’s form, color, material and distinctive details. Results may vary depending on the quality of the uploaded image and the generation model, so final outputs should be reviewed before publishing."
+        "answer": "The system is designed to preserve the productâ€™s form, color, material and distinctive details. Results may vary depending on the quality of the uploaded image and the generation model, so final outputs should be reviewed before publishing."
       },
       "productPhotos": {
         "question": "What kind of product photos produce the best results?",
@@ -182,7 +182,7 @@
       },
       "commercialUse": {
         "question": "Can I use generated content commercially?",
-        "answer": "Paid plans allow you to use generated outputs in your brand’s campaigns, advertising, e-commerce and social media content. You remain responsible for having the appropriate rights to the products and brand assets you upload."
+        "answer": "Paid plans allow you to use generated outputs in your brandâ€™s campaigns, advertising, e-commerce and social media content. You remain responsible for having the appropriate rights to the products and brand assets you upload."
       },
       "customPrompts": {
         "question": "Do I have to write my own prompt?",
@@ -273,7 +273,7 @@
           "label": "Raw Product"
         },
         "closeup": {
-          "alt": "Close-up campaign frame of an organic gold ring worn on a model’s hand",
+          "alt": "Close-up campaign frame of an organic gold ring worn on a modelâ€™s hand",
           "label": "Model Close-up"
         },
         "macro": {
@@ -370,7 +370,7 @@
     "ctaTitleLead": "One product photo.",
     "ctaTitleTrail": "An entire campaign.",
     "description": "Create premium campaign visuals for apparel, jewelry, watches, cosmetics, and footwear.",
-    "cta": "Try for Free →",
+    "cta": "Try for Free â†’",
     "shortDescription": "Campaign-ready content from your product photos.",
     "platform": "PLATFORM",
     "industries": "INDUSTRIES",
@@ -387,7 +387,7 @@
     "instagramLabel": "Instagram",
     "linkedinLabel": "LinkedIn",
     "xLabel": "X",
-    "copyright": "© {year} {brand}. All rights reserved."
+    "copyright": "Â© {year} {brand}. All rights reserved."
   },
   "SignupPage": {
     "metadataTitle": "Create Account",
@@ -473,7 +473,7 @@
     "metadataDescription": "Contact the Klay.ai team to discuss pilot access, partnerships or anything you would like to know about the product.",
     "heading": "Talk to our team",
     "description": "Tell us about pilot access, pricing, partnerships or anything you would like to know about Klay.ai.",
-    "helper": "We’ll review your message and get back to you as soon as possible.",
+    "helper": "Weâ€™ll review your message and get back to you as soon as possible.",
     "nameLabel": "Full name",
     "namePlaceholder": "Enter your full name",
     "nameRequired": "Enter your full name to continue.",
@@ -503,7 +503,7 @@
     "unavailable": "The contact form will be available soon.",
     "visualLabel": "Klay.ai fashion campaign",
     "visualAlt": "Campaign photograph of an adult model wearing a burgundy floor-length dress in warm stone architecture",
-    "visualEyebrow": "LET’S CREATE TOGETHER",
+    "visualEyebrow": "LETâ€™S CREATE TOGETHER",
     "visualHeading": "Build a new creative workflow\nfor your brand.",
     "visualDescription": "Talk to our team about pilot access, partnerships or anything you would like to know about the product."
   },
@@ -521,6 +521,7 @@
       "collapseSidebar": "Collapse sidebar",
       "expandSidebar": "Expand sidebar",
       "returnToWebsite": "Go to website",
+      "plan": { "label": "Plan", "credits": "{count} credits remaining", "upgrade": "Upgrade plan" },
       "unavailable": "This area will be available in a future update.",
       "openMenu": "Open workspace navigation",
       "closeMenu": "Close workspace navigation",
@@ -540,7 +541,7 @@
       "newProject": "New project",
       "newBlankProject": "Create blank project",
       "workspace": "Creative Workspace",
-      "credits": "Credits —",
+      "credits": "Credits â€”",
       "creditsHint": "Available after plan setup",
       "account": "Account",
       "profile": "Account",
@@ -558,9 +559,9 @@
       "displayNameLabel": "Display name",
       "displayNameHelper": "This name is used inside your workspace.",
       "save": "Save changes",
-      "saving": "Saving…",
+      "saving": "Savingâ€¦",
       "validationError": "Display name must be 80 characters or fewer.",
-      "saveError": "We couldn’t save your profile. Please try again.",
+      "saveError": "We couldnâ€™t save your profile. Please try again.",
       "saveSuccess": "Profile saved."
     },
     "overview": {
@@ -580,14 +581,16 @@
     "composer": {
       "heading": "Create a new image",
       "description": "Upload your product, set the scene, and create a campaign image.",
+      "projectNameLabel": "Project name",
+      "projectNamePlaceholder": "Optional",
       "eyebrow": "Product + Creative Direction",
       "context": "New project",
       "promptLabel": "Creative direction",
       "creativeNoteLabel": "Creative note",
       "promptPlaceholder": "Describe the scene, lighting, composition, or campaign direction...",
       "generateStep": "Generate",
-      "promptHelper": "Write naturally — we'll help turn your idea into a production-ready direction.",
-      "presetNoteHelper": "Optional — add a detail for the selected preset, or leave this blank to use the preset direction.",
+      "promptHelper": "Write naturally â€” we'll help turn your idea into a production-ready direction.",
+      "presetNoteHelper": "Optional â€” add a detail for the selected preset, or leave this blank to use the preset direction.",
       "selectedPreset": "Selected preset: {title}",
       "productLabel": "Product",
       "productHelper": "Drop or choose a JPEG, PNG or WebP",
@@ -604,8 +607,8 @@
       "invalidProductType": "Please select a JPEG, PNG, or WebP image.",
       "productTooLarge": "The image must be 20 MB or smaller.",
       "selectedProductAlt": "Selected product image",
-      "creating": "Creating…",
-      "creationError": "We couldn’t create the image. Please try again.",
+      "creating": "Creatingâ€¦",
+      "creationError": "We couldnâ€™t create the image. Please try again.",
       "progressTitle": "Creating your image",
       "progressDescription": "Your result will open automatically when it's ready.",
       "progressStatuses": {
@@ -740,17 +743,19 @@
       "emptyDescription": "Upload your first product to get started.",
       "startCreating": "Create your first project",
       "newProject": "New project",
-      "creating": "Creating…",
-      "createError": "We couldn’t create the project. Please try again.",
+      "creating": "Creatingâ€¦",
+      "createError": "We couldnâ€™t create the project. Please try again.",
       "delete": "Delete",
       "deleteProject": "Delete project",
       "deleteHeading": "Delete project?",
       "deleteDescription": "This project and its generated outputs will be permanently deleted.",
       "deleteConfirm": "Delete {title}? This cannot be undone.",
       "cancel": "Cancel",
-      "deleting": "Deleting…",
-      "deleteError": "We couldn’t delete the project. Please try again.",
+      "deleting": "Deletingâ€¦",
+      "deleteError": "We couldnâ€™t delete the project. Please try again.",
       "untitledProject": "Untitled Project",
+      "rename": { "edit": "Edit project name", "save": "Save", "cancel": "Cancel", "saving": "Saving...", "saved": "Saved", "error": "Could not save the project name." },
+      "imageEdit": { "title": "Edit image", "description": "Describe the change you want to make to the current image.", "placeholder": "For example: Simplify the background without changing the product.", "helper": "Only the requested area will be edited while preserving product identity.", "apply": "Apply edit", "unavailable": "Image editing will be available soon." },
       "thumbnailAlt": "Preview for {title}",
       "types": {
         "image": "Image",
@@ -777,10 +782,12 @@
       "deleteHeading": "Delete project?",
       "deleteDescription": "This project and its generated outputs will be permanently deleted.",
       "cancel": "Cancel",
-      "deleting": "Deleting…",
+      "deleting": "Deletingâ€¦",
       "deleteError": "Project could not be deleted. Please try again.",
       "backToProjects": "Back to projects",
       "updated": "Updated {date}",
+      "rename": { "edit": "Edit project name", "save": "Save", "cancel": "Cancel", "saving": "Saving...", "saved": "Saved", "error": "Could not save the project name." },
+      "imageEdit": { "title": "Edit image", "description": "Describe the change you want to make to the current image.", "placeholder": "For example: Simplify the background without changing the product.", "helper": "Only the requested area will be edited while preserving product identity.", "apply": "Apply edit", "unavailable": "Image editing will be available soon." },
       "controlsHeading": "Creative controls",
       "backToWorkspace": "Back to Workspace",
       "untitledProject": "Untitled Project",
@@ -792,12 +799,12 @@
         "heading": "Product image",
         "description": "Upload the product photo you want to use for this project.",
         "dropzone": "Drop an image here or choose a file.",
-        "helper": "JPEG, PNG or WebP · Max 20 MB",
-        "uploading": "Uploading…",
+        "helper": "JPEG, PNG or WebP Â· Max 20 MB",
+        "uploading": "Uploadingâ€¦",
         "invalidType": "Please upload a JPEG, PNG, or WebP image.",
         "tooLarge": "Image must be 20 MB or smaller.",
-        "uploadError": "We couldn’t upload the image. Please try again.",
-        "metadataError": "The image was uploaded, but we couldn’t save it to the project. Please try again.",
+        "uploadError": "We couldnâ€™t upload the image. Please try again.",
+        "metadataError": "The image was uploaded, but we couldnâ€™t save it to the project. Please try again.",
         "success": "Product image uploaded",
       "replace": "Replace product",
         "previewAlt": "Uploaded product image"
@@ -805,7 +812,7 @@
       "references": {
         "heading": "Visual references",
       "add": "Add reference",
-      "uploading": "Adding…",
+      "uploading": "Addingâ€¦",
       "invalidFile": "Choose a JPEG, PNG, or WebP image up to 20 MB.",
       "uploadError": "We couldn't add the reference. Please try again.",
       "limit": "You can add up to 3 references.",
@@ -817,22 +824,22 @@
         "description": "Describe the scene, mood, lighting, styling, and campaign direction you want.",
         "placeholder": "Example: A luxury editorial product campaign with warm marble, soft morning light, subtle shadows, and premium minimal styling.",
         "save": "Save direction",
-        "saving": "Saving…",
+        "saving": "Savingâ€¦",
         "validationError": "Creative direction must be 4,000 characters or fewer.",
-        "saveError": "We couldn’t save the creative direction. Please try again.",
+        "saveError": "We couldnâ€™t save the creative direction. Please try again.",
         "saveSuccess": "Creative direction saved."
       },
       "generation": {
         "generate": "Generate image",
-        "creating": "Creating…",
+        "creating": "Creatingâ€¦",
         "missingProductImage": "Upload a product image before creating a generation.",
         "missingCreativeDirection": "Add a creative direction before creating a generation.",
-        "creationFailed": "We couldn’t create the generation. Please try again.",
+        "creationFailed": "We couldnâ€™t create the generation. Please try again.",
         "enhanceWithAI": "Enhance with AI",
         "enhanceWithAIHelper": "Turn your creative direction into a more detailed production prompt before generation.",
         "run": "Run generation",
-        "running": "Generating…",
-        "generationFailed": "We couldn’t complete the image generation. Please try again.",
+        "running": "Generatingâ€¦",
+        "generationFailed": "We couldnâ€™t complete the image generation. Please try again.",
         "progressTitle": "Creating your image",
         "progressDescription": "Your result will open automatically when it's ready.",
         "progressStatuses": {
@@ -904,7 +911,7 @@
       "en": "English"
     },
     "localeNames": {
-      "tr": "Türkçe",
+      "tr": "TÃ¼rkÃ§e",
       "en": "English"
     }
   }

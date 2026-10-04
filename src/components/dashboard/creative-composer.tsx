@@ -36,6 +36,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const router = useRouter();
   const descriptionId = useId();
   const promptId = useId();
+  const projectNameId = useId();
   const statusId = useId();
   const disabledHintId = useId();
   const productInputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +44,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const composerRef = useRef<HTMLElement>(null);
   const [prompt, setPrompt] = useState("");
+  const [projectName, setProjectName] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [productFile, setProductFile] = useState<File | null>(null);
   const [productPreviewUrl, setProductPreviewUrl] = useState<string | null>(null);
@@ -178,7 +180,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     setStatusMessage(t("creating"));
 
     try {
-      const project = await createWorkspaceProject(locale);
+      const project = await createWorkspaceProject(locale, projectName.trim());
       if (!project.ok) {
         throw new Error("Unable to create a project.");
       }
@@ -274,6 +276,10 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         }}
       >
         <div className="creative-composer-body">
+          <div className="creative-project-name-field creative-prompt-field">
+            <label htmlFor={projectNameId} className="creative-field-label">{t("projectNameLabel")}</label>
+            <input id={projectNameId} value={projectName} maxLength={120} placeholder={t("projectNamePlaceholder")} className="creative-project-name-input" onChange={(event) => setProjectName(event.target.value)} />
+          </div>
           <div className="creative-product-field">
             <span className="creative-field-label"><span className="creative-step-number">01</span>{t("productLabel")}</span>
             {productPreviewUrl ? (
@@ -320,6 +326,19 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             onChange={handleProductChange}
           />
 
+          <div className="creative-prompt-field creative-direction-field">
+            <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
+            <textarea
+              ref={promptRef}
+              id={promptId}
+              value={prompt}
+              placeholder={t("promptPlaceholder")}
+              className="creative-prompt-textarea"
+              onChange={(event) => setPrompt(event.target.value)}
+            />
+            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
+          </div>
+
           <div className="creative-reference-field">
             <span className="creative-field-label"><span className="creative-step-number">02</span>{t("referenceLabel")}</span>
             <p>{t("referenceHelper")}</p>
@@ -357,18 +376,6 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             }}
           />
 
-          <div className="creative-prompt-field">
-            <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
-            <textarea
-              ref={promptRef}
-              id={promptId}
-              value={prompt}
-              placeholder={t("promptPlaceholder")}
-              className="creative-prompt-textarea"
-              onChange={(event) => setPrompt(event.target.value)}
-            />
-            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
-          </div>
         </div>
 
         <div className="creative-composer-controls">

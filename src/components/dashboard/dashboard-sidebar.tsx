@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { dashboardPrimaryNavigation } from "@/data/dashboard-navigation";
 import { Link, usePathname } from "@/i18n/navigation";
+import { DashboardPlanCard } from "@/components/dashboard/dashboard-plan-card";
 
 type DashboardSidebarProps = {
   displayName?: string | null;
@@ -38,6 +39,9 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
           </Link>;
         })}
       </nav>
+    </div>
+    <div className="dashboard-sidebar-plan-slot">
+      <DashboardPlanCard collapsed={collapsed} />
     </div>
     <div className="dashboard-sidebar-spacer" />
     <div className="dashboard-sidebar-footer">

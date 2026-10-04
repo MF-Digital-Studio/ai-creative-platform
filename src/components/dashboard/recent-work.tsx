@@ -68,7 +68,7 @@ export async function RecentWork({
       ) : (
         <ul className="dashboard-recent-grid">
           {projects.map((project) => {
-            const title = project.title ?? t("untitledProject");
+            const title = project.title?.trim() || t("untitledProject");
             const activityDate = project.latest_generation?.created_at ?? project.updated_at;
 
             return (

@@ -11,6 +11,7 @@ import {
   type DashboardNavigationItem,
 } from "@/data/dashboard-navigation";
 import { Link, usePathname } from "@/i18n/navigation";
+import { DashboardPlanCard } from "@/components/dashboard/dashboard-plan-card";
 
 export function DashboardMobileNav({ displayName }: { displayName?: string | null }) {
   const t = useTranslations("Dashboard.navigation");
@@ -174,6 +175,7 @@ export function DashboardMobileNav({ displayName }: { displayName?: string | nul
               <span className="dashboard-drawer-caption">{t("workspaceGroup")}</span>
               {dashboardPrimaryNavigation.map((item) => renderItem(item, item.key === "home" ? pathname === "/dashboard" : item.key === "projects" ? pathname.startsWith("/dashboard/projects") : false))}
             </nav>
+            <div className="dashboard-drawer-plan-slot"><DashboardPlanCard /></div>
             <div className="dashboard-drawer-spacer" />
             <div className="dashboard-drawer-footer">
               <nav aria-label={t("secondaryLabel")} className="dashboard-drawer-nav dashboard-drawer-nav-secondary">
