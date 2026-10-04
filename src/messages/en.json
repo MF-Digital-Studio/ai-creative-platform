@@ -1085,6 +1085,7 @@
         "openFullscreen": "View fullscreen",
         "closeFullscreen": "Close fullscreen view",
         "zoomImage": "Zoom in on image",
+        "zoomOutImage": "Zoom out on image",
         "resetImageZoom": "Fit image to screen",
         "galleryLabel": "Generated image gallery",
         "selectOutput": "Select output",

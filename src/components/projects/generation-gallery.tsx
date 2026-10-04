@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { GenerationStatus } from "@/lib/projects/get-projects";
+import { ProjectImageViewer } from "@/components/projects/project-image-viewer";
 
 export type GenerationGalleryItem = {
   id: string;
@@ -22,6 +23,7 @@ type GalleryMessages = {
   openFullscreen: string;
   closeFullscreen: string;
   zoomImage: string;
+  zoomOutImage: string;
   resetImageZoom: string;
   galleryLabel: string;
   selectOutput: string;
@@ -78,22 +80,13 @@ function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messag
 
 export function GenerationGallery({ items, controls, runActions, onSelectionChange, messages }: GenerationGalleryProps) {
   const [selection, setSelection] = useState<{ id: string; latestId: string } | null>(null);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const latestId = items[0]?.id ?? "";
   const selected = selection?.latestId === latestId ? items.find((item) => item.id === selection.id) ?? items[0] : items[0];
   const previewItems = items.filter((item) => item.previewUrl);
 
   function openFullscreen() {
-    if (selected?.previewUrl && dialogRef.current && !dialogRef.current.open) {
-      setIsZoomed(false);
-      dialogRef.current.showModal();
-    }
-  }
-
-  function closeFullscreen() {
-    setIsZoomed(false);
-    dialogRef.current?.close();
+    if (selected?.previewUrl) setViewerOpen(true);
   }
 
   return <>
@@ -136,14 +129,6 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
         {runActions.find((action) => action.id === item.id)?.node}
       </li>)}</ul>
     </section> : null}
-    <dialog ref={dialogRef} className={`project-lightbox${isZoomed ? " is-zoomed" : ""}`} aria-label={messages.openFullscreen} onClose={() => setIsZoomed(false)} onClick={(event) => { if (event.target === event.currentTarget) closeFullscreen(); }}>
-      <button type="button" className="project-lightbox-close" aria-label={messages.closeFullscreen} onClick={closeFullscreen}>×</button>
-      {selected?.previewUrl ? (
-        <button type="button" className="project-lightbox-image-button" aria-label={isZoomed ? messages.resetImageZoom : messages.zoomImage} aria-pressed={isZoomed} onClick={() => setIsZoomed((zoomed) => !zoomed)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={selected.previewUrl} alt={selected.alt} />
-        </button>
-      ) : null}
-    </dialog>
+    {selected?.previewUrl ? <ProjectImageViewer src={selected.previewUrl} alt={selected.alt} open={viewerOpen} closeLabel={messages.closeFullscreen} zoomInLabel={messages.zoomImage} zoomOutLabel={messages.zoomOutImage} resetLabel={messages.resetImageZoom} onOpenChange={setViewerOpen} /> : null}
   </>;
 }

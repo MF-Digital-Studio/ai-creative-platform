@@ -1089,6 +1089,7 @@
         "openFullscreen": "Tam ekran görüntüle",
         "closeFullscreen": "Tam ekran görünümünü kapat",
         "zoomImage": "Görseli yakınlaştır",
+        "zoomOutImage": "Görseli uzaklaştır",
         "resetImageZoom": "Görseli ekrana sığdır",
         "galleryLabel": "Üretilen görsel galerisi",
         "selectOutput": "Çıktıyı seç",

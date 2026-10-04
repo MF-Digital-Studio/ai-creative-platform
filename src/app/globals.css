@@ -3795,66 +3795,86 @@ html[data-motion="ready"] .signup-form-wrap {
   margin: 0;
   border: 0;
   background: color-mix(in srgb, var(--dashboard-foreground) 96%, transparent);
-  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(5rem, calc(env(safe-area-inset-bottom) + 4rem)) max(1rem, env(safe-area-inset-left));
   color: var(--dashboard-surface);
   overflow: hidden;
 }
 
 .project-lightbox[open] {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 }
 
 .project-lightbox::backdrop {
   background: var(--dashboard-foreground);
 }
 
-.project-lightbox-image-button {
-  display: block;
-  flex: 0 1 auto;
-  max-width: 100%;
-  max-height: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: zoom-in;
-  overflow: auto;
+.project-lightbox-viewport {
+  position: absolute;
+  inset: max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem)) max(1rem, env(safe-area-inset-right)) max(5rem, calc(env(safe-area-inset-bottom) + 4rem)) max(1rem, env(safe-area-inset-left));
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
 }
 
-.project-lightbox-image-button:focus-visible {
-  outline: 2px solid var(--dashboard-surface);
-  outline-offset: 4px;
-}
+.project-lightbox-viewport.is-zoomed,
+.project-lightbox-viewport.is-dragging { cursor: grabbing; }
 
-.project-lightbox-image-button img {
+.project-lightbox-image {
   display: block;
   width: auto;
   height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 96%;
+  max-height: 96%;
   object-fit: contain;
-  transition: transform 160ms ease;
-}
-
-.project-lightbox.is-zoomed {
-  overflow: auto;
-}
-
-.project-lightbox.is-zoomed .project-lightbox-image-button {
-  flex: 0 0 auto;
-  max-width: none;
-  max-height: none;
-  margin: auto;
-  cursor: zoom-out;
-  overflow: visible;
-}
-
-.project-lightbox.is-zoomed .project-lightbox-image-button img {
-  max-width: none;
-  max-height: none;
-  transform: scale(1.5);
   transform-origin: center;
+  transition: transform 90ms linear;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.project-lightbox-controls {
+  position: fixed;
+  z-index: 2;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transform: translateX(-50%);
+  padding: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--dashboard-surface) 18%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--dashboard-foreground) 82%, transparent);
+  color: var(--dashboard-surface);
+  backdrop-filter: blur(10px);
+}
+
+.project-lightbox-controls button {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.project-lightbox-controls button:hover { background: color-mix(in srgb, var(--dashboard-surface) 14%, transparent); }
+.project-lightbox-controls button:focus-visible,
+.project-lightbox-close:focus-visible { outline: 2px solid var(--dashboard-surface); outline-offset: 2px; }
+.project-lightbox-controls output { min-width: 3.5rem; text-align: center; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.project-lightbox-controls .project-lightbox-reset { width: auto; padding-inline: 0.6rem; font-size: 0.8rem; }
+
+@media (max-width: 480px) {
+  .project-lightbox-controls { gap: 0.15rem; }
+  .project-lightbox-controls button { min-width: 2.75rem; min-height: 2.75rem; }
 }
 
 .project-lightbox-close {
