@@ -37,7 +37,9 @@ import {
 import { resolveReferenceMatch } from "@/lib/generation/references/resolve-reference-match";
 import { resolveReferenceGenerationPath } from "@/lib/generation/references/reference-product-replacement";
 import { getReferenceShotProfile, REFERENCE_MATCH_VERSION, type ReferenceMode } from "@/lib/generation/references/reference-shot-profile";
-import { buildReferenceReplacementPrompt, orderGenerationImages, orderReferenceReplacementImages } from "@/lib/generation/image-roles";
+import { buildReferenceReplacementPrompt, orderGenerationImages, orderReferenceReplacementImages, orderImageEditImages } from "@/lib/generation/image-roles";
+import { buildImageEditPrompt, parseImageEditIntent } from "@/lib/image-edit/edit-intent";
+import { validateImageEdit } from "@/lib/image-edit/validate-image-edit";
 import { buildProductIdentityManifest } from "@/lib/product-identity/build-product-identity-manifest";
 import { resolveApparelArtworkRegion, buildApparelFidelityBenchmarkPrompts, compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
 import { evaluateApparelProductFidelity, resolveApparelFidelityMode } from "@/lib/product-identity/resolve-apparel-fidelity-mode";
@@ -112,6 +114,59 @@ type CreateQueuedImageGenerationError =
 export type CreateQueuedImageGenerationResult =
   | { ok: false; message: CreateQueuedImageGenerationError }
   | { ok: true; generationId: string };
+
+export type CreateImageEditResult = { ok: false; error: string; code: "creationFailed" | "missingEditInstruction" | "missingOutput" } | { ok: true; generationId: string; status: "succeeded" };
+
+export async function createImageEdit(locale: AppLocale, projectId: string, baseGenerationId: string, instruction: string): Promise<CreateImageEditResult> {
+  if (!isSupportedLocale(locale) || !uuidPattern.test(projectId) || !uuidPattern.test(baseGenerationId) || typeof instruction !== "string" || instruction.trim().length < 2 || instruction.length > 1000) return { ok: false, error: "Edit instruction is invalid.", code: "missingEditInstruction" };
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { ok: false, error: "Edit could not be authorized.", code: "creationFailed" };
+  const supabase = await createClient();
+  const { data: project } = await supabase.from("projects").select("id,user_id").eq("id", projectId).eq("user_id", userId).maybeSingle();
+  if (!project || project.user_id !== userId) return { ok: false, error: "Project could not be loaded.", code: "creationFailed" };
+  const { data: base } = await supabase.from("generations").select("id,project_id,input_asset_id,generation_type,status,output_bucket_id,output_object_path,aspect_ratio,provider_metadata").eq("id", baseGenerationId).eq("project_id", projectId).maybeSingle();
+  if (!base || base.generation_type !== "image" || base.status !== "succeeded" || !base.output_bucket_id || !base.output_object_path || base.output_bucket_id !== generatedAssetsBucket || !hasValidObjectPath(userId, projectId, base.output_object_path)) return { ok: false, error: "Selected output is unavailable.", code: "missingOutput" };
+  const { data: asset } = await supabase.from("assets").select("id,bucket_id,object_path").eq("id", base.input_asset_id ?? "").eq("project_id", projectId).eq("user_id", userId).maybeSingle();
+  if (!asset || asset.bucket_id !== "product-assets" || !hasValidObjectPath(userId, projectId, asset.object_path)) return { ok: false, error: "Source product image is unavailable.", code: "creationFailed" };
+  const intent = parseImageEditIntent(instruction.trim());
+  const admin = getSupabaseAdminClient();
+  const { data: edit, error } = await admin.from("generations").insert({ project_id: projectId, input_asset_id: asset.id, generation_type: "image", status: "processing", provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspect_ratio: base.aspect_ratio ?? "1:1", preservation_mode: "reference_edit", fidelity_status: "not_checked", creative_direction_snapshot: instruction.trim(), provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "pending", repairAttempted: false, editVersion: 1 } } }).select("id").single();
+  if (error || !edit) return { ok: false, error: "Edit record could not be created.", code: "creationFailed" };
+  const now = new Date();
+  const { data: marked } = await admin.from("generations").update({ status: "processing", processing_started_at: now.toISOString() }).eq("id", edit.id).select("id").maybeSingle();
+  if (!marked) return { ok: false, error: "Edit could not be started.", code: "creationFailed" };
+  try {
+    const [baseDownload, productDownload] = await Promise.all([admin.storage.from(base.output_bucket_id).download(base.output_object_path), admin.storage.from(asset.bucket_id).download(asset.object_path)]);
+    if (baseDownload.error || !baseDownload.data || productDownload.error || !productDownload.data) throw new Error("Unable to load edit images.");
+    const baseBuffer = Buffer.from(await baseDownload.data.arrayBuffer());
+    const productBuffer = Buffer.from(await productDownload.data.arrayBuffer());
+    const baseInput = { id: base.id, bucketId: base.output_bucket_id, objectPath: base.output_object_path, data: baseBuffer, mimeType: "image/png" };
+    const productInput = { id: asset.id, bucketId: asset.bucket_id, objectPath: asset.object_path, data: productBuffer, mimeType: productDownload.data.type || "image/jpeg" };
+    let result = await getImageGenerationProvider("openai").generate({ generationId: edit.id, projectId, sourceAsset: productInput, images: orderImageEditImages(baseInput, productInput), prompt: buildImageEditPrompt(instruction.trim(), intent), provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspectRatio: resolveAspectRatio(base.aspect_ratio), operation: "image_edit" });
+    let validation = await validateImageEdit({ base: baseBuffer, edited: result.imageData, instruction: instruction.trim() });
+    let repairAttempted = false;
+    if (validation.status === "fail" && validation.issueCodes.some((code) => code === "EDIT_REQUEST_NOT_APPLIED" || code === "EDIT_SCOPE_OVERREACH" || code === "EDIT_PRODUCT_IDENTITY_DRIFT")) {
+      repairAttempted = true;
+      const previous = result.imageData;
+      const repairPrompt = `Use the previous edited image and original base image. Correct only the failed edit behavior: ${validation.issueCodes.join(", ")}. Restore all unrequested elements to the base image appearance. Preserve the exact product identity.\n\nOriginal instruction: ${instruction.trim()}`;
+      result = await getImageGenerationProvider("openai").generate({ generationId: edit.id, projectId, sourceAsset: productInput, images: orderImageEditImages({ ...baseInput, data: previous }, productInput), prompt: repairPrompt, provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: "xhigh", aspectRatio: resolveAspectRatio(base.aspect_ratio), operation: "image_edit" });
+      validation = await validateImageEdit({ base: baseBuffer, edited: result.imageData, instruction: instruction.trim() });
+    }
+    if (validation.status === "fail") throw new Error("Edit fidelity validation failed.");
+    const objectPath = `${userId}/${projectId}/${edit.id}.png`;
+    const upload = await admin.storage.from(generatedAssetsBucket).upload(objectPath, result.imageData, { contentType: "image/png", upsert: false });
+    if (upload.error) throw new Error("Unable to store edited image.");
+    const processingCompletedAt = new Date();
+    const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : "not_checked", provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
+    if (saveError) throw new Error("Unable to save edited image record.");
+    revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
+    return { ok: true, generationId: edit.id, status: "succeeded" };
+  } catch {
+    const completedAt = new Date();
+    await admin.from("generations").update({ status: "failed", error_message: generationFailureCode, processing_completed_at: completedAt.toISOString(), processing_duration_ms: completedAt.getTime() - now.getTime(), provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "fail", repairAttempted: false, editVersion: 1 } } }).eq("id", edit.id).eq("status", "processing");
+    return { ok: false, error: "Edit could not be completed.", code: "creationFailed" };
+  }
+}
 
 type RunQueuedImageGenerationError = "generationFailed" | "notQueued";
 
@@ -1006,9 +1061,18 @@ export async function runQueuedImageGeneration(
       minor: fidelityValidation.issues.filter(({ severity }) => severity === "minor").length,
     };
     const originalIdentityIssueCounts = {
-      critical: fidelityValidation.issues.filter(({ category, severity }) => category === "product_identity" && severity === "critical").length,
-      major: fidelityValidation.issues.filter(({ category, severity }) => category === "product_identity" && severity === "major").length,
+      critical: fidelityValidation.issues.filter(({ identityImpact, severity }) => identityImpact === "critical" && severity === "critical").length,
+      major: fidelityValidation.issues.filter(({ identityImpact, severity }) => identityImpact === "major" && severity === "major").length,
     };
+    console.info("[generation] calibrated_validation", {
+      status: fidelityValidation.status,
+      commerciallyUsable: fidelityValidation.commerciallyUsable,
+      criticalIssueCount: originalValidationIssueCounts.critical,
+      majorIssueCount: originalValidationIssueCounts.major,
+      minorIssueCount: originalValidationIssueCounts.minor,
+      identityCriticalIssueCount: originalIdentityIssueCounts.critical,
+      identityMajorIssueCount: originalIdentityIssueCounts.major,
+    });
     if (fidelityValidation.status === "validation_unavailable") {
       logDevelopmentGenerationEvent("fidelity_validation_unavailable", {
         generationId: queuedGeneration.id,
@@ -1265,11 +1329,23 @@ export async function runQueuedImageGeneration(
           fidelity_validation: {
             version: selectedValidation.version,
             status: selectedValidation.status,
+            commerciallyUsable: selectedValidation.commerciallyUsable,
             criticalIssueCount: validationIssueCounts.critical,
             majorIssueCount: validationIssueCounts.major,
             minorIssueCount: validationIssueCounts.minor,
             retryRecommended: selectedValidation.retryRecommended,
             issueCodes: selectedValidation.issues.map(({ code }) => code).slice(0, 20),
+            warnings: selectedValidation.issues.filter(({ severity }) => severity === "minor" || severity === "major" && selectedValidation.status !== "fail").map(({ code, finding }) => ({ code, finding })).slice(0, 20),
+          },
+          validation: {
+            version: selectedValidation.version,
+            status: selectedValidation.status,
+            commerciallyUsable: selectedValidation.commerciallyUsable,
+            criticalIssueCount: validationIssueCounts.critical,
+            majorIssueCount: validationIssueCounts.major,
+            minorIssueCount: validationIssueCounts.minor,
+            warnings: selectedValidation.issues.filter(({ severity }) => severity === "minor" || severity === "major" && selectedValidation.status !== "fail").map(({ code, finding, confidence, likelyCause }) => ({ code, finding, confidence, likelyCause })).slice(0, 20),
+            issueCodes: selectedValidation.issues.map(({ issueCode, code }) => issueCode ?? code).slice(0, 20),
           },
           auto_repair: repairMetadata,
           product_identity_lock: {

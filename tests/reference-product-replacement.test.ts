@@ -39,7 +39,7 @@ test("replacement instructions preserve the scene, replace existing products, in
 
 test("final repair policy schedules at most one repair attempt", () => {
   const validation = {
-    version: "test", status: "fail", retryRecommended: true, summary: "identity issue",
+    version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "identity issue",
     checks: [], severity: "critical",
     issues: [{ code: "identity_changed", category: "product_identity", severity: "critical", finding: "wrong product", expected: "source product", sourceAuthoritative: true }],
   } as FidelityValidationResult;

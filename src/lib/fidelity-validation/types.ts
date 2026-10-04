@@ -15,11 +15,17 @@ export const fidelityValidationCategories = [
 export type FidelityValidationCategory = (typeof fidelityValidationCategories)[number];
 export type FidelityIssueSeverity = "critical" | "major" | "minor";
 export type FidelityValidationStatus = "pass" | "pass_with_warnings" | "fail" | "validation_unavailable";
+export type FidelityIdentityImpact = "none" | "minor" | "major" | "critical";
+export type FidelityLikelyCause = "source_identity_drift" | "perspective" | "fabric_deformation" | "lighting" | "body_interaction" | "typography_change" | "geometry_change" | "unknown";
 
 export type FidelityValidationIssue = {
   code: string;
+  issueCode?: string;
   category: FidelityValidationCategory;
   severity: FidelityIssueSeverity;
+  confidence?: number;
+  identityImpact?: FidelityIdentityImpact;
+  likelyCause?: FidelityLikelyCause;
   finding: string;
   expected: string;
   sourceAuthoritative: boolean;
@@ -38,6 +44,7 @@ export type FidelityValidationResult = {
   issues: FidelityValidationIssue[];
   severity: FidelityIssueSeverity | null;
   retryRecommended: boolean;
+  commerciallyUsable: boolean;
   summary: string;
   version: string;
 };

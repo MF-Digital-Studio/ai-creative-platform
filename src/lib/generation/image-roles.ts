@@ -31,6 +31,13 @@ export function orderReferenceReplacementImages(
   ];
 }
 
+export function orderImageEditImages(baseImage: ImageGenerationSourceAsset, product: ImageGenerationSourceAsset): GenerationImageInput[] {
+  return [
+    { ...baseImage, role: "generated_attempt", order: 0 },
+    { ...product, role: "product_identity_source", order: 1 },
+  ];
+}
+
 export function buildReferenceReplacementPrompt(userDirection: string): string {
   return [
     "REFERENCE IMAGE — PRESERVE AS BASE PHOTOGRAPH. Image 1 is the photograph to edit. Preserve its composition, subject, pose, anatomy, framing, camera, perspective, lighting, shadows, skin, clothing, background, environment, depth of field, and photographic character. Do not recreate or redesign the scene. Modify only the smallest region needed for the product.",

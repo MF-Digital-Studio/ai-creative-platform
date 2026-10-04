@@ -961,7 +961,11 @@
         "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.",
         "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.",
         "apply": "Düzenlemeyi uygula",
-        "unavailable": "Görsel düzenleme yakında kullanıma açılacak."
+        "unavailable": "Görsel düzenleme yakında kullanıma açılacak.",
+        "failed": "Düzenleme tamamlanamadı. Lütfen tekrar deneyin.",
+        "progressTitle": "Düzenlemeniz uygulanıyor",
+        "progressDescription": "Seçili görsel, ürün kimliği korunarak düzenleniyor.",
+        "progressStatuses": { "applying": "İstenen değişiklik uygulanıyor", "preserving": "Görsel korunuyor", "checking": "Ürün kimliği kontrol ediliyor", "finalizing": "Düzenleme tamamlanıyor" }
       },
       "thumbnailAlt": "{title} için önizleme",
       "types": {
@@ -1009,7 +1013,11 @@
         "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.",
         "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.",
         "apply": "Düzenlemeyi uygula",
-        "unavailable": "Görsel düzenleme yakında kullanıma açılacak."
+        "unavailable": "Görsel düzenleme yakında kullanıma açılacak.",
+        "failed": "Düzenleme tamamlanamadı. Lütfen tekrar deneyin.",
+        "progressTitle": "Düzenlemeniz uygulanıyor",
+        "progressDescription": "Seçili görsel, ürün kimliği korunarak düzenleniyor.",
+        "progressStatuses": { "applying": "İstenen değişiklik uygulanıyor", "preserving": "Görsel korunuyor", "checking": "Ürün kimliği kontrol ediliyor", "finalizing": "Düzenleme tamamlanıyor" }
       },
       "controlsHeading": "Yaratıcı kontroller",
       "backToWorkspace": "Çalışma Alanına Dön",

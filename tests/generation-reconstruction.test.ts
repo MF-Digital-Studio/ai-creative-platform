@@ -37,7 +37,7 @@ test("apparel artwork crops and hybrid projection require localized exact-produc
 });
 
 test("at most one automatic repair attempt is selected", () => {
-  const plan = resolveRepairPlan({ status: "fail", retryRecommended: true, issues: [{ code: "product_identity_drift", category: "product_identity", severity: "major", finding: "drift", expected: "preserve identity", sourceAuthoritative: true }], checks: [], severity: "major", summary: "identity drift", version: "test" });
+  const plan = resolveRepairPlan({ status: "fail", retryRecommended: true, commerciallyUsable: false, issues: [{ code: "product_identity_drift", category: "product_identity", severity: "major", finding: "drift", expected: "preserve identity", sourceAuthoritative: true }], checks: [], severity: "major", summary: "identity drift", version: "test" });
   assert.equal(plan.shouldRetry, true);
   assert.equal(plan.shouldRetry ? 1 : 0, 1);
   assert.equal(plan.categories.length, 1);

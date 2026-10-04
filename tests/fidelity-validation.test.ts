@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { mapStructuredValidationOutput, resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
-import type { FidelityValidationIssue } from "../src/lib/fidelity-validation/types";
+import type { FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 
 function issue(overrides: Partial<FidelityValidationIssue>): FidelityValidationIssue {
   return {
@@ -12,6 +12,10 @@ function issue(overrides: Partial<FidelityValidationIssue>): FidelityValidationI
     finding: "A non-blocking visual difference was observed.",
     expected: "Keep the source product visually consistent.",
     sourceAuthoritative: true,
+    issueCode: overrides.code ?? "warning",
+    confidence: 0.92,
+    identityImpact: overrides.identityImpact ?? (overrides.severity === "critical" && overrides.category === "product_identity" ? "critical" : ["product_identity", "geometry"].includes(overrides.category ?? "") ? "major" : "none"),
+    likelyCause: "unknown",
     ...overrides,
   };
 }
@@ -42,7 +46,7 @@ test("structured findings map deterministically and preserve source authority", 
   assert.equal(first.issues[0]?.sourceAuthoritative, true);
 });
 
-test("vertical findings cover jewelry, watches, footwear, apparel and cosmetics issue codes", () => {
+test("vertical finding codes remain available with calibrated context", () => {
   const scenarios: Array<[string, FidelityValidationIssue["category"]]> = [
     ["changed_stone_layout", "geometry"],
     ["changed_dial_layout", "geometry"],
@@ -54,13 +58,59 @@ test("vertical findings cover jewelry, watches, footwear, apparel and cosmetics 
     const result = resolveQualityGate([issue({ code, category, severity: "major" })]);
     assert.equal(result.issues[0]?.code, code);
     assert.equal(result.issues[0]?.severity, "major");
+    assert.equal(result.issues[0]?.confidence, 0.92);
+    assert.ok(result.issues[0]?.likelyCause);
   }
+});
+
+test("calibration fixtures tolerate natural changes and reject identity changes", () => {
+  const fixture = (code: string, category: FidelityValidationIssue["category"], severity: FidelityValidationIssue["severity"], identityImpact: FidelityValidationIssue["identityImpact"], likelyCause: FidelityValidationIssue["likelyCause"] = "source_identity_drift") => ({
+    code, issueCode: code, category, severity, finding: code, expected: "preserve source identity", confidence: 0.94, identityImpact, likelyCause, sourceAuthoritative: true,
+  });
+  const cases: Array<[string, FidelityValidationIssue, FidelityValidationIssue["severity"], FidelityValidationResult["status"]]> = [
+    ["small branded chest logo mild shift", fixture("APPAREL_ARTWORK_PLACEMENT_DRIFT", "product_identity", "minor", "minor", "perspective"), "minor", "pass_with_warnings"],
+    ["wrong logo", fixture("WRONG_LOGO", "product_identity", "minor", "critical"), "critical", "fail"],
+    ["large complex hoodie typography corruption", fixture("APPAREL_ARTWORK_TEXT_DRIFT", "product_identity", "major", "critical", "typography_change"), "critical", "fail"],
+    ["garment fold distortion", fixture("FABRIC_DEFORMATION", "geometry", "minor", "minor", "fabric_deformation"), "minor", "pass_with_warnings"],
+    ["necklace chain fall variation", fixture("CHAIN_FALL_VARIATION", "body_interaction", "minor", "none", "body_interaction"), "minor", "pass_with_warnings"],
+    ["necklace pendant geometry", fixture("PENDANT_GEOMETRY_CHANGED", "product_identity", "major", "critical", "geometry_change"), "critical", "fail"],
+    ["watch wrist perspective", fixture("WRIST_ANGLE_VARIATION", "realism", "minor", "none", "perspective"), "minor", "pass_with_warnings"],
+    ["watch wrong dial geometry", fixture("WATCH_DIAL_STRUCTURE_CHANGED", "product_identity", "major", "critical", "geometry_change"), "critical", "fail"],
+    ["footwear flex", fixture("FOOTWEAR_FLEX", "geometry", "minor", "minor", "fabric_deformation"), "minor", "pass_with_warnings"],
+    ["footwear silhouette drift", fixture("FOOTWEAR_SILHOUETTE_CHANGED", "product_identity", "major", "critical", "geometry_change"), "critical", "fail"],
+    ["cosmetics reflections", fixture("COSMETICS_REFLECTION_VARIATION", "realism", "minor", "none", "lighting"), "minor", "pass_with_warnings"],
+    ["cosmetics label identity", fixture("BRANDING_CORRUPTED", "product_identity", "major", "critical", "typography_change"), "critical", "fail"],
+  ];
+  for (const [name, input, severity, status] of cases) {
+    const [mapped] = mapStructuredValidationOutput({ findings: [input] });
+    const result = resolveQualityGate([mapped!]);
+    assert.equal(mapped?.severity, severity, name);
+    assert.equal(result.status, status, name);
+    assert.equal(result.commerciallyUsable, status !== "fail", name);
+  }
+});
+
+test("low-confidence mild identity variation cannot become critical", () => {
+  const [mapped] = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity", severity: "critical", confidence: 0.32, identityImpact: "major", likelyCause: "perspective", finding: "slight shift", expected: "source placement" }] });
+  const result = resolveQualityGate([mapped!]);
+  assert.equal(mapped?.severity, "minor");
+  assert.equal(result.status, "pass_with_warnings");
+});
+
+test("human realism findings stay separate from product identity", () => {
+  const result = resolveQualityGate([
+    issue({ code: "hand_anatomy_error", category: "human_realism", severity: "critical", identityImpact: "none", likelyCause: "body_interaction" }),
+    issue({ code: "product_identity_drift", category: "product_identity", severity: "critical", identityImpact: "critical", likelyCause: "source_identity_drift" }),
+  ]);
+  assert.equal(result.status, "fail");
+  assert.equal(result.commerciallyUsable, false);
+  assert.deepEqual(new Set(result.issues.map(({ category }) => category)), new Set(["human_realism", "product_identity"]));
 });
 
 test("creative requirement issues are warnings or failures based on explicit severity", () => {
   const warning = resolveQualityGate([issue({ code: "decorative_mood_mismatch", category: "creative_requirement", severity: "minor" })]);
   const required = resolveQualityGate([issue({ code: "required_creative_missing", category: "creative_requirement", severity: "major" })]);
   assert.equal(warning.status, "pass_with_warnings");
-  assert.equal(required.retryRecommended, true);
+  assert.equal(required.retryRecommended, false);
   assert.equal(required.status, "pass_with_warnings");
 });

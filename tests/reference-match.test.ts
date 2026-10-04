@@ -55,6 +55,7 @@ test("reference match validation issues map to the existing one-repair plan", ()
   const validation = resolveQualityGate([{ code: "reference_composition_missed", category: "reference_match", severity: "major", finding: "wide output", expected: "centered close-up", sourceAuthoritative: false }]);
   assert.equal(validation.checks.find((check) => check.category === "reference_match")?.passed, false);
   const plan = resolveRepairPlan(validation);
-  assert.equal(plan.shouldRetry, true);
-  assert.ok(plan.categories.includes("composition_repair"));
+  assert.equal(validation.status, "pass_with_warnings");
+  assert.equal(validation.retryRecommended, false);
+  assert.equal(plan.shouldRetry, false);
 });

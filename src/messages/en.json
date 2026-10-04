@@ -959,7 +959,11 @@
         "placeholder": "For example: Simplify the background without changing the product.",
         "helper": "Only the requested area will be edited while preserving product identity.",
         "apply": "Apply edit",
-        "unavailable": "Image editing will be available soon."
+        "unavailable": "Image editing will be available soon.",
+        "failed": "The edit could not be completed. Please try again.",
+        "progressTitle": "Applying your edit",
+        "progressDescription": "The selected image is being edited while preserving its product identity.",
+        "progressStatuses": { "applying": "Applying the requested change", "preserving": "Preserving the image", "checking": "Checking product identity", "finalizing": "Finishing the edit" }
       },
       "thumbnailAlt": "Preview for {title}",
       "types": {
@@ -1005,7 +1009,11 @@
         "placeholder": "For example: Simplify the background without changing the product.",
         "helper": "Only the requested area will be edited while preserving product identity.",
         "apply": "Apply edit",
-        "unavailable": "Image editing will be available soon."
+        "unavailable": "Image editing will be available soon.",
+        "failed": "The edit could not be completed. Please try again.",
+        "progressTitle": "Applying your edit",
+        "progressDescription": "The selected image is being edited while preserving its product identity.",
+        "progressStatuses": { "applying": "Applying the requested change", "preserving": "Preserving the image", "checking": "Checking product identity", "finalizing": "Finishing the edit" }
       },
       "controlsHeading": "Creative controls",
       "backToWorkspace": "Back to Workspace",

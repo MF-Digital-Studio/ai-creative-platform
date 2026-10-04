@@ -48,12 +48,12 @@ test("watch, footwear, apparel, and cosmetics manifests retain their identity an
 });
 
 function attempt(attempt: 0 | 1, issues: GenerationAttempt["validation"]["issues"]): GenerationAttempt {
-  return { attempt, imageData: Buffer.from(String(attempt)), mimeType: "image/png", providerRequestId: null, preservationMode: "reference_edit", validation: { status: issues.length ? "fail" : "pass", issues, retryRecommended: false, checks: [], severity: issues[0]?.severity ?? null, summary: "test", version: "test" } };
+  return { attempt, imageData: Buffer.from(String(attempt)), mimeType: "image/png", providerRequestId: null, preservationMode: "reference_edit", validation: { status: issues.length ? "fail" : "pass", issues, retryRecommended: false, commerciallyUsable: !issues.some(({ identityImpact }) => identityImpact === "critical"), checks: [], severity: issues[0]?.severity ?? null, summary: "test", version: "test" } };
 }
 
 test("correct product repair beats a better reference match with identity drift", () => {
-  const wrongProduct = attempt(0, [{ code: "product_identity_drift", category: "product_identity", severity: "critical", finding: "different ring", expected: "source ring", sourceAuthoritative: true }]);
-  const correctProduct = attempt(1, [{ code: "reference_composition_missed", category: "reference_match", severity: "major", finding: "angle adjusted", expected: "reference angle", sourceAuthoritative: false }]);
+  const wrongProduct = attempt(0, [{ code: "product_identity_drift", issueCode: "product_identity_drift", category: "product_identity", severity: "critical", finding: "different ring", expected: "source ring", sourceAuthoritative: true, confidence: .95, identityImpact: "critical", likelyCause: "source_identity_drift" }]);
+  const correctProduct = attempt(1, [{ code: "reference_composition_missed", issueCode: "reference_composition_missed", category: "reference_match", severity: "major", finding: "angle adjusted", expected: "reference angle", sourceAuthoritative: false, confidence: .88, identityImpact: "none", likelyCause: "unknown" }]);
   assert.equal(selectFinalAttempt(wrongProduct, correctProduct).attempt, 1);
 });
 

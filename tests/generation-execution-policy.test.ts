@@ -30,7 +30,7 @@ test("strong preset skips enhancement, custom ambiguous note enables it", () => 
 });
 
 test("minor and non-actionable findings do not trigger repair; critical targeted identity issue does", () => {
-  const base = { checks: [], severity: "minor" as const, retryRecommended: true, summary: "", version: "test" };
+  const base = { checks: [], severity: "minor" as const, retryRecommended: true, commerciallyUsable: true, summary: "", version: "test" };
   const minor = { ...base, status: "fail" as const, issues: [{ code: "minor_cosmetic_imperfection", category: "realism" as const, severity: "minor" as const, finding: "minor", expected: "", sourceAuthoritative: false }] };
   const critical = { ...base, status: "fail" as const, severity: "critical" as const, issues: [{ code: "product_identity_drift", category: "product_identity" as const, severity: "critical" as const, finding: "drift", expected: "source", sourceAuthoritative: true }] };
   assert.equal(resolveRepairEligibility({ validation: minor, exactProduct: false, hybridProjectionApplied: false, maximumAttemptsRemaining: true }).eligible, false);
@@ -38,13 +38,20 @@ test("minor and non-actionable findings do not trigger repair; critical targeted
   assert.equal(resolveRepairEligibility({ validation: critical, exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: false }).eligible, false);
 });
 
+test("pass with warnings suppresses repair while high-confidence identity failure remains repairable", () => {
+  const warning = { status: "pass_with_warnings" as const, checks: [], commerciallyUsable: true, severity: "minor" as const, retryRecommended: false, summary: "warning", version: "test", issues: [{ code: "apparel_artwork_placement_drift", category: "product_identity" as const, severity: "minor" as const, finding: "small shift", expected: "same placement class", sourceAuthoritative: true, confidence: .8, identityImpact: "minor" as const, likelyCause: "perspective" as const }] };
+  assert.equal(resolveRepairEligibility({ validation: warning, exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true }).eligible, false);
+  const wrongProduct = { status: "fail" as const, checks: [], commerciallyUsable: false, severity: "critical" as const, retryRecommended: true, summary: "wrong product", version: "test", issues: [{ code: "product_identity_drift", category: "product_identity" as const, severity: "critical" as const, finding: "different product", expected: "source SKU", sourceAuthoritative: true, confidence: .97, identityImpact: "critical" as const, likelyCause: "source_identity_drift" as const }] };
+  assert.equal(resolveRepairEligibility({ validation: wrongProduct, exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true }).eligible, true);
+});
+
 test("hybrid projection suppresses redundant repair if identity issues were resolved", () => {
-  const validation = { status: "fail" as const, checks: [], severity: "minor" as const, retryRecommended: true, summary: "", version: "test", issues: [{ code: "minor_cosmetic_imperfection", category: "realism" as const, severity: "minor" as const, finding: "minor", expected: "", sourceAuthoritative: false }] };
+  const validation = { status: "fail" as const, checks: [], commerciallyUsable: true, severity: "minor" as const, retryRecommended: true, summary: "", version: "test", issues: [{ code: "minor_cosmetic_imperfection", category: "realism" as const, severity: "minor" as const, finding: "minor", expected: "", sourceAuthoritative: false }] };
   assert.equal(resolveRepairEligibility({ validation, exactProduct: true, hybridProjectionApplied: true, maximumAttemptsRemaining: true }).reason, "no_material_targeted_issue");
 });
 
 test("artwork-only drift with unavailable hybrid projection suppresses full generation repair", () => {
-  const validation = { status: "fail" as const, checks: [], severity: "critical" as const, retryRecommended: true, summary: "", version: "test", issues: [
+  const validation = { status: "fail" as const, checks: [], commerciallyUsable: false, severity: "critical" as const, retryRecommended: true, summary: "", version: "test", issues: [
     { code: "APPAREL_ARTWORK_TEXT_DRIFT", category: "product_identity" as const, severity: "critical" as const, finding: "text differs", expected: "source", sourceAuthoritative: true },
     { code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity" as const, severity: "major" as const, finding: "placement differs", expected: "source", sourceAuthoritative: true },
   ] };
@@ -56,7 +63,7 @@ test("artwork-only drift with unavailable hybrid projection suppresses full gene
 
 test("global identity and severe anatomy failures retain one repair opportunity", () => {
   for (const [code, category] of [["garment_type_changed", "product_identity"], ["hand_anatomy_error", "human_realism"]] as const) {
-    const validation = { status: "fail" as const, checks: [], severity: "critical" as const, retryRecommended: true, summary: "", version: "test", issues: [{ code, category, severity: "critical" as const, finding: "critical", expected: "source", sourceAuthoritative: true }] };
+    const validation = { status: "fail" as const, checks: [], commerciallyUsable: false, severity: "critical" as const, retryRecommended: true, summary: "", version: "test", issues: [{ code, category, severity: "critical" as const, finding: "critical", expected: "source", sourceAuthoritative: true }] };
     assert.equal(resolveRepairEligibility({ validation, exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true }).eligible, true, code);
   }
 });
@@ -69,7 +76,7 @@ test("small logo apparel can start high while on-model apparel and complex typog
 });
 
 test("artwork-only issue with enabled but unapplied projection never launches full repair", () => {
-  const validation = { status: "fail" as const, checks: [], severity: "major" as const, retryRecommended: true, summary: "", version: "test", issues: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity" as const, severity: "major" as const, finding: "placement", expected: "source", sourceAuthoritative: true }] };
+  const validation = { status: "fail" as const, checks: [], commerciallyUsable: false, severity: "major" as const, retryRecommended: true, summary: "", version: "test", issues: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity" as const, severity: "major" as const, finding: "placement", expected: "source", sourceAuthoritative: true }] };
   const result = resolveRepairEligibility({ validation, exactProduct: true, hybridProjectionEnabled: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true });
   assert.equal(result.eligible, false);
   assert.equal(result.reason, "artwork_requires_projection_not_full_regeneration");

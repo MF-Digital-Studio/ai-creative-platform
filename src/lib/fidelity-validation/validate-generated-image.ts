@@ -19,11 +19,14 @@ const validationSchema = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["code", "category", "severity", "finding", "expected"],
+        required: ["code", "category", "severity", "confidence", "identityImpact", "likelyCause", "finding", "expected"],
         properties: {
           code: { type: "string" },
           category: { type: "string", enum: fidelityValidationCategories },
           severity: { type: "string", enum: ["critical", "major", "minor"] },
+          confidence: { type: "number", minimum: 0, maximum: 1 },
+          identityImpact: { type: "string", enum: ["none", "minor", "major", "critical"] },
+          likelyCause: { type: "string", enum: ["source_identity_drift", "perspective", "fabric_deformation", "lighting", "body_interaction", "typography_change", "geometry_change", "unknown"] },
           finding: { type: "string" },
           expected: { type: "string" },
         },
@@ -57,7 +60,7 @@ class OpenAIFidelityValidationClient implements FidelityValidationClient {
       text: structuredResponseText({
         type: "json_schema",
         name: "fidelity_validation",
-        description: "Structured material fidelity findings only.",
+        description: "Structured calibrated fidelity findings with confidence, identity impact, likely cause, and product usability context.",
         schema: validationSchema,
         strict: true,
       }),
@@ -72,13 +75,7 @@ export async function validateGeneratedImage(input: FidelityValidationInput, cli
   const brief = buildValidationBrief({ ...input, referencePreservation: Boolean(input.referenceBaseScene), apparelArtworkIdentity: input.apparelArtworkIdentity ? { available: true, containsText: input.apparelArtworkIdentity.containsText, side: input.apparelArtworkIdentity.side, confidence: input.apparelArtworkIdentity.confidence } : null });
   if (input.exactProductApparel && input.apparelArtworkIdentity) {
     const result = await client.validate(input, brief);
-    const raw = mapStructuredValidationOutput(result).filter((issue) => brief.humanRealism?.applied || issue.category !== "human_realism").map((issue) => {
-      const code = issue.code.toLowerCase();
-      const mappedCode = code === "apparel_artwork_drift" ? "APPAREL_ARTWORK_IDENTITY_DRIFT" : code === "apparel_text_drift" ? "APPAREL_ARTWORK_TEXT_DRIFT" : code === "apparel_artwork_structure_drift" ? "APPAREL_ARTWORK_STRUCTURE_DRIFT" : code === "apparel_artwork_placement_drift" ? "APPAREL_ARTWORK_PLACEMENT_DRIFT" : code === "apparel_scale_drift" ? "APPAREL_ARTWORK_SCALE_DRIFT" : code === "apparel_color_drift" ? "APPAREL_ARTWORK_COLOR_DRIFT" : issue.code;
-      const lower = mappedCode.toLowerCase();
-      const severity = ["apparel_artwork_identity_drift", "apparel_artwork_text_drift"].includes(lower) ? "critical" as const : ["apparel_artwork_placement_drift", "apparel_artwork_scale_drift", "apparel_artwork_color_drift", "apparel_artwork_structure_drift"].includes(lower) ? "major" as const : issue.severity;
-      return { ...issue, code: mappedCode, severity, category: issue.category === "human_realism" ? "human_realism" as const : "product_identity" as const, sourceAuthoritative: true };
-    });
+    const raw = mapStructuredValidationOutput(result).filter((issue) => brief.humanRealism?.applied || issue.category !== "human_realism");
     const gate = resolveQualityGate(raw);
     return { ...gate, version: FIDELITY_VALIDATION_VERSION };
   }
@@ -97,6 +94,7 @@ export async function validateGeneratedImageBestEffort(input: FidelityValidation
       issues: [],
       severity: null,
       retryRecommended: false,
+      commerciallyUsable: false,
       summary: "Semantic fidelity validation was unavailable; generation remains accessible and was not marked as passed.",
       version: FIDELITY_VALIDATION_VERSION,
     };

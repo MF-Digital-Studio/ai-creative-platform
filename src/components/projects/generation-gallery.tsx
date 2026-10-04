@@ -51,6 +51,7 @@ type GenerationGalleryProps = {
   items: GenerationGalleryItem[];
   controls: ReactNode;
   runActions: { id: string; node: ReactNode }[];
+  onSelectionChange: (id: string | null) => void;
   messages: GalleryMessages;
 };
 
@@ -75,7 +76,7 @@ function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messag
   </div>;
 }
 
-export function GenerationGallery({ items, controls, runActions, messages }: GenerationGalleryProps) {
+export function GenerationGallery({ items, controls, runActions, onSelectionChange, messages }: GenerationGalleryProps) {
   const [selection, setSelection] = useState<{ id: string; latestId: string } | null>(null);
   const [isZoomed, setIsZoomed] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -113,7 +114,7 @@ export function GenerationGallery({ items, controls, runActions, messages }: Gen
                   : <OutputState heading={messages.emptyHeading} description={messages.emptyDescription} action={messages.goToControls} />}
         </div>
         {previewItems.length > 1 ? <div className="project-gallery-strip" role="group" aria-label={messages.galleryLabel}>
-          {previewItems.map((item, index) => <button key={item.id} type="button" className="project-gallery-thumbnail" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput} ${index + 1}`} onClick={() => setSelection({ id: item.id, latestId })}>
+          {previewItems.map((item, index) => <button key={item.id} type="button" className="project-gallery-thumbnail" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput} ${index + 1}`} onClick={() => { setSelection({ id: item.id, latestId }); onSelectionChange(item.id); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={item.previewUrl as string} alt="" />
           </button>)}
@@ -125,7 +126,7 @@ export function GenerationGallery({ items, controls, runActions, messages }: Gen
     {items.length > 0 ? <section className="project-generation-history" aria-labelledby="project-generation-history-heading">
       <div className="dashboard-section-heading"><h2 id="project-generation-history-heading">{messages.historyHeading}</h2></div>
       <ul className="project-generation-history-list">{items.map((item) => <li key={item.id} className="project-generation-history-item">
-        <button type="button" className="project-generation-history-select" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput}: ${item.createdAt}`} onClick={() => setSelection({ id: item.id, latestId })}>
+        <button type="button" className="project-generation-history-select" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput}: ${item.createdAt}`} onClick={() => { setSelection({ id: item.id, latestId }); onSelectionChange(item.status === "succeeded" && item.previewUrl ? item.id : null); }}>
           <span className="project-generation-history-media">{item.previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.previewUrl} alt="" />

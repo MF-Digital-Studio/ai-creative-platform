@@ -23,8 +23,7 @@ export function evaluateApparelProductFidelity(input: {
   issueCodes: string[];
   benchmarkStatus: "passed" | "failed" | "not_run";
 }): { qualityGatePassed: boolean; productFidelityReady: boolean; failedCodes: string[] } {
-  const productCodes = new Set(["apparel_artwork_drift", "apparel_artwork_placement_drift", "apparel_text_drift", "apparel_scale_drift", "apparel_color_drift", "apparel_silhouette_drift", "product_identity_drift", "different_product", "identity_changed", "garment_artwork_changed", "geometry_drift", "branding_corrupted", "color_material_drift"]);
-  const failedCodes = input.issueCodes.filter((code) => productCodes.has(code.toLowerCase()));
-  const qualityGatePassed = input.validationStatus !== "validation_unavailable" && failedCodes.length === 0;
+  const failedCodes = input.issueCodes.filter((code) => ["apparel_artwork_identity_drift", "apparel_artwork_text_drift", "wrong_artwork", "missing_artwork", "wrong_logo", "product_identity_drift", "different_product", "identity_changed", "garment_type_changed", "garment_color_changed"].includes(code.toLowerCase()));
+  const qualityGatePassed = input.validationStatus !== "validation_unavailable" && input.validationStatus !== "fail" && failedCodes.length === 0;
   return { qualityGatePassed, productFidelityReady: qualityGatePassed && input.benchmarkStatus === "passed", failedCodes };
 }

@@ -1,16 +1,61 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
+import type { CreateImageEditResult } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
+import { resolveImageEditCompletion } from "@/components/projects/image-edit-completion";
 
-export function ImageEditPanel({ hasOutput, messages }: { hasOutput: boolean; messages: { title: string; description: string; placeholder: string; helper: string; apply: string; unavailable: string } }) {
+export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceeded, action, messages }: { hasOutput: boolean; selectedGenerationId: string | null; onEditSucceeded: (generationId: string) => void; action: (baseGenerationId: string, instruction: string) => Promise<CreateImageEditResult>; messages: { title: string; description: string; placeholder: string; helper: string; apply: string; unavailable: string; failed: string; progressTitle: string; progressDescription: string; progressStatuses: readonly [string, string, string, string] } }) {
   const inputId = useId();
+  const router = useRouter();
+  const instructionRef = useRef<HTMLTextAreaElement>(null);
+  const pendingRef = useRef(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [progressTitle, setProgressTitle] = useState(messages.progressTitle);
+  function log(event: string, fields?: Record<string, boolean | string>) {
+    if (process.env.NODE_ENV === "development") console.info(`[image-edit-ui] ${event}`, fields ?? {});
+  }
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const instruction = instructionRef.current?.value.trim() ?? "";
+    if (!selectedGenerationId || !instruction || pendingRef.current) return;
+    pendingRef.current = true; setPending(true); setError(null);
+    setProgressTitle(messages.progressTitle);
+    log("submit_started");
+    try {
+      const result = await action(selectedGenerationId, instruction);
+      log("action_resolved", { ok: result.ok, generationIdPresent: result.ok });
+      const completion = resolveImageEditCompletion(result);
+      if (completion.error) { setError(messages.failed); return; }
+      if (completion.selectedGenerationId) onEditSucceeded(completion.selectedGenerationId);
+      if (completion.clearInstruction && instructionRef.current) instructionRef.current.value = "";
+      if (completion.refresh) {
+        setProgressTitle(messages.progressStatuses[3]);
+        pendingRef.current = false;
+        setPending(false);
+        log("modal_closed", { success: true });
+        log("refresh_started");
+        router.refresh();
+      }
+    } catch {
+      setError(messages.failed);
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
+  }
   return <section className="project-control-section project-image-edit" aria-labelledby={`${inputId}-title`}>
     <h3 id={`${inputId}-title`}>{messages.title}</h3><p>{messages.description}</p>
-    <label className="sr-only" htmlFor={inputId}>{messages.title}</label>
-    <textarea id={inputId} className="project-direction-textarea" placeholder={messages.placeholder} disabled={!hasOutput} />
-    <p>{messages.helper}</p>
-    <Button type="button" variant="primary" size="md" className="project-generate-button" disabled title={messages.unavailable}>{messages.apply}</Button>
-    <p className="project-edit-unavailable" role="status">{messages.unavailable}</p>
+    <form onSubmit={(event) => void submit(event)}>
+      <label className="sr-only" htmlFor={inputId}>{messages.title}</label>
+      <textarea ref={instructionRef} id={inputId} className="project-direction-textarea" placeholder={messages.placeholder} disabled={!hasOutput || pending} maxLength={1000} />
+      <p>{messages.helper}</p>
+      {error ? <p role="alert" className="project-generation-error">{error}</p> : null}
+      <Button type="submit" variant="primary" size="md" className="project-generate-button" disabled={!hasOutput || pending}>{pending ? messages.progressTitle : messages.apply}</Button>
+    </form>
+    <GenerationProgressModal open={pending} title={progressTitle} description={messages.progressDescription} statuses={messages.progressStatuses} />
   </section>;
 }

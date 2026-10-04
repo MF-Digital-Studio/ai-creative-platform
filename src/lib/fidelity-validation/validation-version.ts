@@ -1,1 +1,1 @@
-export const FIDELITY_VALIDATION_VERSION = "fidelity-validation-v1";
+export const FIDELITY_VALIDATION_VERSION = "fidelity-validator-v2-calibrated";

@@ -47,14 +47,15 @@ test("reference cannot override apparel source artwork identity or placement", (
   assert.match(prompt, /Do not substitute a similar design/);
 });
 
-test("artwork drift is critical and placement drift fails the product quality gate", () => {
-  const artwork = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_DRIFT", category: "realism", severity: "minor", finding: "print changed", expected: "source print" }] });
-  const placement = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "realism", severity: "minor", finding: "print moved", expected: "source placement" }] });
+test("wrong artwork stays critical while perspective-led placement variation is a warning", () => {
+  const artwork = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_DRIFT", category: "realism", severity: "minor", confidence: .96, identityImpact: "critical", likelyCause: "source_identity_drift", finding: "print changed", expected: "source print" }] });
+  const placement = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "realism", severity: "minor", confidence: .75, identityImpact: "minor", likelyCause: "perspective", finding: "print moved slightly with pose", expected: "same apparel side and approximate placement class" }] });
   assert.equal(artwork[0]?.severity, "critical");
   assert.equal(resolveQualityGate(artwork).status, "fail");
-  assert.equal(placement[0]?.severity, "major");
-  assert.equal(resolveQualityGate(placement).status, "fail");
-  assert.equal(evaluateApparelProductFidelity({ validationStatus: "fail", issueCodes: ["apparel_artwork_placement_drift"], benchmarkStatus: "not_run" }).qualityGatePassed, false);
+  assert.equal(placement[0]?.severity, "minor");
+  assert.equal(resolveQualityGate(placement).status, "pass_with_warnings");
+  assert.equal(resolveQualityGate(placement).commerciallyUsable, true);
+  assert.equal(evaluateApparelProductFidelity({ validationStatus: "pass_with_warnings", issueCodes: ["apparel_artwork_placement_drift"], benchmarkStatus: "not_run" }).qualityGatePassed, true);
   assert.equal(evaluateApparelProductFidelity({ validationStatus: "pass", issueCodes: [], benchmarkStatus: "not_run" }).productFidelityReady, false);
   assert.equal(evaluateApparelProductFidelity({ validationStatus: "pass", issueCodes: [], benchmarkStatus: "passed" }).productFidelityReady, true);
 });
@@ -85,7 +86,7 @@ test("benchmark runner gives the generator no reference images", async () => {
 
 test("repair instructions prioritize artwork and placement before scene issues", () => {
   const validation = {
-    version: "test", status: "fail", retryRecommended: true, summary: "drift", checks: [], severity: "critical",
+    version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "drift", checks: [], severity: "critical",
     issues: [
       { code: "reference_background_missed", category: "reference_match", severity: "major", finding: "background", expected: "reference", sourceAuthoritative: false },
       { code: "apparel_artwork_placement_drift", category: "product_identity", severity: "major", finding: "moved", expected: "source", sourceAuthoritative: true },
@@ -134,19 +135,19 @@ test("no-artwork apparel keeps the fallback path without producing a crop", asyn
   assert.equal(await createApparelArtworkCrop({ data: source, assetId: "plain-tee", side: "front", boundingBox: { x: 0.2, y: 0.2, width: 0.3, height: 0.3 }, confidence: 0.9, containsText: false, detected: false }), null);
 });
 
-test("artwork identity and text issue codes are critical; placement is major and fails exact apparel gate", () => {
+test("confident artwork identity and text issue codes stay critical; small placement differences warn", () => {
   for (const code of ["APPAREL_ARTWORK_IDENTITY_DRIFT", "APPAREL_ARTWORK_TEXT_DRIFT"]) {
-    const [issue] = mapStructuredValidationOutput({ findings: [{ code, category: "product_identity", severity: "minor", finding: "changed", expected: "source" }] });
+    const [issue] = mapStructuredValidationOutput({ findings: [{ code, category: "product_identity", severity: "minor", confidence: .96, identityImpact: "critical", likelyCause: code.includes("TEXT") ? "typography_change" : "source_identity_drift", finding: "changed", expected: "source" }] });
     assert.equal(issue?.severity, "critical");
     assert.equal(resolveQualityGate([issue!]).status, "fail");
   }
-  const [placement] = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity", severity: "minor", finding: "moved", expected: "source" }] });
+  const [placement] = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity", severity: "major", confidence: .84, identityImpact: "major", likelyCause: "perspective", finding: "noticeably shifted by perspective", expected: "same side and placement class" }] });
   assert.equal(placement?.severity, "major");
-  assert.equal(resolveQualityGate([placement!]).status, "fail");
+  assert.equal(resolveQualityGate([placement!]).status, "pass_with_warnings");
 });
 
 test("apparel artwork repair instructions preserve the identity source", () => {
-  const validation = { version: "test", status: "fail", retryRecommended: true, summary: "drift", checks: [], severity: "critical", issues: [{ code: "APPAREL_ARTWORK_TEXT_DRIFT", category: "product_identity", severity: "critical", finding: "text", expected: "source", sourceAuthoritative: true }] } as FidelityValidationResult;
+  const validation = { version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "drift", checks: [], severity: "critical", issues: [{ code: "APPAREL_ARTWORK_TEXT_DRIFT", category: "product_identity", severity: "critical", finding: "text", expected: "source", sourceAuthoritative: true }] } as FidelityValidationResult;
   const plan = resolveRepairPlan(validation);
   assert.match(plan.repairInstructions[0] ?? "", /apparel_artwork_identity_source/);
   assert.match(compileRepairInstructions("base", plan), /remains available as exact print authority/);

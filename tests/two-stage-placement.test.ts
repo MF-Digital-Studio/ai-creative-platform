@@ -72,6 +72,6 @@ test("actual final image is fidelity-validated and repair remains limited to one
   assert.match(generationAction, /if \(repairPlan\.shouldRetry\)/);
   assert.match(generationAction, /executionCounts\.repairCalls = 1/);
   assert.equal((generationAction.match(/performance\.measure\("provider_repair"/g) ?? []).length, 1);
-  const validation: FidelityValidationResult = { version: "test", status: "fail", retryRecommended: true, summary: "identity issue", checks: [], severity: "critical", issues: [{ code: "watch_dial_structure_changed", category: "product_identity", severity: "critical", finding: "wrong dial", expected: "source dial", sourceAuthoritative: true }] };
+  const validation: FidelityValidationResult = { version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "identity issue", checks: [], severity: "critical", issues: [{ code: "watch_dial_structure_changed", category: "product_identity", severity: "critical", finding: "wrong dial", expected: "source dial", sourceAuthoritative: true }] };
   assert.equal(resolveRepairPlan(validation).shouldRetry, true);
 });

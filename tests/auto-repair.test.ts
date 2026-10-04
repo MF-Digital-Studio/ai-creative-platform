@@ -9,11 +9,11 @@ import type { GenerationAttempt } from "../src/lib/auto-repair/types";
 import type { FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 
 function issue(code: string, severity: FidelityValidationIssue["severity"] = "major"): FidelityValidationIssue {
-  return { code, category: code === "floating_ring" ? "body_interaction" : "geometry", severity, finding: code, expected: "preserve source fidelity", sourceAuthoritative: true };
+  return { code, issueCode: code, category: code === "floating_ring" ? "body_interaction" : "geometry", severity, finding: code, expected: "preserve source fidelity", sourceAuthoritative: true, confidence: .95, identityImpact: "major", likelyCause: "source_identity_drift" };
 }
 
 function validation(status: FidelityValidationResult["status"], issues: FidelityValidationIssue[] = [], retryRecommended = status === "fail"): FidelityValidationResult {
-  return { status, issues, retryRecommended, checks: [], severity: issues[0]?.severity ?? null, summary: status, version: "fidelity-validation-v1" };
+  return { status, issues, retryRecommended, commerciallyUsable: status !== "fail", checks: [], severity: issues[0]?.severity ?? null, summary: status, version: "fidelity-validator-v2-calibrated" };
 }
 
 function attempt(status: FidelityValidationResult["status"], issues: FidelityValidationIssue[] = [], imageData = Buffer.from(status)): GenerationAttempt {

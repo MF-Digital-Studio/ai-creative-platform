@@ -18,6 +18,7 @@ export type ImageGenerationSourceAsset = {
 
 export type GenerationImageRole =
   | "product_identity_source"
+  | "generated_attempt"
   | "apparel_artwork_identity_source"
   | "reference_base_scene"
   | "scene_reference"
@@ -59,7 +60,7 @@ export type ImageGenerationRequest = {
   model: string;
   quality: ImageGenerationQuality;
   aspectRatio: AspectRatio;
-  operation?: "edit" | "reference_product_replacement";
+  operation?: "image_edit" | "edit" | "reference_product_replacement";
 };
 
 export type ImageGenerationUsage = {
