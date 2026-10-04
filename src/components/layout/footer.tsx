@@ -1,13 +1,9 @@
-import { getLocale, getTranslations } from "next-intl/server";
+﻿import { getTranslations } from "next-intl/server";
 
-import { Button } from "@/components/ui/button";
-import { AnimatedHeading } from "@/components/motion/animated-heading";
-import { Reveal } from "@/components/motion/reveal";
-import { RevealGroup } from "@/components/motion/reveal-group";
 import { Container } from "@/components/ui/container";
 import { siteConfig } from "@/config/site";
 import { navigationItems } from "@/data/navigation";
-import { getPathname, Link } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 function FooterLink({ href, label }: { href: string; label: string }) {
   return (
@@ -21,7 +17,6 @@ function FooterLink({ href, label }: { href: string; label: string }) {
 }
 
 export async function Footer() {
-  const locale = await getLocale();
   const footerT = await getTranslations("Footer");
   const navigationT = await getTranslations("Navigation");
   const footerNavigation = [
@@ -36,17 +31,16 @@ export async function Footer() {
       title: footerT("industries"),
       links: [
         { label: footerT("jewelry"), href: "#jewelry" },
-        { label: footerT("fashion"), href: "#fashion" },
+        { label: footerT("fashion"), href: "#apparel" },
+        { label: footerT("watch"), href: "#watch" },
         { label: footerT("cosmetics"), href: "#cosmetics" },
+        { label: footerT("footwear"), href: "#footwear" },
       ],
     },
     {
       title: footerT("company"),
       links: [
-        { label: footerT("about"), href: siteConfig.routes.about },
         { label: footerT("contact"), href: siteConfig.routes.contact },
-        { label: footerT("privacy"), href: siteConfig.routes.privacy },
-        { label: footerT("terms"), href: siteConfig.routes.terms },
       ],
     },
   ];
@@ -63,46 +57,16 @@ export async function Footer() {
   ].filter((link) => link.href);
 
   return (
-    <footer className="w-full max-w-[100vw] overflow-hidden bg-[var(--foreground)] text-[var(--background)]">
-      <Container>
-        <section className="grid grid-cols-1 gap-10 border-b border-[var(--footer-border)] py-[var(--section-space)] lg:grid-cols-[minmax(0,1.35fr)_minmax(16rem,0.65fr)] lg:items-end lg:gap-16">
-          <div className="min-w-0">
-            <Reveal variant="fade"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--footer-muted)]">
-              {footerT("eyebrow")}
-            </p></Reveal>
-            <AnimatedHeading
-              variant="footer"
-              lines={[footerT("ctaTitleLead"), footerT("ctaTitleTrail")]}
-              className="mt-5 max-w-full text-[clamp(2.25rem,4.1vw,4rem)] font-semibold leading-[0.98] tracking-[-0.06em]"
-            />
-          </div>
-
-          <Reveal delay={100} className="min-w-0 max-w-md lg:pb-1">
-            <p className="text-base leading-7 text-[var(--footer-muted)]">
-              {footerT("description")}
-            </p>
-            <Button
-              href={getPathname({
-                href: siteConfig.routes.signup,
-                locale,
-              })}
-              className="mt-7"
-              size="lg"
-            >
-              {footerT("cta")}
-            </Button>
-          </Reveal>
-        </section>
-
-        <RevealGroup variant="rows" className="py-[var(--section-space-compact)]">
-        <section className="grid grid-cols-1 gap-12 border-b border-[var(--footer-border)] lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.55fr))] lg:gap-8">
+    <footer className="public-footer w-full max-w-[100vw] overflow-hidden bg-[var(--foreground)] text-[var(--background)]">
+      <Container variant="public">
+        <section className="grid grid-cols-1 gap-12 border-b border-[var(--footer-border)] py-[clamp(4rem,6vw,6rem)] lg:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.55fr))] lg:gap-12">
           <div className="max-w-xs">
             <p
-              className="text-sm font-bold tracking-[-0.025em]"
+              className="text-lg font-bold tracking-[-0.035em]"
             >
               {siteConfig.name}
             </p>
-            <p className="mt-4 text-sm leading-6 text-[var(--footer-muted)]">
+            <p className="mt-3 text-sm leading-6 text-[var(--footer-muted)]">
               {footerT("shortDescription")}
             </p>
           </div>
@@ -127,16 +91,6 @@ export async function Footer() {
             ))}
           </nav>
         </section>
-        </RevealGroup>
-
-        <Reveal variant="clip" className="overflow-hidden py-8 sm:py-10 lg:py-12">
-          <p
-            aria-hidden="true"
-            className="whitespace-nowrap text-center text-[clamp(1.875rem,9vw,10rem)] font-semibold leading-[0.82] tracking-[-0.075em] text-[var(--footer-wordmark)] sm:text-[clamp(2.25rem,11.25vw,10rem)]"
-          >
-            {siteConfig.name}
-          </p>
-        </Reveal>
 
         <div className="flex flex-col gap-5 border-t border-[var(--footer-border)] py-6 text-sm text-[var(--footer-muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>

@@ -5,10 +5,9 @@
   },
   "Navigation": {
     "home": "Ana Sayfa",
-    "howItWorks": "Nasıl Çalışır",
-    "templates": "Şablonlar",
+    "howItWorks": "Nasıl çalışır",
+    "templates": "Örnekler",
     "showcase": "Örnekler",
-    "pricing": "Fiyatlandırma",
     "signIn": "Giriş Yap",
     "tryForFree": "Ücretsiz Dene",
     "workspace": "Çalışma Alanı",
@@ -387,7 +386,9 @@
     "instagramLabel": "Instagram",
     "linkedinLabel": "LinkedIn",
     "xLabel": "X",
-    "copyright": "© {year} {brand}. Tüm hakları saklıdır."
+    "copyright": "© {year} {brand}. Tüm hakları saklıdır.",
+    "watch": "Saat",
+    "footwear": "Ayakkabı"
   },
   "SignupPage": {
     "metadataTitle": "Hesap Oluştur",
@@ -521,7 +522,11 @@
       "collapseSidebar": "Yan menüyü daralt",
       "expandSidebar": "Yan menüyü genişlet",
       "returnToWebsite": "Ana siteye dön",
-      "plan": { "label": "Plan", "credits": "{count} kredi kaldı", "upgrade": "Planı yükselt" },
+      "plan": {
+        "label": "Plan",
+        "credits": "{count} kredi kaldı",
+        "upgrade": "Planı yükselt"
+      },
       "unavailable": "Bu alan gelecek bir güncellemede kullanıma açılacak.",
       "openMenu": "Çalışma alanı navigasyonunu aç",
       "closeMenu": "Çalışma alanı navigasyonunu kapat",
@@ -653,53 +658,239 @@
       "description": "Üretime hazır bir yön seçin, ardından isteğe bağlı notunuzu ekleyin.",
       "listLabel": "Yaratıcı preset kütüphanesi",
       "usePreset": "{title} presetini seç",
-      "categories": { "apparel": "Giyim", "jewelry": "Takı", "watches": "Saat", "cosmetics": "Kozmetik", "footwear": "Ayakkabı" },
+      "categories": {
+        "apparel": "Giyim",
+        "jewelry": "Takı",
+        "watches": "Saat",
+        "cosmetics": "Kozmetik",
+        "footwear": "Ayakkabı"
+      },
       "items": {
-        "apparel-street-style": { "title": "Sokak Stili", "description": "Gerçek şehir atmosferinde ürün odaklı streetwear editoriali.", "alt": "Şehirde ürün odaklı sokak stili giyim kampanyası" },
-        "apparel-scenic-editorial": { "title": "Estetik Manzara", "description": "Manzaranın ürünü desteklediği açık hava moda görseli.", "alt": "Manzara içinde ürün odaklı giyim editoriali" },
-        "apparel-studio-style": { "title": "Stüdyo Stili", "description": "Ürün detaylarını koruyan temiz premium moda stüdyosu.", "alt": "Temiz premium stüdyo giyim fotoğrafı" },
-        "jewelry-on-body": { "title": "Üzerinde", "description": "Takının ciltle doğal temasını gösteren yakın editorial.", "alt": "Takının elde veya vücutta doğal şekilde kullanımı" },
-        "jewelry-studio": { "title": "Stüdyo", "description": "Malzeme ve işçiliği öne çıkaran lüks takı çekimi.", "alt": "Temiz stüdyoda premium takı ürün fotoğrafı" },
-        "jewelry-scenic": { "title": "Estetik Ortam", "description": "Takıyı önde tutan dokulu, doğal premium ortam.", "alt": "Taş yüzeyde kahraman takı ürün çekimi" },
-        "watch-on-wrist": { "title": "Bilekte", "description": "Bileğe doğal oturan saati öne çıkaran yakın çekim.", "alt": "Bilekte doğal duran premium saat" },
-        "watch-bright-studio": { "title": "Aydınlık Stüdyo", "description": "Kadran ve materyal detaylarını gösteren net saat kampanyası.", "alt": "Aydınlık stüdyoda premium saat ürün çekimi" },
-        "watch-scenic-environment": { "title": "Estetik Ortam", "description": "Saatin kahraman kaldığı rafine lifestyle ortamı.", "alt": "Taş yüzeyde kahraman ürün olarak premium saat" },
-        "footwear-hero-focus": { "title": "Ayakkabı Odağı", "description": "Siluet, taban ve detayları öne çıkaran güçlü yakın plan.", "alt": "Ayakkabıyı öne çıkaran yakın plan kampanya çekimi" },
-        "footwear-studio": { "title": "Stüdyo", "description": "Materyal ve taban yapısını gösteren premium ayakkabı stüdyosu.", "alt": "Premium stüdyoda ayakkabı ürün çekimi" },
-        "footwear-street-lifestyle": { "title": "Sokak Yaşamı", "description": "Ayakkabının odağını koruyan doğal şehir adımı.", "alt": "Şehir zemininde ayakkabı odaklı doğal adım" },
-        "cosmetics-studio": { "title": "Stüdyo", "description": "Paketleme detaylarını koruyan aydınlık beauty kampanyası.", "alt": "Aydınlık stüdyoda premium kozmetik ürün çekimi" },
-        "cosmetics-aesthetic-setting": { "title": "Estetik Ortam", "description": "Ürünü önde tutan rafine, dokulu beauty ortamı.", "alt": "Şık taş yüzeyde kozmetik ürün çekimi" },
-        "cosmetics-lifestyle-landscape": { "title": "Yaşam Alanı", "description": "Ürünün baskın kaldığı sıcak doğal lifestyle sahnesi.", "alt": "Doğal ortamda kahraman kozmetik ürün çekimi" },
-        "on-model-editorial": { "title": "Model Üzerinde Editorial", "description": "Temiz ve premium giyim editorial fotoğrafı.", "alt": "Model üzerinde premium giyim editoriali" },
-        "brutalist-streetwear": { "title": "Brutalist Streetwear", "description": "Modern mimari atmosferli streetwear kampanyası.", "alt": "Modern mimaride streetwear editoriali" },
-        "urban-night": { "title": "Şehir Streetwear", "description": "Sinematik şehir streetwear kampanyası.", "alt": "Sinematik şehir streetwear kampanyası" },
-        "minimal-studio-fashion": { "title": "Minimal Studio Fashion", "description": "Temiz giyim sunumu için yumuşak stüdyo kurulumu.", "alt": "Minimal stüdyo giyim fotoğrafı" },
-        "back-print-focus": { "title": "Back Print Focus", "description": "Arka grafik odaklı giyim kampanyaları için tasarlandı.", "alt": "Arka görünüş odaklı giyim kampanyası" },
-        "front-hero-apparel": { "title": "Front Hero Apparel", "description": "Önden, giysiye odaklanan model çekimi.", "alt": "Önden giyim kampanyası fotoğrafı" },
-        "luxury-macro-jewelry": { "title": "Lüks Makro Natürmort", "description": "Zengin detaylı yakın plan lüks takı natürmortu.", "alt": "Lüks takı makro natürmortu" },
-        "soft-daylight-jewelry": { "title": "Yumuşak Editorial Takı", "description": "Yumuşak gün ışığında zarif takı editoriali.", "alt": "Yumuşak gün ışığında takı editoriali" },
-        "black-luxury-jewelry": { "title": "Black Luxury", "description": "Dramatik ışıklı koyu premium takı kampanyası.", "alt": "Koyu lüks takı kampanyası" },
-        "jewelry-on-model": { "title": "Elde Takı", "description": "Elde doğal duran takı için makro editorial.", "alt": "Yetişkin bir elde doğal duran takı" },
-        "stone-surface-jewelry": { "title": "Stone Surface", "description": "Şık taş veya mermer yüzeylerde stillenmiş takı.", "alt": "Taş üzerinde düzenlenmiş takı" },
-        "minimal-product-detail": { "title": "Minimal Detail", "description": "Temiz ve minimal yakın plan ürün sunumu.", "alt": "Minimal takı yakın planı" },
-        "dark-premium-studio": { "title": "Premium Güzellik Editoriali", "description": "Kontrollü şişe yansımalarıyla premium güzellik editoriali.", "alt": "Premium güzellik ürünü editoriali" },
-        "soft-daylight-product": { "title": "Yumuşak Gün Işığı Güzellik", "description": "Aydınlık doğal cilt bakımı fotoğrafı.", "alt": "Gün ışığında güzellik ürünü" },
-        "tabletop-lifestyle": { "title": "Sıcak Lüks Makyaj Masası", "description": "Sıcak ve rafine makyaj masası ortamında güzellik ürünü.", "alt": "Sıcak lüks makyaj masasında güzellik ürünü" },
-        "reflective-luxury-surface": { "title": "Yansıtıcı Kozmetik", "description": "Kontrollü yansıtıcı yüzeyde kozmetik ambalajı.", "alt": "Yansıtıcı yüzeyde kozmetik" },
-        "minimal-catalog-plus": { "title": "Temiz Stüdyo Ürün Çekimi", "description": "Temiz premium güzellik ambalajı stüdyo çekimi.", "alt": "Temiz premium güzellik ambalajı stüdyo çekimi" },
-        "watch-hero": { "title": "Saat Stüdyo Yakın Planı", "description": "Temiz lüks saat stüdyo yakın planı.", "alt": "Lüks saat stüdyo yakın planı" },
-        "wrist-editorial": { "title": "Bilekte Saat Editoriali", "description": "Bilekte doğal duran saatle premium editorial fotoğraf.", "alt": "Bilekte doğal duran saat" },
-        "macro-dial": { "title": "Makro Kadran", "description": "Kadran, akrep-yelkovan ve indekslere yakın plan.", "alt": "Saat kadranı makro detayı" },
-        "dark-luxury-watch": { "title": "Lüks Saat Kampanyası", "description": "Kontrollü yansımalı lüks saat kampanyası.", "alt": "Lüks saat kampanyası" },
-        "reflective-metal-watch": { "title": "Yansıtıcı Metal", "description": "Premium metal ve parlak yüzey çalışması.", "alt": "Yansıtıcı metal saat detayı" },
-        "on-foot-editorial": { "title": "Ayakta Editorial", "description": "Model üzerinde doğal duran ayakkabı editoriali.", "alt": "Model üzerinde doğal duran ayakkabı" },
-        "street-footwear": { "title": "Ayakta Sokak Kampanyası", "description": "Ayakkabı odaklı şehir sokak kampanyası.", "alt": "Şehir sokak kampanyasında ayakkabı" },
-        "studio-footwear-hero": { "title": "Minimal Sneaker Stüdyosu", "description": "Temiz minimal ticari sneaker stüdyo çekimi.", "alt": "Minimal sneaker stüdyo çekimi" },
-        "ground-level-campaign": { "title": "Zemin Seviyesi Kampanya", "description": "Ayakkabıyı vurgulayan alçak kamera açısı.", "alt": "Zemin seviyesinde ayakkabı kampanyası" },
-        "motion-step": { "title": "Hareketli Adım", "description": "Gerçekçi ayakkabı-vücut etkileşimli yürüyüş pozu.", "alt": "Doğal adımda ayakkabı" },
-        "footwear-material-detail": { "title": "Ayakkabı Hero Yakın Planı", "description": "Ayakkabı malzemesi, tabanı ve yapısının yakın planı.", "alt": "Ayakkabı hero yakın planı" },
-        "editorial-flash": { "title": "Editorial Flash", "description": "Ham, direkt flaş karakterli premium streetwear fotoğrafı.", "alt": "Direkt flaşla çekilmiş streetwear kampanyası" },
-        "coastal-editorial": { "title": "Coastal Editorial", "description": "Rüzgar ve gerçek mekan dokusuyla doğal sahil streetwear kampanyası.", "alt": "Doğal sahil editorial ortamında streetwear model" }
+        "apparel-street-style": {
+          "title": "Sokak Stili",
+          "description": "Gerçek şehir atmosferinde ürün odaklı streetwear editoriali.",
+          "alt": "Şehirde ürün odaklı sokak stili giyim kampanyası"
+        },
+        "apparel-scenic-editorial": {
+          "title": "Estetik Manzara",
+          "description": "Manzaranın ürünü desteklediği açık hava moda görseli.",
+          "alt": "Manzara içinde ürün odaklı giyim editoriali"
+        },
+        "apparel-studio-style": {
+          "title": "Stüdyo Stili",
+          "description": "Ürün detaylarını koruyan temiz premium moda stüdyosu.",
+          "alt": "Temiz premium stüdyo giyim fotoğrafı"
+        },
+        "jewelry-on-body": {
+          "title": "Üzerinde",
+          "description": "Takının ciltle doğal temasını gösteren yakın editorial.",
+          "alt": "Takının elde veya vücutta doğal şekilde kullanımı"
+        },
+        "jewelry-studio": {
+          "title": "Stüdyo",
+          "description": "Malzeme ve işçiliği öne çıkaran lüks takı çekimi.",
+          "alt": "Temiz stüdyoda premium takı ürün fotoğrafı"
+        },
+        "jewelry-scenic": {
+          "title": "Estetik Ortam",
+          "description": "Takıyı önde tutan dokulu, doğal premium ortam.",
+          "alt": "Taş yüzeyde kahraman takı ürün çekimi"
+        },
+        "watch-on-wrist": {
+          "title": "Bilekte",
+          "description": "Bileğe doğal oturan saati öne çıkaran yakın çekim.",
+          "alt": "Bilekte doğal duran premium saat"
+        },
+        "watch-bright-studio": {
+          "title": "Aydınlık Stüdyo",
+          "description": "Kadran ve materyal detaylarını gösteren net saat kampanyası.",
+          "alt": "Aydınlık stüdyoda premium saat ürün çekimi"
+        },
+        "watch-scenic-environment": {
+          "title": "Estetik Ortam",
+          "description": "Saatin kahraman kaldığı rafine lifestyle ortamı.",
+          "alt": "Taş yüzeyde kahraman ürün olarak premium saat"
+        },
+        "footwear-hero-focus": {
+          "title": "Ayakkabı Odağı",
+          "description": "Siluet, taban ve detayları öne çıkaran güçlü yakın plan.",
+          "alt": "Ayakkabıyı öne çıkaran yakın plan kampanya çekimi"
+        },
+        "footwear-studio": {
+          "title": "Stüdyo",
+          "description": "Materyal ve taban yapısını gösteren premium ayakkabı stüdyosu.",
+          "alt": "Premium stüdyoda ayakkabı ürün çekimi"
+        },
+        "footwear-street-lifestyle": {
+          "title": "Sokak Yaşamı",
+          "description": "Ayakkabının odağını koruyan doğal şehir adımı.",
+          "alt": "Şehir zemininde ayakkabı odaklı doğal adım"
+        },
+        "cosmetics-studio": {
+          "title": "Stüdyo",
+          "description": "Paketleme detaylarını koruyan aydınlık beauty kampanyası.",
+          "alt": "Aydınlık stüdyoda premium kozmetik ürün çekimi"
+        },
+        "cosmetics-aesthetic-setting": {
+          "title": "Estetik Ortam",
+          "description": "Ürünü önde tutan rafine, dokulu beauty ortamı.",
+          "alt": "Şık taş yüzeyde kozmetik ürün çekimi"
+        },
+        "cosmetics-lifestyle-landscape": {
+          "title": "Yaşam Alanı",
+          "description": "Ürünün baskın kaldığı sıcak doğal lifestyle sahnesi.",
+          "alt": "Doğal ortamda kahraman kozmetik ürün çekimi"
+        },
+        "on-model-editorial": {
+          "title": "Model Üzerinde Editorial",
+          "description": "Temiz ve premium giyim editorial fotoğrafı.",
+          "alt": "Model üzerinde premium giyim editoriali"
+        },
+        "brutalist-streetwear": {
+          "title": "Brutalist Streetwear",
+          "description": "Modern mimari atmosferli streetwear kampanyası.",
+          "alt": "Modern mimaride streetwear editoriali"
+        },
+        "urban-night": {
+          "title": "Şehir Streetwear",
+          "description": "Sinematik şehir streetwear kampanyası.",
+          "alt": "Sinematik şehir streetwear kampanyası"
+        },
+        "minimal-studio-fashion": {
+          "title": "Minimal Studio Fashion",
+          "description": "Temiz giyim sunumu için yumuşak stüdyo kurulumu.",
+          "alt": "Minimal stüdyo giyim fotoğrafı"
+        },
+        "back-print-focus": {
+          "title": "Back Print Focus",
+          "description": "Arka grafik odaklı giyim kampanyaları için tasarlandı.",
+          "alt": "Arka görünüş odaklı giyim kampanyası"
+        },
+        "front-hero-apparel": {
+          "title": "Front Hero Apparel",
+          "description": "Önden, giysiye odaklanan model çekimi.",
+          "alt": "Önden giyim kampanyası fotoğrafı"
+        },
+        "luxury-macro-jewelry": {
+          "title": "Lüks Makro Natürmort",
+          "description": "Zengin detaylı yakın plan lüks takı natürmortu.",
+          "alt": "Lüks takı makro natürmortu"
+        },
+        "soft-daylight-jewelry": {
+          "title": "Yumuşak Editorial Takı",
+          "description": "Yumuşak gün ışığında zarif takı editoriali.",
+          "alt": "Yumuşak gün ışığında takı editoriali"
+        },
+        "black-luxury-jewelry": {
+          "title": "Black Luxury",
+          "description": "Dramatik ışıklı koyu premium takı kampanyası.",
+          "alt": "Koyu lüks takı kampanyası"
+        },
+        "jewelry-on-model": {
+          "title": "Elde Takı",
+          "description": "Elde doğal duran takı için makro editorial.",
+          "alt": "Yetişkin bir elde doğal duran takı"
+        },
+        "stone-surface-jewelry": {
+          "title": "Stone Surface",
+          "description": "Şık taş veya mermer yüzeylerde stillenmiş takı.",
+          "alt": "Taş üzerinde düzenlenmiş takı"
+        },
+        "minimal-product-detail": {
+          "title": "Minimal Detail",
+          "description": "Temiz ve minimal yakın plan ürün sunumu.",
+          "alt": "Minimal takı yakın planı"
+        },
+        "dark-premium-studio": {
+          "title": "Premium Güzellik Editoriali",
+          "description": "Kontrollü şişe yansımalarıyla premium güzellik editoriali.",
+          "alt": "Premium güzellik ürünü editoriali"
+        },
+        "soft-daylight-product": {
+          "title": "Yumuşak Gün Işığı Güzellik",
+          "description": "Aydınlık doğal cilt bakımı fotoğrafı.",
+          "alt": "Gün ışığında güzellik ürünü"
+        },
+        "tabletop-lifestyle": {
+          "title": "Sıcak Lüks Makyaj Masası",
+          "description": "Sıcak ve rafine makyaj masası ortamında güzellik ürünü.",
+          "alt": "Sıcak lüks makyaj masasında güzellik ürünü"
+        },
+        "reflective-luxury-surface": {
+          "title": "Yansıtıcı Kozmetik",
+          "description": "Kontrollü yansıtıcı yüzeyde kozmetik ambalajı.",
+          "alt": "Yansıtıcı yüzeyde kozmetik"
+        },
+        "minimal-catalog-plus": {
+          "title": "Temiz Stüdyo Ürün Çekimi",
+          "description": "Temiz premium güzellik ambalajı stüdyo çekimi.",
+          "alt": "Temiz premium güzellik ambalajı stüdyo çekimi"
+        },
+        "watch-hero": {
+          "title": "Saat Stüdyo Yakın Planı",
+          "description": "Temiz lüks saat stüdyo yakın planı.",
+          "alt": "Lüks saat stüdyo yakın planı"
+        },
+        "wrist-editorial": {
+          "title": "Bilekte Saat Editoriali",
+          "description": "Bilekte doğal duran saatle premium editorial fotoğraf.",
+          "alt": "Bilekte doğal duran saat"
+        },
+        "macro-dial": {
+          "title": "Makro Kadran",
+          "description": "Kadran, akrep-yelkovan ve indekslere yakın plan.",
+          "alt": "Saat kadranı makro detayı"
+        },
+        "dark-luxury-watch": {
+          "title": "Lüks Saat Kampanyası",
+          "description": "Kontrollü yansımalı lüks saat kampanyası.",
+          "alt": "Lüks saat kampanyası"
+        },
+        "reflective-metal-watch": {
+          "title": "Yansıtıcı Metal",
+          "description": "Premium metal ve parlak yüzey çalışması.",
+          "alt": "Yansıtıcı metal saat detayı"
+        },
+        "on-foot-editorial": {
+          "title": "Ayakta Editorial",
+          "description": "Model üzerinde doğal duran ayakkabı editoriali.",
+          "alt": "Model üzerinde doğal duran ayakkabı"
+        },
+        "street-footwear": {
+          "title": "Ayakta Sokak Kampanyası",
+          "description": "Ayakkabı odaklı şehir sokak kampanyası.",
+          "alt": "Şehir sokak kampanyasında ayakkabı"
+        },
+        "studio-footwear-hero": {
+          "title": "Minimal Sneaker Stüdyosu",
+          "description": "Temiz minimal ticari sneaker stüdyo çekimi.",
+          "alt": "Minimal sneaker stüdyo çekimi"
+        },
+        "ground-level-campaign": {
+          "title": "Zemin Seviyesi Kampanya",
+          "description": "Ayakkabıyı vurgulayan alçak kamera açısı.",
+          "alt": "Zemin seviyesinde ayakkabı kampanyası"
+        },
+        "motion-step": {
+          "title": "Hareketli Adım",
+          "description": "Gerçekçi ayakkabı-vücut etkileşimli yürüyüş pozu.",
+          "alt": "Doğal adımda ayakkabı"
+        },
+        "footwear-material-detail": {
+          "title": "Ayakkabı Hero Yakın Planı",
+          "description": "Ayakkabı malzemesi, tabanı ve yapısının yakın planı.",
+          "alt": "Ayakkabı hero yakın planı"
+        },
+        "editorial-flash": {
+          "title": "Editorial Flash",
+          "description": "Ham, direkt flaş karakterli premium streetwear fotoğrafı.",
+          "alt": "Direkt flaşla çekilmiş streetwear kampanyası"
+        },
+        "coastal-editorial": {
+          "title": "Coastal Editorial",
+          "description": "Rüzgar ve gerçek mekan dokusuyla doğal sahil streetwear kampanyası.",
+          "alt": "Doğal sahil editorial ortamında streetwear model"
+        }
       }
     },
     "projectsIndex": {
@@ -754,10 +945,24 @@
       "deleting": "Siliniyor…",
       "deleteError": "Proje silinemedi. Lütfen tekrar deneyin.",
       "untitledProject": "İsimsiz Proje",
-      "rename": { "edit": "Proje adını düzenle", "description": "Projeyi daha kolay bulmak için bir ad verebilirsiniz.", "label": "Proje adı", "placeholder": "İsimsiz Proje", "save": "Kaydet", "cancel": "İptal", "saving": "Kaydediliyor...", "error": "Proje adı kaydedilemedi." },
-      "imageEdit": { "title": "Görseli düzenle", "description": "Mevcut görselde yapmak istediğiniz değişikliği yazın.", "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.", "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.", "apply": "Düzenlemeyi uygula", "unavailable": "Görsel düzenleme yakında kullanıma açılacak." },
-      "rename": { "edit": "Proje adını düzenle", "description": "Projeyi daha kolay bulmak için bir ad verebilirsiniz.", "label": "Proje adı", "placeholder": "İsimsiz Proje", "save": "Kaydet", "cancel": "İptal", "saving": "Kaydediliyor...", "error": "Proje adı kaydedilemedi." },
-      "imageEdit": { "title": "Görseli düzenle", "description": "Mevcut görselde yapmak istediğiniz değişikliği yazın.", "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.", "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.", "apply": "Düzenlemeyi uygula", "unavailable": "Görsel düzenleme yakında kullanıma açılacak." },
+      "rename": {
+        "edit": "Proje adını düzenle",
+        "description": "Projeyi daha kolay bulmak için bir ad verebilirsiniz.",
+        "label": "Proje adı",
+        "placeholder": "İsimsiz Proje",
+        "save": "Kaydet",
+        "cancel": "İptal",
+        "saving": "Kaydediliyor...",
+        "error": "Proje adı kaydedilemedi."
+      },
+      "imageEdit": {
+        "title": "Görseli düzenle",
+        "description": "Mevcut görselde yapmak istediğiniz değişikliği yazın.",
+        "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.",
+        "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.",
+        "apply": "Düzenlemeyi uygula",
+        "unavailable": "Görsel düzenleme yakında kullanıma açılacak."
+      },
       "thumbnailAlt": "{title} için önizleme",
       "types": {
         "image": "Görsel",
@@ -788,8 +993,24 @@
       "deleteError": "Proje silinemedi. Lütfen tekrar deneyin.",
       "backToProjects": "Projelere dön",
       "updated": "Güncellendi: {date}",
-      "rename": { "edit": "Proje adını düzenle", "description": "Projeyi daha kolay bulmak için bir ad verebilirsiniz.", "label": "Proje adı", "placeholder": "İsimsiz Proje", "save": "Kaydet", "cancel": "İptal", "saving": "Kaydediliyor...", "error": "Proje adı kaydedilemedi." },
-      "imageEdit": { "title": "Görseli düzenle", "description": "Mevcut görselde yapmak istediğiniz değişikliği yazın.", "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.", "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.", "apply": "Düzenlemeyi uygula", "unavailable": "Görsel düzenleme yakında kullanıma açılacak." },
+      "rename": {
+        "edit": "Proje adını düzenle",
+        "description": "Projeyi daha kolay bulmak için bir ad verebilirsiniz.",
+        "label": "Proje adı",
+        "placeholder": "İsimsiz Proje",
+        "save": "Kaydet",
+        "cancel": "İptal",
+        "saving": "Kaydediliyor...",
+        "error": "Proje adı kaydedilemedi."
+      },
+      "imageEdit": {
+        "title": "Görseli düzenle",
+        "description": "Mevcut görselde yapmak istediğiniz değişikliği yazın.",
+        "placeholder": "Örn. Arka planı daha sade yap, ürüne dokunma.",
+        "helper": "Ürün kimliği korunarak yalnızca istediğiniz alan düzenlenir.",
+        "apply": "Düzenlemeyi uygula",
+        "unavailable": "Görsel düzenleme yakında kullanıma açılacak."
+      },
       "controlsHeading": "Yaratıcı kontroller",
       "backToWorkspace": "Çalışma Alanına Dön",
       "untitledProject": "İsimsiz Proje",
@@ -808,16 +1029,16 @@
         "uploadError": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
         "metadataError": "Görsel yüklendi ancak projeye kaydedilemedi. Lütfen tekrar deneyin.",
         "success": "Ürün görseli yüklendi",
-      "replace": "Ürünü değiştir",
+        "replace": "Ürünü değiştir",
         "previewAlt": "Yüklenen ürün görseli"
       },
       "references": {
         "heading": "Görsel referanslar",
-      "add": "Referans ekle",
-      "uploading": "Ekleniyor…",
-      "invalidFile": "JPEG, PNG veya WebP; en fazla 20 MB görsel seçin.",
-      "uploadError": "Referans eklenemedi. Lütfen tekrar deneyin.",
-      "limit": "En fazla 3 referans ekleyebilirsiniz.",
+        "add": "Referans ekle",
+        "uploading": "Ekleniyor…",
+        "invalidFile": "JPEG, PNG veya WebP; en fazla 20 MB görsel seçin.",
+        "uploadError": "Referans eklenemedi. Lütfen tekrar deneyin.",
+        "limit": "En fazla 3 referans ekleyebilirsiniz.",
         "description": "Bu görseller ışık, kompozisyon ve atmosferi yönlendirir; ürününüzün yerini almaz.",
         "previewAlt": "Görsel referans {index}"
       },
@@ -864,22 +1085,22 @@
         "galleryLabel": "Üretilen görsel galerisi",
         "selectOutput": "Çıktıyı seç",
         "details": "Çıktı ayrıntıları",
-      "historyHeading": "Üretim geçmişi",
-      "emptyHeading": "Henüz üretim yok",
-      "emptyDescription": "Ürününü yükle ve ilk görselini oluştur.",
-      "goToControls": "Üretime başla",
-      "failedHeading": "Görsel oluşturulamadı",
-      "failedDescription": "Ayarlarını kontrol edip yeniden deneyebilirsin.",
-      "processingHeading": "Görsel oluşturuluyor",
-      "processingDescription": "Üretim devam ediyor. Birazdan burada görünecek.",
-      "queuedHeading": "Üretim sırada",
-      "queuedDescription": "Üretimi başlatmak için geçmişteki çalıştırma eylemini kullan.",
-      "advancedDetails": "Gelişmiş üretim ayrıntıları",
-      "statusLabel": "Durum",
+        "historyHeading": "Üretim geçmişi",
+        "emptyHeading": "Henüz üretim yok",
+        "emptyDescription": "Ürününü yükle ve ilk görselini oluştur.",
+        "goToControls": "Üretime başla",
+        "failedHeading": "Görsel oluşturulamadı",
+        "failedDescription": "Ayarlarını kontrol edip yeniden deneyebilirsin.",
+        "processingHeading": "Görsel oluşturuluyor",
+        "processingDescription": "Üretim devam ediyor. Birazdan burada görünecek.",
+        "queuedHeading": "Üretim sırada",
+        "queuedDescription": "Üretimi başlatmak için geçmişteki çalıştırma eylemini kullan.",
+        "advancedDetails": "Gelişmiş üretim ayrıntıları",
+        "statusLabel": "Durum",
         "empty": "Henüz üretim yok.",
         "previewAlt": "Üretilen çıktı önizlemesi",
         "noPreview": "Önizleme kullanılamıyor",
-      "noPreviewDescription": "Bu görselin önizlemesi şu anda açılmıyor.",
+        "noPreviewDescription": "Bu görselin önizlemesi şu anda açılmıyor.",
         "provider": "Sağlayıcı",
         "model": "Model",
         "created": "Oluşturulma",
@@ -916,5 +1137,77 @@
       "tr": "Türkçe",
       "en": "English"
     }
+  },
+  "HomeRedesign": {
+    "eyebrow": "ÜRÜN GÖRSELLERİ İÇİN YARATICI ÜRETİM",
+    "heroTitle": "Ürün fotoğrafından\nkampanya görseline.",
+    "heroDescription": "Ürününüzü yükleyin. Klay.ai ürün kimliğini koruyarak stüdyo, lifestyle ve model üzerinde kampanya görselleri oluştursun.",
+    "try": "Ücretsiz dene",
+    "howLink": "Nasıl çalışır",
+    "heroOutputAlt": "Ürün fotoğrafından oluşturulmuş giyim kampanya görseli",
+    "heroProductAlt": "Sade fonda giyim ürün fotoğrafı",
+    "sourceLabel": "Ürününüz",
+    "outputLabel": "Kampanya görseli",
+    "fidelityTitle": "Ürününüz aynı kalır. Sahne değişir.",
+    "fidelityDescription": "Klay.ai ürünün renk, form, baskı ve karakteristik detaylarını korumayı önceliklendirirken onu yeni bir kampanya sahnesine taşır.",
+    "principle1": "Ürün kimliğini korur",
+    "principle2": "Doğal görünüm",
+    "principle3": "Referans yönünü takip eder",
+    "fidelitySourceAlt": "Orijinal takı ürün fotoğrafı",
+    "fidelityOutputAlt": "Kampanya sahnesinde sunulan takı",
+    "stepsTitle": "Üç adımda kampanyaya hazır.",
+    "step1Title": "Ürünü yükle",
+    "step1Description": "Tek bir ürün fotoğrafıyla başlayın.",
+    "step2Title": "Yönünü seç",
+    "step2Description": "Bir preset seçin, referans ekleyin veya yalnızca üretime başlayın.",
+    "step3Title": "Görselini üret",
+    "step3Description": "Klay.ai ürününüzü seçtiğiniz sahnede kampanya görseline dönüştürsün.",
+    "categoryTitle": "Ürününüz için doğru sahneyi bulun.",
+    "categoryDescription": "Çalıştığınız ürünler için kampanya görsellerini keşfedin.",
+    "apparel": "Giyim",
+    "jewelry": "Takı",
+    "watch": "Saat",
+    "cosmetics": "Kozmetik",
+    "footwear": "Ayakkabı",
+    "apparelAlt": "Editoryal giyim kampanya görseli",
+    "jewelryAlt": "Model üzerinde sunulan takı",
+    "watchAlt": "Bilekte gösterilen saat",
+    "cosmeticsAlt": "Stil verilmiş sahnede kozmetik ürünü",
+    "footwearAlt": "Şehir yaşamında ayakkabı görseli",
+    "referenceTitle": "Bir yön seçin. Ya da kendi referansınızı kullanın.",
+    "referenceDescription": "Presetlerden başlayın veya ışık, kompozisyon ve atmosfer için kendi referans görselinizi ekleyin.",
+    "referenceNote": "Preset ve referanslar sahneye yön verir. Ürününüz odağı korur.",
+    "presetAlt": "Stüdyo ürün preset görseli",
+    "referenceAlt": "Editoryal sahne referansı",
+    "outputAlt": "Görsel referansı takip eden kampanya sonucu",
+    "workspaceEyebrow": "YARATICI ÇALIŞMA ALANINIZ",
+    "workspaceTitle": "Üretimleriniz tek yerde.",
+    "workspaceDescription": "Projelerinizi, referanslarınızı, geçmiş üretimleri ve düzenlemeleri tek çalışma alanında yönetin.",
+    "workspaceLink": "Çalışma alanına git",
+    "workspaceAlt": "Yaratıcı çalışma alanındaki giyim kampanya projesi önizlemesi",
+    "faqTitle": "Merak edilenler.",
+    "faq1Question": "Ürünüm görselde aynı kalır mı?",
+    "faq1Answer": "Klay.ai rengin, formun, baskının ve ayırt edici detayların tanınır kalmasını önceler. Yayınlamadan önce her sonucu kontrol edin.",
+    "faq2Question": "Referans görsel kullanabilir miyim?",
+    "faq2Answer": "Evet. Yeni sahnenin ışığını, kompozisyonunu ve atmosferini yönlendirmek için referans ekleyebilirsiniz.",
+    "faq3Question": "Prompt yazmam gerekiyor mu?",
+    "faq3Answer": "Hayır. Bir preset seçerek veya doğrudan görsel oluşturarak başlayabilirsiniz.",
+    "faq4Question": "Hangi ürün kategorileri destekleniyor?",
+    "faq4Answer": "Giyim, takı, saat, kozmetik ve ayakkabı.",
+    "faq5Question": "Üretilen görseli daha sonra düzenleyebilir miyim?",
+    "faq5Answer": "Üretilen görselleri projenizde inceleyebilir ve düzenlemeye devam edebilirsiniz.",
+    "faq6Question": "Projelerimi saklayabilir miyim?",
+    "faq6Answer": "Evet. Projeleriniz ürününüzü, referanslarınızı ve önceki sonuçlarınızı bir arada tutar.",
+    "ctaTitle": "Bir ürün fotoğrafıyla başlayın.",
+    "ctaDescription": "Ürününüzü yükleyin ve ilk kampanya görselinizi oluşturun.",
+    "ctaButton": "Görsel oluştur",
+    "campaignTitle": "Stüdyodan sokağa. Tek ürün, farklı kampanyalar.",
+    "campaignDescription": "Bir ürünü farklı atmosfer ve sunumlarla yeniden hayal edin.",
+    "campaignAlt1": "Sokak sahnesinde giyim kampanyası",
+    "campaignAlt2": "Editoryal giyim kampanyası",
+    "campaignAlt3": "Lifestyle takı kampanyası",
+    "workspaceProject": "Proje",
+    "workspacePreview": "Önizleme",
+    "workspaceHistory": "Son görseller"
   }
 }

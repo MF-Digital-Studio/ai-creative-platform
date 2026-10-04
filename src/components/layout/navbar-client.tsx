@@ -94,7 +94,7 @@ export function NavbarClient({isAuthenticated}: NavbarClientProps) {
         className="navbar-shell navbar-intro"
         data-state={isCompact ? "compact" : "top"}
       >
-        <Container className="navbar-container">
+        <Container variant="public" className="navbar-container">
           <nav aria-label={navigationT("mainLabel")} className="navbar-bar">
             <Link
               href={siteConfig.routes.home}

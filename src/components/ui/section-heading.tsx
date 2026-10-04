@@ -11,6 +11,7 @@ export interface SectionHeadingProps {
   description?: string;
   align?: SectionHeadingAlign;
   className?: string;
+  titleClassName?: string;
 }
 
 const alignmentClasses: Record<SectionHeadingAlign, string> = {
@@ -24,6 +25,7 @@ export function SectionHeading({
   description,
   align = "left",
   className,
+  titleClassName,
 }: SectionHeadingProps) {
   return (
     <header
@@ -36,7 +38,7 @@ export function SectionHeading({
       {eyebrow ? <Reveal variant="fade"><Badge>{eyebrow}</Badge></Reveal> : null}
       <AnimatedHeading
         lines={title.split("\n")}
-        className="text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl"
+        className={cn("text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl", titleClassName)}
       />
       {description ? (
         <Reveal delay={100} className="max-w-2xl"><p className="text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">

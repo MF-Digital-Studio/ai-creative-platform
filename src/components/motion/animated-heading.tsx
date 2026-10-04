@@ -43,6 +43,8 @@ export function AnimatedHeading({ as: Tag = "h2", className, id, lines, style, v
       {lines.map((line) => <span className="animated-heading-line" key={`${line}-${index}`}>
         {line.split(/(\s+)/).map((segment) => {
           const current = index++;
+          // Text-node spaces wrap naturally; inline-block spaces indent new lines.
+          if (!segment.trim()) return segment;
           return <span key={`${segment}-${current}`} className="animated-heading-segment" style={{ "--heading-index": current } as CSSProperties}>{segment}</span>;
         })}
       </span>)}
