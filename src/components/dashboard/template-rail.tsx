@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
 import { CreativePresetRail } from "@/components/dashboard/creative-preset-rail";
-import { InspirationGrid } from "@/components/dashboard/inspiration-grid";
 
 export async function TemplateRail() {
   const t = await getTranslations("Dashboard.presets");
@@ -13,7 +12,6 @@ export async function TemplateRail() {
         <p>{t("description")}</p>
       </div>
       <CreativePresetRail />
-      <InspirationGrid />
     </section>
   );
 }

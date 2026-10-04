@@ -16,7 +16,12 @@ export type DashboardGeneration = {
 export async function getDashboardGenerations(userId: string) {
   const supabase = await createClient();
   const { data: ownedProjects, error: projectError } = await supabase.from("projects").select("id, title").eq("user_id", userId);
-  if (projectError) throw new Error("Unable to load dashboard projects.");
+  if (projectError) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[dashboard-projects] query_failed", { code: projectError.code, message: projectError.message, details: projectError.details, hint: projectError.hint });
+    }
+    throw new Error("Unable to load dashboard projects.");
+  }
   const projects = ownedProjects ?? [];
   if (projects.length === 0) return { projectCount: 0, completedCount: 0, activeCount: 0, generations: [] as DashboardGeneration[] };
 

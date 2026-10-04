@@ -4,7 +4,7 @@ import test from "node:test";
 import { compileRepairInstructions } from "../src/lib/auto-repair/compile-repair-instructions";
 import { MAX_AUTO_REPAIR_ATTEMPTS } from "../src/lib/auto-repair/repair-version";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
-import { selectFinalAttempt } from "../src/lib/auto-repair/select-final-attempt";
+import { resolveFinalCandidateSelection, selectFinalAttempt } from "../src/lib/auto-repair/select-final-attempt";
 import type { GenerationAttempt } from "../src/lib/auto-repair/types";
 import type { FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 
@@ -95,4 +95,37 @@ test("repair attempt type preserves the existing preservation mode", () => {
   const selected = selectFinalAttempt(original, repair);
   assert.equal(selected.preservationMode, "pixel_lock");
   assert.equal(original.preservationMode, "reference_edit");
+});
+
+test("final candidate selection records pass and chooses objectively less severe failed candidate", () => {
+  const passed = attempt("pass");
+  const rejected = attempt("fail", [issue("geometry_drift", "critical")]);
+  const repairPass = { ...attempt("pass"), attempt: 1 as const };
+  const caseA = resolveFinalCandidateSelection(passed, null);
+  assert.deepEqual({ selectedAttempt: caseA.selectedAttempt, reason: caseA.reason, validationStatus: caseA.validationStatus, qualityGatePassed: caseA.qualityGatePassed, qualityRejected: caseA.qualityRejected }, { selectedAttempt: 0, reason: "initial_passed", validationStatus: "pass", qualityGatePassed: true, qualityRejected: false });
+  const caseB = resolveFinalCandidateSelection(rejected, repairPass);
+  assert.deepEqual({ selectedAttempt: caseB.selectedAttempt, reason: caseB.reason, validationStatus: caseB.validationStatus, qualityGatePassed: caseB.qualityGatePassed, qualityRejected: caseB.qualityRejected }, { selectedAttempt: 1, reason: "repair_passed", validationStatus: "pass", qualityGatePassed: true, qualityRejected: false });
+  const noRepair = resolveFinalCandidateSelection(rejected, null);
+  assert.equal(noRepair.reason, "initial_less_bad_but_quality_rejected");
+  assert.equal(noRepair.qualityRejected, true);
+
+  const repairLessBad = { ...attempt("fail", [issue("structural_drift", "major")]), attempt: 1 as const };
+  const selectedRepair = resolveFinalCandidateSelection(rejected, repairLessBad);
+  assert.deepEqual({ selectedAttempt: selectedRepair.selectedAttempt, reason: selectedRepair.reason, validationStatus: selectedRepair.validationStatus, qualityGatePassed: selectedRepair.qualityGatePassed, qualityRejected: selectedRepair.qualityRejected }, { selectedAttempt: 1, reason: "repair_less_bad_but_quality_rejected", validationStatus: "fail", qualityGatePassed: false, qualityRejected: true });
+
+  const initialLessBad = { ...attempt("fail", [issue("structural_drift", "major")]), attempt: 0 as const };
+  const selectedInitial = resolveFinalCandidateSelection(initialLessBad, { ...attempt("fail", [issue("geometry_drift", "critical")]), attempt: 1 as const });
+  assert.equal(selectedInitial.selectedAttempt, 0);
+  assert.equal(selectedInitial.reason, "initial_less_bad_but_quality_rejected");
+
+  const unavailable = resolveFinalCandidateSelection(attempt("validation_unavailable"), null);
+  assert.equal(unavailable.validationStatus, "validation_unavailable");
+  assert.equal(unavailable.qualityGatePassed, false);
+  assert.equal(unavailable.qualityRejected, false);
+});
+
+test("at most one automatic repair is permitted", () => {
+  assert.equal(MAX_AUTO_REPAIR_ATTEMPTS, 1);
+  const repair = { ...attempt("fail", []), attempt: 1 as const };
+  assert.equal(resolveFinalCandidateSelection(attempt("fail", [issue("geometry_drift")]), repair).selectedAttempt, 1);
 });

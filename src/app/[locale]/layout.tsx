@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { isSupportedLocale, routing } from "@/i18n/routing";
+import { ThemeInitScript } from "@/components/theme/theme-init-script";
+import { ThemeProviderBoundary } from "@/components/theme/theme-provider-boundary";
 
 import "../globals.css";
 
@@ -70,9 +72,10 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} data-theme="light" suppressHydrationWarning>
+      <head><ThemeInitScript /></head>
       <body className={poppins.variable}>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <ThemeProviderBoundary><NextIntlClientProvider>{children}</NextIntlClientProvider></ThemeProviderBoundary>
       </body>
     </html>
   );

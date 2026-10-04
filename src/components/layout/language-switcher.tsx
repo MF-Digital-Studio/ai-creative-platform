@@ -14,12 +14,12 @@ import { cn } from "@/lib/cn";
 
 type LanguageSwitcherProps = {
   onLocaleChange?: () => void;
-  variant?: "desktop" | "mobile";
+  variant?: "public" | "dashboard" | "mobile";
 };
 
 export function LanguageSwitcher({
   onLocaleChange,
-  variant = "desktop",
+  variant = "public",
 }: LanguageSwitcherProps) {
   const locale = useLocale();
   const t = useTranslations("LanguageSwitcher");
@@ -107,7 +107,11 @@ export function LanguageSwitcher({
   return (
     <div
       ref={rootRef}
-      className={cn("relative", variant === "mobile" && "w-full")}
+      className={cn(
+        "language-switcher relative",
+        `language-switcher-${variant}`,
+        variant === "mobile" && "w-full",
+      )}
     >
       <button
         ref={triggerRef}
@@ -117,7 +121,7 @@ export function LanguageSwitcher({
         aria-haspopup="menu"
         aria-label={t("label")}
         className={cn(
-          "inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
+          "language-switcher-trigger inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--foreground)] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
           variant === "mobile" && "w-full justify-between normal-case tracking-normal",
         )}
         onClick={() => setIsOpen((current) => !current)}
@@ -128,31 +132,30 @@ export function LanguageSwitcher({
           }
         }}
       >
-        {variant === "mobile" ? (
-          <span>{`${t("label")}: ${activeLocale.toUpperCase()}`}</span>
-        ) : (
-          <>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="h-[1.125rem] w-[1.125rem]"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.6"
-            >
-              <circle cx="12" cy="12" r="8.5" />
-              <path d="M3.9 12h16.2M12 3.5c2.1 2.3 3.2 5.16 3.2 8.5S14.1 18.2 12 20.5C9.9 18.2 8.8 15.34 8.8 12S9.9 5.8 12 3.5Z" />
-            </svg>
-            <span>{activeLocale.toUpperCase()}</span>
-          </>
-        )}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="h-4 w-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.6"
+        >
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M3.9 12h16.2M12 3.5c2.1 2.3 3.2 5.16 3.2 8.5S14.1 18.2 12 20.5C9.9 18.2 8.8 15.34 8.8 12S9.9 5.8 12 3.5Z" />
+        </svg>
+        <span className={cn("language-switcher-name", variant === "mobile" && "sr-only")}>
+          {t(`localeNames.${activeLocale}`)}
+        </span>
+        <span aria-hidden="true" className="language-switcher-code">
+          {activeLocale.toUpperCase()}
+        </span>
         <svg
           aria-hidden="true"
           viewBox="0 0 12 8"
           className={cn(
-            "h-2 w-3 transition-transform duration-(--transition-fast) motion-reduce:transition-none",
+            "language-switcher-chevron h-2 w-3 transition-transform duration-(--transition-fast) motion-reduce:transition-none",
             isOpen && "rotate-180",
           )}
         >
@@ -173,10 +176,11 @@ export function LanguageSwitcher({
           role="menu"
           aria-label={t("menuLabel")}
           className={cn(
-            "language-menu absolute top-[calc(100%+0.5rem)] min-w-44 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] p-1 shadow-[var(--shadow-subtle)]",
-            variant === "desktop" ? "right-0" : "inset-x-0 w-full",
+            "language-menu absolute top-[calc(100%+0.5rem)] z-50 w-[min(15rem,calc(100vw-2rem))] rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[var(--shadow-subtle)]",
+            variant === "mobile" ? "inset-x-0 w-full" : "right-0",
           )}
         >
+          <div className="language-menu-heading">{t("menuLabel")}</div>
           {routing.locales.map((optionLocale, index) => {
             const isActive = optionLocale === activeLocale;
             const label = t(`localeNames.${optionLocale}`);
@@ -193,18 +197,31 @@ export function LanguageSwitcher({
                 aria-current={isActive ? "true" : undefined}
                 aria-label={`${t("switchTo")} ${label}`}
                 className={cn(
-                  "flex min-h-11 w-full items-center justify-between gap-4 rounded-[var(--radius-sm)] px-3 text-left text-sm transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
-                  isActive && "font-semibold text-[var(--accent)]",
+                  "language-menu-option flex min-h-14 w-full items-center justify-between gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-left transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
+                  isActive && "bg-[var(--surface-soft)] text-[var(--foreground)]",
                 )}
                 onClick={() => selectLocale(optionLocale)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
               >
-                <span>{label}</span>
+                <span className="grid gap-0.5">
+                  <span className="language-menu-name">{label}</span>
+                  <span className="language-menu-description">
+                    {t(`descriptions.${optionLocale}`)} · {optionLocale.toUpperCase()}
+                  </span>
+                </span>
                 {isActive ? (
-                  <span
+                  <svg
                     aria-hidden="true"
-                    className="h-1.5 w-1.5 rounded-full bg-current"
-                  />
+                    viewBox="0 0 16 16"
+                    className="h-4 w-4 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.7"
+                  >
+                    <path d="m3.5 8.2 2.8 2.8 6.2-6" />
+                  </svg>
                 ) : null}
               </button>
             );

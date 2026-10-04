@@ -27,6 +27,9 @@ import { compileProductIdentityLock } from "@/lib/product-identity/compile-produ
 import { buildProductIdentityManifest } from "@/lib/product-identity/build-product-identity-manifest";
 import type { ProductIdentityManifest } from "@/lib/product-identity/types";
 import type { ApparelIdentityManifest } from "@/lib/product-identity/apparel-identity-manifest";
+import { resolveHumanRealismPolicy } from "@/lib/human-realism/human-realism-policy";
+import { compileHumanRealismPrompt } from "@/lib/human-realism/compile-human-realism-prompt";
+import type { HumanFocusArea } from "@/lib/human-realism/types";
 import { compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
 
 const productPreservationInstructions = [
@@ -71,6 +74,8 @@ const footwearOnModelInstructions = [
 ].join("\n");
 
 export type FinalPromptLayers = {
+  humanRealismApplied: boolean;
+  humanRealismFocusAreas: HumanFocusArea[];
   category: GenerationVisualCategory;
   categoryRealismApplied: boolean;
   fidelityPolicy: "fashion_on_model" | "jewelry_on_model" | "jewelry_still_life" | "watch_on_wrist" | "footwear_on_model" | "rigid_product";
@@ -92,6 +97,9 @@ export type FinalPromptLayers = {
 };
 
 export type ImageGenerationPromptOptions = {
+  visibleHuman?: boolean;
+  faceVisible?: boolean;
+  handsVisible?: boolean;
   fashionOnModel?: boolean;
   strategy?: GenerationStrategy;
   useCase?: string | null;
@@ -119,6 +127,8 @@ export function buildImageGenerationPromptWithPolicy(
   const jewelryStillLife = strategy === "jewelry_still_life";
   const category = fashionOnModel ? "apparel" : strategy.startsWith("jewelry_") ? "jewelry" : strategy === "watch_on_wrist" ? "watches" : strategy === "footwear_on_model" ? "footwear" : context.category;
   const vertical = isSupportedVertical(category) ? category : null;
+  const humanRealism = resolveHumanRealismPolicy({ strategy, vertical, visibleHuman: options.visibleHuman, faceVisible: options.faceVisible, handsVisible: options.handsVisible });
+  const humanRealismDirection = compileHumanRealismPrompt(humanRealism, vertical);
   const verticalQuality = vertical ? getVerticalQualityProfile(vertical) : null;
   const globalRealismPolicy = context.visualIntent === "photographic"
     ? globalPhotorealismPolicy
@@ -176,16 +186,17 @@ export function buildImageGenerationPromptWithPolicy(
   ].join("\n") : "";
   const prompt = [
     identityLockDirection,
-    apparelIdentityDirection,
     imageRoleDirection,
+    apparelIdentityDirection,
     productProfilePrompt ? [
       ...productProfilePrompt.identity,
       ...productProfilePrompt.interaction,
     ].join("\n") : "",
+    fidelityPolicy,
+    humanRealismDirection,
     sceneDirection ? `Scene suitability (product-compatible scene structure; product identity remains higher priority):\n${sceneDirection}` : "",
     compositionDirection ? `Composition intelligence (product visibility and physical plausibility are required):\n${compositionDirection}` : "",
     productProfilePrompt?.presentation.join("\n") ?? "",
-    fidelityPolicy,
     complianceDirection,
     referenceMatchDirection,
     verticalFidelityPolicy,
@@ -201,6 +212,8 @@ export function buildImageGenerationPromptWithPolicy(
   return {
     prompt,
     layers: {
+      humanRealismApplied: humanRealism.applied,
+      humanRealismFocusAreas: humanRealism.focusAreas,
       category,
       categoryRealismApplied: Boolean(verticalRealismPolicy),
       fidelityPolicy: fidelityLabel,

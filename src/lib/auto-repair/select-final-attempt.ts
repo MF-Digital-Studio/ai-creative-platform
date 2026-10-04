@@ -12,7 +12,8 @@ function priorityVector(attempt: GenerationAttempt): number[] {
     count((issue) => issue.category === "composition_visibility"),
     count((issue) => issue.category === "reference_match"),
     count((issue) => issue.category === "creative_requirement"),
-    count((issue) => issue.severity === "critical" || issue.severity === "major"),
+    count((issue) => issue.severity === "critical"),
+    count((issue) => issue.severity === "major"),
     count((issue) => issue.severity === "minor"),
   ];
 }
@@ -27,4 +28,40 @@ export function selectFinalAttempt(original: GenerationAttempt, repair: Generati
     if (repairPriorities[index]! > originalPriorities[index]!) return original;
   }
   return original;
+}
+
+export type FinalCandidateSelectionReason = "initial_passed" | "repair_passed" | "initial_less_bad_but_quality_rejected" | "repair_less_bad_but_quality_rejected" | "validation_unavailable";
+
+export type FinalCandidateSelection = {
+  selectedAttempt: 0 | 1;
+  reason: FinalCandidateSelectionReason;
+  validationStatus: GenerationAttempt["validation"]["status"];
+  qualityGatePassed: boolean;
+  qualityRejected: boolean;
+  attempt: GenerationAttempt;
+};
+
+export function resolveFinalCandidateSelection(original: GenerationAttempt, repair: GenerationAttempt | null, accepted: (attempt: GenerationAttempt) => boolean = (attempt) => attempt.validation.status === "pass" || attempt.validation.status === "pass_with_warnings"): FinalCandidateSelection {
+  let attempt: GenerationAttempt;
+  let reason: FinalCandidateSelectionReason;
+  if (accepted(original)) {
+    attempt = original;
+    reason = "initial_passed";
+  } else if (repair && accepted(repair)) {
+    attempt = repair;
+    reason = "repair_passed";
+  } else {
+    attempt = selectFinalAttempt(original, repair);
+    if (attempt.validation.status === "validation_unavailable") reason = "validation_unavailable";
+    else reason = attempt.attempt === 0 ? "initial_less_bad_but_quality_rejected" : "repair_less_bad_but_quality_rejected";
+  }
+  const qualityGatePassed = accepted(attempt);
+  return {
+    attempt,
+    selectedAttempt: attempt.attempt,
+    reason,
+    validationStatus: attempt.validation.status,
+    qualityGatePassed,
+    qualityRejected: attempt.validation.status !== "validation_unavailable" && !qualityGatePassed,
+  };
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { runQueuedImageGeneration } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import { runQueuedImageGeneration } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
 import { RunGenerationButton } from "./run-generation-button";
 import { GenerationGallery, type GenerationGalleryItem } from "@/components/projects/generation-gallery";
 import { ProjectControlPanel } from "@/components/projects/project-control-panel";

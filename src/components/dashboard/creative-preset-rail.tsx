@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { creativePresets } from "@/lib/creative-presets/creative-presets";
 import { cn } from "@/lib/cn";
 
@@ -22,7 +21,7 @@ export function CreativePresetRail() {
 
   return (
     <div className="dashboard-template-rail" aria-label={t("listLabel")}>
-      {creativePresets.map((preset, index) => (
+      {creativePresets.map((preset) => (
         <button
           key={preset.id}
           type="button"
@@ -36,11 +35,11 @@ export function CreativePresetRail() {
               src={preset.thumbnail}
               alt={t(`items.${preset.id}.alt`)}
               fill
-              loading={index === 0 ? "eager" : "lazy"}
-              sizes="(min-width: 1280px) 230px, (min-width: 768px) 210px, 72vw"
+              loading="lazy"
+              sizes="(min-width: 1600px) 25vw, (min-width: 1200px) 33vw, (min-width: 700px) 50vw, 100vw"
               style={{ objectPosition: preset.objectPosition }}
             />
-            <span className="dashboard-template-shade" />
+            {selectedPresetId === preset.id ? <span className="dashboard-template-check" aria-hidden="true">✓</span> : null}
           </span>
           <span className="dashboard-template-copy">
             <span>
@@ -48,7 +47,6 @@ export function CreativePresetRail() {
               <strong>{t(`items.${preset.id}.title`)}</strong>
               <span>{t(`items.${preset.id}.description`)}</span>
             </span>
-            <DashboardIcon name="arrow" />
           </span>
         </button>
       ))}

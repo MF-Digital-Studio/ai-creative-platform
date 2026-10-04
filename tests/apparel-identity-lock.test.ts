@@ -4,9 +4,15 @@ import test from "node:test";
 import { resolveApparelArtworkRegion, compileApparelArtworkLock, buildApparelFidelityBenchmarkPrompts, runSourceProductFidelityBenchmark } from "../src/lib/product-identity/apparel-identity-manifest";
 import { evaluateApparelProductFidelity, resolveApparelFidelityMode } from "../src/lib/product-identity/resolve-apparel-fidelity-mode";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
+import { compileRepairInstructions } from "../src/lib/auto-repair/compile-repair-instructions";
 import { mapStructuredValidationOutput, resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
 import type { ProductProfile } from "../src/lib/product-understanding/product-profile";
 import type { FidelityValidationResult } from "../src/lib/fidelity-validation/types";
+import { createApparelArtworkCrop, isValidNormalizedBox } from "../src/lib/product-identity/apparel-artwork-localization";
+import { orderGenerationImages, compileImageRoleInstructions } from "../src/lib/generation/image-roles";
+import sharp from "sharp";
+import { buildOpenAIImageEditParams } from "../src/lib/generation/providers/openai-image-request";
+import { GenerationProviderError } from "../src/lib/generation/types";
 
 const apparelProfile: ProductProfile = {
   productId: "tee", schemaVersion: 1, analysisVersion: "test", vertical: "apparel", subcategory: "t-shirt", wearability: "wearable", rigidity: "deformable",
@@ -89,4 +95,59 @@ test("repair instructions prioritize artwork and placement before scene issues",
   const plan = resolveRepairPlan(validation);
   assert.match(plan.repairInstructions[0] ?? "", /PRIORITY 1/);
   assert.match(plan.repairInstructions[1] ?? "", /PRIORITY 2/);
+});
+
+test("normalized artwork boxes are bounded and safe padding clamps to original image bounds", async () => {
+  assert.equal(isValidNormalizedBox({ x: 0.1, y: 0.2, width: 0.3, height: 0.4 }), true);
+  assert.equal(isValidNormalizedBox({ x: 0.9, y: 0, width: 0.2, height: 0.4 }), false);
+  const source = await sharp({ create: { width: 20, height: 12, channels: 3, background: { r: 120, g: 20, b: 30 } } }).png().toBuffer();
+  const crop = await createApparelArtworkCrop({ data: source, assetId: "tee", side: "back", boundingBox: { x: 0.8, y: 0.75, width: 0.2, height: 0.25 }, confidence: 0.9, containsText: true });
+  assert.ok(crop);
+  assert.equal(crop.identitySource.cropMetadata?.left, 15);
+  assert.equal(crop.identitySource.cropMetadata?.top, 8);
+  assert.equal(crop.identitySource.cropMetadata?.width, 5);
+  assert.equal(crop.identitySource.cropMetadata?.height, 4);
+  const [originalPixels, croppedPixels] = await Promise.all([sharp(source).raw().toBuffer(), sharp(crop.data).raw().toBuffer()]);
+  const expectedPixels = Buffer.concat(Array.from({ length: 4 }, (_, row) => originalPixels.subarray(((8 + row) * 20 + 15) * 3, ((8 + row) * 20 + 20) * 3)));
+  assert.deepEqual(croppedPixels, expectedPixels);
+  assert.equal(crop.identitySource.identityCritical, true);
+});
+
+test("artwork crop is a separate provider input ahead of references", () => {
+  const source = { id: "tee", bucketId: "b", objectPath: "tee.png", data: Buffer.from("garment"), mimeType: "image/png" };
+  const artwork = { ...source, id: "art", data: Buffer.from("crop") };
+  const scene = { ...source, id: "scene", data: Buffer.from("scene") };
+  const ordered = orderGenerationImages(source, [scene], artwork);
+  assert.deepEqual(ordered.map(({ role }) => role), ["product_identity_source", "apparel_artwork_identity_source", "scene_reference"]);
+  assert.match(compileImageRoleInstructions(ordered), /exact print design and typography/);
+  const request = buildOpenAIImageEditParams({ model: "gpt-image-2", image: ordered, prompt: "exact apparel", size: "1024x1024", quality: null });
+  assert.equal(request.image, ordered);
+  const missingArtwork = () => {
+    const images = orderGenerationImages(source);
+    if ("SOURCE ARTWORK IDENTITY — EXACT DESIGN AUTHORITY".includes("SOURCE ARTWORK IDENTITY — EXACT DESIGN AUTHORITY") && images[1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("artwork crop missing", "openai");
+  };
+  assert.throws(missingArtwork, GenerationProviderError);
+});
+
+test("no-artwork apparel keeps the fallback path without producing a crop", async () => {
+  const source = await sharp({ create: { width: 16, height: 16, channels: 3, background: "black" } }).png().toBuffer();
+  assert.equal(await createApparelArtworkCrop({ data: source, assetId: "plain-tee", side: "front", boundingBox: { x: 0.2, y: 0.2, width: 0.3, height: 0.3 }, confidence: 0.9, containsText: false, detected: false }), null);
+});
+
+test("artwork identity and text issue codes are critical; placement is major and fails exact apparel gate", () => {
+  for (const code of ["APPAREL_ARTWORK_IDENTITY_DRIFT", "APPAREL_ARTWORK_TEXT_DRIFT"]) {
+    const [issue] = mapStructuredValidationOutput({ findings: [{ code, category: "product_identity", severity: "minor", finding: "changed", expected: "source" }] });
+    assert.equal(issue?.severity, "critical");
+    assert.equal(resolveQualityGate([issue!]).status, "fail");
+  }
+  const [placement] = mapStructuredValidationOutput({ findings: [{ code: "APPAREL_ARTWORK_PLACEMENT_DRIFT", category: "product_identity", severity: "minor", finding: "moved", expected: "source" }] });
+  assert.equal(placement?.severity, "major");
+  assert.equal(resolveQualityGate([placement!]).status, "fail");
+});
+
+test("apparel artwork repair instructions preserve the identity source", () => {
+  const validation = { version: "test", status: "fail", retryRecommended: true, summary: "drift", checks: [], severity: "critical", issues: [{ code: "APPAREL_ARTWORK_TEXT_DRIFT", category: "product_identity", severity: "critical", finding: "text", expected: "source", sourceAuthoritative: true }] } as FidelityValidationResult;
+  const plan = resolveRepairPlan(validation);
+  assert.match(plan.repairInstructions[0] ?? "", /apparel_artwork_identity_source/);
+  assert.match(compileRepairInstructions("base", plan), /remains available as exact print authority/);
 });

@@ -6,6 +6,7 @@ import { getOrCreateProfile } from "@/lib/profile/get-or-create-profile";
 import { isSupportedLocale } from "@/i18n/routing";
 
 import { ProfileForm } from "./profile-form";
+import { AppearanceControl } from "./appearance-control";
 
 type AccountPageProps = {
   params: Promise<{ locale: string }>;
@@ -48,8 +49,9 @@ export default async function AccountPage({ params }: AccountPageProps) {
           </div>
 
           <div className="dashboard-settings-layout">
-            <nav className="dashboard-settings-nav" aria-label={t("heading")}><a href="#profile-settings" aria-current="page">{t("heading")}</a></nav>
-            <div id="profile-settings" className="dashboard-settings-card">
+            <nav className="dashboard-settings-nav" aria-label={t("heading")}><a href="#account-settings" aria-current="page">{t("heading")}</a><a href="#appearance-settings">{t("appearanceHeading")}</a></nav>
+            <div className="dashboard-settings-sections">
+            <div id="account-settings" className="dashboard-settings-card">
               <h2>{t("heading")}</h2>
               <ProfileForm
               displayName={profile.display_name}
@@ -63,6 +65,12 @@ export default async function AccountPage({ params }: AccountPageProps) {
                 saveSuccess: t("saveSuccess"),
               }}
               />
+            </div>
+            <section id="appearance-settings" className="dashboard-settings-card" aria-labelledby="appearance-heading">
+              <h2 id="appearance-heading">{t("appearanceHeading")}</h2>
+              <p className="appearance-description">{t("appearanceDescription")}</p>
+              <AppearanceControl labels={{ group: t("appearanceHeading"), system: t("system"), dark: t("dark"), light: t("light") }} />
+            </section>
             </div>
           </div>
         </section>

@@ -7,13 +7,15 @@ export type { GenerationImageInput, GenerationImageRole } from "./types";
 export function orderGenerationImages(
   product: ImageGenerationSourceAsset,
   references: readonly ImageGenerationSourceAsset[] = [],
+  artwork?: ImageGenerationSourceAsset | null,
 ): GenerationImageInput[] {
   return [
     { ...product, role: "product_identity_source", order: 0 },
-    ...references.slice(0, 3).map((reference, index) => ({
+    ...(artwork ? [{ ...artwork, role: "apparel_artwork_identity_source" as const, order: 1 }] : []),
+    ...references.slice(0, artwork ? 2 : 3).map((reference, index) => ({
       ...reference,
       role: index === 0 ? "scene_reference" as const : "style_reference" as const,
-      order: index + 1,
+      order: index + (artwork ? 2 : 1),
     })),
   ];
 }
@@ -40,12 +42,14 @@ export function buildReferenceReplacementPrompt(userDirection: string): string {
 }
 
 export function compileImageRoleInstructions(images: readonly GenerationImageInput[]): string {
+  const artworkIndex = images.findIndex(({ role }) => role === "apparel_artwork_identity_source");
   const referenceCount = images.filter(({ role }) => role === "scene_reference" || role === "style_reference").length;
   return [
     "INPUT IMAGE ROLES — STRICT AUTHORITY ORDER:",
     "Image 1 is PRODUCT IDENTITY SOURCE and is the exact product design authority.",
+    artworkIndex >= 0 ? `Image ${artworkIndex + 1} is APPAREL ARTWORK IDENTITY SOURCE, a direct pixel crop from the source garment. It independently governs exact print design and typography.` : "No separate apparel artwork crop is available.",
     referenceCount
-      ? `Images 2-${referenceCount + 1} are SCENE/STYLE REFERENCES only. Transfer pose, framing, camera, lighting, environment, props, and human interaction structure; never transfer their products, geometry, materials, colors, branding, stones, watch dials, shoe structure, packaging, or garments.`
+      ? `Scene/style reference images follow the identity inputs and are scene only. Transfer pose, framing, camera, lighting, environment, props, and human interaction structure; never transfer product identity, artwork, typography, print color, placement, geometry, materials, branding, stones, watch dials, shoe structure, or packaging.`
       : "No scene or style reference image is supplied.",
     "Replace any reference product with the exact product shown in Image 1.",
   ].join("\n");

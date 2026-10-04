@@ -18,6 +18,21 @@ export const generationStrategies = [
 
 export type GenerationStrategy = (typeof generationStrategies)[number];
 
+export function resolveHybridProjectionEligibility(input: {
+  vertical: string | null;
+  artworkPresent: boolean;
+  exactProductApparel: boolean;
+  artworkSide: string;
+  localized: boolean;
+}): boolean {
+  return input.vertical === "apparel" && input.artworkPresent && input.exactProductApparel
+    && input.localized && (input.artworkSide === "front" || input.artworkSide === "back");
+}
+
+export function resolveApparelArtworkCropEligibility(input: { vertical: string | null; exactProductApparel: boolean; artworkPresent: boolean }): boolean {
+  return input.vertical === "apparel" && input.exactProductApparel && input.artworkPresent;
+}
+
 export type GenerationStrategyReason =
   | "product_profile"
   | "preset_strategy_hint"

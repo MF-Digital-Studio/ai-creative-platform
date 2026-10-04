@@ -5,6 +5,17 @@ import type { RepairCategory, RepairPlan } from "./types";
 type RepairMapping = { category: RepairCategory; instructions: string[] };
 
 const mappings: Record<string, RepairMapping> = {
+  hand_anatomy_error: { category: "human_anatomy_repair", instructions: ["Correct only visible hand anatomy: five fingers per hand, natural joints, plausible proportions and realistic nail placement. Preserve the product, identity and scene."] },
+  finger_count_error: { category: "human_anatomy_repair", instructions: ["Restore exactly five fingers per visible hand, including the correctly placed thumb. Preserve the product and composition."] },
+  finger_geometry_error: { category: "human_anatomy_repair", instructions: ["Correct finger lengths, joints and separation without changing product identity or pose intent."] },
+  nail_anatomy_error: { category: "human_anatomy_repair", instructions: ["Align natural nails with each finger; retain requested polish color and the source product."] },
+  plastic_skin: { category: "skin_texture_repair", instructions: ["Reduce beauty retouching; restore subtle pores, natural skin texture and tonal variation without exaggerating imperfections. Preserve facial identity, product and composition."] },
+  over_retouched_skin: { category: "skin_texture_repair", instructions: ["Restore restrained editorial skin texture and realistic highlights; preserve face, product and scene."] },
+  facial_realism_drift: { category: "facial_realism_repair", instructions: ["Correct only uncanny facial surfaces, eyes, expression and asymmetry while preserving facial identity, product and framing."] },
+  body_proportion_error: { category: "body_anatomy_repair", instructions: ["Restore natural body proportions and joint locations without changing product identity, styling or scene."] },
+  pose_implausible: { category: "body_anatomy_repair", instructions: ["Correct posture, balance and weight distribution while preserving the product and intended pose."] },
+  hair_realism_drift: { category: "hair_realism_repair", instructions: ["Restore natural hairline, varied strands and lighting interaction without changing identity or product."] },
+  human_product_contact_error: { category: "body_interaction_repair", instructions: ["Correct only product-to-body fit, occlusion, pressure and contact shadows; preserve the exact source product."] },
   floating_ring: { category: "body_interaction_repair", instructions: ["Make the ring wrap naturally around the correct finger with realistic skin contact and occlusion.", "Do not float, paste, overlay, or fuse the ring to the hand."] },
   body_interaction_failure: { category: "body_interaction_repair", instructions: ["Restore physically plausible contact, scale, attachment, and occlusion for the resolved body target."] },
   stone_layout_changed: { category: "identity_reinforcement", instructions: ["Preserve the exact source stone count, layout, center-stone shape, setting, and band geometry."] },
@@ -31,7 +42,12 @@ const mappings: Record<string, RepairMapping> = {
   footwear_panel_structure_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source footwear panel boundaries, toe box, sole geometry, lacing, tongue, heel, and logo placement."] },
   garment_artwork_changed: { category: "identity_reinforcement", instructions: ["Restore the exact source garment artwork, placement, closures, pockets, and construction while allowing only natural folds and drape."] },
   apparel_artwork_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 1 — Restore the exact source apparel artwork composition and major graphic shapes. Do not substitute, simplify, redraw, or reinterpret the print."] },
-  apparel_artwork_placement_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 2 — Restore the artwork to its exact source position and scale relative to collar, hem, and garment seams. Allow only natural folds and perspective."] },
+  apparel_artwork_identity_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 1 — Use the supplied apparel_artwork_identity_source as exact design authority. Restore its exact composition and structure; do not replace, redraw, simplify, restyle, or reinterpret it."] },
+  apparel_artwork_text_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 2 — Use apparel_artwork_identity_source to restore every letter, exact text, letter shape and text layout. Do not approximate, invent, omit, or reorder typography."] },
+  apparel_artwork_structure_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 2 — Restore all major illustration shapes and linework from apparel_artwork_identity_source."] },
+  apparel_artwork_placement_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 2 — Restore placement class and proportions from the source garment relative to collar, side edges, and hem."] },
+  apparel_artwork_scale_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 4 — Restore artwork width and height relative to garment torso from apparel_artwork_identity_source and source garment."] },
+  apparel_artwork_color_drift: { category: "color_material_repair", instructions: ["PRIORITY 1 — Restore graphic colors and relationships exactly as shown in apparel_artwork_identity_source."] },
   apparel_text_drift: { category: "identity_reinforcement", instructions: ["PRIORITY 3 — Preserve every visible source text region, typography presence, content, and location; do not invent or remove text."] },
   apparel_color_drift: { category: "color_material_repair", instructions: ["PRIORITY 4 — Restore the source garment color and material appearance."] },
   apparel_silhouette_drift: { category: "geometry_reinforcement", instructions: ["PRIORITY 5 — Restore garment silhouette, sleeve, collar, fit, and construction; allow only natural drape and body curvature."] },
@@ -43,14 +59,14 @@ const mappings: Record<string, RepairMapping> = {
 
 function mappingsFor(issues: FidelityValidationIssue[]): RepairMapping[] {
   const selected = new Map<RepairCategory, RepairMapping>();
-  const apparelPriority = ["apparel_artwork_drift", "apparel_artwork_placement_drift", "apparel_text_drift", "apparel_color_drift", "apparel_silhouette_drift", "apparel_scale_drift"];
+  const apparelPriority = ["apparel_artwork_drift", "apparel_artwork_identity_drift", "apparel_artwork_text_drift", "apparel_artwork_structure_drift", "apparel_artwork_color_drift", "apparel_artwork_placement_drift", "apparel_artwork_scale_drift", "apparel_text_drift", "apparel_color_drift", "apparel_silhouette_drift", "apparel_scale_drift"];
   const orderedIssues = [...issues].sort((left, right) => {
     const leftIndex = apparelPriority.indexOf(left.code.toLowerCase());
     const rightIndex = apparelPriority.indexOf(right.code.toLowerCase());
     return (leftIndex < 0 ? apparelPriority.length : leftIndex) - (rightIndex < 0 ? apparelPriority.length : rightIndex);
   });
   for (const issue of orderedIssues) {
-    const mapping = mappings[issue.code];
+    const mapping = mappings[issue.code.toLowerCase()];
     if (mapping) {
       const existing = selected.get(mapping.category);
       if (existing) existing.instructions.push(...mapping.instructions);

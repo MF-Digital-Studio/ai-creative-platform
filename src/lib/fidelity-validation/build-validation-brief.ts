@@ -28,11 +28,14 @@ function buildBrief(input: {
   referenceStyleContext?: string | null;
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
+  apparelArtworkIdentity?: FidelityValidationBrief["apparelArtworkIdentity"];
   referencePreservation?: boolean;
+  humanRealism?: FidelityValidationBrief["humanRealism"];
 }): FidelityValidationBrief {
   return {
     vertical: input.vertical,
     strategy: input.strategy,
+    humanRealism: input.humanRealism,
     sourceAuthority: "The original product image is pixel truth. ProductProfile is an interpretation aid and cannot override visible source evidence.",
     referencePreservation: input.referencePreservation === true,
     productProfile: input.productProfile,
@@ -43,6 +46,7 @@ function buildBrief(input: {
     verticalChecks: input.vertical === "product" ? genericChecks : verticalChecks[input.vertical],
     referenceMatch: input.referenceMatch ?? null,
     identityManifest: input.identityManifest ?? null,
+    apparelArtworkIdentity: input.apparelArtworkIdentity ?? null,
   };
 }
 
@@ -53,9 +57,10 @@ export function renderValidationInstructions(brief: FidelityValidationBrief): st
     "Compare the source product image and generated output directly. A visually similar but different product is a material identity failure. Return only the requested structured findings; do not provide free-form reasoning.",
     "Use PRODUCT_IDENTITY_DRIFT for a substituted/different source design (critical). For jewelry use CENTER_STONE_SHAPE_CHANGED, STONE_COUNT_CHANGED, STONE_LAYOUT_CHANGED, SETTING_CHANGED, or BAND_GEOMETRY_CHANGED when materially visible. For watches use WATCH_DIAL_STRUCTURE_CHANGED; footwear FOOTWEAR_PANEL_STRUCTURE_CHANGED; cosmetics PACKAGE_GEOMETRY_CHANGED; apparel GARMENT_ARTWORK_CHANGED. Material identity structure failures are critical or major; harmless perspective-dependent changes are not issues.",
     "Ignore harmless perspective, lighting, natural folds, expected body fitting, and tiny unreadable text unless prominent branding or layout is materially corrupted.",
-    brief.vertical === "apparel" ? "Apparel source identity gate: compare the garment against the uploaded product before judging scene quality. Report APPAREL_ARTWORK_DRIFT as critical when artwork composition/design changes; report APPAREL_ARTWORK_PLACEMENT_DRIFT, APPAREL_TEXT_DRIFT, APPAREL_SCALE_DRIFT, APPAREL_COLOR_DRIFT, or APPAREL_SILHOUETTE_DRIFT as at least major when materially changed. Artwork existence, placement, scale, orientation, visible text, garment color, cut, and construction are source-locked. Allow only natural folds, drape, body curvature, perspective, and lighting. Reference images may guide pose/environment/light/crop only and must never override garment or artwork identity, placement, scale, color, text, or construction." : "",
+    brief.vertical === "apparel" ? `Apparel source identity gate: compare the garment against the uploaded product before judging scene quality. Compare artwork composition, typography, major illustration shapes, dominant graphic colors, relative placement, scale and orientation. Report APPAREL_ARTWORK_IDENTITY_DRIFT as critical for materially different/replaced artwork; APPAREL_ARTWORK_TEXT_DRIFT as critical for materially changed text; APPAREL_ARTWORK_STRUCTURE_DRIFT as major for missing/changed major graphic elements; APPAREL_ARTWORK_PLACEMENT_DRIFT, APPAREL_ARTWORK_SCALE_DRIFT, or APPAREL_ARTWORK_COLOR_DRIFT as major for material changes. Small fold-related deviations are minor. Artwork identity evidence: ${brief.apparelArtworkIdentity ? JSON.stringify(brief.apparelArtworkIdentity) : "no separate crop available; do not claim exact artwork verification"}. Visible text is identity-critical. Reference images may guide pose/environment/light/crop only and must never override garment or artwork identity, placement, scale, color, text, or construction.` : "",
     "Validate only creative requirements listed as applied. Rejected or adjusted requirements are not failures. Preferred/decorative misses are warnings.",
     `Vertical-specific checks: ${brief.verticalChecks.join("; ")}.`,
+    brief.humanRealism?.applied ? `Independently assess human_realism only where anatomy is visible (focus: ${brief.humanRealism.focusAreas.join(", ")}). Report PLASTIC_SKIN, OVER_RETOUCHED_SKIN, HAND_ANATOMY_ERROR, FINGER_COUNT_ERROR, FINGER_GEOMETRY_ERROR, NAIL_ANATOMY_ERROR, FACIAL_REALISM_DRIFT, BODY_PROPORTION_ERROR, POSE_IMPLAUSIBLE, HAIR_REALISM_DRIFT, or HUMAN_PRODUCT_CONTACT_ERROR as applicable. Missing/extra/fused fingers, severely malformed hands or impossible limbs are critical. Clear plastic skin, AI face, malformed nails, synthetic hair, major proportion or contact errors are major. Mild retouch or subtle awkwardness is minor. Do not demand severe blemishes or clinical skin texture. Human realism remains required even for glossy editorial styling or a retouched reference.` : "Human realism category is inactive for this still-life scene; do not report human anatomy issues.",
     `Resolved strategy: ${brief.strategy}. Scene: ${brief.sceneSuitability?.selectedSceneFamily ?? "not provided"}.`,
     `Composition expectation: ${brief.composition ? JSON.stringify(brief.composition) : "not provided"}.`,
     `Applied creative requirements: ${brief.appliedRequirements.length ? JSON.stringify(brief.appliedRequirements) : "none"}.`,

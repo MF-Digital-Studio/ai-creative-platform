@@ -7,7 +7,7 @@ export type OpenAIImageEditRequestParams<TImage> = {
   n: 1;
   output_format: "png";
   size: string;
-  quality?: "high" | "low";
+  quality?: "low" | "medium" | "high" | "xhigh" | "max" | "auto";
   input_fidelity?: "high";
 };
 
@@ -17,7 +17,7 @@ export function buildOpenAIImageEditParams<TImage>(input: {
   image: TImage;
   prompt: string;
   size: string;
-  quality: "high" | "low" | null;
+  quality: "low" | "medium" | "high" | "xhigh" | "max" | "auto" | null;
 }): OpenAIImageEditRequestParams<TImage> {
   const capabilities = getImageModelCapabilities(input.model);
 

@@ -543,13 +543,18 @@
       "credits": "Credits —",
       "creditsHint": "Available after plan setup",
       "account": "Account",
-      "profile": "Profile",
+      "profile": "Account",
       "signOut": "Sign Out"
     },
     "account": {
       "eyebrow": "ACCOUNT",
-      "heading": "Profile",
+      "heading": "Account",
       "description": "Manage the name shown in your Klay.ai workspace.",
+      "appearanceHeading": "Appearance",
+      "appearanceDescription": "Choose how Klay.ai looks on this device.",
+      "system": "System",
+      "dark": "Dark",
+      "light": "Light",
       "displayNameLabel": "Display name",
       "displayNameHelper": "This name is used inside your workspace.",
       "save": "Save changes",
@@ -640,40 +645,6 @@
         "socialCampaign": "A cohesive social campaign set with an attention-led hero image, detail crop and vertical story composition."
       }
     },
-    "templates": {
-      "heading": "Create with a preset",
-      "description": "Start from a curated direction, then make it your own.",
-      "useTemplate": "Use {title} template",
-      "types": {
-        "image": "Image",
-        "video": "Video",
-        "campaignSet": "Campaign set"
-      },
-      "items": {
-        "studioProductShot": "Studio Product Shot",
-        "editorialFashion": "Editorial Fashion",
-        "luxuryCosmetics": "Luxury Cosmetics",
-        "jewelryCloseUp": "Jewelry Close-up",
-        "lifestyleScene": "Lifestyle Scene",
-        "shortProductVideo": "Short Product Video"
-      },
-      "descriptors": {
-        "studioProductShot": "Clean commercial studio",
-        "editorialFashion": "Editorial on-model styling",
-        "luxuryCosmetics": "Warm premium campaign",
-        "jewelryCloseUp": "Sculptural macro detail",
-        "lifestyleScene": "Natural campaign setting",
-        "shortProductVideo": "Cinematic product motion"
-      },
-      "alts": {
-        "studioProductShot": "Minimal cosmetic bottle photographed in soft studio light",
-        "editorialFashion": "Tailored dark jacket styled in a bright architectural interior",
-        "luxuryCosmetics": "Amber skincare bottle staged with warm stone and sunlight",
-        "jewelryCloseUp": "Sculptural gold jewelry photographed in dramatic macro detail",
-        "lifestyleScene": "Adult model wearing a burgundy dress in warm stone architecture",
-        "shortProductVideo": "Dark blue fragrance bottle staged above reflective water"
-      }
-    },
     "presets": {
       "heading": "Creative presets",
       "description": "Choose a production-ready direction, then add an optional note.",
@@ -726,55 +697,6 @@
         "ground-level-campaign": { "title": "Ground-Level Campaign", "description": "Low camera angle emphasizing footwear.", "alt": "Ground-level footwear campaign" },
         "motion-step": { "title": "Motion Step", "description": "Walking pose with realistic footwear-body interaction.", "alt": "Footwear during a natural step" },
         "footwear-material-detail": { "title": "Footwear Hero Close-up", "description": "Close-up of footwear material, sole, and construction.", "alt": "Footwear hero close-up" }
-      }
-    },
-    "inspiration": {
-      "heading": "Explore creative directions",
-      "description": "Curated campaign directions for apparel, jewelry, watches, cosmetics, and footwear.",
-      "filterLabel": "Filter creative directions",
-      "useDirection": "Use this direction",
-      "categories": {
-        "all": "All",
-        "apparel": "Apparel",
-        "cosmetics": "Cosmetics",
-        "jewelry": "Jewelry",
-        "watches": "Watches",
-        "footwear": "Footwear"
-      },
-      "types": {
-        "image": "Image",
-        "video": "Video",
-        "campaignSet": "Campaign set"
-      },
-      "items": {
-        "architecturalFashion": "Architectural Poise",
-        "quietTailoring": "Quiet Tailoring",
-        "warmSkincare": "Sun-washed Skincare",
-        "textureStudy": "Texture Study",
-        "goldSculpture": "Sculpted Gold",
-        "softDaylightJewelry": "Soft Daylight Jewelry",
-        "warmWrist": "Warm Wrist Editorial",
-        "streetStep": "Street Step"
-      },
-      "alts": {
-        "architecturalFashion": "Adult model in a long burgundy dress framed by stone arches",
-        "quietTailoring": "Dark tailored jacket and light trousers in a minimal interior",
-        "warmSkincare": "Amber skincare bottle beside a model in warm directional sunlight",
-        "textureStudy": "Close-up study of glossy cosmetic texture in neutral tones",
-        "goldSculpture": "Curved polished gold jewelry on a dark textured surface",
-        "softDaylightJewelry": "Gold earrings with violet stones resting on warm limestone",
-        "warmWrist": "Premium watch naturally worn on a wrist in warm directional light",
-        "streetStep": "Sneakers in a natural walking step on city pavement"
-      },
-      "prompts": {
-        "architecturalFashion": "Create a poised editorial fashion campaign in warm monumental architecture with precise garment detail.",
-        "quietTailoring": "Use restrained daylight, modern tailoring and a minimal architectural setting with calm neutral tones.",
-        "warmSkincare": "Build a sun-washed skincare campaign with warm stone, subtle reflections and clean product focus.",
-        "textureStudy": "Create a tactile macro study that highlights material texture, sheen and soft tonal depth.",
-        "goldSculpture": "Photograph the jewelry as a sculptural object with dramatic black surfaces and controlled gold reflections.",
-        "softDaylightJewelry": "Create a refined daylight jewelry scene on pale stone with soft shadows and premium detail.",
-        "warmWrist": "Create a close wrist editorial with warm directional light and true watch detail.",
-        "streetStep": "Create a low-angle street campaign focused on the sneakers and natural floor contact."
       }
     },
     "projectsIndex": {
@@ -977,6 +899,10 @@
     "label": "Select language",
     "menuLabel": "Language options",
     "switchTo": "Switch language to",
+    "descriptions": {
+      "tr": "Turkish",
+      "en": "English"
+    },
     "localeNames": {
       "tr": "Türkçe",
       "en": "English"

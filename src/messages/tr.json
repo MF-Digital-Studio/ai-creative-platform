@@ -543,13 +543,18 @@
       "credits": "Krediler —",
       "creditsHint": "Plan kurulumu tamamlandığında kullanılabilir",
       "account": "Hesap",
-      "profile": "Profil",
+      "profile": "Hesap",
       "signOut": "Çıkış Yap"
     },
     "account": {
       "eyebrow": "HESAP",
-      "heading": "Profil",
+      "heading": "Hesap",
       "description": "Klay.ai çalışma alanınızda görünen adı yönetin.",
+      "appearanceHeading": "Görünüm",
+      "appearanceDescription": "Klay.ai'nin bu cihazda nasıl görüneceğini seçin.",
+      "system": "Sistem",
+      "dark": "Koyu",
+      "light": "Açık",
       "displayNameLabel": "Görünen ad",
       "displayNameHelper": "Bu ad çalışma alanınızda kullanılır.",
       "save": "Değişiklikleri kaydet",
@@ -640,40 +645,6 @@
         "socialCampaign": "Dikkat çekici ana görsel, detay kadrajı ve dikey hikâye kompozisyonundan oluşan tutarlı sosyal medya seti."
       }
     },
-    "templates": {
-      "heading": "Bir preset ile oluşturun",
-      "description": "Seçilmiş bir yaratıcı yönle başlayın, sonra kendinize göre uyarlayın.",
-      "useTemplate": "{title} şablonunu kullan",
-      "types": {
-        "image": "Görsel",
-        "video": "Video",
-        "campaignSet": "Kampanya seti"
-      },
-      "items": {
-        "studioProductShot": "Stüdyo Ürün Çekimi",
-        "editorialFashion": "Editorial Moda",
-        "luxuryCosmetics": "Lüks Kozmetik",
-        "jewelryCloseUp": "Takı Yakın Planı",
-        "lifestyleScene": "Yaşam Tarzı Sahnesi",
-        "shortProductVideo": "Kısa Ürün Videosu"
-      },
-      "descriptors": {
-        "studioProductShot": "Temiz ticari stüdyo",
-        "editorialFashion": "Model üzerinde editorial stil",
-        "luxuryCosmetics": "Sıcak premium kampanya",
-        "jewelryCloseUp": "Heykelsi makro detay",
-        "lifestyleScene": "Doğal kampanya ortamı",
-        "shortProductVideo": "Sinematik ürün hareketi"
-      },
-      "alts": {
-        "studioProductShot": "Yumuşak stüdyo ışığında fotoğraflanmış minimal kozmetik şişesi",
-        "editorialFashion": "Aydınlık mimari iç mekânda stillenmiş koyu renk özel dikim ceket",
-        "luxuryCosmetics": "Sıcak taş ve gün ışığıyla kurgulanmış amber cilt bakım şişesi",
-        "jewelryCloseUp": "Dramatik makro detayla fotoğraflanmış heykelsi altın takı",
-        "lifestyleScene": "Sıcak taş mimaride bordo elbise giyen yetişkin model",
-        "shortProductVideo": "Yansıtıcı su üzerinde kurgulanmış koyu mavi parfüm şişesi"
-      }
-    },
     "presets": {
       "heading": "Yaratıcı presetler",
       "description": "Üretime hazır bir yön seçin, ardından isteğe bağlı notunuzu ekleyin.",
@@ -726,55 +697,6 @@
         "footwear-material-detail": { "title": "Ayakkabı Hero Yakın Planı", "description": "Ayakkabı malzemesi, tabanı ve yapısının yakın planı.", "alt": "Ayakkabı hero yakın planı" },
         "editorial-flash": { "title": "Editorial Flash", "description": "Ham, direkt flaş karakterli premium streetwear fotoğrafı.", "alt": "Direkt flaşla çekilmiş streetwear kampanyası" },
         "coastal-editorial": { "title": "Coastal Editorial", "description": "Rüzgar ve gerçek mekan dokusuyla doğal sahil streetwear kampanyası.", "alt": "Doğal sahil editorial ortamında streetwear model" }
-      }
-    },
-    "inspiration": {
-      "heading": "Yaratıcı yönleri keşfedin",
-      "description": "Giyim, takı, saat, kozmetik ve ayakkabı için seçilmiş kampanya yönleri.",
-      "filterLabel": "Yaratıcı yönleri filtrele",
-      "useDirection": "Bu yönü kullan",
-      "categories": {
-        "all": "Tümü",
-        "apparel": "Giyim",
-        "cosmetics": "Kozmetik",
-        "jewelry": "Takı",
-        "watches": "Saat",
-        "footwear": "Ayakkabı"
-      },
-      "types": {
-        "image": "Görsel",
-        "video": "Video",
-        "campaignSet": "Kampanya seti"
-      },
-      "items": {
-        "architecturalFashion": "Mimari Duruş",
-        "quietTailoring": "Sade Terzilik",
-        "warmSkincare": "Güneşli Cilt Bakımı",
-        "textureStudy": "Doku Çalışması",
-        "goldSculpture": "Heykelsi Altın",
-        "softDaylightJewelry": "Yumuşak Gün Işığında Takı",
-        "warmWrist": "Sıcak Bilek Editoriali",
-        "streetStep": "Sokak Adımı"
-      },
-      "alts": {
-        "architecturalFashion": "Taş kemerlerle çevrelenmiş uzun bordo elbiseli yetişkin model",
-        "quietTailoring": "Minimal iç mekânda koyu renk özel dikim ceket ve açık renk pantolon",
-        "warmSkincare": "Sıcak yönlü ışıkta model yanında amber cilt bakım şişesi",
-        "textureStudy": "Nötr tonlarda parlak kozmetik dokusunun yakın plan çalışması",
-        "goldSculpture": "Koyu dokulu yüzey üzerinde kıvrımlı parlak altın takı",
-        "softDaylightJewelry": "Sıcak kireç taşı üzerinde mor taşlı altın küpeler",
-        "warmWrist": "Sıcak yönlü ışıkta bilekte doğal duran premium saat",
-        "streetStep": "Şehir zemininde doğal yürüyüş adımındaki sneakerlar"
-      },
-      "prompts": {
-        "architecturalFashion": "Sıcak anıtsal mimaride, hassas giysi detayıyla güçlü bir editorial moda kampanyası oluştur.",
-        "quietTailoring": "Sade gün ışığı, modern terzilik ve sakin nötr tonlarda minimal bir mimari ortam kullan.",
-        "warmSkincare": "Sıcak taş, hafif yansımalar ve temiz ürün odağıyla güneşli bir cilt bakım kampanyası oluştur.",
-        "textureStudy": "Malzeme dokusunu, parlaklığı ve yumuşak ton derinliğini öne çıkaran dokunsal bir makro çalışma oluştur.",
-        "goldSculpture": "Takıyı dramatik siyah yüzeyler ve kontrollü altın yansımalarla heykelsi bir nesne olarak fotoğrafla.",
-        "softDaylightJewelry": "Açık renk taş üzerinde yumuşak gölgeler ve premium detayla rafine bir gün ışığı takı sahnesi oluştur.",
-        "warmWrist": "Sıcak yönlü ışık ve gerçek saat detaylarıyla yakın plan bir bilek editoriali oluştur.",
-        "streetStep": "Sneakerlara ve doğal zemin temasına odaklanan alçak açılı bir sokak kampanyası oluştur."
       }
     },
     "projectsIndex": {
@@ -977,6 +899,10 @@
     "label": "Dil seç",
     "menuLabel": "Dil seçenekleri",
     "switchTo": "Dili değiştir:",
+    "descriptions": {
+      "tr": "Türkçe",
+      "en": "English"
+    },
     "localeNames": {
       "tr": "Türkçe",
       "en": "English"

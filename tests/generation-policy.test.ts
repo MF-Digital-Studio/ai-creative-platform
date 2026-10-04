@@ -6,6 +6,7 @@ import { getImageModelCapabilities } from "../src/lib/generation/providers/image
 import { buildOpenAIImageEditParams } from "../src/lib/generation/providers/openai-image-request";
 import { orderGenerationImages } from "../src/lib/generation/image-roles";
 import { validateGenerationPolicy } from "../src/lib/generation/strategy/validate-generation-policy";
+import type { ImageGenerationQuality } from "../src/lib/generation/types";
 
 test("jewelry on body normalizes to jewelry on model and reference edit", () => {
   const result = validateGenerationPolicy({ strategy: "jewelry_still_life", sceneFamily: "jewelry_on_body", preservationMode: "pixel_lock", hasUsableMask: false, vertical: "jewelry" });
@@ -37,6 +38,42 @@ test("gpt-image-2 omits explicit input fidelity while retaining every edit image
   assert.equal("input_fidelity" in params, false);
   assert.deepEqual(params.image, ["source", "reference"]);
   assert.equal(getImageModelCapabilities("gpt-image-2").supportsExplicitInputFidelity, false);
+});
+
+test("Image 2.5 Sunburst and Flare snapshots support extended quality without input fidelity", () => {
+  for (const model of ["gpt-image-2.5-sunburst", "gpt-image-2.5-sunburst-2026-10-01", "gpt-image-2.5-flare", "gpt-image-2.5-flare-2026-10-01"]) {
+    const capabilities = getImageModelCapabilities(model);
+    assert.equal(capabilities.supportsExtendedQuality, true);
+    assert.equal(capabilities.supportsExplicitInputFidelity, false);
+    assert.equal(capabilities.supportsMultiImageEdit, true);
+    assert.equal(capabilities.supportsFlexibleSize, true);
+    assert.ok(capabilities.supportedQualities.includes("xhigh"));
+    assert.ok(capabilities.supportedQualities.includes("max"));
+    for (const quality of ["low", "medium", "auto"] as const) {
+      assert.ok(capabilities.supportedQualities.includes(quality));
+    }
+    for (const quality of ["xhigh", "max"] as const) {
+      const images = ["product", "artwork", "reference"];
+      const params = buildOpenAIImageEditParams({ model, image: images, prompt: "test", size: "1024x1536", quality });
+      assert.equal(params.quality, quality);
+      assert.equal("input_fidelity" in params, false);
+      assert.deepEqual(params.image, images);
+    }
+  }
+  assert.equal(getImageModelCapabilities("unknown-model").supportsExtendedQuality, false);
+});
+
+test("generation quality type covers persisted provider qualities and legacy values", () => {
+  const persistedQualities: readonly ImageGenerationQuality[] = [
+    "preview", "standard", "low", "medium", "high", "xhigh", "max", "auto",
+  ];
+  assert.deepEqual(persistedQualities, ["preview", "standard", "low", "medium", "high", "xhigh", "max", "auto"]);
+});
+
+test("Sunburst production default remains xhigh and other models remain standard", () => {
+  const resolveDefault = (model: string) => model.startsWith("gpt-image-2.5-sunburst") ? "xhigh" : "standard";
+  assert.equal(resolveDefault("gpt-image-2.5-sunburst"), "xhigh");
+  assert.equal(resolveDefault("gpt-image-1"), "standard");
 });
 
 test("generation image ordering keeps source first and references deterministic", () => {

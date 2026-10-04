@@ -1,6 +1,7 @@
 import "server-only";
 
 import { toFile } from "openai";
+import type { ImageEditParamsNonStreaming } from "openai/resources/images";
 
 import { getOpenAIClient } from "@/lib/openai/client";
 
@@ -31,13 +32,19 @@ export function resolveOpenAIImageSize(aspectRatio: AspectRatio): OpenAIImageSiz
 
 export function resolveOpenAIImageQuality(
   quality: ImageGenerationQuality,
-): "high" | "low" | null {
+): "high" | "low" | "xhigh" | "max" | null {
   switch (quality) {
     case "preview":
+    case "low":
       return "low";
+    case "medium":
     case "high":
       return "high";
+    case "xhigh":
+    case "max":
+      return quality;
     case "standard":
+    case "auto":
       // Keep the established API default for the existing generation flow.
       return null;
   }
@@ -58,12 +65,21 @@ function getProviderRequestId(response: unknown): string | null {
 
 export class OpenAIImageProvider implements ImageGenerationProviderClient {
   async generate(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
+    const operation = request.operation ?? "image_generation";
+    console.info("[generation] provider_entered", {
+      model: request.model,
+      quality: request.quality,
+      operation,
+    });
     try {
       const orderedImages = request.images ? [...request.images].sort((left, right) => left.order - right.order) : orderGenerationImages(request.sourceAsset);
       const scenePreparation = request.operation === "scene_preparation";
       const referenceReplacement = request.operation === "reference_product_replacement";
       if (referenceReplacement && (orderedImages[0]?.role !== "reference_base_scene" || orderedImages[1]?.role !== "product_identity_source")) throw new GenerationProviderError("Reference replacement requires the base scene first and product identity source second.", "openai");
       if (!scenePreparation && !referenceReplacement && request.operation !== "identity_placement" && orderedImages[0]?.role !== "product_identity_source") throw new GenerationProviderError("Product identity source must be the first provider image.", "openai");
+      if (request.operation !== "identity_placement" && request.prompt.includes("SOURCE ARTWORK IDENTITY — EXACT DESIGN AUTHORITY") && orderedImages[0]?.role === "product_identity_source" && orderedImages[1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("Exact-product apparel generation requires its separate artwork identity input when localization succeeded.", "openai");
+      if (request.operation !== "identity_placement" && orderedImages.some(({ role }) => role === "apparel_artwork_identity_source") && orderedImages[referenceReplacement ? 2 : 1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("Apparel artwork identity source must follow the product identity source.", "openai");
+      if (request.operation !== "identity_placement" && orderedImages.some(({ role }) => role === "apparel_artwork_identity_source") && orderedImages.some(({ role }) => role === "scene_reference" || role === "style_reference") && orderedImages.findIndex(({ role }) => role === "apparel_artwork_identity_source") > orderedImages.findIndex(({ role }) => role === "scene_reference" || role === "style_reference")) throw new GenerationProviderError("Apparel artwork identity must precede scene references.", "openai");
       const imageFiles = await Promise.all(orderedImages.map(async (image, index) => {
         const normalized = await normalizeImageInputForOpenAI(image.data, image.mimeType);
         const suffix = normalized.mimeType === "image/jpeg" ? "jpg" : normalized.mimeType === "image/webp" ? "webp" : "png";
@@ -71,12 +87,18 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
       }));
       const size = resolveOpenAIImageSize(request.aspectRatio);
       const quality = resolveOpenAIImageQuality(request.quality);
+      // The installed SDK types predate the Image 2.5 extended quality values.
+      console.info("[generation] openai_request_started", {
+        model: request.model,
+        quality: request.quality,
+        operation,
+      });
       const response = scenePreparation && imageFiles.length === 0
         ? await getOpenAIClient().images.generate({
           model: request.model,
           prompt: request.prompt,
           size: size.value,
-          ...(quality ? { quality } : {}),
+          ...(quality ? { quality: quality as "high" | "low" } : {}),
           output_format: "png",
         })
         : await getOpenAIClient().images.edit(buildOpenAIImageEditParams({
@@ -85,7 +107,7 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
           prompt: request.prompt,
           size: size.value,
           quality,
-        }));
+        }) as ImageEditParamsNonStreaming);
       const imageBase64 = response.data?.[0]?.b64_json;
 
       if (typeof imageBase64 !== "string" || imageBase64.length === 0) {
@@ -108,7 +130,7 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
         model: request.model,
         width: size.width,
         height: size.height,
-        providerMetadata: requestId ? { requestId } : undefined,
+        providerMetadata: { ...(requestId ? { requestId } : {}), model: request.model, quality: quality ?? "auto" },
       };
     } catch (error) {
       if (error instanceof GenerationProviderError) {

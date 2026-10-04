@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { createQueuedImageGeneration, registerProductAsset, registerReferenceAsset } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import { registerProductAsset, registerReferenceAsset } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import { createQueuedImageGeneration } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
 import { ProductImageUpload } from "@/components/projects/product-image-upload";
 import { ReferenceAssetList } from "@/components/projects/reference-asset-list";
 import type { AppLocale } from "@/i18n/routing";
@@ -24,7 +25,7 @@ export async function ProjectControlPanel({ locale, projectId, userId, creativeD
     <CreativeDirectionForm creativeDirection={creativeDirection} projectId={projectId} locale={locale} messages={{
       label: t("creativeDirection.label"), description: t("creativeDirection.description"), placeholder: t("creativeDirection.placeholder"), save: t("creativeDirection.save"), saving: t("creativeDirection.saving"), validationError: t("creativeDirection.validationError"), saveError: t("creativeDirection.saveError"), saveSuccess: t("creativeDirection.saveSuccess"),
     }} />
-    <GenerateImageForm projectId={projectId} action={createQueuedImageGeneration.bind(null, locale, projectId)} messages={{
+    <GenerateImageForm action={createQueuedImageGeneration.bind(null, locale, projectId)} messages={{
       generate: t("generation.generate"), creating: t("generation.creating"), missingProductImage: t("generation.missingProductImage"), missingCreativeDirection: t("generation.missingCreativeDirection"), creationFailed: t("generation.creationFailed"), generationFailed: t("generation.generationFailed"),
       progressTitle: t("generation.progressTitle"), progressDescription: t("generation.progressDescription"), progressStatuses: [t("generation.progressStatuses.preparing"), t("generation.progressStatuses.scene"), t("generation.progressStatuses.generating"), t("generation.progressStatuses.finalizing")],
     }} />

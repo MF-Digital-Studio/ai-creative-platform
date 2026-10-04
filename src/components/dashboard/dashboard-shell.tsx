@@ -8,7 +8,7 @@ type DashboardShellProps = {
 
 export function DashboardShell({ children, displayName }: DashboardShellProps) {
   return (
-    <DashboardFrame displayName={displayName} topbar={<DashboardTopbar />}>
+    <DashboardFrame displayName={displayName} topbar={<DashboardTopbar displayName={displayName} />}>
       {children}
     </DashboardFrame>
   );

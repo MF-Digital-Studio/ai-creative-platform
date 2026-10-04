@@ -1,13 +1,13 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 
 const storageKey = "klay-dashboard-sidebar-collapsed";
 const sidebarChangeEvent = "klay-dashboard-sidebar-change";
 
 function subscribe(onChange: () => void) {
-  const media = window.matchMedia("(max-width: 1100px)");
+  const media = window.matchMedia("(min-width: 768px) and (max-width: 1199px)");
   window.addEventListener("storage", onChange);
   window.addEventListener(sidebarChangeEvent, onChange);
   media.addEventListener("change", onChange);
@@ -20,11 +20,26 @@ function subscribe(onChange: () => void) {
 
 function getCollapsed() {
   const saved = window.localStorage.getItem(storageKey);
-  return saved === null ? window.matchMedia("(max-width: 1100px)").matches : saved === "true";
+  return window.matchMedia("(min-width: 768px) and (max-width: 1199px)").matches || saved === "true";
 }
 
 export function DashboardFrame({ children, topbar, displayName }: { children: React.ReactNode; topbar: React.ReactNode; displayName?: string | null }) {
   const collapsed = useSyncExternalStore(subscribe, getCollapsed, () => false);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+
+    function checkHorizontalOverflow() {
+      const page = document.documentElement;
+      if (page.scrollWidth > page.clientWidth) {
+        console.warn(`Dashboard horizontal overflow at ${page.clientWidth}px: ${page.scrollWidth}px scroll width`);
+      }
+    }
+
+    checkHorizontalOverflow();
+    window.addEventListener("resize", checkHorizontalOverflow);
+    return () => window.removeEventListener("resize", checkHorizontalOverflow);
+  }, []);
 
   function toggleSidebar() {
     window.localStorage.setItem(storageKey, String(!collapsed));

@@ -1,6 +1,6 @@
 export type GenerationProvider = "openai";
 
-export type ImageGenerationQuality = "preview" | "standard" | "high";
+export type ImageGenerationQuality = "preview" | "standard" | "low" | "medium" | "high" | "xhigh" | "max" | "auto";
 
 export type AspectRatio = "1:1" | "4:5" | "3:4" | "16:9" | "9:16";
 
@@ -18,6 +18,7 @@ export type ImageGenerationSourceAsset = {
 
 export type GenerationImageRole =
   | "product_identity_source"
+  | "apparel_artwork_identity_source"
   | "reference_base_scene"
   | "scene_reference"
   | "style_reference"
@@ -27,6 +28,25 @@ export type GenerationImageRole =
 export type GenerationImageInput = ImageGenerationSourceAsset & {
   role: GenerationImageRole;
   order: number;
+};
+
+export type ApparelArtworkIdentitySource = {
+  assetId: string;
+  side: "front" | "back" | "unknown";
+  source: "detected_crop" | "profile_estimate" | "unavailable";
+  boundingBox: { x: number; y: number; width: number; height: number } | null;
+  cropMetadata: { sourceWidth: number; sourceHeight: number; left: number; top: number; width: number; height: number } | null;
+  confidence: number;
+  containsText: boolean;
+  identityCritical: boolean;
+};
+
+export type HumanRealismMetadata = {
+  version: string;
+  applied: boolean;
+  focusAreas: string[];
+  validationResult: "pass" | "pass_with_warnings" | "fail" | "validation_unavailable" | null;
+  repairType: string | null;
 };
 
 export type ImageGenerationRequest = {

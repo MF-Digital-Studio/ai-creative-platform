@@ -51,7 +51,7 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
           <DashboardIcon name="chevron" className="dashboard-sidebar-chevron" />
         </summary>
         <div className="dashboard-sidebar-account-actions">
-          <Link href="/dashboard/account">{topbar("profile")}</Link>
+          <Link href="/dashboard/account">{topbar("account")}</Link>
           <form action={`/${locale}/auth/signout`} method="post"><button type="submit">{topbar("signOut")}</button></form>
         </div>
       </details>

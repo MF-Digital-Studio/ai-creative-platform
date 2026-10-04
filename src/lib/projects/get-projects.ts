@@ -92,15 +92,38 @@ function buildProjectQuery(supabase: Awaited<ReturnType<typeof createClient>>, u
     .limit(1, { referencedTable: "product_asset" });
 }
 
+function logProjectQueryFailure(error: { code: string; message: string; details: string; hint: string }) {
+  if (process.env.NODE_ENV === "development") {
+    console.error("[projects] query_failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+  }
+}
+
 export async function getProjects(userId: string, limit?: number): Promise<Project[]> {
+  if (process.env.NODE_ENV === "development") {
+    console.info("[projects] query_start", { userIdPresent: Boolean(userId), limit: limit ?? null });
+  }
   const supabase = await createClient();
   const query = buildProjectQuery(supabase, userId).order("created_at", { ascending: false });
   const { data, error } = limit ? await query.limit(limit) : await query;
-  if (error) throw new Error("Unable to load projects.");
+  if (error) {
+    logProjectQueryFailure(error);
+    throw new Error("Unable to load projects.");
+  }
+  if (process.env.NODE_ENV === "development") {
+    console.info("[projects] query_success", { count: data?.length ?? 0 });
+  }
   return signProjectPreviews((data ?? []) as unknown as ProjectRow[]);
 }
 
 export async function getProjectsPage(userId: string, options: { page: number; pageSize: number; search: string; status: ProjectStatus | null; sort: ProjectSort }) {
+  if (process.env.NODE_ENV === "development") {
+    console.info("[projects] query_start", { userIdPresent: Boolean(userId), limit: options.pageSize });
+  }
   const supabase = await createClient();
   const { count: totalCount, error: totalError } = await supabase.from("projects").select("id", { count: "exact", head: true }).eq("user_id", userId);
   if (totalError) throw new Error("Unable to count projects.");
@@ -111,8 +134,14 @@ export async function getProjectsPage(userId: string, options: { page: number; p
   if (options.status) query = query.eq("status", options.status);
   const start = (options.page - 1) * options.pageSize;
   const { data, count, error } = await query.order(field, { ascending }).range(start, start + options.pageSize - 1);
-  if (error) throw new Error("Unable to load projects.");
+  if (error) {
+    logProjectQueryFailure(error);
+    throw new Error("Unable to load projects.");
+  }
   const resultCount = count ?? 0;
+  if (process.env.NODE_ENV === "development") {
+    console.info("[projects] query_success", { count: data?.length ?? 0 });
+  }
   const pageCount = Math.max(1, Math.ceil(resultCount / options.pageSize));
   if (resultCount > 0 && options.page > pageCount) return getProjectsPage(userId, { ...options, page: pageCount });
   return { projects: await signProjectPreviews((data ?? []) as unknown as ProjectRow[]), totalCount: totalCount ?? 0, resultCount, page: options.page, pageCount };

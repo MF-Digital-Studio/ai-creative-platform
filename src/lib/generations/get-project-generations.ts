@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { ImageGenerationQuality } from "@/lib/generation/types";
 
 const generationFields = [
   "id",
@@ -40,7 +42,7 @@ type ProjectGenerationRow = {
   status: GenerationStatus;
   provider: string;
   model: string;
-  quality: "preview" | "standard" | "high" | null;
+  quality: ImageGenerationQuality | null;
   aspect_ratio: "1:1" | "4:5" | "3:4" | "16:9" | "9:16" | null;
   preservation_mode: "reference_edit" | "pixel_lock" | null;
   fidelity_status: "not_checked" | "locked" | "failed" | "not_available" | null;
@@ -84,6 +86,20 @@ export async function getProjectGenerations(
   }
 
   const generations = (data ?? []) as unknown as ProjectGenerationRow[];
+
+  const staleBefore = Date.now() - 10 * 60 * 1000;
+  for (const generation of generations) {
+    if (generation.status !== "queued" || new Date(generation.created_at).getTime() >= staleBefore) continue;
+    const { data: stalled } = await getSupabaseAdminClient().from("generations")
+      .update({ status: "failed", error_message: "queue_stalled", processing_completed_at: new Date().toISOString() })
+      .eq("id", generation.id).eq("project_id", projectId).eq("status", "queued")
+      .select("id").maybeSingle();
+    if (stalled) {
+      generation.status = "failed";
+      generation.error_message = "queue_stalled";
+      console.info("[generation-queue] status_transition", { generationId: generation.id, from: "queued", to: "failed" });
+    }
+  }
 
   return Promise.all(
     generations.map(async (generation) => {

@@ -6,12 +6,11 @@ import { useTranslations } from "next-intl";
 import { createWorkspaceProject } from "@/app/[locale]/dashboard/actions";
 import { DASHBOARD_PRESET_EVENT } from "@/components/dashboard/creative-preset-rail";
 import {
-  createQueuedImageGeneration,
   registerProductAsset,
   registerReferenceAsset,
-  runQueuedImageGeneration,
   updateCreativeDirection,
 } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import { createQueuedImageGeneration } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
 import {
@@ -20,7 +19,6 @@ import {
   productImageExtensions,
 } from "@/components/projects/product-image-upload";
 import { Button } from "@/components/ui/button";
-import { DASHBOARD_DIRECTION_EVENT } from "@/data/dashboard-inspiration";
 import { useRouter } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
 import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
@@ -54,19 +52,6 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const isCreating = generationState === "pending";
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const selectedPreset = getCreativePreset(selectedPresetId);
-
-  useEffect(() => {
-    function handleDirection(event: Event) {
-      if (event instanceof CustomEvent && typeof event.detail === "string") {
-        setPrompt(event.detail);
-        setStatusMessage("");
-        promptRef.current?.focus();
-      }
-    }
-
-    window.addEventListener(DASHBOARD_DIRECTION_EVENT, handleDirection);
-    return () => window.removeEventListener(DASHBOARD_DIRECTION_EVENT, handleDirection);
-  }, []);
 
   useEffect(() => {
     function handlePreset(event: Event) {
@@ -255,11 +240,6 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       );
       if (!generation.ok) {
         throw new Error("Unable to queue the image generation.");
-      }
-
-      const result = await runQueuedImageGeneration(project.projectId, generation.generationId);
-      if (!result.ok) {
-        throw new Error("Unable to run the image generation.");
       }
 
       router.push(`/dashboard/projects/${project.projectId}`, { locale });

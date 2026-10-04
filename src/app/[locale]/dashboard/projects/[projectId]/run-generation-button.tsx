@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { announceGenerationProgress } from "@/components/projects/generation-progress-event";
 
-import type { RunQueuedImageGenerationResult } from "./actions";
+import type { RunQueuedImageGenerationResult } from "./generation-actions";
 
 type RunGenerationButtonProps = {
   action: () => Promise<RunQueuedImageGenerationResult>;

@@ -6,10 +6,11 @@ import type { SceneSuitabilityResolution } from "@/lib/scene-suitability/types";
 import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import type { ReferenceMatchResolution } from "@/lib/generation/references/resolve-reference-match";
 import type { ProductIdentityManifest } from "@/lib/product-identity/types";
+import type { HumanRealismPolicy } from "@/lib/human-realism/types";
 
 export const fidelityValidationCategories = [
   "product_identity", "geometry", "color_material", "branding_text", "body_interaction",
-  "composition_visibility", "creative_requirement", "realism", "duplication", "structural_integrity", "reference_match",
+  "composition_visibility", "creative_requirement", "realism", "human_realism", "duplication", "structural_integrity", "reference_match",
 ] as const;
 export type FidelityValidationCategory = (typeof fidelityValidationCategories)[number];
 export type FidelityIssueSeverity = "critical" | "major" | "minor";
@@ -44,6 +45,7 @@ export type FidelityValidationResult = {
 export type FidelityValidationBrief = {
   vertical: SupportedVertical | "product";
   strategy: GenerationStrategy;
+  humanRealism?: HumanRealismPolicy;
   sourceAuthority: string;
   referencePreservation: boolean;
   productProfile: ProductProfile | null;
@@ -54,6 +56,7 @@ export type FidelityValidationBrief = {
   verticalChecks: string[];
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
+  apparelArtworkIdentity?: { available: boolean; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
 };
 
 export type FidelityValidationInput = {
@@ -66,12 +69,15 @@ export type FidelityValidationInput = {
   productProfile: ProductProfile | null;
   vertical: SupportedVertical | "product";
   strategy: GenerationStrategy;
+  humanRealism?: HumanRealismPolicy;
   sceneSuitability: SceneSuitabilityResolution | null;
   composition: CompositionProfile | null;
   creativeCompliance: CreativeComplianceResolution | null;
   referenceStyleContext?: string | null;
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
+  apparelArtworkIdentity?: { data: Buffer; mimeType: string; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
+  exactProductApparel?: boolean;
 };
 
 export type FidelityValidationClient = {

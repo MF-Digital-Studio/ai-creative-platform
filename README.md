@@ -29,3 +29,6 @@ npm run build
 ## Development Rules
 
 Geliştirme kuralları ve tasarım ilkeleri için kök dizindeki [AGENTS.md](AGENTS.md) dosyasını izleyin.
+# Image generation model
+
+`OPENAI_IMAGE_MODEL` overrides the image model for new generations. The default is `gpt-image-2.5-sunburst` at `xhigh` quality. Other configured models retain the established `standard` quality default. `max` is supported for explicit benchmark requests and is not the production default.

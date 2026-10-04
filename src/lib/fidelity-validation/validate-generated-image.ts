@@ -7,6 +7,7 @@ import { buildValidationBrief, renderValidationInstructions } from "./build-vali
 import { mapStructuredValidationOutput, resolveQualityGate } from "./resolve-quality-gate";
 import { FIDELITY_VALIDATION_VERSION } from "./validation-version";
 import type { FidelityValidationClient, FidelityValidationInput, FidelityValidationResult } from "./types";
+import { fidelityValidationCategories } from "./types";
 
 const validationSchema = {
   type: "object",
@@ -21,7 +22,7 @@ const validationSchema = {
         required: ["code", "category", "severity", "finding", "expected"],
         properties: {
           code: { type: "string" },
-          category: { type: "string", enum: ["product_identity", "geometry", "color_material", "branding_text", "body_interaction", "composition_visibility", "creative_requirement", "realism", "duplication", "structural_integrity", "reference_match"] },
+          category: { type: "string", enum: fidelityValidationCategories },
           severity: { type: "string", enum: ["critical", "major", "minor"] },
           finding: { type: "string" },
           expected: { type: "string" },
@@ -45,8 +46,9 @@ class OpenAIFidelityValidationClient implements FidelityValidationClient {
       model: getFidelityValidationModel(),
       instructions: renderValidationInstructions(brief),
       input: [{ role: "user", content: [
-        { type: "input_text", text: input.referenceBaseScene ? "Image 1 is the authoritative source product. Image 2 is the authoritative reference base scene. Image 3 is the edited output. Check product identity against Image 1 and scene preservation against Image 2." : "Image 1 is the authoritative source product. Image 2 is the generated output. Identify only material deviations under the supplied validation policy." },
+        { type: "input_text", text: input.apparelArtworkIdentity ? "Image 1 is source garment authority. Image 2 is exact source artwork identity crop. The final image is generated output; if a reference scene is also shown, it is scene authority only. Compare typography/artwork to image 2 and placement to image 1." : input.referenceBaseScene ? "Image 1 is the authoritative source product. Image 2 is the authoritative reference base scene. Image 3 is the edited output. Check product identity against Image 1 and scene preservation against Image 2." : "Image 1 is the authoritative source product. Image 2 is the generated output. Identify only material deviations under the supplied validation policy." },
         imageInput(input.originalProduct, input.originalMimeType),
+        ...(input.apparelArtworkIdentity ? [imageInput(input.apparelArtworkIdentity.data, input.apparelArtworkIdentity.mimeType)] : []),
         ...(input.referenceBaseScene ? [imageInput(input.referenceBaseScene, input.referenceBaseSceneMimeType ?? "image/png")] : []),
         imageInput(input.generatedImage, input.generatedMimeType),
       ] }],
@@ -67,9 +69,21 @@ class OpenAIFidelityValidationClient implements FidelityValidationClient {
 }
 
 export async function validateGeneratedImage(input: FidelityValidationInput, client: FidelityValidationClient = new OpenAIFidelityValidationClient()): Promise<FidelityValidationResult> {
-  const brief = buildValidationBrief({ ...input, referencePreservation: Boolean(input.referenceBaseScene) });
+  const brief = buildValidationBrief({ ...input, referencePreservation: Boolean(input.referenceBaseScene), apparelArtworkIdentity: input.apparelArtworkIdentity ? { available: true, containsText: input.apparelArtworkIdentity.containsText, side: input.apparelArtworkIdentity.side, confidence: input.apparelArtworkIdentity.confidence } : null });
+  if (input.exactProductApparel && input.apparelArtworkIdentity) {
+    const result = await client.validate(input, brief);
+    const raw = mapStructuredValidationOutput(result).filter((issue) => brief.humanRealism?.applied || issue.category !== "human_realism").map((issue) => {
+      const code = issue.code.toLowerCase();
+      const mappedCode = code === "apparel_artwork_drift" ? "APPAREL_ARTWORK_IDENTITY_DRIFT" : code === "apparel_text_drift" ? "APPAREL_ARTWORK_TEXT_DRIFT" : code === "apparel_artwork_structure_drift" ? "APPAREL_ARTWORK_STRUCTURE_DRIFT" : code === "apparel_artwork_placement_drift" ? "APPAREL_ARTWORK_PLACEMENT_DRIFT" : code === "apparel_scale_drift" ? "APPAREL_ARTWORK_SCALE_DRIFT" : code === "apparel_color_drift" ? "APPAREL_ARTWORK_COLOR_DRIFT" : issue.code;
+      const lower = mappedCode.toLowerCase();
+      const severity = ["apparel_artwork_identity_drift", "apparel_artwork_text_drift"].includes(lower) ? "critical" as const : ["apparel_artwork_placement_drift", "apparel_artwork_scale_drift", "apparel_artwork_color_drift", "apparel_artwork_structure_drift"].includes(lower) ? "major" as const : issue.severity;
+      return { ...issue, code: mappedCode, severity, category: issue.category === "human_realism" ? "human_realism" as const : "product_identity" as const, sourceAuthoritative: true };
+    });
+    const gate = resolveQualityGate(raw);
+    return { ...gate, version: FIDELITY_VALIDATION_VERSION };
+  }
   const raw = await client.validate(input, brief);
-  const result = resolveQualityGate(mapStructuredValidationOutput(raw));
+  const result = resolveQualityGate(mapStructuredValidationOutput(raw).filter((issue) => brief.humanRealism?.applied || issue.category !== "human_realism"));
   return { ...result, version: FIDELITY_VALIDATION_VERSION };
 }
 

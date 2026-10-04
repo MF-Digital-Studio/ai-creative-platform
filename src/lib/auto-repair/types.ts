@@ -9,6 +9,7 @@ export const repairCategories = [
   "creative_requirement_repair",
   "color_material_repair",
   "branding_structure_repair",
+  "human_anatomy_repair", "skin_texture_repair", "facial_realism_repair", "body_anatomy_repair", "hair_realism_repair",
 ] as const;
 export type RepairCategory = (typeof repairCategories)[number];
 
