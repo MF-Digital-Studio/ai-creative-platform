@@ -38,13 +38,6 @@ import { resolveReferenceMatch } from "@/lib/generation/references/resolve-refer
 import { resolveReferenceGenerationPath } from "@/lib/generation/references/reference-product-replacement";
 import { getReferenceShotProfile, REFERENCE_MATCH_VERSION, type ReferenceMode } from "@/lib/generation/references/reference-shot-profile";
 import { buildReferenceReplacementPrompt, orderGenerationImages, orderReferenceReplacementImages } from "@/lib/generation/image-roles";
-import { resolvePlacementStrategy } from "@/lib/generation/placement/placement-strategy";
-import { buildPlacementStageBInputs, buildProductFreePlacementStageAInputs } from "@/lib/generation/placement/placement-inputs";
-import { projectReferenceForPlacement } from "@/lib/generation/placement/project-reference-for-placement";
-import { buildPlacementAccessoryCleanupPrompt, buildPlacementSafeRecompositionPrompt, shouldRunPlacementAccessoryCleanup, shouldUsePlacementSafeRecomposition } from "@/lib/generation/placement/accessory-cleanup";
-import { buildPlacementStageAPrompt, buildPlacementStageBPrompt } from "@/lib/generation/placement/placement-prompts";
-import { validatePlacementPreparationBestEffort } from "@/lib/generation/placement/validate-placement-preparation";
-import { buildPlacementReadinessRepairInstructions, type PlacementReadinessIssueCode, type PlacementReadinessStatus } from "@/lib/generation/placement/placement-readiness";
 import { buildProductIdentityManifest } from "@/lib/product-identity/build-product-identity-manifest";
 import { resolveApparelArtworkRegion, buildApparelFidelityBenchmarkPrompts, compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
 import { evaluateApparelProductFidelity, resolveApparelFidelityMode } from "@/lib/product-identity/resolve-apparel-fidelity-mode";
@@ -52,6 +45,7 @@ import { PRODUCT_IDENTITY_LOCK_VERSION } from "@/lib/product-identity/identity-l
 import { resolveImageGenerationOutputCanvas } from "@/lib/generation/output-canvas";
 import {
   buildImageGenerationPromptWithPolicy,
+  watchOnWristInstructions,
 } from "@/lib/generation/prompts/build-image-generation-prompt";
 import { enhanceCreativeDirection } from "@/lib/generation/prompts/enhance-creative-direction";
 import {
@@ -183,12 +177,6 @@ function hasValidObjectPath(userId: string, projectId: string, objectPath: strin
 
 function isGenerationProvider(value: unknown): value is GenerationProvider {
   return value === "openai";
-}
-
-function resolveGenerationQuality(value: unknown): ImageGenerationQuality {
-  return value === "preview" || value === "standard" || value === "low" || value === "medium" || value === "high" || value === "xhigh" || value === "max" || value === "auto"
-    ? value
-    : "xhigh";
 }
 
 function safeGenerationEvent(scope: "create" | "queue", event: string, fields: Record<string, boolean | number | string | null> = {}) {
@@ -641,7 +629,6 @@ export async function runQueuedImageGeneration(
       compatibleReferenceCount: usableReferenceImages.length,
       referenceCompatible: referenceMatch?.compatible ?? true,
       fallbackStrategy: strategy,
-      fallbackUsesStageA: false,
     });
     const usesReferenceReplacement = referenceGenerationPath.strategy === "reference_product_replacement";
     logDevelopmentGenerationEvent("reference_replacement_resolved", {
@@ -652,19 +639,9 @@ export async function runQueuedImageGeneration(
       replacementMode: usesReferenceReplacement ? "reference_product_replacement" : null,
     });
     const usesReferenceEditing = requestedPreservationMode === "reference_edit";
-    const placementStrategy = resolvePlacementStrategy({
-      vertical: productProfile?.vertical ?? null,
-      generationStrategy: strategy,
-      sceneFamily: sceneSuitability?.selectedSceneFamily ?? null,
-      identityManifest,
-      interactionTarget: productProfile?.interactionTargets[0] ?? null,
-      referenceMode,
-      sourceFidelityRisk: "high",
-    });
-    const usesTwoStagePlacement = !usesReferenceReplacement && placementStrategy === "two_stage_identity_placement";
     logDevelopmentGenerationEvent("placement_strategy_resolved", {
       generationId: queuedGeneration.id,
-      strategy: placementStrategy,
+      strategy: "single_pass",
     });
     logDevelopmentGenerationEvent("strategy_resolved", {
       effectivePreservationMode: requestedPreservationMode,
@@ -915,19 +892,11 @@ export async function runQueuedImageGeneration(
     effectivePreservationMode = finalPolicy.preservationMode;
     fidelityMetadata.effective_mode = effectivePreservationMode;
     let activePrompt = usesReferenceReplacement
-      ? `${buildReferenceReplacementPrompt(promptEnhancement.prompt)}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
+      ? `${buildReferenceReplacementPrompt(promptEnhancement.prompt)}${strategy === "watch_on_wrist" ? `\n\n${watchOnWristInstructions}` : ""}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
       : finalPrompt.prompt;
     const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman: finalPrompt.layers.humanRealismApplied || strategy === "rigid_product" && qualityUseCase === "cosmetics" });
     const humanRealismDirection = compileHumanRealismPrompt(humanRealismPolicy, productProfile?.vertical ?? finalPrompt.layers.vertical);
     if (humanRealismDirection && !activePrompt.includes(humanRealismDirection)) activePrompt = `${activePrompt}\n\n${humanRealismDirection}`;
-    let activeGenerationImages = generationImages;
-    let stageACompleted = false;
-    let stageBCompleted = false;
-    let stageAProviderRequestId: string | null = null;
-    let stageAAttempts = 0;
-    let stageAMode: "reference_guided" | "placement_safe_recomposition" = "reference_guided";
-    let stageAValidationStatus: PlacementReadinessStatus | null = null;
-    let stageAIssueCodes: PlacementReadinessIssueCode[] = [];
     let hybridProjectionMetadata: Record<string, unknown> | null = null;
 
     if (usesReferenceReplacement) {
@@ -938,106 +907,8 @@ export async function runQueuedImageGeneration(
       });
     }
 
-    if (usesTwoStagePlacement) {
-      logDevelopmentGenerationEvent("placement_stage_a_started", { generationId: queuedGeneration.id });
-      const stageAImages = buildProductFreePlacementStageAInputs();
-      const placementReference = projectReferenceForPlacement(referenceMatch);
-      logDevelopmentGenerationEvent("placement_reference_sanitized", {
-        generationId: queuedGeneration.id,
-        originalInteractionPresent: placementReference.diagnostics.originalInteractionPresent,
-        productTermsRemoved: placementReference.diagnostics.productTermsRemoved,
-        droppedFieldNames: placementReference.diagnostics.droppedFieldNames,
-        retainedFieldNames: placementReference.diagnostics.retainedFieldNames,
-      });
-      logDevelopmentGenerationEvent("placement_stage_a_inputs", {
-        generationId: queuedGeneration.id,
-        rawReferenceImageCount: 0,
-        rawProductImageCount: 0,
-        structuredReferenceApplied: Boolean(referenceMatch),
-      });
-      let stageAPrompt = buildPlacementStageAPrompt({ creativeDirection: promptEnhancement.prompt, strategy, referenceProfile: placementReference.profile });
-      let stageAResult: Awaited<ReturnType<ReturnType<typeof getImageGenerationProvider>["generate"]>> | null = null;
-      for (let attempt = 0; attempt <= 1; attempt += 1) {
-        logDevelopmentGenerationEvent("placement_stage_a_mode", { generationId: queuedGeneration.id, attempt, mode: stageAMode });
-        stageAResult = await getImageGenerationProvider(queuedGeneration.provider).generate({
-          generationId: queuedGeneration.id, projectId: project.id, sourceAsset: providerProductAsset, images: stageAImages,
-          prompt: stageAPrompt, provider: queuedGeneration.provider, model: queuedGeneration.model,
-          quality: resolveGenerationQuality(queuedGeneration.quality), aspectRatio, operation: "scene_preparation",
-        });
-        executionCounts.imageGenerationCalls += 1;
-        executionCounts.visionValidationCalls += 1;
-        stageAAttempts = attempt + 1;
-        stageAProviderRequestId = typeof stageAResult.providerMetadata?.requestId === "string" ? stageAResult.providerMetadata.requestId : null;
-        const placementPreparation = await validatePlacementPreparationBestEffort({ imageData: stageAResult.imageData, mimeType: stageAResult.mimeType, strategy });
-        stageAValidationStatus = placementPreparation.status;
-        stageAIssueCodes = placementPreparation.issues;
-        logDevelopmentGenerationEvent("placement_validation", {
-          generationId: queuedGeneration.id, stage: "a", status: placementPreparation.status,
-          issueCodes: placementPreparation.issues, retryRecommended: placementPreparation.retryRecommended,
-          targetRegion: placementPreparation.targetRegion,
-        });
-        if (placementPreparation.status === "pass") {
-          stageACompleted = true;
-          logDevelopmentGenerationEvent("placement_stage_a_completed", { generationId: queuedGeneration.id, attempt, status: "ready" });
-          break;
-        }
-        if (attempt === 0 && placementPreparation.status === "fail" && placementPreparation.retryRecommended) {
-          logDevelopmentGenerationEvent("placement_stage_a_retry", { generationId: queuedGeneration.id, attempt: 1, issueCodes: placementPreparation.issues });
-          const useSafeRecomposition = shouldUsePlacementSafeRecomposition(placementPreparation.issues);
-          stageAMode = useSafeRecomposition ? "placement_safe_recomposition" : "reference_guided";
-          stageAPrompt = `${stageAPrompt}\n\nSTAGE A READINESS REPAIR:\n${buildPlacementReadinessRepairInstructions(placementPreparation.issues).join("\n")}${useSafeRecomposition ? `\n${buildPlacementSafeRecompositionPrompt()}` : ""}`;
-          continue;
-        }
-        if (attempt === 1 && placementPreparation.status === "fail" && shouldRunPlacementAccessoryCleanup(placementPreparation.issues)) {
-          logDevelopmentGenerationEvent("placement_stage_a_cleanup_started", { generationId: queuedGeneration.id, reason: "unwanted_accessory" });
-          const cleanupResult = await getImageGenerationProvider(queuedGeneration.provider).generate({
-            generationId: queuedGeneration.id,
-            projectId: project.id,
-            sourceAsset: providerProductAsset,
-            images: [{ id: "internal-stage-a", bucketId: "", objectPath: "", data: stageAResult.imageData, mimeType: stageAResult.mimeType, role: "generated_attempt", order: 0 }],
-            prompt: buildPlacementAccessoryCleanupPrompt(),
-            provider: queuedGeneration.provider,
-            model: queuedGeneration.model,
-            quality: resolveGenerationQuality(queuedGeneration.quality),
-            aspectRatio,
-            operation: "scene_preparation",
-          });
-          executionCounts.imageGenerationCalls += 1;
-          executionCounts.visionValidationCalls += 1;
-          const cleanupReadiness = await validatePlacementPreparationBestEffort({ imageData: cleanupResult.imageData, mimeType: cleanupResult.mimeType, strategy });
-          stageAResult = cleanupResult;
-          stageAValidationStatus = cleanupReadiness.status;
-          stageAIssueCodes = cleanupReadiness.issues;
-          logDevelopmentGenerationEvent("placement_stage_a_cleanup_completed", { generationId: queuedGeneration.id });
-          logDevelopmentGenerationEvent("placement_validation", {
-            generationId: queuedGeneration.id, stage: "a", status: cleanupReadiness.status,
-            issueCodes: cleanupReadiness.issues, retryRecommended: cleanupReadiness.retryRecommended,
-            targetRegion: cleanupReadiness.targetRegion,
-          });
-          if (cleanupReadiness.status === "pass") {
-            stageACompleted = true;
-            logDevelopmentGenerationEvent("placement_stage_a_completed", { generationId: queuedGeneration.id, attempt, status: "ready_after_cleanup" });
-            break;
-          }
-        }
-        throw new Error("The prepared placement scene is not ready for product placement.");
-      }
-      if (!stageAResult || !stageACompleted) throw new Error("The prepared placement scene is not ready for product placement.");
-      activeGenerationImages = buildPlacementStageBInputs(
-        { id: "internal-stage-a", bucketId: "", objectPath: "", data: stageAResult.imageData, mimeType: stageAResult.mimeType },
-        providerProductAsset,
-      );
-      activePrompt = buildPlacementStageBPrompt({ creativeDirection: promptEnhancement.prompt, strategy, identityManifest });
-      logDevelopmentGenerationEvent("placement_stage_b_inputs", {
-        generationId: queuedGeneration.id,
-        sceneImageCount: 1,
-        productIdentityImageCount: 1,
-        rawReferenceImageCount: 0,
-      });
-      logDevelopmentGenerationEvent("placement_stage_b_started", { generationId: queuedGeneration.id });
-    }
     providerDiagnosticContext = {
-      provider: queuedGeneration.provider, model: queuedGeneration.model, imageCount: activeGenerationImages.length,
+      provider: queuedGeneration.provider, model: queuedGeneration.model, imageCount: generationImages.length,
       preservationMode: effectivePreservationMode, strategy: finalPolicy.strategy,
       sceneFamily: finalPolicy.sceneFamily,
     };
@@ -1052,19 +923,16 @@ export async function runQueuedImageGeneration(
       generationId: queuedGeneration.id,
       projectId: project.id,
       sourceAsset: providerProductAsset,
-      images: activeGenerationImages,
+      images: generationImages,
       prompt: activePrompt,
       provider: queuedGeneration.provider,
       model: queuedGeneration.model,
       quality: executionPolicy.quality,
       aspectRatio,
-      ...(usesTwoStagePlacement ? { operation: "identity_placement" as const } : {}),
       ...(usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
     }));
     executionCounts.imageGenerationCalls += 1;
     providerDiagnosticContext = null;
-    stageBCompleted = usesTwoStagePlacement;
-    if (usesTwoStagePlacement) logDevelopmentGenerationEvent("placement_stage_b_completed", { generationId: queuedGeneration.id });
 
     let finalImageData = result.imageData;
     if (pixelLockInput && effectivePreservationMode === "pixel_lock") {
@@ -1158,13 +1026,6 @@ export async function runQueuedImageGeneration(
         retryRecommended: fidelityValidation.retryRecommended,
       });
     }
-    if (usesTwoStagePlacement) {
-      logDevelopmentGenerationEvent("placement_validation", {
-        generationId: queuedGeneration.id,
-        status: fidelityValidation.status,
-        stage: "b",
-      });
-    }
     if (usesReferenceReplacement) {
       logDevelopmentGenerationEvent("reference_preservation_validation", {
         generationId: queuedGeneration.id,
@@ -1209,13 +1070,12 @@ export async function runQueuedImageGeneration(
           generationId: queuedGeneration.id,
           projectId: project.id,
           sourceAsset: providerProductAsset,
-          images: activeGenerationImages,
+          images: generationImages,
           prompt: compileRepairInstructions(activePrompt, repairPlan),
           provider: queuedGeneration.provider,
           model: queuedGeneration.model,
           quality: executionPolicy.repairQuality,
           aspectRatio,
-          ...(usesTwoStagePlacement ? { operation: "identity_placement" as const } : {}),
           ...(usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
         }));
         executionCounts.imageGenerationCalls += 1;
@@ -1417,20 +1277,11 @@ export async function runQueuedImageGeneration(
             vertical: identityManifest.vertical,
             identityAnchorCount: identityManifest.immutableAttributes.length + identityManifest.geometryAnchors.length + identityManifest.colorMaterialAnchors.length + identityManifest.brandingAnchors.length,
             imageOrderingVersion: "generation-image-order-v1",
-            placementStrategy,
+            placementStrategy: "single_pass",
           },
           placement: {
-            version: "two-stage-placement-v1",
-            strategy: placementStrategy,
-            stageACompleted,
-            stageBCompleted,
-            repairAttempted: repairPlan.shouldRetry,
-            stageAAttempts,
-            stageAMode,
-            stageAValidationStatus,
-            stageAIssueCodes,
-            // Stage A is intentionally transient: no user-visible output asset is persisted.
-            stageARequestId: stageAProviderRequestId,
+            version: "single-pass-placement-v1",
+            strategy: "single_pass",
           },
           ...(referenceMatch ? {
             reference_match: {

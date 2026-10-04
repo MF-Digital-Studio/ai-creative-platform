@@ -22,6 +22,8 @@ const categories = [
   ["footwear", "/presets/footwear-street-lifestyle.png"],
 ] as const;
 
+const mutedApparelImage = "/presets/apparel-scenic-editorial.png";
+
 export default async function Home({ params }: HomeProps) {
   const { locale } = await params;
   if (!isSupportedLocale(locale)) notFound();
@@ -41,7 +43,7 @@ export default async function Home({ params }: HomeProps) {
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-12">
               <header className="min-w-0">
                 <p className="text-xs font-semibold tracking-[0.16em] text-[var(--foreground-muted)]">{t("eyebrow")}</p>
-                <h1 className="homepage-hero-title mt-5 text-[clamp(2.5rem,4.4vw,3.5rem)] font-semibold leading-[1] tracking-[-0.04em] text-[var(--foreground)]">{t("heroTitle")}</h1>
+                <SectionHeading as="h1" titleId="homepage-hero-title" className="mt-5 min-w-0 max-w-none" titleClassName="homepage-hero-title text-[clamp(2.5rem,4.4vw,3.5rem)] font-semibold leading-[1] tracking-[-0.04em]" title={t("heroTitle")} />
                 <p className="mt-6 max-w-lg text-base leading-7 text-[var(--foreground-muted)] sm:text-lg sm:leading-8">{t("heroDescription")}</p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <Button href={signupHref} size="lg">{t("try")}</Button>
@@ -50,7 +52,7 @@ export default async function Home({ params }: HomeProps) {
               </header>
               <figure className="relative min-w-0">
                 <div className="relative ml-[8%] aspect-[4/3] overflow-hidden bg-[var(--surface-soft)] sm:ml-[10%]">
-                  <Image src="/features/product-to-campaign/campaign-output.webp" alt={t("heroOutputAlt")} fill priority sizes="(min-width: 1024px) 58vw, 100vw" className="object-cover" />
+                  <Image src="/presets/apparel-scenic-editorial.png" alt={t("heroOutputAlt")} fill priority sizes="(min-width: 1024px) 58vw, 100vw" className="object-cover" />
                 </div>
                 <div className="absolute bottom-[8%] left-0 w-[22%] border border-[var(--border)] bg-[var(--surface)] p-1 shadow-[var(--shadow-subtle)] sm:w-[19%] sm:p-1.5">
                   <div className="relative aspect-square bg-[var(--surface-soft)]"><Image src="/features/product-to-campaign/product-input.webp" alt={t("heroProductAlt")} fill sizes="(min-width: 1024px) 18vw, 35vw" className="object-contain" /></div>
@@ -103,10 +105,10 @@ export default async function Home({ params }: HomeProps) {
               <div><SectionHeading className="min-w-0 max-w-none" titleClassName="homepage-section-title" title={t("referenceTitle")} description={t("referenceDescription")} /><p className="mt-7 max-w-md text-sm leading-6 text-[var(--foreground-muted)]">{t("referenceNote")}</p></div>
               <div className="grid grid-cols-[0.8fr_auto_1.5fr] items-center gap-3 sm:gap-5">
                 <div className="grid grid-cols-2 gap-2">
-                  {["/presets/apparel-studio-style.png", "/presets/apparel-scenic-editorial.png"].map((src, index) => <div key={src} className="relative aspect-[3/4] min-w-0 bg-[var(--surface-soft)]"><Image src={src} alt={t(index === 0 ? "presetAlt" : "referenceAlt")} fill sizes="(min-width: 1024px) 12vw, 20vw" className="object-cover" /></div>)}
+                  {[mutedApparelImage, mutedApparelImage].map((src, index) => <div key={`${src}-${index}`} className="relative aspect-[3/4] min-w-0 bg-[var(--surface-soft)]"><Image src={src} alt={t(index === 0 ? "presetAlt" : "referenceAlt")} fill sizes="(min-width: 1024px) 12vw, 20vw" className="object-cover" /></div>)}
                 </div>
                 <span aria-hidden="true" className="text-sm text-[var(--foreground-muted)]">→</span>
-                <div className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[var(--surface-soft)]"><Image src="/workspace-demo/fashion/campaign.webp" alt={t("outputAlt")} fill sizes="(min-width: 1024px) 34vw, 50vw" className="object-cover" /></div>
+                <div className="relative aspect-[4/3] min-w-0 overflow-hidden bg-[var(--surface-soft)]"><Image src="/presets/apparel-scenic-editorial.png" alt={t("outputAlt")} fill sizes="(min-width: 1024px) 34vw, 50vw" className="object-cover" /></div>
               </div>
             </div>
           </Container>
@@ -115,13 +117,13 @@ export default async function Home({ params }: HomeProps) {
         <Section className="homepage-campaign-section pb-0" spacing="compact">
           <Container variant="public">
             <div className="mb-10 grid items-end gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-              <h2 className="homepage-section-title min-w-0 font-semibold">{t("campaignTitle")}</h2>
+              <SectionHeading className="min-w-0 max-w-none" titleClassName="homepage-section-title" title={t("campaignTitle")} />
               <p className="max-w-sm text-sm leading-6 text-[var(--foreground-muted)]">{t("campaignDescription")}</p>
             </div>
           </Container>
           <div className="homepage-campaign-gallery grid grid-cols-2 gap-1 sm:grid-cols-3">
             {[
-              ["/workspace-demo/fashion/campaign.webp", "campaignAlt1"],
+              ["/presets/apparel-scenic-editorial.png", "campaignAlt1"],
               ["/workspace-demo/jewelry/campaign-hero.webp", "campaignAlt2"],
               ["/workspace-demo/jewelry/campaign.webp", "campaignAlt3"],
             ].map(([src, alt], index) => <figure key={src} className={`relative aspect-[3/2] min-w-0 overflow-hidden bg-[var(--surface-soft)] ${index === 0 ? "col-span-2 sm:col-span-1" : ""}`}><Image src={src} alt={t(alt)} fill sizes="(min-width: 640px) 34vw, (min-width: 375px) 50vw, 100vw" className="object-cover" /></figure>)}
@@ -131,12 +133,12 @@ export default async function Home({ params }: HomeProps) {
         <Section className="homepage-workspace-band" spacing="compact">
           <Container variant="public">
             <div className="grid items-center gap-9 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:gap-14">
-              <div><p className="text-xs font-semibold tracking-[0.16em] opacity-70">{t("workspaceEyebrow")}</p><h2 className="homepage-section-title mt-4 font-semibold">{t("workspaceTitle")}</h2><p className="mt-5 max-w-[38ch] text-base leading-7 opacity-75">{t("workspaceDescription")}</p><Button href={dashboardHref} className="workspace-cta mt-7">{t("workspaceLink")}</Button></div>
+              <div><p className="text-xs font-semibold tracking-[0.16em] opacity-70">{t("workspaceEyebrow")}</p><SectionHeading className="mt-4 min-w-0 max-w-none" titleClassName="homepage-section-title" title={t("workspaceTitle")} /><p className="mt-5 max-w-[38ch] text-base leading-7 opacity-75">{t("workspaceDescription")}</p><Button href={dashboardHref} className="workspace-cta mt-7">{t("workspaceLink")}</Button></div>
               <div className="homepage-workspace-frame">
                 <div className="homepage-workspace-topbar"><span aria-hidden="true" className="flex gap-1.5"><i /><i /><i /></span><span className="font-medium">{siteConfig.name}</span><span className="opacity-65">{t("workspaceProject")}</span></div>
                 <div className="homepage-workspace-content">
-                  <figure className="relative aspect-[16/10] min-w-0 overflow-hidden bg-[var(--surface-soft)]"><Image src="/workspace-demo/fashion/campaign-hero.webp" alt={t("workspaceAlt")} fill sizes="(min-width: 1024px) 48vw, 100vw" className="object-cover" /></figure>
-                  <aside className="homepage-workspace-aside"><p>{t("workspacePreview")}</p><div className="relative aspect-square overflow-hidden bg-[var(--surface-soft)]"><Image src="/workspace-demo/fashion/product.webp" alt={t("heroProductAlt")} fill sizes="120px" className="object-cover" /></div><div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-soft)]"><Image src="/workspace-demo/fashion/social.webp" alt={t("campaignAlt2")} fill sizes="120px" className="object-cover" /></div><span>{t("workspaceHistory")}</span></aside>
+                  <figure className="relative aspect-[16/10] min-w-0 overflow-hidden bg-[var(--surface-soft)]"><Image src="/presets/apparel-scenic-editorial.png" alt={t("workspaceAlt")} fill sizes="(min-width: 1024px) 48vw, 100vw" className="object-cover" /></figure>
+                  <aside className="homepage-workspace-aside"><p>{t("workspacePreview")}</p><div className="relative aspect-square overflow-hidden bg-[var(--surface-soft)]"><Image src="/features/product-to-campaign/product-input.webp" alt={t("heroProductAlt")} fill sizes="120px" className="object-contain" /></div><div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface-soft)]"><Image src="/presets/apparel-scenic-editorial.png" alt={t("campaignAlt2")} fill sizes="120px" className="object-cover" /></div><span>{t("workspaceHistory")}</span></aside>
                 </div>
               </div>
             </div>
@@ -153,7 +155,7 @@ export default async function Home({ params }: HomeProps) {
         </Section>
 
         <Section className="homepage-section-compact bg-[var(--surface-soft)] text-center" spacing="compact">
-          <Container variant="public"><div className="py-5"><h2 className="homepage-section-title font-semibold">{t("ctaTitle")}</h2><p className="mx-auto mt-4 max-w-[52ch] text-base leading-7 text-[var(--foreground-muted)]">{t("ctaDescription")}</p><Button href={signupHref} size="lg" className="mt-6">{t("ctaButton")}</Button></div></Container>
+          <Container variant="public"><div className="py-5"><SectionHeading align="center" className="mx-auto min-w-0 max-w-none" titleClassName="homepage-section-title" title={t("ctaTitle")} /><p className="mx-auto mt-4 max-w-[52ch] text-base leading-7 text-[var(--foreground-muted)]">{t("ctaDescription")}</p><Button href={signupHref} size="lg" className="mt-6">{t("ctaButton")}</Button></div></Container>
         </Section>
       </main>
       <Footer />

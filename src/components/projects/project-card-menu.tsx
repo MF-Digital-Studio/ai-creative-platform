@@ -4,6 +4,7 @@ import {useState} from "react";
 import {deleteProject} from "@/app/[locale]/dashboard/actions";
 import {DeleteProjectModal} from "@/components/projects/delete-project-modal";
 import {Button} from "@/components/ui/button";
+import {useDismissiblePopover} from "@/hooks/use-dismissible-popover";
 import type {AppLocale} from "@/i18n/routing";
 
 type ProjectCardMenuProps = {
@@ -15,16 +16,16 @@ type ProjectCardMenuProps = {
 };
 
 export function ProjectCardMenu({projectId, locale, menuLabel, deleteMessages, redirectOnSuccess = false}: ProjectCardMenuProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const {close, isOpen: menuOpen, rootRef, toggle, triggerRef} = useDismissiblePopover();
   const [modalOpen, setModalOpen] = useState(false);
   const action = deleteProject.bind(null, locale, projectId);
 
-  return <div className="project-card-actions" onClick={(event) => event.stopPropagation()}>
-    <Button type="button" variant="ghost" size="sm" className="project-card-menu-trigger" aria-label={menuLabel} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
+  return <div ref={rootRef} className="project-card-actions" onClick={(event) => event.stopPropagation()}>
+    <Button ref={triggerRef} type="button" variant="ghost" size="sm" className="project-card-menu-trigger" aria-label={menuLabel} aria-haspopup="menu" aria-expanded={menuOpen} onClick={toggle}>
       <span aria-hidden="true">···</span>
     </Button>
-    {menuOpen ? <div className="project-card-menu-content" role="menu" onKeyDown={(event) => { if (event.key === "Escape") setMenuOpen(false); }}>
-      <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setModalOpen(true); }}>{deleteMessages.menuItem}</button>
+    {menuOpen ? <div className="project-card-menu-content" role="menu">
+      <button type="button" role="menuitem" onClick={() => { close(); setModalOpen(true); }}>{deleteMessages.menuItem}</button>
     </div> : null}
     <DeleteProjectModal action={action} open={modalOpen} onClose={() => setModalOpen(false)} redirectOnSuccess={redirectOnSuccess} messages={deleteMessages} />
   </div>;

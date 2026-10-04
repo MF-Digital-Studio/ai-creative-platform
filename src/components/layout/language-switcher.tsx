@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -11,6 +11,7 @@ import {
   type AppLocale,
 } from "@/i18n/routing";
 import { cn } from "@/lib/cn";
+import { useDismissiblePopover } from "@/hooks/use-dismissible-popover";
 
 type LanguageSwitcherProps = {
   onLocaleChange?: () => void;
@@ -26,10 +27,8 @@ export function LanguageSwitcher({
   const pathname = usePathname();
   const router = useRouter();
   const menuId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { close, isOpen, open, rootRef, toggle, triggerRef } = useDismissiblePopover();
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [isOpen, setIsOpen] = useState(false);
 
   const activeLocale = isSupportedLocale(locale)
     ? locale
@@ -43,33 +42,10 @@ export function LanguageSwitcher({
 
     optionRefs.current[activeIndex]?.focus();
 
-    function handlePointerDown(event: PointerEvent) {
-      if (
-        event.target instanceof Node &&
-        !rootRef.current?.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
   }, [activeIndex, isOpen]);
 
   function selectLocale(nextLocale: AppLocale) {
-    setIsOpen(false);
+    close();
     onLocaleChange?.();
 
     if (nextLocale === activeLocale) {
@@ -124,11 +100,11 @@ export function LanguageSwitcher({
           "language-switcher-trigger inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--foreground)] transition-colors duration-(--transition-fast) hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)]",
           variant === "mobile" && "w-full justify-between normal-case tracking-normal",
         )}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={toggle}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
             event.preventDefault();
-            setIsOpen(true);
+            open();
           }
         }}
       >

@@ -7,16 +7,15 @@ import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
 import { buildValidationBrief, renderValidationInstructions } from "../src/lib/fidelity-validation/build-validation-brief";
 import type { FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 
-const fallback = { fallbackStrategy: "jewelry_on_model" as const, fallbackUsesStageA: true };
+const fallback = { fallbackStrategy: "jewelry_on_model" as const };
 
-test("compatible jewelry hand reference routes to reference product replacement and bypasses Stage A", () => {
+test("compatible jewelry hand reference routes to reference product replacement without Stage A", () => {
   const route = resolveReferenceGenerationPath({ compatibleReferenceCount: 1, referenceCompatible: true, ...fallback });
-  assert.equal(route.strategy, "reference_product_replacement");
-  assert.equal(route.usesStageA, false);
+  assert.deepEqual(route, { strategy: "reference_product_replacement" });
 });
 
-test("no reference keeps the existing generation flow", () => {
-  assert.deepEqual(resolveReferenceGenerationPath({ compatibleReferenceCount: 0, referenceCompatible: true, ...fallback }), { strategy: "jewelry_on_model", usesStageA: true });
+test("no reference uses direct on-body generation without Stage A", () => {
+  assert.deepEqual(resolveReferenceGenerationPath({ compatibleReferenceCount: 0, referenceCompatible: true, ...fallback }), { strategy: "jewelry_on_model" });
 });
 
 test("reference base scene is first and source product identity is second", () => {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentProps, ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ButtonHTMLAttributes, ReactNode, Ref } from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -16,6 +16,7 @@ interface ButtonBaseProps {
 type ButtonAsButtonProps = ButtonBaseProps &
   ButtonHTMLAttributes<HTMLButtonElement> & {
     href?: never;
+    ref?: Ref<HTMLButtonElement>;
   };
 
 type ButtonAsLinkProps = ButtonBaseProps &

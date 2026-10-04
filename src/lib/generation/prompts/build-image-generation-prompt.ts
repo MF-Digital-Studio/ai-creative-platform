@@ -61,10 +61,11 @@ const jewelryStillLifeInstructions = [
   "Do not float, paste, overlay, distort, redesign, or reinterpret the jewelry. No incorrect gemstone count, melted metal, warped prongs or settings, low-detail generic jewelry, AI-art, or CGI look.",
 ].join("\n");
 
-const watchOnWristInstructions = [
+export const watchOnWristInstructions = [
   "The supplied image is a watch reference for a real person to wear naturally on their wrist in the requested photograph.",
-  "Preserve its exact case shape, bezel, crown side, lugs, bracelet or strap structure, dial layout, marker count, hand style, date-window position, branding, material, and believable scale while allowing natural wrist placement and perspective.",
-  "Integrate the watch with realistic skin contact and strap tension; keep a clean believable dial instead of nonsense microtext, and never paste, overlay, or composite the original watch image flat onto skin.",
+  "Preserve this exact watch identity: dial geometry and layout, indices, hands, bezel, crown, lugs, case proportions, strap or bracelet construction, colors, materials, branding, and believable scale. Place the same watch naturally wrapped around a clearly visible wrist with a plausible orientation and correct strap contact.",
+  "Show realistic skin texture, wrist proportions, skin compression and contact beneath the strap, and natural strap pressure. Keep the dial readable. Do not add a competing or duplicate watch, and add no extra jewelry unless explicitly requested.",
+  "Never paste, overlay, or composite the original watch image flat onto skin; do not fuse anatomy, distort the wrist, warp the dial, or detach the strap from the wrist.",
 ].join("\n");
 
 const footwearOnModelInstructions = [

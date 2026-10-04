@@ -6,10 +6,9 @@ export function resolveReferenceGenerationPath(input: {
   compatibleReferenceCount: number;
   referenceCompatible: boolean;
   fallbackStrategy: GenerationStrategy;
-  fallbackUsesStageA: boolean;
-}): { strategy: "reference_product_replacement" | GenerationStrategy; usesStageA: boolean } {
+}): { strategy: "reference_product_replacement" | GenerationStrategy } {
   if (input.compatibleReferenceCount > 0 && input.referenceCompatible) {
-    return { strategy: "reference_product_replacement", usesStageA: false };
+    return { strategy: "reference_product_replacement" };
   }
-  return { strategy: input.fallbackStrategy, usesStageA: input.fallbackUsesStageA };
+  return { strategy: input.fallbackStrategy };
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 
 import {
   type WorkspaceScenarioId,
   workspaceScenarios,
 } from "@/data/workspace-demo";
 import { cn } from "@/lib/cn";
+import { useDismissiblePopover } from "@/hooks/use-dismissible-popover";
 
 type WorkspaceProjectSelectorProps = {
   activeScenarioId: WorkspaceScenarioId;
@@ -25,10 +26,8 @@ export function WorkspaceProjectSelector({
   onOpenChange,
   onScenarioChange,
 }: WorkspaceProjectSelectorProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const menuId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { close, isOpen, open, rootRef, toggle, triggerRef } = useDismissiblePopover();
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
@@ -45,29 +44,6 @@ export function WorkspaceProjectSelector({
     );
     optionRefs.current[Math.max(activeIndex, 0)]?.focus();
 
-    function handlePointerDown(event: PointerEvent) {
-      if (
-        event.target instanceof Node &&
-        !rootRef.current?.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
   }, [activeScenarioId, isOpen]);
 
   function focusOption(index: number) {
@@ -92,13 +68,13 @@ export function WorkspaceProjectSelector({
       event.preventDefault();
       focusOption(workspaceScenarios.length - 1);
     } else if (event.key === "Tab") {
-      setIsOpen(false);
+      close();
     }
   }
 
   function selectScenario(scenarioId: WorkspaceScenarioId) {
     onScenarioChange(scenarioId);
-    setIsOpen(false);
+    close();
     triggerRef.current?.focus();
   }
 
@@ -112,14 +88,14 @@ export function WorkspaceProjectSelector({
         aria-haspopup="menu"
         aria-label={selectProjectLabel}
         className="group flex min-h-10 max-w-full items-center gap-2 rounded-[var(--radius-sm)] px-2 text-left text-xs font-medium text-[var(--workspace-text)] transition-colors duration-(--transition-fast) hover:bg-[var(--workspace-control)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] sm:text-sm"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={toggle}
         onKeyDown={(event) => {
           if (
             !isOpen &&
             (event.key === "ArrowDown" || event.key === "ArrowUp")
           ) {
             event.preventDefault();
-            setIsOpen(true);
+            open();
           }
         }}
       >

@@ -10,6 +10,10 @@ const gallery = read("src/components/projects/project-gallery-card.tsx");
 const detail = read("src/components/projects/project-header.tsx");
 const menu = read("src/components/projects/project-card-menu.tsx");
 const modal = read("src/components/projects/delete-project-modal.tsx");
+const popover = read("src/hooks/use-dismissible-popover.ts");
+const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
+const languageSwitcher = read("src/components/layout/language-switcher.tsx");
+const workspaceSelector = read("src/components/sections/workspace-project-selector.tsx");
 
 test("dashboard recent cards use the shared overflow menu and have no delete pill", () => {
   assert.match(recent, /<ProjectCardMenu/);
@@ -21,6 +25,23 @@ test("dashboard and projects surfaces share the card menu and delete modal", () 
   assert.match(menu, /<DeleteProjectModal/);
   assert.match(menu, /event\.stopPropagation\(\)/);
   assert.match(menu, /role="menuitem"/);
+  assert.match(menu, /useDismissiblePopover/);
+  assert.match(menu, /close\(\); setModalOpen\(true\)/);
+});
+
+test("custom popovers dismiss on outside pointer, Escape, and when another opens", () => {
+  assert.match(popover, /addEventListener\("pointerdown"/);
+  assert.match(popover, /event\.key !== "Escape"/);
+  assert.match(popover, /triggerRef\.current\?\.focus\(\)/);
+  assert.match(popover, /OPEN_POPOVER_EVENT/);
+  for (const source of [menu, sidebar, languageSwitcher, workspaceSelector]) {
+    assert.match(source, /useDismissiblePopover/);
+  }
+});
+
+test("account menu actions close before navigation or sign out", () => {
+  assert.match(sidebar, /aria-expanded=\{isOpen\}/);
+  assert.match(sidebar, /onClick=\{\(\) => close\(\)\}/);
 });
 
 test("project detail exposes shared project actions and redirects after success", () => {

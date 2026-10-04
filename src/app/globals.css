@@ -755,24 +755,14 @@ html[data-motion="ready"] .workspace-frame {
   animation: motion-caret 760ms var(--ease-standard) 1.18s both;
 }
 
-html[data-motion="ready"] .animated-heading[data-motion-variant="hero"] .animated-heading-segment {
-  opacity: 0;
-  transform: translateY(0.18em);
-  filter: blur(3px);
-  animation: motion-heading-word var(--motion-base) var(--ease-emphasized) calc(120ms + var(--heading-index) * 76ms) both;
-}
-
-html[data-motion="ready"] .animated-heading[data-motion-variant="section"][data-motion-revealed="false"],
-html[data-motion="ready"] .animated-heading[data-motion-variant="footer"][data-motion-revealed="false"] {
+html[data-motion="ready"] .homepage-main .animated-heading[data-motion-revealed="false"] {
   opacity: 0;
 }
 
-html[data-motion="ready"] .animated-heading[data-motion-variant="section"][data-motion-revealed="true"] .animated-heading-segment,
-html[data-motion="ready"] .animated-heading[data-motion-variant="footer"][data-motion-revealed="true"] .animated-heading-segment {
+html[data-motion="ready"] .homepage-main .animated-heading[data-motion-revealed="true"] .animated-heading-segment {
   opacity: 0;
-  transform: translateY(0.72em);
-  filter: blur(2px);
-  animation: motion-heading-line var(--motion-base) var(--ease-emphasized) calc(var(--heading-index) * 72ms) both;
+  transform: translateY(0.16em);
+  animation: motion-heading-line var(--motion-base) var(--ease-emphasized) calc(100ms + var(--heading-index) * 42ms) both;
 }
 
 html[data-motion="ready"] .motion-reveal[data-motion-revealed="false"],
@@ -1612,6 +1602,8 @@ html[data-motion="ready"] .hero-cta { animation-delay: 800ms; animation-timing-f
 html[data-motion="ready"] .workspace-frame { animation: motion-workspace-enter var(--motion-slow) var(--ease-emphasized) 880ms both; }
 
 @media (prefers-reduced-motion: reduce) {
+  html[data-motion="ready"] .homepage-main .animated-heading,
+  html[data-motion="ready"] .homepage-main .animated-heading-segment,
   html[data-motion="ready"] .navbar-intro,
   html[data-motion="ready"] .hero-description,
   html[data-motion="ready"] .hero-cta,
@@ -1628,8 +1620,7 @@ html[data-motion="ready"] .workspace-frame { animation: motion-workspace-enter v
     clip-path: none !important;
   }
 
-  html[data-motion="ready"] .animated-heading[data-motion-variant="section"][data-motion-revealed="false"],
-  html[data-motion="ready"] .animated-heading[data-motion-variant="footer"][data-motion-revealed="false"] {
+  html[data-motion="ready"] .homepage-main .animated-heading[data-motion-revealed="false"] {
     opacity: 1;
   }
 
@@ -4543,7 +4534,7 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-sidebar-account::-webkit-details-marker { display: none; }
 .dashboard-sidebar-account:hover { background: var(--dashboard-surface-hover); }
 .dashboard-sidebar-chevron { width: 0.875rem; height: 0.875rem; flex: none; margin-left: auto; color: var(--dashboard-muted); }
-.dashboard-sidebar-account-menu[open] .dashboard-sidebar-chevron { transform: rotate(180deg); }
+.dashboard-sidebar-chevron.is-open { transform: rotate(180deg); }
 .dashboard-sidebar-account-actions { position: absolute; right: 0; bottom: calc(100% + 0.5rem); left: 0; z-index: 40; border: 1px solid var(--dashboard-border); border-radius: var(--radius-sm); background: var(--dashboard-surface); padding: 0.375rem; box-shadow: var(--shadow-subtle); }
 .dashboard-sidebar-account-actions a, .dashboard-sidebar-account-actions button { display: block; width: 100%; border: 0; border-radius: var(--radius-sm); background: transparent; padding: 0.625rem; color: var(--dashboard-foreground); font-size: 0.8125rem; text-align: left; text-decoration: none; cursor: pointer; }
 .dashboard-sidebar-account-actions a:hover, .dashboard-sidebar-account-actions button:hover { background: var(--dashboard-surface-raised); }

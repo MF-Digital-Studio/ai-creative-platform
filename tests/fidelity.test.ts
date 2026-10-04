@@ -824,9 +824,9 @@ test("watch-on-wrist fidelity policy preserves the dial, wrist fit, and clean mi
     strategy: "watch_on_wrist", useCase: "watches",
   });
 
-  assert.match(watch, /case shape, bezel, crown side, lugs, bracelet or strap structure/i);
-  assert.match(watch, /marker count, hand style, date-window position/i);
-  assert.match(watch, /clean believable dial instead of nonsense microtext/i);
+  assert.match(watch, /dial geometry and layout, indices, hands, bezel, crown, lugs, case proportions/i);
+  assert.match(watch, /exact marker count, hand placement style, visible subdials, date-window position/i);
+  assert.match(watch, /clean believable dial rather than invented or nonsense text/i);
   assert.match(watch, /close wrist-led editorial frame/i);
   assert.match(watch, /No extra crowns or pushers, missing crown detail/i);
 });

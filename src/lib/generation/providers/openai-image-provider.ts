@@ -73,13 +73,12 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
     });
     try {
       const orderedImages = request.images ? [...request.images].sort((left, right) => left.order - right.order) : orderGenerationImages(request.sourceAsset);
-      const scenePreparation = request.operation === "scene_preparation";
       const referenceReplacement = request.operation === "reference_product_replacement";
       if (referenceReplacement && (orderedImages[0]?.role !== "reference_base_scene" || orderedImages[1]?.role !== "product_identity_source")) throw new GenerationProviderError("Reference replacement requires the base scene first and product identity source second.", "openai");
-      if (!scenePreparation && !referenceReplacement && request.operation !== "identity_placement" && orderedImages[0]?.role !== "product_identity_source") throw new GenerationProviderError("Product identity source must be the first provider image.", "openai");
-      if (request.operation !== "identity_placement" && request.prompt.includes("SOURCE ARTWORK IDENTITY — EXACT DESIGN AUTHORITY") && orderedImages[0]?.role === "product_identity_source" && orderedImages[1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("Exact-product apparel generation requires its separate artwork identity input when localization succeeded.", "openai");
-      if (request.operation !== "identity_placement" && orderedImages.some(({ role }) => role === "apparel_artwork_identity_source") && orderedImages[referenceReplacement ? 2 : 1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("Apparel artwork identity source must follow the product identity source.", "openai");
-      if (request.operation !== "identity_placement" && orderedImages.some(({ role }) => role === "apparel_artwork_identity_source") && orderedImages.some(({ role }) => role === "scene_reference" || role === "style_reference") && orderedImages.findIndex(({ role }) => role === "apparel_artwork_identity_source") > orderedImages.findIndex(({ role }) => role === "scene_reference" || role === "style_reference")) throw new GenerationProviderError("Apparel artwork identity must precede scene references.", "openai");
+      if (!referenceReplacement && orderedImages[0]?.role !== "product_identity_source") throw new GenerationProviderError("Product identity source must be the first provider image.", "openai");
+      if (request.prompt.includes("SOURCE ARTWORK IDENTITY — EXACT DESIGN AUTHORITY") && orderedImages[0]?.role === "product_identity_source" && orderedImages[1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("Exact-product apparel generation requires its separate artwork identity input when localization succeeded.", "openai");
+      if (orderedImages.some(({ role }) => role === "apparel_artwork_identity_source") && orderedImages[referenceReplacement ? 2 : 1]?.role !== "apparel_artwork_identity_source") throw new GenerationProviderError("Apparel artwork identity source must follow the product identity source.", "openai");
+      if (orderedImages.some(({ role }) => role === "apparel_artwork_identity_source") && orderedImages.some(({ role }) => role === "scene_reference" || role === "style_reference") && orderedImages.findIndex(({ role }) => role === "apparel_artwork_identity_source") > orderedImages.findIndex(({ role }) => role === "scene_reference" || role === "style_reference")) throw new GenerationProviderError("Apparel artwork identity must precede scene references.", "openai");
       const imageFiles = await Promise.all(orderedImages.map(async (image, index) => {
         const normalized = await normalizeImageInputForOpenAI(image.data, image.mimeType);
         const suffix = normalized.mimeType === "image/jpeg" ? "jpg" : normalized.mimeType === "image/webp" ? "webp" : "png";
@@ -93,15 +92,7 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
         quality: request.quality,
         operation,
       });
-      const response = scenePreparation && imageFiles.length === 0
-        ? await getOpenAIClient().images.generate({
-          model: request.model,
-          prompt: request.prompt,
-          size: size.value,
-          ...(quality ? { quality: quality as "high" | "low" } : {}),
-          output_format: "png",
-        })
-        : await getOpenAIClient().images.edit(buildOpenAIImageEditParams({
+      const response = await getOpenAIClient().images.edit(buildOpenAIImageEditParams({
           model: request.model,
           image: imageFiles.length === 1 ? imageFiles[0] : imageFiles,
           prompt: request.prompt,

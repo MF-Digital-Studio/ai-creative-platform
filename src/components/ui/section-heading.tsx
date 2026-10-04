@@ -6,12 +6,14 @@ import { cn } from "@/lib/cn";
 type SectionHeadingAlign = "left" | "center";
 
 export interface SectionHeadingProps {
+  as?: "h1" | "h2";
   eyebrow?: string;
   title: string;
   description?: string;
   align?: SectionHeadingAlign;
   className?: string;
   titleClassName?: string;
+  titleId?: string;
 }
 
 const alignmentClasses: Record<SectionHeadingAlign, string> = {
@@ -20,12 +22,14 @@ const alignmentClasses: Record<SectionHeadingAlign, string> = {
 };
 
 export function SectionHeading({
+  as = "h2",
   eyebrow,
   title,
   description,
   align = "left",
   className,
   titleClassName,
+  titleId,
 }: SectionHeadingProps) {
   return (
     <header
@@ -37,6 +41,8 @@ export function SectionHeading({
     >
       {eyebrow ? <Reveal variant="fade"><Badge>{eyebrow}</Badge></Reveal> : null}
       <AnimatedHeading
+        as={as}
+        id={titleId}
         lines={title.split("\n")}
         className={cn("text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-[var(--foreground)] sm:text-5xl lg:text-6xl", titleClassName)}
       />

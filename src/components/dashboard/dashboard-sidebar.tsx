@@ -1,10 +1,13 @@
 "use client";
 
+"use client";
+
 import { useLocale, useTranslations } from "next-intl";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { dashboardPrimaryNavigation } from "@/data/dashboard-navigation";
 import { Link, usePathname } from "@/i18n/navigation";
 import { DashboardPlanCard } from "@/components/dashboard/dashboard-plan-card";
+import { useDismissiblePopover } from "@/hooks/use-dismissible-popover";
 
 type DashboardSidebarProps = {
   displayName?: string | null;
@@ -18,6 +21,7 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
   const locale = useLocale();
   const pathname = usePathname();
   const name = displayName?.trim() || t("items.account");
+  const { close, isOpen, rootRef, toggle, triggerRef } = useDismissiblePopover();
 
   return <aside className="dashboard-sidebar" aria-label={t("primaryLabel")}>
     <div className="dashboard-sidebar-brand-row">
@@ -48,17 +52,17 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
       <Link href="/" className="dashboard-nav-item dashboard-site-link" aria-label={t("returnToWebsite")} data-tooltip={collapsed ? t("returnToWebsite") : undefined}>
         <DashboardIcon name="website" className="dashboard-nav-icon" /><span className="dashboard-nav-label">{t("returnToWebsite")}</span>
       </Link>
-      <details className="dashboard-sidebar-account-menu">
-        <summary className="dashboard-sidebar-account" aria-label={`${t("items.account")}: ${name}`} title={collapsed ? name : undefined}>
+      <div ref={rootRef} className="dashboard-sidebar-account-menu">
+        <button ref={triggerRef} type="button" className="dashboard-sidebar-account" aria-label={`${t("items.account")}: ${name}`} aria-haspopup="menu" aria-expanded={isOpen} title={collapsed ? name : undefined} onClick={toggle}>
           <span className="dashboard-sidebar-avatar" aria-hidden="true">{name.slice(0, 1).toLocaleUpperCase()}</span>
           <span className="dashboard-sidebar-account-copy"><strong>{name}</strong><small>{t("personalWorkspace")}</small></span>
-          <DashboardIcon name="chevron" className="dashboard-sidebar-chevron" />
-        </summary>
-        <div className="dashboard-sidebar-account-actions">
-          <Link href="/dashboard/account">{topbar("account")}</Link>
-          <form action={`/${locale}/auth/signout`} method="post"><button type="submit">{topbar("signOut")}</button></form>
-        </div>
-      </details>
+          <DashboardIcon name="chevron" className={`dashboard-sidebar-chevron${isOpen ? " is-open" : ""}`} />
+        </button>
+        {isOpen ? <div className="dashboard-sidebar-account-actions" role="menu">
+          <Link href="/dashboard/account" role="menuitem" onClick={() => close()}>{topbar("account")}</Link>
+          <form action={`/${locale}/auth/signout`} method="post"><button type="submit" role="menuitem" onClick={() => close()}>{topbar("signOut")}</button></form>
+        </div> : null}
+      </div>
     </div>
   </aside>;
 }

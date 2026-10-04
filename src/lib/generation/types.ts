@@ -59,7 +59,7 @@ export type ImageGenerationRequest = {
   model: string;
   quality: ImageGenerationQuality;
   aspectRatio: AspectRatio;
-  operation?: "edit" | "scene_preparation" | "identity_placement" | "reference_product_replacement";
+  operation?: "edit" | "reference_product_replacement";
 };
 
 export type ImageGenerationUsage = {
