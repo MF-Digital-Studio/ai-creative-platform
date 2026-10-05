@@ -31,7 +31,7 @@ export function buildImageEditPrompt(instruction: string, intent: ImageEditInten
   return [
     "Edit the provided base image. Preserve all elements not explicitly requested to change. Do not redesign or regenerate the entire scene.",
     "BASE IMAGE PRESERVATION: preserve composition, camera angle, framing, subject identity and appearance, pose, environment unless requested, and product placement.",
-    "PRODUCT IDENTITY: preserve the exact source product, geometry, color, branding, artwork, and materials. Product Identity Lock remains active. Do not redesign, recolor, replace logos/artwork, or alter identity-critical details unless the instruction explicitly names a product change.",
+    "PRODUCT IDENTITY: preserve the exact source product, geometry, color, branding, artwork, and materials. Product Identity Lock remains active. For bags, preserve bag type and silhouette, proportions, handle count/geometry, strap presence/placement, closure and flap, zipper and pockets, panel seams, hardware, logo/monogram, print, material, color, and base. Do not redesign, recolor, replace logos/artwork, or alter identity-critical details unless the instruction explicitly names a product change.",
     `ALLOWED CHANGES: ${intent.allowedChanges.join(", ")}.`,
     `PROTECTED ELEMENTS: ${intent.preservedElements.join("; ")}.`,
     `USER REQUEST: ${instruction}`,

@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Klay.ai",
-    "description": "Giyim, takı, saat, kozmetik ve ayakkabı için premium AI kampanya içerikleri."
+    "description": "Kampanya görselleri için giyim, takı, saat, kozmetik, ayakkabı ve çantalar."
   },
   "Navigation": {
     "home": "Ana Sayfa",
@@ -368,7 +368,7 @@
     "eyebrow": "Kampanyanı oluştur",
     "ctaTitleLead": "Bir ürün fotoğrafı.",
     "ctaTitleTrail": "Baştan sona bir kampanya.",
-    "description": "Giyim, takı, saat, kozmetik ve ayakkabı için premium kampanya görselleri oluşturun.",
+    "description": "Giyim, takı, saat, kozmetik, ayakkabı ve çantalar için premium kampanya görselleri oluşturun.",
     "cta": "Ücretsiz Dene →",
     "shortDescription": "Ürün fotoğraflarından kampanyaya hazır içerikler.",
     "platform": "PLATFORM",
@@ -388,7 +388,8 @@
     "xLabel": "X",
     "copyright": "© {year} {brand}. Tüm hakları saklıdır.",
     "watch": "Saat",
-    "footwear": "Ayakkabı"
+    "footwear": "Ayakkabı",
+    "bags": "Çantalar"
   },
   "SignupPage": {
     "metadataTitle": "Hesap Oluştur",
@@ -571,17 +572,28 @@
     },
     "overview": {
       "heading": "Çalışma alanı",
+      "description": "Projelerinize ve üretimlerinize hızlı bir bakış.",
       "projects": "Projeler",
-      "completed": "Tamamlanan üretimler",
-      "active": "Sıradaki ve devam eden"
+      "projectsDescription": "Çalışma alanınızdaki projeler",
+      "completed": "Üretimler",
+      "completedDescription": "Tamamlanan görseller",
+      "active": "Devam eden",
+      "activeDescription": "Sıradaki ve işlenen üretimler"
     },
     "generations": {
       "heading": "Son üretimler",
-      "emptyHeading": "Henüz bir üretim yok.",
-      "emptyDescription": "Ürün fotoğrafını ekleyerek ilk görselini oluşturabilirsin.",
-      "start": "Üretime başla",
+      "emptyHeading": "Henüz bir üretiminiz yok.",
+      "emptyDescription": "İlk görselinizi oluşturduğunuzda burada görünecek.",
+      "start": "İlk görselini oluştur",
       "untitled": "İsimsiz proje",
-      "previewAlt": "{title} projesinin üretilen görseli"
+      "previewAlt": "{title} projesinin üretilen görseli",
+      "fullscreen": "Tam ekran",
+      "openProject": "Projeye git",
+      "edit": "Düzenle",
+      "closeFullscreen": "Tam ekrandan çık",
+      "zoomIn": "Yakınlaştır",
+      "zoomOut": "Uzaklaştır",
+      "resetZoom": "Yakınlaştırmayı sıfırla"
     },
     "composer": {
       "heading": "Yeni bir görsel üret",
@@ -600,7 +612,8 @@
       "productLabel": "Ürün",
       "productHelper": "JPEG, PNG veya WebP sürükleyin ya da seçin",
       "addProduct": "Ürün ekle",
-      "replaceProduct": "Değiştir",
+      "replaceProduct": "Ürünü değiştir",
+      "productReady": "Ürün görseli seçildi",
       "removeProduct": "Kaldır",
       "addReference": "Referans ekle",
       "referenceLabel": "Görsel referanslar",
@@ -613,10 +626,22 @@
       "removeReference": "Görsel referans {index} kaldır",
       "invalidProductType": "Lütfen JPEG, PNG veya WebP görsel seçin.",
       "productTooLarge": "Görsel 20 MB veya daha küçük olmalıdır.",
+      "productRequired": "Ürün görseli ekleyerek başlayın.",
+      "directionRequired": "Bir preset seçin veya yaratıcı yönünüzü yazın.",
+      "signInRequired": "Devam etmek için oturum açın.",
+      "productUploading": "Ürün görseli yükleniyor…",
+      "productAnalyzing": "Ürün analiz ediliyor…",
+      "referenceUploading": "Referans görseller yükleniyor…",
+      "productUploadFailed": "Ürün görseli yüklenemedi. Yeniden deneyin veya başka bir görsel seçin.",
+      "referenceUploadFailed": "Referans görseller yüklenemedi. Yeniden deneyin.",
       "selectedProductAlt": "Seçilen ürün görseli",
       "creating": "Oluşturuluyor…",
       "creationError": "Görsel oluşturulamadı. Lütfen tekrar deneyin.",
       "progressTitle": "Görseliniz oluşturuluyor",
+      "closeProgress": "İlerleme penceresini kapat",
+      "activeStatus": "Görsel üretiliyor…",
+      "successStatus": "Görsel hazır",
+      "failedStatus": "Üretim başarısız",
       "progressDescription": "Hazır olduğunda sonucunuz otomatik olarak açılacak.",
       "progressStatuses": {
         "preparing": "Ürününüz hazırlanıyor",
@@ -678,6 +703,10 @@
     },
     "presets": {
       "heading": "Yaratıcı presetler",
+      "recommendedHeading": "Bu ürün için önerilen presetler",
+      "recommendedDescription": "Ürün türünüze uygun yaratıcı yönleri öne çıkardık.",
+      "viewAll": "Tüm presetleri gör",
+      "showLess": "Daha az göster",
       "description": "Üretime hazır bir yön seçin, ardından isteğe bağlı notunuzu ekleyin.",
       "listLabel": "Yaratıcı preset kütüphanesi",
       "usePreset": "{title} presetini seç",
@@ -686,7 +715,8 @@
         "jewelry": "Takı",
         "watches": "Saat",
         "cosmetics": "Kozmetik",
-        "footwear": "Ayakkabı"
+        "footwear": "Ayakkabı",
+        "bags": "Çantalar"
       },
       "items": {
         "apparel-street-style": {
@@ -913,6 +943,21 @@
           "title": "Coastal Editorial",
           "description": "Rüzgar ve gerçek mekan dokusuyla doğal sahil streetwear kampanyası.",
           "alt": "Doğal sahil editorial ortamında streetwear model"
+        },
+        "bags-street-editorial": {
+          "title": "Sokak Editoriali",
+          "description": "Çantayı net ve görünür tutan şehir kampanyası.",
+          "alt": "Şehir sahnesinde çanta kampanyası"
+        },
+        "bags-minimal-studio": {
+          "title": "Minimal Stüdyo",
+          "description": "Çanta detaylarını öne çıkaran sade stüdyo.",
+          "alt": "Minimal stüdyoda çanta"
+        },
+        "bags-crossbody-lifestyle": {
+          "title": "Çapraz Askılı Yaşam",
+          "description": "Doğal askı teması ve gerçekçi taşıma.",
+          "alt": "Çapraz askılı çanta görünümü"
         }
       }
     },
@@ -947,15 +992,10 @@
     },
     "recentWork": {
       "projectActions": "Proje işlemleri",
-      "heading": "Son projeler",
-      "viewAll": "Tüm projeleri gör",
       "allHeading": "Tüm projeler",
       "allEyebrow": "Proje arşivi",
       "allMetadataTitle": "Tüm Projeler",
       "backToWorkspace": "Çalışma Alanına Dön",
-      "emptyHeading": "Henüz bir projen yok.",
-      "emptyDescription": "İlk ürününü yükleyerek üretime başlayabilirsin.",
-      "startCreating": "İlk projeyi oluştur",
       "newProject": "Yeni proje",
       "creating": "Oluşturuluyor…",
       "createError": "Proje oluşturulamadı. Lütfen tekrar deneyin.",
@@ -986,6 +1026,9 @@
         "apply": "Düzenlemeyi uygula",
         "unavailable": "Görsel düzenleme yakında kullanıma açılacak.",
         "failed": "Düzenleme tamamlanamadı. Lütfen tekrar deneyin.",
+        "activeStatus": "Düzenleme uygulanıyor…",
+        "successStatus": "Düzenleme hazır",
+        "failedStatus": "Üretim başarısız",
         "progressTitle": "Düzenlemeniz uygulanıyor",
         "progressDescription": "Seçili görsel, ürün kimliği korunarak düzenleniyor.",
         "progressStatuses": {
@@ -1024,6 +1067,7 @@
       "deleting": "Siliniyor…",
       "deleteError": "Proje silinemedi. Lütfen tekrar deneyin.",
       "backToProjects": "Projelere dön",
+      "closeProgress": "İlerleme penceresini kapat",
       "updated": "Güncellendi: {date}",
       "rename": {
         "edit": "Proje adını düzenle",
@@ -1045,7 +1089,10 @@
         "failed": "Düzenleme tamamlanamadı. Lütfen tekrar deneyin.",
         "progressTitle": "Düzenlemeniz uygulanıyor",
         "progressDescription": "Seçili görsel, ürün kimliği korunarak düzenleniyor.",
-        "progressStatuses": {
+                "activeStatus": "Görsel düzenlemesi uygulanıyor…",
+        "successStatus": "Görsel düzenlemesi tamamlandı",
+        "failedStatus": "Görsel düzenlemesi başarısız",
+"progressStatuses": {
           "applying": "İstenen değişiklik uygulanıyor",
           "preserving": "Görsel korunuyor",
           "checking": "Ürün kimliği kontrol ediliyor",
@@ -1104,6 +1151,10 @@
         "run": "Üretimi çalıştır",
         "running": "Üretiliyor…",
         "generationFailed": "Görsel üretimi tamamlanamadı. Lütfen tekrar deneyin.",
+        "activeStatus": "Görsel üretiliyor…",
+        "successStatus": "Görsel hazır",
+        "failedStatus": "Üretim başarısız",
+        "closeProgress": "İlerleme penceresini kapat",
         "progressTitle": "Görseliniz oluşturuluyor",
         "progressDescription": "Hazır olduğunda sonucunuz otomatik olarak açılacak.",
         "progressStatuses": {
@@ -1113,8 +1164,30 @@
           "finalizing": "Sonuç tamamlanıyor"
         },
         "notQueued": "Bu üretim artık sırada değil. Sayfayı yenileyip tekrar deneyin.",
-        "invalidAspectRatio": "Desteklenen biçimlerden birini seçin.",
         "invalidAspectRatio": "Lutfen desteklenen bicimlerden birini secin."
+      },
+      "composer": {
+        "invalidAspectRatio": "Desteklenen biçimlerden birini seçin.",
+        "aspectRatio": {
+          "label": "Format",
+          "helper": "İçeriğinizin yayınlanacağı formata uygun görsel oranını seçin.",
+          "names": {
+            "widescreen": "Geniş ekran",
+            "vertical": "Dikey",
+            "square": "Kare",
+            "classic": "Klasik",
+            "tall": "Dikey ürün",
+            "cinemascope": "Sinematik"
+          },
+          "descriptions": {
+            "widescreenUse": "YouTube, web siteleri, açılış sayfaları",
+            "verticalUse": "TikTok, Reels, Shorts, Stories",
+            "squareUse": "Instagram ve Facebook gönderileri",
+            "classicUse": "Sunumlar, pazaryerleri, kataloglar",
+            "tallUse": "Ürün sayfaları, Pinterest",
+            "cinemascopeUse": "Bannerlar ve hero alanları"
+          }
+        }
       },
       "outputs": {
         "heading": "Üretilen çıktılar",
@@ -1214,11 +1287,13 @@
     "watch": "Saat",
     "cosmetics": "Kozmetik",
     "footwear": "Ayakkabı",
+    "bags": "Çantalar",
     "apparelAlt": "Editoryal giyim kampanya görseli",
     "jewelryAlt": "Model üzerinde sunulan takı",
     "watchAlt": "Bilekte gösterilen saat",
     "cosmeticsAlt": "Stil verilmiş sahnede kozmetik ürünü",
     "footwearAlt": "Şehir yaşamında ayakkabı görseli",
+    "bagsAlt": "Deri el çantası ürün fotoğrafı",
     "referenceTitle": "Bir yön seçin. Ya da kendi referansınızı kullanın.",
     "referenceDescription": "Presetlerden başlayın veya ışık, kompozisyon ve atmosfer için kendi referans görselinizi ekleyin.",
     "referenceNote": "Preset ve referanslar sahneye yön verir. Ürününüz odağı korur.",
@@ -1238,7 +1313,7 @@
     "faq3Question": "Prompt yazmam gerekiyor mu?",
     "faq3Answer": "Hayır. Bir preset seçerek veya doğrudan görsel oluşturarak başlayabilirsiniz.",
     "faq4Question": "Hangi ürün kategorileri destekleniyor?",
-    "faq4Answer": "Giyim, takı, saat, kozmetik ve ayakkabı.",
+    "faq4Answer": "Giyim, takı, saat, kozmetik, ayakkabı ve çantalar.",
     "faq5Question": "Üretilen görseli daha sonra düzenleyebilir miyim?",
     "faq5Answer": "Üretilen görselleri projenizde inceleyebilir ve düzenlemeye devam edebilirsiniz.",
     "faq6Question": "Projelerimi saklayabilir miyim?",

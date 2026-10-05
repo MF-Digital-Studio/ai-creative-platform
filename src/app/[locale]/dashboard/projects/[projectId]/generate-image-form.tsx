@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
+import { GenerationStatusIndicator, type GenerationState } from "@/components/projects/generation-status-indicator";
 import { AspectRatioPicker, type AspectRatioPickerMessages } from "@/components/projects/aspect-ratio-picker";
 import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
 import type { GenerationAspectRatio } from "@/lib/generation/types";
@@ -23,13 +24,15 @@ type GenerateImageFormProps = {
     progressTitle: string;
     progressDescription: string;
     progressStatuses: readonly [string, string, string, string];
+    closeProgress: string; activeStatus: string; successStatus: string; failedStatus: string;
   };
 };
 
 export function GenerateImageForm({ action, messages }: GenerateImageFormProps) {
   const router = useRouter();
-  const [generationState, setGenerationState] = useState<"idle" | "pending" | "failed">("idle");
-  const pending = generationState === "pending";
+  const [generationState, setGenerationState] = useState<GenerationState>("idle");
+  const [modalOpen, setModalOpen] = useState(false);
+  const pending = generationState !== "idle" && generationState !== "succeeded" && generationState !== "failed";
   const [message, setMessage] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
   const pendingRef = useRef(false);
@@ -40,12 +43,15 @@ export function GenerateImageForm({ action, messages }: GenerateImageFormProps) 
     pendingRef.current = true;
     const formData = new FormData(event.currentTarget);
     setMessage(null);
-    setGenerationState("pending");
+    setGenerationState("queued");
+    setModalOpen(true);
     try {
       const queued = await action(null, formData);
-      if (!queued.ok) { setGenerationState("failed"); setMessage(messages[queued.message]); pendingRef.current = false; setGenerationState("idle"); return; }
+      if (!queued.ok) { setGenerationState("failed"); setMessage(messages[queued.message]); pendingRef.current = false; return; }
+      setGenerationState("processing");
+      router.replace(`?generation=${encodeURIComponent(queued.generationId)}`);
       router.refresh();
-    } catch { setGenerationState("failed"); setMessage(messages.generationFailed); pendingRef.current = false; setGenerationState("idle"); }
+    } catch { setGenerationState("failed"); setMessage(messages.generationFailed); pendingRef.current = false; }
   }
 
   return <>
@@ -56,6 +62,7 @@ export function GenerateImageForm({ action, messages }: GenerateImageFormProps) 
       <input type="hidden" name="aspect_ratio" value={aspectRatio} />
       <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending} className="project-generate-button">{pending ? messages.creating : messages.generate}</Button>
     </form>
-    <GenerationProgressModal open={generationState === "pending"} title={messages.progressTitle} description={messages.progressDescription} statuses={messages.progressStatuses} />
+    <GenerationStatusIndicator status={generationState} label={pending ? messages.activeStatus : generationState === "succeeded" ? messages.successStatus : messages.failedStatus} onClick={() => { if (generationState === "succeeded") { router.refresh(); return; } setModalOpen(true); }} />
+      <GenerationProgressModal open={modalOpen && generationState !== "idle"} onClose={() => setModalOpen(false)} closeLabel={messages.closeProgress} title={generationState === "failed" ? messages.generationFailed : messages.progressTitle} description={messages.progressDescription} statuses={messages.progressStatuses} />
   </>;
 }

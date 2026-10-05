@@ -13,6 +13,7 @@ export const generationStrategies = [
   "jewelry_on_model",
   "watch_on_wrist",
   "footwear_on_model",
+  "bags_on_model",
   "reference_edit",
 ] as const;
 
@@ -67,6 +68,7 @@ export function getGenerationStrategyCategory(
   if (strategy === "jewelry_on_model" || strategy === "jewelry_still_life") return "jewelry";
   if (strategy === "watch_on_wrist") return "watches";
   if (strategy === "footwear_on_model") return "footwear";
+  if (strategy === "bags_on_model") return "bags";
   return "product";
 }
 
@@ -79,7 +81,7 @@ function hasJewelryOnBodyIntent(userPrompt: string): boolean {
 }
 
 function effectivePreservationMode(strategy: GenerationStrategy): ProductPreservationMode {
-  return strategy === "fashion_on_model" || strategy === "jewelry_on_model" || strategy === "watch_on_wrist" || strategy === "footwear_on_model" || strategy === "reference_edit"
+  return strategy === "fashion_on_model" || strategy === "jewelry_on_model" || strategy === "watch_on_wrist" || strategy === "footwear_on_model" || strategy === "bags_on_model" || strategy === "reference_edit"
     ? "reference_edit"
     : "pixel_lock";
 }
@@ -98,6 +100,7 @@ function resolveForCategory(
   }
   if (category === "watches") return subjectType === "on_model" ? "watch_on_wrist" : "rigid_product";
   if (category === "footwear") return subjectType === "on_model" ? "footwear_on_model" : "rigid_product";
+  if (category === "bags") return subjectType === "on_model" ? "bags_on_model" : "rigid_product";
   return "rigid_product";
 }
 
@@ -139,6 +142,10 @@ function resolveForProductProfile(
   if (profile.vertical === "jewelry") return requestsOnBody || (canBeWorn && referenceRequestsOnBody) ? "jewelry_on_model" : "jewelry_still_life";
   if (profile.vertical === "watches") return requestsOnBody ? "watch_on_wrist" : "rigid_product";
   if (profile.vertical === "footwear") return requestsOnBody ? "footwear_on_model" : "rigid_product";
+  if (profile.vertical === "bags") {
+    const carryIntent = /\b(?:handheld|hand held|carry|carrying|shoulder|crossbody|cross-body|under-arm|under arm|on model|worn)\b/i.test(userPrompt);
+    return requestsOnBody || carryIntent || referenceRequestsOnBody ? "bags_on_model" : "rigid_product";
+  }
   return "rigid_product";
 }
 

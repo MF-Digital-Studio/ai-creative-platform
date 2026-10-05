@@ -42,14 +42,19 @@ const footwearSchema = {
   required: ["shoeType", "silhouette", "upperMaterial", "outsole", "midsole", "panelStructure", "lacing", "tongue", "heel", "logoRegions", "colorBlocking"],
   properties: { shoeType: { type: "string" }, silhouette: nullableString, upperMaterial: { type: "array", items: { type: "string" } }, outsole: nullableString, midsole: nullableString, panelStructure: { type: "array", items: { type: "string" } }, lacing: nullableString, tongue: nullableString, heel: nullableString, logoRegions: { type: "array", items: regionSchema }, colorBlocking: { type: "array", items: { type: "string" } } },
 } as const;
+const bagsSchema = {
+  type: ["object", "null"], additionalProperties: false,
+  required: ["bagType", "silhouette", "proportions", "bodyStructure", "handleCount", "handleGeometry", "handleAttachmentPoints", "strapCount", "strapPlacement", "strapWidth", "strapLengthClass", "closureType", "flapOrOpeningShape", "zipperLayout", "pocketLayout", "panelConstruction", "stitchingPattern", "pipingOrEdgeTreatment", "hardwareLayout", "hardwareColor", "logoOrMonogramPlacement", "material", "materialTexture", "colorBlocking", "patternOrPrint", "baseShape", "baseFeetHardware", "chainStrap", "decorativeCharms", "asymmetricDetails"],
+  properties: { bagType: { type: "string" }, silhouette: nullableString, proportions: nullableString, bodyStructure: nullableString, handleCount: nullableNumber, handleGeometry: nullableString, handleAttachmentPoints: { type: "array", items: { type: "string" } }, strapCount: nullableNumber, strapPlacement: { type: "array", items: { type: "string" } }, strapWidth: nullableString, strapLengthClass: nullableString, closureType: nullableString, flapOrOpeningShape: nullableString, zipperLayout: { type: "array", items: { type: "string" } }, pocketLayout: { type: "array", items: { type: "string" } }, panelConstruction: { type: "array", items: { type: "string" } }, stitchingPattern: nullableString, pipingOrEdgeTreatment: nullableString, hardwareLayout: { type: "array", items: { type: "string" } }, hardwareColor: nullableString, logoOrMonogramPlacement: { type: "array", items: regionSchema }, material: nullableString, materialTexture: nullableString, colorBlocking: { type: "array", items: { type: "string" } }, patternOrPrint: nullableString, baseShape: nullableString, baseFeetHardware: nullableString, chainStrap: { type: ["boolean", "null"] }, decorativeCharms: { type: "array", items: { type: "string" } }, asymmetricDetails: { type: "array", items: { type: "string" } } },
+} as const;
 
 /** Flat, strict-schema-compatible model output. ProductProfile is assembled server-side. */
 export const productAnalysisModelOutputSchema = {
   type: "object", additionalProperties: false,
-  required: ["status", "inferredCategory", "vertical", "subcategory", "wearability", "rigidity", "materials", "dominantColors", "productShape", "identityCriticalAttributes", "visibleBranding", "interactionTargets", "allowedTransformations", "forbiddenTransformations", "recommendedSceneTags", "discouragedSceneTags", "confidence", "apparel", "jewelry", "watch", "cosmetics", "footwear"],
+  required: ["status", "inferredCategory", "vertical", "subcategory", "wearability", "rigidity", "materials", "dominantColors", "productShape", "identityCriticalAttributes", "visibleBranding", "interactionTargets", "allowedTransformations", "forbiddenTransformations", "recommendedSceneTags", "discouragedSceneTags", "confidence", "apparel", "jewelry", "watch", "cosmetics", "footwear", "bags"],
   properties: {
     status: { type: "string", enum: ["supported", "unsupported"] }, inferredCategory: nullableString,
-    vertical: { type: ["string", "null"], enum: ["apparel", "jewelry", "watches", "cosmetics", "footwear", null] }, subcategory: nullableString,
+    vertical: { type: ["string", "null"], enum: ["apparel", "jewelry", "watches", "cosmetics", "footwear", "bags", null] }, subcategory: nullableString,
     wearability: { type: "string", enum: ["wearable", "non_wearable", "context_dependent"] }, rigidity: { type: "string", enum: ["rigid", "semi_rigid", "deformable"] },
     materials: { type: "array", items: { type: "string" } }, dominantColors: { type: "array", items: { type: "string" } }, productShape: { type: "string" },
     identityCriticalAttributes: { type: "array", items: { type: "object", additionalProperties: false, required: ["attribute", "rationale", "regions"], properties: { attribute: { type: "string" }, rationale: { type: "string" }, regions: { type: "array", items: regionSchema } } } },
@@ -57,7 +62,7 @@ export const productAnalysisModelOutputSchema = {
     interactionTargets: { type: "array", items: { type: "string", enum: ["finger", "wrist", "neck", "ear", "foot", "torso", "hand", "none"] } }, allowedTransformations: { type: "array", items: { type: "string", enum: ["natural_fabric_deformation", "perspective_change", "lighting_or_reflection_change", "body_fitting", "natural_pose_flex", "none"] } }, forbiddenTransformations: { type: "array", items: { type: "string", enum: ["recolor", "logo_movement", "geometry_redesign", "gemstone_count_change", "dial_layout_change", "outsole_redesign", "label_redesign", "text_or_artwork_change", "packaging_redesign"] } },
     recommendedSceneTags: { type: "array", items: { type: "string" } }, discouragedSceneTags: { type: "array", items: { type: "string" } },
     confidence: { type: "object", additionalProperties: false, required: ["overall", "vertical", "subcategory", "materials", "wearability", "rigidity", "visibleBranding", "verticalAttributes"], properties: { overall: { type: "number", minimum: 0, maximum: 1 }, vertical: nullableNumber, subcategory: nullableNumber, materials: nullableNumber, wearability: nullableNumber, rigidity: nullableNumber, visibleBranding: nullableNumber, verticalAttributes: nullableNumber } },
-    apparel: apparelSchema, jewelry: jewelrySchema, watch: watchSchema, cosmetics: cosmeticsSchema, footwear: footwearSchema,
+    apparel: apparelSchema, jewelry: jewelrySchema, watch: watchSchema, cosmetics: cosmeticsSchema, footwear: footwearSchema, bags: bagsSchema,
   },
 } as const;
 
@@ -66,7 +71,7 @@ export function createProductAnalysisInput(input: { assetId: string; image: { da
     role: "user" as const,
     content: [{
       type: "input_text" as const,
-      text: `Analyze product asset ${input.assetId}. Return every required field. Use null for non-applicable category blocks and unknown nullable values.`,
+      text: `Analyze product asset ${input.assetId}. Return every required field. Use null for non-applicable category blocks and unknown nullable values. Classify handbags, shoulder bags, crossbody bags, totes, clutches, backpacks, mini bags, bucket bags, structured bags, and satchels as vertical bags. For bags, inspect visible source evidence for silhouette, proportions, body structure, handles and attachment points, straps and placement, closure/flap/zipper, pockets, panels, seams, edge treatment, hardware and color, logo/monogram, material and texture, color blocking, print, base/feet, chain strap, charms, and asymmetric details. Do not infer hidden components; the source image is authoritative.`,
     }, {
       type: "input_image" as const,
       image_url: `data:${input.image.mimeType};base64,${input.image.data.toString("base64")}`,

@@ -57,6 +57,7 @@ type GenerationGalleryProps = {
   runActions: { id: string; node: ReactNode }[];
   onSelectionChange: (id: string | null) => void;
   messages: GalleryMessages;
+  initialSelectedGenerationId?: string | null;
 };
 
 function OutputState({ heading, description, busy = false, action }: { heading: string; description: string; busy?: boolean; action?: string }) {
@@ -80,8 +81,8 @@ function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messag
   </div>;
 }
 
-export function GenerationGallery({ items, controls, runActions, onSelectionChange, messages }: GenerationGalleryProps) {
-  const [selection, setSelection] = useState<{ id: string; latestId: string } | null>(null);
+export function GenerationGallery({ items, controls, runActions, onSelectionChange, messages, initialSelectedGenerationId }: GenerationGalleryProps) {
+  const [selection, setSelection] = useState<{ id: string; latestId: string } | null>(() => initialSelectedGenerationId ? { id: initialSelectedGenerationId, latestId: items[0]?.id ?? "" } : null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const latestId = items[0]?.id ?? "";
   const selected = selection?.latestId === latestId ? items.find((item) => item.id === selection.id) ?? items[0] : items[0];

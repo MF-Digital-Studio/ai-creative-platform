@@ -22,13 +22,16 @@ export function resolveGenerationExecutionPolicy(input: {
   const jewelry = profile?.vertical === "jewelry";
   const onModelApparel = profile?.vertical === "apparel" && input.strategy === "fashion_on_model";
   const complexOnModelFootwear = profile?.vertical === "footwear" && input.strategy === "footwear_on_model";
+  const onModelBag = profile?.vertical === "bags" && input.strategy === "bags_on_model";
+  const identityCriticalBag = profile?.vertical === "bags" && Boolean(profile.visibleBranding.hasLogo || profile.visibleBranding.hasReadableText);
   const exactProductHighRisk = input.exactProduct && !(profile?.vertical === "apparel" && input.artworkComplexity === "simple_logo");
-  const complex = Boolean(onModelApparel && input.artworkComplexity !== "simple_logo" || artworkText || jewelry || watch || input.referenceReplacement || exactProductHighRisk || complexOnModelFootwear);
+  const complex = Boolean(onModelApparel && input.artworkComplexity !== "simple_logo" || artworkText || jewelry || watch || input.referenceReplacement || exactProductHighRisk || complexOnModelFootwear || onModelBag || identityCriticalBag);
   if (artworkText) reasons.push("artwork_text");
   if (input.exactProduct) reasons.push("exact_product");
   if (input.artworkComplexity === "simple_logo") reasons.push("simple_logo");
   if (jewelry) reasons.push("jewelry_geometry");
   if (watch) reasons.push("watch_geometry", "watch_dial_detail", "identity_critical");
+  if (onModelBag || identityCriticalBag) reasons.push("identity_critical");
   if (input.referenceReplacement) reasons.push("reference_replacement");
   if (profile?.vertical === "apparel" && !onModelApparel && !artworkText && !input.exactProduct) reasons.push("plain_apparel");
   if (!complex && profile && ["cosmetics", "product", "home_goods"].includes(profile.vertical)) reasons.push("simple_still_life");

@@ -12,9 +12,15 @@ import {
 import {
   creativePresetCategories,
   creativePresets,
+  getRecommendedPresets,
   getCreativePreset,
   getHistoricalCreativePreset,
   getHistoricalPresetMetadata,
+  presetFamilies,
+  resolvePresetVariant,
+  buildPresetVariantDirection,
+  getPresetFamily,
+  getRecommendedFamilyPresets,
   historicalUnsupportedPresetIds,
 } from "../src/lib/creative-presets/creative-presets";
 import { creativeBriefFields, type CreativeBrief } from "../src/lib/generation/prompts/creative-brief";
@@ -40,6 +46,33 @@ const validBrief: CreativeBrief = {
   capture: null,
 };
 
+test("preset recommendations show only family cards and stay deterministic", () => {
+  const recommendations = getRecommendedPresets({ vertical: null });
+
+  assert.equal(recommendations.length, 6);
+  assert.equal(new Set(recommendations.map((preset) => preset.id)).size, 6);
+  assert.deepEqual(recommendations.map((preset) => preset.id), getRecommendedPresets({ vertical: null }).map((preset) => preset.id));
+  assert.ok(recommendations.every((preset) => getPresetFamily(preset.id)));
+});
+
+test("known vertical recommendations do not fill with unrelated families", () => {
+  for (const vertical of supportedVerticals) {
+    const recommendations = getRecommendedFamilyPresets({ vertical });
+    assert.ok(recommendations.length === (vertical === "cosmetics" ? 2 : 3));
+    assert.ok(recommendations.every((preset) => preset.vertical === vertical));
+  }
+});
+
+test("selected non-recommended families stay visible", () => {
+  const selectedId = getRecommendedFamilyPresets({ vertical: "cosmetics" })[1]?.id;
+  assert.ok(selectedId);
+  const collapsed = getRecommendedPresets({ vertical: "apparel", selectedPresetId: selectedId });
+
+  assert.equal(collapsed.length, 4);
+  assert.ok(collapsed.some((preset) => preset.id === selectedId));
+  assert.equal(getRecommendedFamilyPresets({ vertical: "apparel" }).length, 3);
+});
+
 class CapturingEnhancementClient implements PromptEnhancementClient {
   input: Parameters<PromptEnhancementClient["createCreativeBrief"]>[0] | null = null;
 
@@ -56,9 +89,9 @@ function requiredPreset(id: string) {
 }
 
 test("active registry contains exactly three complete presets for each supported vertical", () => {
-  assert.equal(creativePresets.length, 15);
+  assert.equal(creativePresets.length, 18);
   assert.deepEqual(creativePresetCategories, supportedVerticals);
-  assert.equal(new Set(creativePresets.map((preset) => preset.id)).size, 15);
+  assert.equal(new Set(creativePresets.map((preset) => preset.id)).size, 18);
 
   for (const vertical of supportedVerticals) {
     const presets = creativePresets.filter((preset) => preset.vertical === vertical);
@@ -80,27 +113,74 @@ test("active registry contains exactly three complete presets for each supported
 });
 
 test("active preset cards map one-to-one to distinct, sector-correct covers", () => {
-  assert.equal(new Set(creativePresets.map((preset) => preset.thumbnail)).size, 15);
+  assert.equal(new Set(creativePresets.map((preset) => preset.thumbnail)).size, 17);
   assert.deepEqual(
     creativePresets.map((preset) => preset.thumbnail),
     [
-      "/presets/apparel-street-style.png",
-      "/presets/apparel-scenic-editorial.png",
-      "/presets/apparel-studio-style.png",
-      "/presets/jewelry-on-body.png",
-      "/presets/jewelry-studio.png",
-      "/presets/jewelry-scenic.png",
-      "/presets/watch-on-wrist.png",
-      "/presets/watch-bright-studio.png",
-      "/presets/watch-scenic-environment.png",
-      "/presets/footwear-hero-focus.png",
-      "/presets/footwear-studio.png",
-      "/presets/footwear-street-lifestyle.png",
-      "/presets/cosmetics-studio.png",
-      "/presets/cosmetics-aesthetic-setting.png",
-      "/presets/cosmetics-lifestyle-landscape.png",
+      "/images/presets/apparel-street.webp",
+      "/images/presets/apparel-scenic.webp",
+      "/images/presets/apparel-studio.webp",
+      "/images/presets/jewelry-on-model.webp",
+      "/images/presets/jewelry-studio.webp",
+      "/images/presets/jewelry-lifestyle-still-life.webp",
+      "/images/presets/watches-on-wrist.webp",
+      "/images/presets/watches-product-composition.webp",
+      "/images/presets/watches-editorial-studio.webp",
+      "/images/presets/footwear-scenic-lifestyle.webp",
+      "/images/presets/footwear-studio.webp",
+      "/images/presets/footwear-street.webp",
+      "/images/presets/cosmetics-studio.webp",
+      "/images/presets/cosmetics-scenic-lifestyle.webp",
+      "/images/presets/cosmetics-scenic-lifestyle.webp",
+      "/images/presets/bags-lifestyle-setting.webp",
+      "/images/presets/bags-studio.webp",
+      "/images/presets/bags-on-model.webp",
     ],
   );
+});
+
+test("public preset families match every vertical and keep eight internal variants each", () => {
+  const expected: Record<(typeof supportedVerticals)[number], number> = {
+    apparel: 3, watches: 3, jewelry: 3, footwear: 3, cosmetics: 2, bags: 3,
+  };
+  assert.equal(presetFamilies.length, 17);
+  for (const vertical of supportedVerticals) {
+    const families = presetFamilies.filter((family) => family.vertical === vertical);
+    assert.equal(families.length, expected[vertical]);
+    for (const family of families) {
+      assert.equal(family.variants.length, 8);
+      assert.ok(family.variants.every((variant) => variant.familyId === family.id));
+      assert.ok(family.variants.every((variant) => variant.environmentDirection && variant.lightingDirection && variant.compositionDirection));
+    }
+  }
+});
+
+test("variant selection is deterministic, valid, and avoids the most recent alternative", () => {
+  const family = getPresetFamily("apparel-street");
+  assert.ok(family);
+  const first = resolvePresetVariant({ family, generationSeed: "generation-a" });
+  const next = resolvePresetVariant({ family, generationSeed: "generation-b", previousVariantId: first.id });
+  assert.ok(family.variants.some((variant) => variant.id === next.id));
+  assert.notEqual(next.id, first.id);
+  assert.equal(resolvePresetVariant({ family, generationSeed: "generation-a" }).id, first.id);
+});
+
+test("family and resolved variant metadata persist with the v2 version", () => {
+  const preset = requiredPreset("bags-on-model");
+  const variant = getPresetFamily(preset.id)?.variants[0];
+  assert.ok(variant);
+  assert.deepEqual(createCreativePresetMetadata(preset, variant.id), {
+    id: "bags-on-model", title: "On model", category: "bags", vertical: "bags", useCase: "bags",
+    version: "preset-system-v2", familyId: "bags-on-model", variantId: variant.id,
+  });
+});
+
+test("resolved creative direction adapts jewelry and bag placement to subtype without changing family", () => {
+  const jewelry = buildPresetVariantDirection(requiredPreset("jewelry-on-model"), getPresetFamily("jewelry-on-model")!.variants[0]);
+  const bags = buildPresetVariantDirection(requiredPreset("bags-on-model"), getPresetFamily("bags-on-model")!.variants[0]);
+  assert.match(jewelry.creativeDirection.pose, /ring on finger, bracelet on wrist, necklace on neck\/collarbone/i);
+  assert.match(bags.creativeDirection.pose, /crossbody only with its source crossbody strap/i);
+  assert.equal(bags.id, "bags-on-model");
 });
 
 test("specialist preset briefs retain deterministic fidelity and framing directions", () => {

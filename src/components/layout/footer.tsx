@@ -35,6 +35,7 @@ export async function Footer() {
         { label: footerT("watch"), href: "#watch" },
         { label: footerT("cosmetics"), href: "#cosmetics" },
         { label: footerT("footwear"), href: "#footwear" },
+        { label: footerT("bags"), href: "#bags" },
       ],
     },
     {

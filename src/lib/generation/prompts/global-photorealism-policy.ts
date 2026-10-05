@@ -14,6 +14,7 @@ const jewelryPattern = /\b(?:jewelry|jewellery|ring|necklace|earring|bracelet|pe
 const watchPattern = /\b(watch|timepiece|dial|bezel|chronograph|bracelet watch|wristwatch)\b/i;
 const cosmeticsPattern = /\b(cosmetic|skincare|skin care|serum|moisturi[sz]er|lipstick|makeup|fragrance|perfume|beauty product)\b/i;
 const footwearPattern = /\b(footwear|shoe|shoes|sneaker|sneakers|boot|boots|loafer|heel|heels|trainer|trainers)\b/i;
+const bagsPattern = /\b(bag|bags|handbag|handbags|tote|clutch|backpack|satchel|crossbody|shoulder bag)\b|\b(çanta|çantalar|el çantası|sırt çantası)\b/i;
 
 export const globalPhotorealismPolicy = [
   "Global photorealism policy: create believable real-world commercial photography with physically plausible lighting, material response, shadows, reflections, natural depth, authentic camera perspective, realistic image texture, and restrained post-processing.",
@@ -40,6 +41,10 @@ export const categoryPhotorealismPolicies: Record<GenerationVisualCategory, stri
   footwear: [
     "Footwear realism policy: retain the shoe silhouette, outsole geometry, color blocking, lacing, material identity, and realistic floor contact. When worn, show natural foot and ankle interaction, believable perspective, and pose-dependent flex.",
     "Avoid flat shoe compositing, floating soles, warped laces, impossible foot anatomy, duplicated footwear, or CGI-render appearance.",
+  ].join("\n"),
+  bags: [
+    "Bag realism policy: preserve source construction and material texture with credible weight, gravity, supported handles, realistic strap tension, and accurate leather, textile, chain, and hardware reflections.",
+    "Avoid floating straps, fused fingers through handles, torso clipping, collapsed structured bags, melted hardware, occluded identity details, or CGI-render appearance.",
   ].join("\n"),
   product: [
     "Product realism policy: use accurate material response, plausible surface interaction, realistic contact shadows and reflections, and grounded commercial product photography.",
@@ -75,6 +80,7 @@ export function resolveImageGenerationContext(
   if (useCase === "footwear" || footwearPattern.test(direction)) {
     return { category: "footwear", visualIntent };
   }
+  if (useCase === "bags" || bagsPattern.test(direction)) return { category: "bags", visualIntent };
 
   return { category: "product", visualIntent };
 }

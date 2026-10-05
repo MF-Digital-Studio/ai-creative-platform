@@ -26,7 +26,7 @@ export function buildCreativePresetDirection(
   return renderPresetCreativeDirection(preset, userCreativeDirection);
 }
 
-export function createCreativePresetMetadata(preset: CreativePreset | null) {
+export function createCreativePresetMetadata(preset: CreativePreset | null, variantId?: string | null) {
   if (!preset) {
     return null;
   }
@@ -37,6 +37,7 @@ export function createCreativePresetMetadata(preset: CreativePreset | null) {
     category: preset.category,
     vertical: preset.vertical,
     useCase: preset.useCase,
+    ...(variantId ? { version: "preset-system-v2", familyId: preset.id, variantId } : {}),
   };
 }
 

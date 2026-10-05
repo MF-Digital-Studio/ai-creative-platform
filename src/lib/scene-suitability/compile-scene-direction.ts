@@ -25,6 +25,16 @@ const directions = {
   footwear_street: "Shoe-focused low or medium street framing. Environment is contextual but secondary; keep footwear large and inspectable.",
   footwear_aesthetic_location: "Footwear-led aesthetic location scene with grounded contact and a secondary environment.",
   footwear_detail: "Close footwear detail scene that keeps construction, upper, and sole features readable.",
+  bags_handheld: "Handheld bag scene with natural grip and the complete bag body, handles, closure, logo, and hardware readable.",
+  bags_shoulder_carry: "Shoulder carry scene with natural contact, gravity, and a visible bag body; keep strap away from the logo.",
+  bags_crossbody: "Crossbody scene with a plausible strap path and tension; avoid torso clipping and preserve source bag identity.",
+  bags_under_arm: "Under-arm bag styling with the bag identity and closure remaining visible, not hidden by the body.",
+  bags_tabletop: "Tabletop bag still life with credible support, supported handles, and preserved structured geometry.",
+  bags_furniture: "Furniture placement with believable contact and handle support while keeping the full silhouette visible.",
+  bags_luxury_still_life: "Luxury still life with a fully readable bag silhouette and distinctive source construction.",
+  bags_street_editorial: "Street editorial led by the bag; keep the product large, unobstructed, and identity-accurate.",
+  bags_travel_lifestyle: "Travel lifestyle setting with the bag visible and supported; the environment remains secondary.",
+  bags_studio: "Studio bag hero with full body, handles, closure, logo, and hardware clearly readable.",
 } as const;
 
 export function compileSceneDirection(resolution: SceneSuitabilityResolution | null, productProfile?: ProductProfile | null): string {

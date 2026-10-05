@@ -8,7 +8,7 @@ function has(prompt: string, pattern: RegExp): boolean { return pattern.test(pro
 
 function safeFallback(input: ResolveCompositionInput): SceneFamily | null {
   if (isProductProfile(input.productProfile)) {
-    const byVertical = { apparel: "apparel_studio", jewelry: "jewelry_studio", watches: "watch_studio", cosmetics: "cosmetics_studio", footwear: "footwear_studio" } as const;
+    const byVertical = { apparel: "apparel_studio", jewelry: "jewelry_studio", watches: "watch_studio", cosmetics: "cosmetics_studio", footwear: "footwear_studio", bags: "bags_studio" } as const;
     return byVertical[input.productProfile.vertical];
   }
   if (input.strategy === "jewelry_on_model") return "jewelry_on_body";

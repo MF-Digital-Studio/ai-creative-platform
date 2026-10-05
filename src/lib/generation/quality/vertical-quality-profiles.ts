@@ -82,6 +82,19 @@ export const verticalQualityProfiles: Record<SupportedVertical, VerticalQualityP
     stillLifeCompositionPolicy: "Make the shoe the dominant close hero with its outsole, laces, panel lines, color blocking, shape, and logo placement clearly readable.",
     artifactPrevention: "No altered sole, extra panels or colors, changed top height, dramatically altered lace count, floating feet, broken ankles, pasted shoes, or duplicated asymmetric branding.",
   },
+  bags: {
+    vertical: "bags",
+    fidelityInvariants: "Preserve exact bag type, silhouette and body proportions, handle count and geometry, strap system and placement, closure and flap/opening, zipper and pocket layout, panel seams, hardware layout/color, logo or monogram, print, material, color blocking, base shape, and asymmetric details.",
+    identityPriorities: "Identity-critical regions: bag type and silhouette, handles and straps, closure/flap, logo/monogram, distinctive hardware, major pockets, print, and source color/material.",
+    allowedTransformations: "Allow only truthful perspective, natural strap bend/tension, realistic leather deformation, soft-bag compression, small folds, and lighting reflections. Never redesign construction or distort proportions to fill the canvas.",
+    realismRules: "Use physically plausible bag weight, gravity, hand grip, shoulder contact, strap tension, and contact shadows. Keep bag construction sharp and commercially credible.",
+    materialRules: "Render leather, suede, canvas, woven textile, coated fabric, chain, and metal hardware with source-accurate texture and restrained physically plausible reflections.",
+    onModelRules: "Use a natural finger/hand grip, shoulder or crossbody path, under-arm contact, and believable gravity. Prevent fused fingers, floating straps, torso clipping, impossible strap tension, and body occlusion of defining details.",
+    stillLifeRules: "Support the bag in a physically possible position. Preserve structured geometry and handle support; do not collapse a structured bag or melt hardware.",
+    onModelCompositionPolicy: "Keep the bag body, handles, closure, logo, and distinctive hardware visible; avoid arm/body occlusion, logo-crossing straps, floating placement, and impossible shoulder contact.",
+    stillLifeCompositionPolicy: "Keep the full bag silhouette and construction visible in a close product-first frame with credible support, readable handles and closure, and no unsafe edge crop.",
+    artifactPrevention: "No substituted bag, changed type/silhouette/proportions, added or missing handles or straps, changed closure or flap, invented pockets/zippers, changed hardware/logo/print/material/color, collapsed structured body, melted hardware, floating straps, or fused fingers.",
+  },
 };
 
 export function getVerticalQualityProfile(vertical: SupportedVertical): VerticalQualityProfile {
@@ -89,7 +102,7 @@ export function getVerticalQualityProfile(vertical: SupportedVertical): Vertical
 }
 
 export function getVerticalPresentationMode(strategy: string): VerticalPresentationMode {
-  return strategy === "fashion_on_model" || strategy === "jewelry_on_model" || strategy === "watch_on_wrist" || strategy === "footwear_on_model"
+  return strategy === "fashion_on_model" || strategy === "jewelry_on_model" || strategy === "watch_on_wrist" || strategy === "footwear_on_model" || strategy === "bags_on_model"
     ? "on_model"
     : "still_life";
 }

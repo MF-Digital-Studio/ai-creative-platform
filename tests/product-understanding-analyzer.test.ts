@@ -36,6 +36,7 @@ const profiles: Record<ProductProfile["vertical"], ProductProfile> = {
   apparel: profile({ vertical: "apparel", details: { garmentType: "hoodie", primaryColor: "black", artworkOrLogoLocations: [], closures: [], pocketStructure: ["kangaroo pocket"], hoodOrCollar: "drawstring hood", constructionDetails: [], identitySides: ["front", "back"] } }),
   cosmetics: profile({ vertical: "cosmetics", details: { packageType: "serum", packageGeometry: "rectangular bottle", containerForm: "bottle", closureOrDispenser: "cap", materialOpacity: "transparent", liquidVisibility: "visible", labelRegions: [], logoRegions: [] } }),
   footwear: profile({ vertical: "footwear", details: { shoeType: "sneaker", silhouette: "low-top", upperMaterial: ["mesh"], outsole: "rubber outsole", midsole: "foam", panelStructure: [], lacing: "white laces", tongue: "padded", heel: "structured", logoRegions: [{ location: "side", description: "side logo" }], colorBlocking: ["white", "blue"] } }),
+  bags: profile({ vertical: "bags", details: { bagType: "handbag", silhouette: "structured top handle", proportions: "wide body", bodyStructure: "rigid", handleCount: 2, handleGeometry: "arched handles", handleAttachmentPoints: ["top corners"], strapCount: 1, strapPlacement: ["side rings"], strapWidth: "narrow", strapLengthClass: "shoulder", closureType: "zipper", flapOrOpeningShape: "open top", zipperLayout: ["top"], pocketLayout: [], panelConstruction: ["front panel"], stitchingPattern: "edge stitch", pipingOrEdgeTreatment: null, hardwareLayout: ["side rings"], hardwareColor: "gold", logoOrMonogramPlacement: [], material: "leather", materialTexture: "grained", colorBlocking: ["black"], patternOrPrint: null, baseShape: "flat base", baseFeetHardware: null, chainStrap: false, decorativeCharms: [], asymmetricDetails: [] } }),
 };
 
 class FakeRepository {
@@ -58,7 +59,7 @@ async function run(result: unknown | Error, repository = new FakeRepository(), f
   return { repository, response, callCount: 1 };
 }
 
-for (const vertical of ["jewelry", "watches", "apparel", "cosmetics", "footwear"] as const) {
+for (const vertical of ["jewelry", "watches", "apparel", "cosmetics", "footwear", "bags"] as const) {
   test(`valid ${vertical} analysis persists a ProductProfile`, async () => {
     const { repository, response } = await run({ status: "supported", inferredCategory: null, profile: profiles[vertical] });
     assert.equal(response.status, "supported");

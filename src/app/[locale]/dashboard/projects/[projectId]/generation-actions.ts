@@ -22,7 +22,10 @@ import {
 } from "@/lib/creative-presets/creative-preset-context";
 import {
   getCreativePreset,
+  getPresetFamily,
   getHistoricalCreativePreset,
+  resolvePresetVariant,
+  buildPresetVariantDirection,
 } from "@/lib/creative-presets/creative-presets";
 import {
   getProjectReferenceAssets,
@@ -531,13 +534,33 @@ export async function runQueuedImageGeneration(
     const presetId =
       metadataPreset &&
       typeof metadataPreset === "object" &&
-      "id" in metadataPreset &&
-      typeof metadataPreset.id === "string"
-        ? metadataPreset.id
+      "familyId" in metadataPreset &&
+      typeof metadataPreset.familyId === "string"
+        ? metadataPreset.familyId
+        : metadataPreset && typeof metadataPreset === "object" && "id" in metadataPreset && typeof metadataPreset.id === "string"
+          ? metadataPreset.id
         : null;
     // A queued generation can reference a preset that has since left the active UI.
     // Resolve it only for replaying that historical generation, never for new selection.
-    const preset = getCreativePreset(presetId) ?? getHistoricalCreativePreset(presetId);
+    let preset = getCreativePreset(presetId) ?? getHistoricalCreativePreset(presetId);
+    let resolvedVariantId: string | null = null;
+    const presetFamily = getPresetFamily(presetId);
+    if (presetFamily) {
+      const { data: recentGenerations } = await admin.from("generations")
+        .select("provider_metadata")
+        .eq("project_id", project.id)
+        .eq("generation_type", "image")
+        .neq("id", queuedGeneration.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      const previousVariantId = recentGenerations?.map((row) => row.provider_metadata)
+        .map((metadata) => metadata && typeof metadata === "object" ? metadata.preset : null)
+        .map((value) => value && typeof value === "object" ? value : null)
+        .find((value) => value && (value.familyId === presetFamily.id || value.id === presetFamily.id) && typeof value.variantId === "string")?.variantId;
+      const variant = resolvePresetVariant({ family: presetFamily, previousVariantId: typeof previousVariantId === "string" ? previousVariantId : null, generationSeed: queuedGeneration.id });
+      resolvedVariantId = variant.id;
+      if (preset) preset = buildPresetVariantDirection(preset, variant);
+    }
     const metadataEnhancement = queuedGeneration.provider_metadata?.prompt_enhancement;
     const metadataReferences = queuedGeneration.provider_metadata?.references;
     const referenceMode: ReferenceMode = metadataReferences && typeof metadataReferences === "object" && "mode" in metadataReferences && metadataReferences.mode === "match" ? "match" : "inspired";
@@ -1119,6 +1142,12 @@ export async function runQueuedImageGeneration(
     const repairEligibility = resolveRepairEligibility({ validation: fidelityValidation, exactProduct: apparelFidelityMode.exactProductApparel, hybridProjectionApplied: hybridProjectionMetadata?.applied === true, hybridProjectionEnabled: hybridEligible, hybridProjectionReady: projectionReady, maximumAttemptsRemaining: true });
     const mappedRepairPlan = resolveRepairPlan(fidelityValidation);
     const repairPlan = repairEligibility.eligible ? mappedRepairPlan : { ...mappedRepairPlan, shouldRetry: false, categories: [], issueCodes: [], repairInstructions: [] };
+    const jewelryReferenceRepair = productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 && repairPlan.shouldRetry && repairPlan.issueCodes.every((code) => code.toLowerCase().startsWith("jewelry_"));
+    if (productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 && fidelityValidation.status !== "validation_unavailable") {
+      const criticalIssueCount = fidelityValidation.issues.filter(({ category, severity }) => category === "product_identity" && severity === "critical").length;
+      const majorIssueCount = fidelityValidation.issues.filter(({ category, severity }) => category === "product_identity" && severity === "major").length;
+      console.info("[generation] jewelry_reference_identity", { identityStatus: criticalIssueCount ? "critical_drift" : majorIssueCount ? "major_drift" : "clear", criticalIssueCount, majorIssueCount, referenceProductContamination: fidelityValidation.issues.some(({ code }) => code.toLowerCase() === "jewelry_reference_product_contamination"), repairEligible: jewelryReferenceRepair });
+    }
     logDevelopmentGenerationEvent("auto_repair_decision", {
       generationId: queuedGeneration.id,
       shouldRetry: repairPlan.shouldRetry,
@@ -1150,13 +1179,17 @@ export async function runQueuedImageGeneration(
           generationId: queuedGeneration.id,
           projectId: project.id,
           sourceAsset: providerProductAsset,
-          images: generationImages,
-          prompt: compileRepairInstructions(activePrompt, repairPlan),
+          images: jewelryReferenceRepair
+            ? orderImageEditImages({ id: queuedGeneration.id, bucketId: generatedAssetsBucket, objectPath: `repair-base/${queuedGeneration.id}`, data: finalImageData, mimeType: originalMimeType }, providerProductAsset)
+            : generationImages,
+          prompt: jewelryReferenceRepair
+            ? `JEWELRY-ONLY TARGETED REPAIR. Image 1 is the current generated result; keep its scene, hand, anatomy, pose, framing, camera, lighting, background, and every non-jewelry pixel unchanged. Image 2 is the authoritative source jewelry product. Edit only the jewelry region to restore its exact source identity, including stone shape/count, prongs, setting, halo and side stones, band geometry, metal color, and proportions. Do not use jewelry from the original visual reference as a design source.\n${compileRepairInstructions(activePrompt, repairPlan)}`
+            : compileRepairInstructions(activePrompt, repairPlan),
           provider: queuedGeneration.provider,
           model: queuedGeneration.model,
           quality: executionPolicy.repairQuality,
           aspectRatio,
-          ...(usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
+          ...(jewelryReferenceRepair ? { operation: "image_edit" as const } : usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
         }));
         executionCounts.imageGenerationCalls += 1;
         executionCounts.repairCalls = 1;
@@ -1311,6 +1344,7 @@ export async function runQueuedImageGeneration(
           typeof selectedProviderResult.providerMetadata?.requestId === "string"
             ? selectedProviderResult.providerMetadata.requestId
             : null,
+        creative_direction_snapshot: fallbackCreativeDirection,
         preservation_mode: effectivePreservationMode,
         fidelity_status: fidelityStatus,
         fidelity_score: fidelityScore,
@@ -1341,6 +1375,14 @@ export async function runQueuedImageGeneration(
             enabled: true,
             baseScenePreserved: selectedValidation.status === "pass",
             productReplacementApplied: selectedValidation.status !== "validation_unavailable",
+          } } : {}),
+          ...(productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 ? { jewelryReferenceFidelity: {
+            version: "jewelry-reference-fidelity-v2",
+            sourceIdentityAuthority: true,
+            referenceJewelryIgnored: true,
+            jewelryIdentityStatus: selectedValidation.issues.some(({ category, severity }) => category === "product_identity" && severity === "critical") ? "critical_drift" : selectedValidation.issues.some(({ category, severity }) => category === "product_identity" && severity === "major") ? "major_drift" : selectedValidation.status === "validation_unavailable" ? "validation_unavailable" : "clear",
+            detectedIssues: selectedValidation.issues.filter(({ code }) => code.toLowerCase().startsWith("jewelry_")).map(({ code }) => code).slice(0, 12),
+            repairAttempted: jewelryReferenceRepair && repairAttempt !== null,
           } } : {}),
           fidelity: fidelityMetadata,
           fidelity_validation: {
@@ -1395,7 +1437,7 @@ export async function runQueuedImageGeneration(
             succeeded: promptEnhancement.succeeded,
             user_prompt: promptEnhancement.userPrompt,
           },
-          ...(preset ? { preset: createCreativePresetMetadata(preset) } : {}),
+          ...(preset ? { preset: createCreativePresetMetadata(preset, resolvedVariantId) } : {}),
           strategy: {
             effective_preservation_mode: effectivePreservationMode,
             reason: strategyResolution.reason,

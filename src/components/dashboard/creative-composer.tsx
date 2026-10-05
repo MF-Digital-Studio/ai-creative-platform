@@ -13,6 +13,7 @@ import {
 import { createQueuedImageGeneration } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
+import { GenerationStatusIndicator, type GenerationState } from "@/components/projects/generation-status-indicator";
 import {
   isSupportedProductImageType,
   MAX_PRODUCT_IMAGE_FILE_SIZE,
@@ -25,7 +26,7 @@ import type { GenerationAspectRatio } from "@/lib/generation/types";
 import { useRouter } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
 import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
-import { getCreativePreset } from "@/lib/creative-presets/creative-presets";
+import { getCreativePreset, getPresetFamily } from "@/lib/creative-presets/creative-presets";
 import { createClient } from "@/lib/supabase/client";
 
 type CreativeComposerProps = {
@@ -42,18 +43,27 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const projectNameId = useId();
   const statusId = useId();
   const disabledHintId = useId();
+  const productErrorId = useId();
+  const referenceErrorId = useId();
   const productInputRef = useRef<HTMLInputElement>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const composerRef = useRef<HTMLElement>(null);
+  const submissionLockRef = useRef(false);
   const [prompt, setPrompt] = useState("");
   const [projectName, setProjectName] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [productError, setProductError] = useState("");
+  const [referenceError, setReferenceError] = useState("");
+  const [isProductDragging, setIsProductDragging] = useState(false);
+  const [isReferenceDragging, setIsReferenceDragging] = useState(false);
   const [productFile, setProductFile] = useState<File | null>(null);
   const [productPreviewUrl, setProductPreviewUrl] = useState<string | null>(null);
   const [referenceFiles, setReferenceFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
   const referenceFilesRef = useRef(referenceFiles);
-  const [generationState, setGenerationState] = useState<"idle" | "pending" | "failed">("idle");
+  const [generationState, setGenerationState] = useState<"idle" | "pending">("idle");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [statusState, setStatusState] = useState<GenerationState>("idle");
   const isCreating = generationState === "pending";
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
@@ -102,17 +112,19 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
 
   function selectProduct(file: File) {
     if (!isSupportedProductImageType(file.type)) {
-      setStatusMessage(t("invalidProductType"));
+      setProductError(t("invalidProductType"));
       return;
     }
 
     if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
-      setStatusMessage(t("productTooLarge"));
+      setProductError(t("productTooLarge"));
       return;
     }
 
+    if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
     setProductFile(file);
     setProductPreviewUrl(URL.createObjectURL(file));
+    setProductError("");
     setStatusMessage("");
   }
 
@@ -126,6 +138,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
 
   function handleProductDrop(event: DragEvent<HTMLButtonElement>) {
     event.preventDefault();
+    setIsProductDragging(false);
     const [file] = Array.from(event.dataTransfer.files);
     if (file) {
       selectProduct(file);
@@ -133,30 +146,36 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   }
 
   function removeProduct() {
+    if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
     setProductFile(null);
     setProductPreviewUrl(null);
+    setProductError("");
     setStatusMessage("");
   }
 
   function selectReferences(files: File[]) {
+    setReferenceError("");
     const availableSlots = 3 - referenceFilesRef.current.length;
     const accepted = files.slice(0, availableSlots).filter((file) => {
       if (!isSupportedProductImageType(file.type)) {
-        setStatusMessage(t("invalidProductType"));
+        setReferenceError(t("invalidProductType"));
         return false;
       }
       if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
-        setStatusMessage(t("productTooLarge"));
+        setReferenceError(t("productTooLarge"));
         return false;
       }
       return true;
     });
-    if (!accepted.length) return;
+    if (!accepted.length) {
+      if (availableSlots < files.length) setReferenceError(t("referenceLimit"));
+      return;
+    }
     setReferenceFiles((current) => [
       ...current,
       ...accepted.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
     ]);
-    setStatusMessage(availableSlots < files.length ? t("referenceLimit") : "");
+    setReferenceError(availableSlots < files.length ? t("referenceLimit") : "");
   }
 
   function removeReference(index: number) {
@@ -165,7 +184,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       if (reference) URL.revokeObjectURL(reference.previewUrl);
       return current.filter((_, currentIndex) => currentIndex !== index);
     });
-    setStatusMessage("");
+    setReferenceError("");
   }
 
   async function startImageCreation() {
@@ -175,13 +194,20 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       !productFile ||
       (!creativeDirection && !selectedPreset) ||
       isCreating ||
-      !isSupportedProductImageType(productFile.type)
+      !isSupportedProductImageType(productFile.type) ||
+      submissionLockRef.current
     ) {
       return;
     }
 
+    submissionLockRef.current = true;
     setGenerationState("pending");
+    setStatusState("processing"); setModalOpen(true);
+    setProductError("");
+    setReferenceError("");
     setStatusMessage(t("creating"));
+
+    let activePhase: "setup" | "productUpload" | "productAnalysis" | "referenceUpload" | "generation" = "setup";
 
     try {
       const project = await createWorkspaceProject(locale, projectName.trim());
@@ -192,6 +218,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       const extension = productImageExtensions[productFile.type];
       const objectPath = `${userId}/${project.projectId}/${crypto.randomUUID()}.${extension}`;
       const supabase = createClient();
+      activePhase = "productUpload";
+      setStatusMessage(t("productUploading"));
       const { error: uploadError } = await supabase.storage
         .from("product-assets")
         .upload(objectPath, productFile, { contentType: productFile.type, upsert: false });
@@ -199,12 +227,16 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         throw uploadError;
       }
 
+      activePhase = "productAnalysis";
+      setStatusMessage(t("productAnalyzing"));
       const registration = await registerProductAsset(locale, project.projectId, objectPath);
       if (registration.status !== "success") {
         throw new Error("Unable to register the product asset.");
       }
 
       for (const reference of referenceFiles) {
+        activePhase = "referenceUpload";
+        setStatusMessage(t("referenceUploading"));
         if (!isSupportedProductImageType(reference.file.type)) {
           throw new Error("Invalid reference image type.");
         }
@@ -233,6 +265,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         throw new Error("Unable to save the creative direction.");
       }
 
+      activePhase = "generation";
+      setStatusMessage(t("creating"));
       const generationFormData = new FormData();
       generationFormData.set("enhance_with_ai", "on");
       generationFormData.set("aspect_ratio", aspectRatio);
@@ -248,16 +282,21 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       if (!generation.ok) {
         throw new Error("Unable to queue the image generation.");
       }
-
+      setStatusState("succeeded"); setModalOpen(false);
+      window.setTimeout(() => setStatusState((current) => current === "succeeded" ? "idle" : current), 7000);
       router.push(`/dashboard/projects/${project.projectId}`, { locale });
     } catch {
-      setGenerationState("failed");
-      setStatusMessage(t("creationError"));
+      if (activePhase === "productUpload" || activePhase === "productAnalysis") setProductError(t("productUploadFailed"));
+      else if (activePhase === "referenceUpload") setReferenceError(t("referenceUploadFailed"));
+      else setStatusMessage(t("creationError"));
       setGenerationState("idle");
+      setStatusState("failed");
+      submissionLockRef.current = false;
     }
   }
 
-  const canStartImageCreation = canCreateImageWithPreset(Boolean(productFile), prompt, selectedPreset) && !isCreating;
+  const canStartImageCreation = canCreateImageWithPreset(Boolean(productFile), prompt, selectedPreset) && Boolean(userId) && !isCreating;
+  const disabledReason = !userId ? t("signInRequired") : !productFile ? t("productRequired") : !prompt.trim() && !selectedPreset ? t("directionRequired") : "";
 
   return (
     <>
@@ -296,11 +335,12 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
                 </span>
                 <span className="creative-selected-product-copy">
                   <strong title={productFile?.name}>{productFile?.name}</strong>
+                  <small className="creative-product-ready">{t("productReady")}</small>
                   <span>
-                    <button type="button" onClick={() => productInputRef.current?.click()}>
+                    <button type="button" onClick={() => productInputRef.current?.click()} disabled={isCreating} aria-describedby={productError ? productErrorId : undefined}>
                       {t("replaceProduct")}
                     </button>
-                    <button type="button" onClick={removeProduct}>
+                    <button type="button" onClick={removeProduct} disabled={isCreating}>
                       {t("removeProduct")}
                     </button>
                   </span>
@@ -309,17 +349,20 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             ) : (
               <button
                 type="button"
-                className="creative-product-upload"
-                aria-describedby={statusId}
+                className={`creative-product-upload${isProductDragging ? " is-dragging" : ""}`}
+                aria-describedby={`${statusId} ${productError ? productErrorId : ""}`.trim()}
                 onClick={() => productInputRef.current?.click()}
-                onDragOver={(event) => event.preventDefault()}
+                onDragOver={(event) => { event.preventDefault(); setIsProductDragging(true); }}
+                onDragLeave={() => setIsProductDragging(false)}
                 onDrop={handleProductDrop}
+                disabled={isCreating}
               >
                 <span className="creative-product-upload-icon"><DashboardIcon name="plus" /></span>
                 <span>{t("addProduct")}</span>
                 <small>{t("productHelper")}</small>
               </button>
             )}
+            {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : null}
           </div>
 
           <div className="creative-reference-field">
@@ -332,19 +375,18 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} />
                   <span className="creative-reference-role">{index === 0 ? t("primaryReference") : t("supportingReference")}</span>
-                  <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })}>
+                  <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })} disabled={isCreating}>
                     <span aria-hidden="true">×</span>
                   </button>
                 </div>
               ))}
-              {referenceFiles.length < 3 ? (
-                <button type="button" className="creative-reference-add" onClick={() => referenceInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); selectReferences(Array.from(event.dataTransfer.files)); }}>
-                  <DashboardIcon name="plus" />
-                  <span>{t("addReference")}</span>
-                </button>
-              ) : null}
+              <button type="button" className={`creative-reference-add${isReferenceDragging ? " is-dragging" : ""}`} onClick={() => referenceInputRef.current?.click()} onDragOver={(event) => { event.preventDefault(); setIsReferenceDragging(true); }} onDragLeave={() => setIsReferenceDragging(false)} onDrop={(event) => { event.preventDefault(); setIsReferenceDragging(false); selectReferences(Array.from(event.dataTransfer.files)); }} disabled={referenceFiles.length >= 3 || isCreating} aria-describedby={referenceError ? referenceErrorId : undefined}>
+                <DashboardIcon name="plus" />
+                <span>{t("addReference")}</span>
+              </button>
             </div>
-            <span className="creative-reference-count">{t("referenceCount", { count: referenceFiles.length })}</span>
+            <span className="creative-reference-count" aria-live="polite">{t("referenceCount", { count: referenceFiles.length })}</span>
+            {referenceError ? <p id={referenceErrorId} className="creative-field-error" role="alert">{referenceError}</p> : null}
           </div>
 
           <input
@@ -353,6 +395,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
             aria-label={t("addProduct")}
+            disabled={isCreating}
             onChange={handleProductChange}
           />
           <input
@@ -362,6 +405,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             className="sr-only"
             multiple
             aria-label={t("addReference")}
+            disabled={referenceFiles.length >= 3 || isCreating}
             onChange={(event) => {
               selectReferences(Array.from(event.target.files ?? []));
               event.target.value = "";
@@ -377,7 +421,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
               className="creative-prompt-textarea"
               onChange={(event) => setPrompt(event.target.value)}
             />
-            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
+            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: getPresetFamily(selectedPreset.id)?.title[locale] ?? presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
           </div>
 
 
@@ -395,6 +439,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
           <span className="creative-generate-label"><span className="creative-step-number">03</span>{t("generateStep")}</span>
           <Button
             type="submit"
+            variant="dark"
             disabled={!canStartImageCreation}
             aria-busy={isCreating}
             aria-describedby={disabledHintId}
@@ -403,15 +448,16 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             <span>{isCreating ? t("creating") : t("createImage")}</span>
             <DashboardIcon name="arrow" className="creative-start-icon" />
           </Button>
+          <p id={disabledHintId} className={!canStartImageCreation && !isCreating ? "creative-disabled-reason" : "sr-only"}>{!canStartImageCreation && !isCreating ? disabledReason || t("startDisabledHint") : ""}</p>
         </div>
 
         <div className="creative-composer-feedback">
           <p id={statusId} role="status" aria-live="polite">{statusMessage}</p>
-          <p id={disabledHintId} className="sr-only">{!canStartImageCreation && !isCreating ? t("startDisabledHint") : null}</p>
         </div>
       </form>
     </section>
-    <GenerationProgressModal open={generationState === "pending"} title={t("progressTitle")} description={t("progressDescription")} statuses={[t("progressStatuses.preparing"), t("progressStatuses.scene"), t("progressStatuses.generating"), t("progressStatuses.finalizing")]} />
+    <GenerationStatusIndicator status={statusState} label={statusState === "failed" ? t("failedStatus") : statusState === "succeeded" ? t("successStatus") : t("activeStatus")} onClick={() => setModalOpen(true)} />
+    <GenerationProgressModal open={modalOpen && generationState === "pending"} onClose={() => setModalOpen(false)} closeLabel={t("closeProgress")} title={t("progressTitle")} description={t("progressDescription")} statuses={[t("progressStatuses.preparing"), t("progressStatuses.scene"), t("progressStatuses.generating"), t("progressStatuses.finalizing")]} />
     </>
   );
 }

@@ -16,7 +16,7 @@ import { getProjectGenerations } from "@/lib/generations/get-project-generations
 import { getProject } from "@/lib/projects/get-project";
 import { createClient } from "@/lib/supabase/server";
 
-type ProjectPageProps = { params: Promise<{ locale: string; projectId: string }> };
+type ProjectPageProps = { params: Promise<{ locale: string; projectId: string }>; searchParams: Promise<{ generation?: string | string[] }> };
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
@@ -26,13 +26,13 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   return { title: t("metadataTitle"), description: t("metadataDescription") };
 }
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
+export default async function ProjectPage({ params, searchParams }: ProjectPageProps) {
   const { locale, projectId } = await params;
   if (!isSupportedLocale(locale) || !uuidPattern.test(projectId)) notFound();
   const userId = await getAuthenticatedUserId();
   if (!userId) throw new Error("Unable to load project.");
 
-  const [project, t] = await Promise.all([getProject(userId, projectId), getTranslations({ locale, namespace: "Dashboard.project" })]);
+  const [project, t, query] = await Promise.all([getProject(userId, projectId), getTranslations({ locale, namespace: "Dashboard.project" }), searchParams]);
   if (!project) notFound();
   const [productAsset, referenceAssets, generations] = await Promise.all([
     getProjectProductAsset(userId, projectId), getProjectReferenceAssets(userId, projectId), getProjectGenerations(userId, projectId),
@@ -76,7 +76,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return <main className="dashboard-main"><div className="dashboard-main-inner dashboard-container project-page-shell">
     <ProjectHeader project={project} locale={locale} />
-    <ProjectGenerationWorkspace items={items} runActions={runActions} controls={<ProjectControlPanel locale={locale} projectId={project.id} userId={userId} hasOutput={items.some((item) => item.previewUrl !== null)} initialAsset={initialAsset} referenceUrls={referenceUrls} />} editAction={createImageEdit.bind(null, locale, project.id)} hasOutput={items.some((item) => item.previewUrl !== null)} editMessages={{ title: t("imageEdit.title"), description: t("imageEdit.description"), placeholder: t("imageEdit.placeholder"), helper: t("imageEdit.helper"), apply: t("imageEdit.apply"), unavailable: t("imageEdit.unavailable"), failed: t("imageEdit.failed"), progressTitle: t("imageEdit.progressTitle"), progressDescription: t("imageEdit.progressDescription"), progressStatuses: [t("imageEdit.progressStatuses.applying"), t("imageEdit.progressStatuses.preserving"), t("imageEdit.progressStatuses.checking"), t("imageEdit.progressStatuses.finalizing")] }} messages={{
+    <ProjectGenerationWorkspace items={items} initialSelectedGenerationId={typeof query.generation === "string" ? query.generation : null} runActions={runActions} controls={<ProjectControlPanel locale={locale} projectId={project.id} userId={userId} hasOutput={items.some((item) => item.previewUrl !== null)} initialAsset={initialAsset} referenceUrls={referenceUrls} />} editAction={createImageEdit.bind(null, locale, project.id)} hasOutput={items.some((item) => item.previewUrl !== null)} editMessages={{ title: t("imageEdit.title"), description: t("imageEdit.description"), placeholder: t("imageEdit.placeholder"), helper: t("imageEdit.helper"), apply: t("imageEdit.apply"), unavailable: t("imageEdit.unavailable"), failed: t("imageEdit.failed"), progressTitle: t("imageEdit.progressTitle"), progressDescription: t("imageEdit.progressDescription"), progressStatuses: [t("imageEdit.progressStatuses.applying"), t("imageEdit.progressStatuses.preserving"), t("imageEdit.progressStatuses.checking"), t("imageEdit.progressStatuses.finalizing")], closeProgress: t("closeProgress"), activeStatus: t("imageEdit.activeStatus"), successStatus: t("imageEdit.successStatus"), failedStatus: t("imageEdit.failedStatus") }} messages={{
       openFullscreen: t("outputs.openFullscreen"), closeFullscreen: t("outputs.closeFullscreen"), zoomImage: t("outputs.zoomImage"), zoomOutImage: t("outputs.zoomOutImage"), resetImageZoom: t("outputs.resetImageZoom"), galleryLabel: t("outputs.galleryLabel"), selectOutput: t("outputs.selectOutput"), details: t("outputs.details"), status: t("outputs.statusLabel"), format: t("outputs.format"), advancedDetails: t("outputs.advancedDetails"), direction: t("outputs.direction"), provider: t("outputs.provider"), model: t("outputs.model"), created: t("outputs.created"), cost: t("outputs.cost"), emptyHeading: t("outputs.emptyHeading"), emptyDescription: t("outputs.emptyDescription"), noPreview: t("outputs.noPreview"), noPreviewDescription: t("outputs.noPreviewDescription"), goToControls: t("outputs.goToControls"), failedHeading: t("outputs.failedHeading"), failedDescription: t("outputs.failedDescription"), processingHeading: t("outputs.processingHeading"), processingDescription: t("outputs.processingDescription"), queuedHeading: t("outputs.queuedHeading"), queuedDescription: t("outputs.queuedDescription"), historyHeading: t("outputs.historyHeading"),
     }} />
   </div></main>;

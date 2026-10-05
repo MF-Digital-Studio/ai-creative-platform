@@ -11,7 +11,9 @@ function profile(vertical: ProductProfile["vertical"], subcategory: string | nul
       ? { caseShape: null, caseMaterialOrColor: null, dialColor: null, bezel: null, crownSide: "not_visible" as const, pushers: null, braceletOrStrap: null, indicesOrMarkers: null, dateWindow: null, subdials: null, dialBrandingRegions: [] }
       : vertical === "footwear"
         ? { shoeType: subcategory ?? "shoe", silhouette: null, upperMaterial: [], outsole: null, midsole: null, panelStructure: [], lacing: null, tongue: null, heel: null, logoRegions: [], colorBlocking: [] }
-        : vertical === "apparel"
+      : vertical === "bags"
+        ? { bagType: "handbag", silhouette: "structured", proportions: null, bodyStructure: null, handleCount: 2, handleGeometry: "arched", handleAttachmentPoints: [], strapCount: 1, strapPlacement: [], strapWidth: null, strapLengthClass: null, closureType: null, flapOrOpeningShape: null, zipperLayout: [], pocketLayout: [], panelConstruction: [], stitchingPattern: null, pipingOrEdgeTreatment: null, hardwareLayout: [], hardwareColor: null, logoOrMonogramPlacement: [], material: null, materialTexture: null, colorBlocking: [], patternOrPrint: null, baseShape: null, baseFeetHardware: null, chainStrap: null, decorativeCharms: [], asymmetricDetails: [] }
+      : vertical === "apparel"
           ? { garmentType: subcategory ?? "garment", primaryColor: null, artworkOrLogoLocations: [], closures: [], pocketStructure: [], hoodOrCollar: null, constructionDetails: [], identitySides: [] }
           : { packageType: subcategory ?? "cosmetic", packageGeometry: null, containerForm: "other" as const, closureOrDispenser: "none" as const, materialOpacity: "opaque" as const, liquidVisibility: "not_applicable" as const, labelRegions: [], logoRegions: [] };
   return {

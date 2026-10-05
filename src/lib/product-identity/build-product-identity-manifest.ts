@@ -38,6 +38,26 @@ export function buildProductIdentityManifest(profile: unknown): ProductIdentityM
   } else if (profile.verticalAttributes.vertical === "footwear") {
     const details = profile.verticalAttributes.details;
     push(geometryAnchors, details.silhouette, "silhouette"); push(geometryAnchors, details.outsole, "outsole"); push(geometryAnchors, details.midsole, "midsole"); push(geometryAnchors, details.lacing, "lacing"); push(geometryAnchors, details.tongue, "tongue"); push(geometryAnchors, details.heel, "heel"); geometryAnchors.push(...details.panelStructure.map((panel) => `panel boundary: ${panel}`)); colorMaterialAnchors.push(...details.colorBlocking.map((color) => `color blocking: ${color}`));
+  } else if (profile.verticalAttributes.vertical === "bags") {
+    const details = profile.verticalAttributes.details;
+    immutableAttributes.push(`bag type: ${details.bagType}`);
+    push(geometryAnchors, details.silhouette, "silhouette"); push(geometryAnchors, details.proportions, "overall proportions"); push(geometryAnchors, details.bodyStructure, "body structure");
+    if (details.handleCount !== null) geometryAnchors.push(`handle count: ${details.handleCount}`);
+    push(geometryAnchors, details.handleGeometry, "handle geometry"); geometryAnchors.push(...details.handleAttachmentPoints.map((value) => `handle attachment: ${value}`));
+    if (details.strapCount !== null) geometryAnchors.push(`strap count: ${details.strapCount}`);
+    geometryAnchors.push(...details.strapPlacement.map((value) => `strap placement: ${value}`));
+    push(geometryAnchors, details.strapWidth, "strap width"); push(geometryAnchors, details.strapLengthClass, "strap length class");
+    push(geometryAnchors, details.closureType, "closure geometry"); push(geometryAnchors, details.flapOrOpeningShape, "flap/opening shape");
+    geometryAnchors.push(...details.zipperLayout.map((value) => `zipper: ${value}`), ...details.pocketLayout.map((value) => `pocket: ${value}`), ...details.panelConstruction.map((value) => `panel seam: ${value}`));
+    push(geometryAnchors, details.stitchingPattern, "stitching"); push(geometryAnchors, details.pipingOrEdgeTreatment, "edge treatment");
+    geometryAnchors.push(...details.hardwareLayout.map((value) => `hardware position: ${value}`)); push(colorMaterialAnchors, details.hardwareColor, "hardware color");
+    push(colorMaterialAnchors, details.material, "material identity"); push(colorMaterialAnchors, details.materialTexture, "material texture");
+    colorMaterialAnchors.push(...details.colorBlocking.map((value) => `color blocking: ${value}`)); push(geometryAnchors, details.patternOrPrint, "pattern/print");
+    push(geometryAnchors, details.baseShape, "base shape"); push(geometryAnchors, details.baseFeetHardware, "base feet/hardware");
+    if (details.chainStrap !== null) geometryAnchors.push(`chain strap: ${details.chainStrap ? "present" : "absent"}`);
+    brandingAnchors.push(...details.logoOrMonogramPlacement.map(({ location, description }) => `logo/monogram at ${location}: ${description}`));
+    geometryAnchors.push(...details.decorativeCharms.map((value) => `charm: ${value}`), ...details.asymmetricDetails.map((value) => `asymmetric detail: ${value}`));
+    interactionSensitiveAttributes.push("preserve realistic handle/strap grip, shoulder or crossbody contact, bag weight, gravity, and strap tension; do not fuse fingers or pass straps through the torso");
   } else if (profile.verticalAttributes.vertical === "apparel") {
     const details = profile.verticalAttributes.details;
     immutableAttributes.push(`garment type: ${details.garmentType}`); push(colorMaterialAnchors, details.primaryColor, "primary color"); geometryAnchors.push(...details.closures.map((closure) => `closure: ${closure}`), ...details.pocketStructure.map((pocket) => `pocket: ${pocket}`), ...details.constructionDetails.map((detail) => `construction: ${detail}`)); push(geometryAnchors, details.hoodOrCollar, "hood/collar"); brandingAnchors.push(...details.artworkOrLogoLocations.map(({ location, description }) => `artwork/logo at ${location}: ${description}`));

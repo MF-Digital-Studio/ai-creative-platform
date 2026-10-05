@@ -21,8 +21,9 @@ import { getOpenAIDiagnostic } from "../src/lib/openai/response-diagnostics";
 import { buildImageGenerationPrompt } from "../src/lib/generation/prompts/build-image-generation-prompt";
 import { orderGenerationImages, orderReferenceReplacementImages, compileImageRoleInstructions } from "../src/lib/generation/image-roles";
 import { buildReferenceReplacementPrompt } from "../src/lib/generation/image-roles";
+import { mapStructuredValidationOutput, resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
+import { resolveRepairEligibility } from "../src/lib/generation/execution-policy/resolve-repair-eligibility";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
-import { resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
 import {
   enhanceCreativeDirectionWithClient,
   type PromptEnhancementClient,
@@ -147,6 +148,36 @@ test("supporting style mismatch stays a warning and cannot trigger repair", () =
   assert.equal(validation.status, "pass_with_warnings");
   assert.equal(validation.issues[0]?.severity, "minor");
   assert.equal(resolveRepairPlan(validation).shouldRetry, false);
+});
+
+test("jewelry reference prompt suppresses reference jewelry while preserving source identity authority", () => {
+  const source = { id: "source", bucketId: "source", objectPath: "source", data: Buffer.from("source"), mimeType: "image/png" };
+  const reference = { ...source, id: "primary", objectPath: "primary" };
+  const jewelryProfile = { vertical: "jewelry", subcategory: "ring", verticalAttributes: { vertical: "jewelry", details: {} } } as never;
+  const prompt = buildImageGenerationPrompt("Keep the reference hand pose.", "reference_edit", { strategy: "jewelry_on_model", productProfile: jewelryProfile, generationImages: orderGenerationImages(source, [reference]) });
+  assert.match(prompt, /JEWELRY REFERENCE FIDELITY V2/);
+  assert.match(prompt, /placeholder jewelry position only/i);
+  assert.match(prompt, /prong count and placement/i);
+  const presetOnlyPrompt = buildImageGenerationPrompt("A solitaire ring on white fabric.", "reference_edit", { strategy: "jewelry_still_life", productProfile: jewelryProfile });
+  assert.doesNotMatch(presetOnlyPrompt, /JEWELRY REFERENCE FIDELITY V2/);
+});
+
+test("high-confidence jewelry identity drift fails independently and qualifies for one targeted repair", () => {
+  const validation = resolveQualityGate(mapStructuredValidationOutput({ findings: [{ code: "JEWELRY_PRONG_COUNT_DRIFT", category: "geometry", severity: "critical", confidence: .96, identityImpact: "critical", finding: "Wrong prong count", expected: "Source prong count", sourceAuthoritative: true }] }));
+  assert.equal(validation.status, "fail");
+  assert.equal(validation.issues[0]?.category, "product_identity");
+  const eligibility = resolveRepairEligibility({ validation, exactProduct: false, hybridProjectionApplied: false, maximumAttemptsRemaining: true });
+  assert.equal(eligibility.eligible, true);
+  assert.equal(eligibility.reason, "critical_jewelry_identity_drift_targeted_repair");
+  const plan = resolveRepairPlan(validation);
+  assert.equal(plan.shouldRetry, true);
+  assert.match(plan.repairInstructions.join(" "), /JEWELRY ONLY.*preserve the generated scene unchanged/i);
+});
+
+test("minor jewelry perspective and reflection variation does not qualify for repair", () => {
+  const validation = resolveQualityGate([{ code: "jewelry_band_geometry_drift", category: "product_identity", severity: "minor", confidence: .42, identityImpact: "minor", finding: "Apparent width differs by perspective", expected: "Allow optical variation", sourceAuthoritative: true }]);
+  assert.notEqual(validation.status, "fail");
+  assert.equal(resolveRepairEligibility({ validation, exactProduct: false, hybridProjectionApplied: false, maximumAttemptsRemaining: true }).eligible, false);
 });
 
 test("OpenAI diagnostics retain safe categories but never image data, URLs, or API keys", () => {

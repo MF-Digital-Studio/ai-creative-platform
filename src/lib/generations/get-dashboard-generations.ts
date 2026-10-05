@@ -11,6 +11,7 @@ export type DashboardGeneration = {
   type: "image" | "video";
   createdAt: string;
   previewUrl: string | null;
+  aspectRatio: string | null;
 };
 
 export async function getDashboardGenerations(userId: string) {
@@ -27,8 +28,8 @@ export async function getDashboardGenerations(userId: string) {
 
   const projectIds = projects.map((project) => project.id);
   const [{ data: rows, error }, { count: completedCount, error: completedError }, { count: queuedCount, error: queuedError }, { count: processingCount, error: processingError }] = await Promise.all([
-    supabase.from("generations").select("id, project_id, generation_type, status, created_at, output_bucket_id, output_object_path").in("project_id", projectIds).order("created_at", { ascending: false }).limit(6),
-    supabase.from("generations").select("id", { count: "exact", head: true }).in("project_id", projectIds).eq("status", "succeeded"),
+    supabase.from("generations").select("id, project_id, generation_type, status, created_at, aspect_ratio, output_bucket_id, output_object_path").in("project_id", projectIds).order("created_at", { ascending: false }).limit(6),
+    supabase.from("generations").select("id", { count: "exact", head: true }).in("project_id", projectIds).eq("generation_type", "image").eq("status", "succeeded"),
     supabase.from("generations").select("id", { count: "exact", head: true }).in("project_id", projectIds).eq("status", "queued"),
     supabase.from("generations").select("id", { count: "exact", head: true }).in("project_id", projectIds).eq("status", "processing"),
   ]);
@@ -40,7 +41,7 @@ export async function getDashboardGenerations(userId: string) {
       const { data } = await supabase.storage.from(row.output_bucket_id).createSignedUrl(row.output_object_path, 3600);
       previewUrl = data?.signedUrl ?? null;
     }
-    return { id: row.id, projectId: row.project_id, projectTitle: titleById.get(row.project_id) ?? null, status: row.status as GenerationStatus, type: row.generation_type as "image" | "video", createdAt: row.created_at, previewUrl };
+    return { id: row.id, projectId: row.project_id, projectTitle: titleById.get(row.project_id) ?? null, status: row.status as GenerationStatus, type: row.generation_type as "image" | "video", createdAt: row.created_at, previewUrl, aspectRatio: row.aspect_ratio };
   }));
   return { projectCount: projects.length, completedCount: completedCount ?? 0, activeCount: (queuedCount ?? 0) + (processingCount ?? 0), generations };
 }

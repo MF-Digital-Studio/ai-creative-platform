@@ -11,8 +11,8 @@ export type GenerationPolicyValidation = {
   reasons: readonly string[];
 };
 
-const onBodyStrategies = new Set<GenerationStrategy>(["jewelry_on_model", "watch_on_wrist", "footwear_on_model", "fashion_on_model"]);
-const onBodyScenes = new Set<SceneFamily>(["jewelry_on_body", "watch_on_wrist", "footwear_on_foot"]);
+const onBodyStrategies = new Set<GenerationStrategy>(["jewelry_on_model", "watch_on_wrist", "footwear_on_model", "fashion_on_model", "bags_on_model"]);
+const onBodyScenes = new Set<SceneFamily>(["jewelry_on_body", "watch_on_wrist", "footwear_on_foot", "bags_handheld", "bags_shoulder_carry", "bags_crossbody", "bags_under_arm"]);
 
 /** Normalizes routing once, immediately before prompt/provider work. */
 export function validateGenerationPolicy(input: {
@@ -41,6 +41,10 @@ export function validateGenerationPolicy(input: {
   if (sceneFamily === "footwear_on_foot" && strategy !== "footwear_on_model") {
     strategy = "footwear_on_model";
     reasons.push("footwear_on_foot_requires_on_model_strategy");
+  }
+  if (["bags_handheld", "bags_shoulder_carry", "bags_crossbody", "bags_under_arm"].includes(sceneFamily ?? "") && strategy !== "bags_on_model") {
+    strategy = "bags_on_model";
+    reasons.push("bag_carry_scene_requires_on_model_strategy");
   }
   if (onBodyStrategies.has(strategy) || (sceneFamily !== null && onBodyScenes.has(sceneFamily))) {
     if (preservationMode !== "reference_edit") reasons.push("on_body_requires_reference_edit");

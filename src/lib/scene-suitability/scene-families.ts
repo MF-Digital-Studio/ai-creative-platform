@@ -8,6 +8,7 @@ export const sceneFamiliesByVertical: Record<SupportedVertical, readonly SceneFa
   watches: ["watch_studio", "watch_on_wrist", "watch_lifestyle_surface", "watch_macro_detail"],
   cosmetics: ["cosmetics_studio", "cosmetics_vanity", "cosmetics_lifestyle", "cosmetics_aesthetic_surface", "cosmetics_macro"],
   footwear: ["footwear_studio", "footwear_on_foot", "footwear_street", "footwear_aesthetic_location", "footwear_detail"],
+  bags: ["bags_handheld", "bags_shoulder_carry", "bags_crossbody", "bags_under_arm", "bags_tabletop", "bags_furniture", "bags_luxury_still_life", "bags_street_editorial", "bags_travel_lifestyle", "bags_studio"],
 };
 
 export function sceneFamilyVertical(family: SceneFamily): SupportedVertical {
@@ -15,5 +16,6 @@ export function sceneFamilyVertical(family: SceneFamily): SupportedVertical {
   if (family.startsWith("jewelry_")) return "jewelry";
   if (family.startsWith("watch_")) return "watches";
   if (family.startsWith("cosmetics_")) return "cosmetics";
+  if (family.startsWith("bags_")) return "bags";
   return "footwear";
 }

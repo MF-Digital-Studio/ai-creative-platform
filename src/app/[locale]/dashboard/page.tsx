@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { CreativeComposer } from "@/components/dashboard/creative-composer";
-import { RecentWork } from "@/components/dashboard/recent-work";
 import { TemplateRail } from "@/components/dashboard/template-rail";
 import { WorkspaceOverview } from "@/components/dashboard/workspace-overview";
 import { RecentGenerations } from "@/components/dashboard/recent-generations";
@@ -38,17 +37,15 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   setRequestLocale(locale);
 
   const userId = await getAuthenticatedUserId();
-  const [loadedProjects, dashboardData] = userId ? await Promise.all([getProjects(userId, 7), getDashboardGenerations(userId)]) : [[], { projectCount: 0, completedCount: 0, activeCount: 0, generations: [] }];
-  const hasMoreProjects = loadedProjects.length > 6;
-  const projects = loadedProjects.slice(0, 6);
+  const [recentProjects, dashboardData] = userId ? await Promise.all([getProjects(userId, 1), getDashboardGenerations(userId)]) : [[], { projectCount: 0, completedCount: 0, activeCount: 0, generations: [] }];
+  const vertical = recentProjects[0]?.vertical ?? null;
 
   return (
     <main className="dashboard-main">
       <div className="dashboard-main-inner dashboard-container">
         <CreativeComposer locale={locale} userId={userId} />
-        <TemplateRail />
+        <TemplateRail vertical={vertical} />
         <WorkspaceOverview projectCount={dashboardData.projectCount} completedCount={dashboardData.completedCount} activeCount={dashboardData.activeCount} />
-        <RecentWork locale={locale} projects={projects} hasMore={hasMoreProjects} />
         <RecentGenerations generations={dashboardData.generations} />
       </div>
     </main>

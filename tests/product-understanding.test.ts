@@ -55,7 +55,9 @@ test("every public vertical is valid in a ProductProfile", () => {
           ? { vertical, details: { caseShape: null, caseMaterialOrColor: null, dialColor: null, bezel: null, crownSide: "not_visible", pushers: null, braceletOrStrap: null, indicesOrMarkers: null, dateWindow: null, subdials: null, dialBrandingRegions: [] } }
           : vertical === "cosmetics"
             ? { vertical, details: { packageType: "serum", packageGeometry: null, containerForm: "bottle", closureOrDispenser: "cap", materialOpacity: "opaque", liquidVisibility: "not_visible", labelRegions: [], logoRegions: [] } }
-            : { vertical, details: { shoeType: "sneaker", silhouette: null, upperMaterial: [], outsole: null, midsole: null, panelStructure: [], lacing: null, tongue: null, heel: null, logoRegions: [], colorBlocking: [] } };
+            : vertical === "footwear"
+              ? { vertical, details: { shoeType: "sneaker", silhouette: null, upperMaterial: [], outsole: null, midsole: null, panelStructure: [], lacing: null, tongue: null, heel: null, logoRegions: [], colorBlocking: [] } }
+              : { vertical, details: { bagType: "handbag", silhouette: null, proportions: null, bodyStructure: null, handleCount: 2, handleGeometry: null, handleAttachmentPoints: [], strapCount: 1, strapPlacement: [], strapWidth: null, strapLengthClass: null, closureType: null, flapOrOpeningShape: null, zipperLayout: [], pocketLayout: [], panelConstruction: [], stitchingPattern: null, pipingOrEdgeTreatment: null, hardwareLayout: [], hardwareColor: null, logoOrMonogramPlacement: [], material: null, materialTexture: null, colorBlocking: [], patternOrPrint: null, baseShape: null, baseFeetHardware: null, chainStrap: null, decorativeCharms: [], asymmetricDetails: [] } };
     assert.equal(isProductProfile(profile(attributes)), true);
   }
 });

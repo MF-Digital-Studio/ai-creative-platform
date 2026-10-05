@@ -97,6 +97,38 @@ export function compileProductProfilePrompt(profile: ProductProfile): ProductPro
     if (details.panelStructure.length) identity.push(`Preserve upper panel structure: ${details.panelStructure.join(", ")}.`); addIfPresent(identity, details.lacing, (value) => `Preserve lacing: ${value}.`); addIfPresent(identity, details.tongue, (value) => `Preserve tongue: ${value}.`); addIfPresent(identity, details.heel, (value) => `Preserve heel: ${value}.`);
     if (details.colorBlocking.length) identity.push(`Preserve color blocking: ${details.colorBlocking.join(", ")}.`); if (hasRegions(details.logoRegions)) identity.push("Preserve visible footwear logo placement.");
     interaction.push("On-foot, ensure realistic fit and natural ground contact."); presentation.push("Footwear must remain the hero subject."); forbidden.push("No warped sole or toe box, panel redesign, or lace corruption.");
+  } else if (attributes.vertical === "bags") {
+    const details = attributes.details;
+    identity.push(`Preserve bag type: ${details.bagType}.`);
+    addIfPresent(identity, details.silhouette, (value) => `Preserve exact bag silhouette: ${value}.`);
+    addIfPresent(identity, details.proportions, (value) => `Preserve bag body proportions: ${value}.`);
+    addIfPresent(identity, details.bodyStructure, (value) => `Preserve body structure: ${value}.`);
+    if (details.handleCount !== null) identity.push(`Preserve handle count exactly: ${details.handleCount}.`);
+    addIfPresent(identity, details.handleGeometry, (value) => `Preserve handle geometry and attachment points: ${value}; ${details.handleAttachmentPoints.join(", ")}.`);
+    if (details.strapCount !== null) identity.push(`Preserve strap count exactly: ${details.strapCount}.`);
+    if (details.strapPlacement.length) identity.push(`Preserve strap presence and placement: ${details.strapPlacement.join(", ")}.`);
+    addIfPresent(identity, details.strapWidth, (value) => `Preserve strap width: ${value}.`);
+    addIfPresent(identity, details.strapLengthClass, (value) => `Preserve strap length class: ${value}.`);
+    addIfPresent(identity, details.closureType, (value) => `Preserve closure type and geometry: ${value}.`);
+    addIfPresent(identity, details.flapOrOpeningShape, (value) => `Preserve flap/opening shape: ${value}.`);
+    if (details.zipperLayout.length) identity.push(`Preserve zipper layout: ${details.zipperLayout.join(", ")}.`);
+    if (details.pocketLayout.length) identity.push(`Preserve pocket layout: ${details.pocketLayout.join(", ")}.`);
+    if (details.panelConstruction.length) identity.push(`Preserve panel seams and construction: ${details.panelConstruction.join(", ")}.`);
+    addIfPresent(identity, details.stitchingPattern, (value) => `Preserve stitching pattern: ${value}.`);
+    addIfPresent(identity, details.pipingOrEdgeTreatment, (value) => `Preserve piping/edge treatment: ${value}.`);
+    if (details.hardwareLayout.length) identity.push(`Preserve hardware positions: ${details.hardwareLayout.join(", ")}.`);
+    addIfPresent(identity, details.hardwareColor, (value) => `Preserve hardware color: ${value}.`);
+    addIfPresent(identity, details.material, (value) => `Preserve material identity: ${value}.`);
+    addIfPresent(identity, details.materialTexture, (value) => `Preserve material texture: ${value}.`);
+    if (details.colorBlocking.length) identity.push(`Preserve color blocking: ${details.colorBlocking.join(", ")}.`);
+    addIfPresent(identity, details.patternOrPrint, (value) => `Preserve pattern/print: ${value}.`);
+    addIfPresent(identity, details.baseShape, (value) => `Preserve base shape: ${value}.`);
+    addIfPresent(identity, details.baseFeetHardware, (value) => `Preserve base feet/hardware: ${value}.`);
+    if (details.chainStrap !== null) identity.push(`Preserve chain strap presence: ${details.chainStrap ? "present" : "absent"}.`);
+    if (hasRegions(details.logoOrMonogramPlacement)) identity.push("Preserve logo/monogram design and exact visible placement.");
+    interaction.push("For on-model carry, use natural hand/finger grip or shoulder/crossbody contact, credible bag weight and gravity, and physically plausible strap tension. Do not let the body hide the main body, handles, closure, logo, or distinctive hardware.");
+    presentation.push("Keep the full bag body and identity-critical handles, straps, closure, logo, and hardware visible. Preserve structured geometry; allow only natural soft-bag compression, strap bend, folds, and perspective.");
+    forbidden.push("Do not add/remove handles, straps, pockets, zippers, closures, hardware, seams, logos, or charms; do not change bag type, flap, proportions, color, material, or construction.");
   } else if (attributes.vertical === "apparel") {
     const details = attributes.details;
     identity.push(`Preserve garment type: ${details.garmentType}.`); addIfPresent(identity, details.primaryColor, (value) => `Preserve garment color: ${value}.`);

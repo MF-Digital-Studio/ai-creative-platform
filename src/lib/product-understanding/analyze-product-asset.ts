@@ -249,7 +249,7 @@ export const legacyProductProfileSchema = {
       required: ["productId", "schemaVersion", "analysisVersion", "vertical", "subcategory", "wearability", "rigidity", "materials", "dominantColors", "productShape", "identityCriticalAttributes", "visibleBranding", "interactionTargets", "allowedTransformations", "forbiddenTransformations", "sceneAffinities", "confidence", "source", "verticalAttributes"],
       properties: {
         productId: { type: "string" }, schemaVersion: { type: "number" }, analysisVersion: { type: "string" },
-        vertical: { type: "string", enum: ["apparel", "jewelry", "watches", "cosmetics", "footwear"] }, subcategory: { type: ["string", "null"] },
+        vertical: { type: "string", enum: ["apparel", "jewelry", "watches", "cosmetics", "footwear", "bags"] }, subcategory: { type: ["string", "null"] },
         wearability: { type: "string", enum: ["wearable", "non_wearable", "context_dependent"] }, rigidity: { type: "string", enum: ["rigid", "semi_rigid", "deformable"] },
         materials: { type: "array", items: { type: "string" } }, dominantColors: { type: "array", items: { type: "string" } }, productShape: { type: "string" },
         identityCriticalAttributes: { type: "array", items: { type: "object", additionalProperties: false, required: ["attribute", "rationale", "regions"], properties: { attribute: { type: "string" }, rationale: { type: "string" }, regions: { type: "array", items: regionSchema } } } },
@@ -276,7 +276,8 @@ const analyzerInstructions = [
   "Analyze the supplied image as a product-understanding task.",
   "The product image is authoritative. Describe only visible, reasonably supported evidence; never invent hidden attributes.",
   "Do not assume brand, material composition, gemstone chemistry, exact color names, product function, or unreadable text. Prefer cautious visual descriptions such as silver-colored metal or blue center stone.",
-  "Classify only apparel, jewelry, watches, cosmetics, or footwear. If the product does not clearly fit one, return status unsupported with no profile.",
+  "Classify apparel, jewelry, watches, cosmetics, footwear, or bags. Handbags, shoulder bags, crossbody bags, totes, clutches, backpacks, mini bags, bucket bags, structured bags, and satchels use vertical bags. If the product does not clearly fit one, return status unsupported with no profile.",
+  "For bags, preserve visible source evidence for bag type, silhouette and proportions, body structure, handles and attachment points, strap presence and placement, closure/flap/opening, zipper, pocket layout, seams/panels, stitch and edge treatment, hardware position/color, logo/monogram, material/texture, color blocking, pattern, base/feet, chain strap, charms, and asymmetric details. Do not invent hidden features; the source image is authoritative.",
   "For supported products, produce the complete flat analysis object defined by the response schema. Fill every required key; use null only where the schema permits it and for non-applicable vertical blocks. Keep identity-critical attributes concise and visual.",
   "Branding regions are semantic locations, not required OCR. Never fabricate exact words.",
   "Derive conservative transformations and scene tags. The profile is an interpretation, never a replacement for the source image.",

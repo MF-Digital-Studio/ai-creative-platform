@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Klay.ai",
-    "description": "Premium AI campaign content for apparel, jewelry, watches, cosmetics, and footwear."
+    "description": "Premium AI campaign content for apparel, jewelry, watches, cosmetics, footwear, and bags."
   },
   "Navigation": {
     "home": "Home",
@@ -368,7 +368,7 @@
     "eyebrow": "Create your campaign",
     "ctaTitleLead": "One product photo.",
     "ctaTitleTrail": "An entire campaign.",
-    "description": "Create premium campaign visuals for apparel, jewelry, watches, cosmetics, and footwear.",
+    "description": "Create premium campaign visuals for apparel, jewelry, watches, cosmetics, footwear, and bags.",
     "cta": "Try for Free â†’",
     "shortDescription": "Campaign-ready content from your product photos.",
     "platform": "PLATFORM",
@@ -388,7 +388,8 @@
     "xLabel": "X",
     "copyright": "Â© {year} {brand}. All rights reserved.",
     "watch": "Watches",
-    "footwear": "Footwear"
+    "footwear": "Footwear",
+    "bags": "Bags"
   },
   "SignupPage": {
     "metadataTitle": "Create Account",
@@ -570,18 +571,29 @@
       "saveSuccess": "Profile saved."
     },
     "overview": {
-      "heading": "Workspace overview",
+      "heading": "Workspace",
+      "description": "A quick overview of your projects and generations.",
       "projects": "Projects",
-      "completed": "Completed generations",
-      "active": "Queued and in progress"
+      "projectsDescription": "Projects in your workspace",
+      "completed": "Generations",
+      "completedDescription": "Completed images",
+      "active": "In progress",
+      "activeDescription": "Queued and processing generations"
     },
     "generations": {
       "heading": "Recent generations",
-      "emptyHeading": "No generations yet.",
-      "emptyDescription": "Add a product photo to create your first image.",
-      "start": "Start creating",
+      "emptyHeading": "You don’t have a generation yet.",
+      "emptyDescription": "Your first image will appear here when it’s ready.",
+      "start": "Create your first image",
       "untitled": "Untitled project",
-      "previewAlt": "Generated image for {title}"
+      "previewAlt": "Generated image for {title}",
+      "fullscreen": "Full screen",
+      "openProject": "Open project",
+      "edit": "Edit",
+      "closeFullscreen": "Close full screen",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "resetZoom": "Reset zoom"
     },
     "composer": {
       "heading": "Create a new image",
@@ -600,7 +612,8 @@
       "productLabel": "Product",
       "productHelper": "Drop or choose a JPEG, PNG or WebP",
       "addProduct": "Add product",
-      "replaceProduct": "Replace",
+      "replaceProduct": "Replace product",
+      "productReady": "Product image selected",
       "removeProduct": "Remove",
       "addReference": "Add reference",
       "referenceLabel": "Visual references",
@@ -613,10 +626,22 @@
       "removeReference": "Remove visual reference {index}",
       "invalidProductType": "Please select a JPEG, PNG, or WebP image.",
       "productTooLarge": "The image must be 20 MB or smaller.",
+      "productRequired": "Add a product image to continue.",
+      "directionRequired": "Choose a preset or add a creative direction.",
+      "signInRequired": "Sign in to continue.",
+      "productUploading": "Uploading product image…",
+      "productAnalyzing": "Analyzing product…",
+      "referenceUploading": "Uploading reference images…",
+      "productUploadFailed": "The product image could not be uploaded. Try again or choose another image.",
+      "referenceUploadFailed": "The reference images could not be uploaded. Please try again.",
       "selectedProductAlt": "Selected product image",
       "creating": "Creatingâ€¦",
       "creationError": "We couldnâ€™t create the image. Please try again.",
       "progressTitle": "Creating your image",
+      "closeProgress": "Close progress dialog",
+      "activeStatus": "Generating image…",
+      "successStatus": "Image ready",
+      "failedStatus": "Generation failed",
       "progressDescription": "Your result will open automatically when it's ready.",
       "progressStatuses": {
         "preparing": "Preparing your product",
@@ -678,6 +703,10 @@
     },
     "presets": {
       "heading": "Creative presets",
+      "recommendedHeading": "Recommended presets for this product",
+      "recommendedDescription": "We highlighted creative directions suited to your product type.",
+      "viewAll": "View all presets",
+      "showLess": "Show less",
       "description": "Choose a production-ready direction, then add an optional note.",
       "listLabel": "Creative preset library",
       "usePreset": "Select {title} preset",
@@ -686,7 +715,8 @@
         "jewelry": "Jewelry",
         "watches": "Watches",
         "cosmetics": "Cosmetics",
-        "footwear": "Footwear"
+        "footwear": "Footwear",
+        "bags": "Bags"
       },
       "items": {
         "apparel-street-style": {
@@ -913,6 +943,21 @@
           "title": "Footwear Hero Close-up",
           "description": "Close-up of footwear material, sole, and construction.",
           "alt": "Footwear hero close-up"
+        },
+        "bags-street-editorial": {
+          "title": "Street Editorial",
+          "description": "A city campaign that keeps the bag clear and prominent.",
+          "alt": "Bag campaign in a city scene"
+        },
+        "bags-minimal-studio": {
+          "title": "Minimal Studio",
+          "description": "A quiet studio hero with defining bag details.",
+          "alt": "Bag in a minimal studio"
+        },
+        "bags-crossbody-lifestyle": {
+          "title": "Crossbody Lifestyle",
+          "description": "Natural carry styling with believable strap contact.",
+          "alt": "Crossbody bag lifestyle"
         }
       }
     },
@@ -947,15 +992,10 @@
     },
     "recentWork": {
       "projectActions": "Project actions",
-      "heading": "Recent projects",
-      "viewAll": "View all projects",
       "allHeading": "All projects",
       "allEyebrow": "Project library",
       "allMetadataTitle": "All Projects",
       "backToWorkspace": "Back to Workspace",
-      "emptyHeading": "No projects yet.",
-      "emptyDescription": "Upload your first product to get started.",
-      "startCreating": "Create your first project",
       "newProject": "New project",
       "creating": "Creatingâ€¦",
       "createError": "We couldnâ€™t create the project. Please try again.",
@@ -970,6 +1010,9 @@
       "untitledProject": "Untitled Project",
       "rename": {
         "edit": "Edit project name",
+        "description": "Give this project a name to make it easier to find.",
+        "label": "Project name",
+        "placeholder": "Untitled project",
         "save": "Save",
         "cancel": "Cancel",
         "saving": "Saving...",
@@ -984,6 +1027,9 @@
         "apply": "Apply edit",
         "unavailable": "Image editing will be available soon.",
         "failed": "The edit could not be completed. Please try again.",
+        "activeStatus": "Applying edit…",
+        "successStatus": "Edit ready",
+        "failedStatus": "Generation failed",
         "progressTitle": "Applying your edit",
         "progressDescription": "The selected image is being edited while preserving its product identity.",
         "progressStatuses": {
@@ -1022,9 +1068,13 @@
       "deleting": "Deletingâ€¦",
       "deleteError": "Project could not be deleted. Please try again.",
       "backToProjects": "Back to projects",
+      "closeProgress": "Close progress dialog",
       "updated": "Updated {date}",
       "rename": {
         "edit": "Edit project name",
+        "description": "Give this project a name to make it easier to find.",
+        "label": "Project name",
+        "placeholder": "Untitled project",
         "save": "Save",
         "cancel": "Cancel",
         "saving": "Saving...",
@@ -1041,7 +1091,13 @@
         "failed": "The edit could not be completed. Please try again.",
         "progressTitle": "Applying your edit",
         "progressDescription": "The selected image is being edited while preserving its product identity.",
-        "progressStatuses": {
+        "activeStatus": "Applying image edit…",
+        "successStatus": "Image edit complete",
+        "failedStatus": "Image edit failed",
+                "activeStatus": "Applying image edit…",
+        "successStatus": "Image edit complete",
+        "failedStatus": "Image edit failed",
+"progressStatuses": {
           "applying": "Applying the requested change",
           "preserving": "Preserving the image",
           "checking": "Checking product identity",
@@ -1100,6 +1156,10 @@
         "run": "Run generation",
         "running": "Generatingâ€¦",
         "generationFailed": "We couldnâ€™t complete the image generation. Please try again.",
+        "activeStatus": "Generating image…",
+        "successStatus": "Image ready",
+        "failedStatus": "Generation failed",
+        "closeProgress": "Close progress dialog",
         "progressTitle": "Creating your image",
         "progressDescription": "Your result will open automatically when it's ready.",
         "progressStatuses": {
@@ -1109,8 +1169,30 @@
           "finalizing": "Finalizing the result"
         },
         "notQueued": "This generation is no longer queued. Refresh the page and try again.",
-        "invalidAspectRatio": "Choose one of the supported image formats.",
         "invalidAspectRatio": "Choose one of the supported image formats."
+      },
+      "composer": {
+        "invalidAspectRatio": "Choose one of the supported image formats.",
+        "aspectRatio": {
+          "label": "Format",
+          "helper": "Choose an image ratio for where your content will appear.",
+          "names": {
+            "widescreen": "Widescreen",
+            "vertical": "Vertical",
+            "square": "Square",
+            "classic": "Classic",
+            "tall": "Tall",
+            "cinemascope": "Cinemascope"
+          },
+          "descriptions": {
+            "widescreenUse": "YouTube, websites, landing pages",
+            "verticalUse": "TikTok, Reels, Shorts, Stories",
+            "squareUse": "Instagram and Facebook feed",
+            "classicUse": "Presentations, marketplaces, catalogues",
+            "tallUse": "Product pages, Pinterest",
+            "cinemascopeUse": "Cinematic banners, hero sections"
+          }
+        }
       },
       "outputs": {
         "heading": "Generated outputs",
@@ -1210,11 +1292,13 @@
     "watch": "Watches",
     "cosmetics": "Cosmetics",
     "footwear": "Footwear",
+    "bags": "Bags",
     "apparelAlt": "Editorial campaign image for apparel",
     "jewelryAlt": "Jewelry styled on a model",
     "watchAlt": "Watch shown on a wrist",
     "cosmeticsAlt": "Cosmetic product in a styled scene",
     "footwearAlt": "Footwear in an urban lifestyle scene",
+    "bagsAlt": "Leather handbag product photograph",
     "referenceTitle": "Choose a direction. Or bring your own reference.",
     "referenceDescription": "Start from a preset or add a reference image for lighting, composition and atmosphere.",
     "referenceNote": "Presets and references guide the scene. Your product remains the focus.",
@@ -1234,7 +1318,7 @@
     "faq3Question": "Do I need to write prompts?",
     "faq3Answer": "No. Start with a preset or go straight to image creation.",
     "faq4Question": "Which product categories are supported?",
-    "faq4Answer": "Apparel, jewelry, watches, cosmetics and footwear.",
+    "faq4Answer": "Apparel, jewelry, watches, cosmetics, footwear and bags.",
     "faq5Question": "Can I edit an image later?",
     "faq5Answer": "You can review generated images in your project and continue editing them there.",
     "faq6Question": "Can I keep multiple generations in a project?",

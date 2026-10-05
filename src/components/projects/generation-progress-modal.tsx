@@ -6,12 +6,14 @@ import { GenerationLoadingIndicator } from "@/components/projects/generation-loa
 
 type GenerationProgressModalProps = {
   open: boolean;
+  onClose: () => void;
+  closeLabel: string;
   title: string;
   description: string;
   statuses: readonly [string, string, string, string];
 };
 
-export function GenerationProgressModal({ open, title, description, statuses }: GenerationProgressModalProps) {
+export function GenerationProgressModal({ open, onClose, closeLabel, title, description, statuses }: GenerationProgressModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [statusIndex, setStatusIndex] = useState(0);
   const portalRoot = typeof document === "undefined" ? null : document.body;
@@ -26,6 +28,7 @@ export function GenerationProgressModal({ open, title, description, statuses }: 
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
+        onClose();
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
       const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -45,7 +48,7 @@ export function GenerationProgressModal({ open, title, description, statuses }: 
       document.body.style.overflow = previousOverflow;
       previousActiveElement?.focus();
     };
-  }, [open]);
+  }, [open, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -56,6 +59,7 @@ export function GenerationProgressModal({ open, title, description, statuses }: 
   if (!open || !portalRoot) return null;
   return createPortal(<div className="generation-progress-overlay" onMouseDown={(event) => event.preventDefault()} onClick={(event) => event.preventDefault()}>
     <div ref={dialogRef} className="generation-progress-modal" role="dialog" aria-modal="true" aria-labelledby="generation-progress-title" aria-describedby="generation-progress-description" tabIndex={-1}>
+      <button type="button" className="generation-progress-close" aria-label={closeLabel} onClick={onClose}>×</button>
       <GenerationLoadingIndicator />
       <h2 id="generation-progress-title">{title}</h2>
       <p id="generation-progress-description">{description}</p>

@@ -5,7 +5,7 @@ import test from "node:test";
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), "utf8");
-const recent = read("src/components/dashboard/recent-work.tsx");
+const dashboardHome = read("src/app/[locale]/dashboard/page.tsx");
 const gallery = read("src/components/projects/project-gallery-card.tsx");
 const detail = read("src/components/projects/project-header.tsx");
 const menu = read("src/components/projects/project-card-menu.tsx");
@@ -14,10 +14,14 @@ const popover = read("src/hooks/use-dismissible-popover.ts");
 const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
 const languageSwitcher = read("src/components/layout/language-switcher.tsx");
 const workspaceSelector = read("src/components/sections/workspace-project-selector.tsx");
+const messages = {
+  tr: JSON.parse(read("src/messages/tr.json")) as { Dashboard: { project: { composer: { invalidAspectRatio: string; aspectRatio: { label: string; names: Record<string, string> } } } } },
+  en: JSON.parse(read("src/messages/en.json")) as { Dashboard: { project: { composer: { invalidAspectRatio: string; aspectRatio: { label: string; names: Record<string, string> } } } } },
+};
 
-test("dashboard recent cards use the shared overflow menu and have no delete pill", () => {
-  assert.match(recent, /<ProjectCardMenu/);
-  assert.doesNotMatch(recent, /DeleteProjectButton|dashboard-project-delete-button/);
+test("dashboard home omits recent projects while the projects area retains the shared menu", () => {
+  assert.doesNotMatch(dashboardHome, /RecentWork|recent-work/);
+  assert.match(gallery, /<ProjectCardMenu/);
 });
 
 test("dashboard and projects surfaces share the card menu and delete modal", () => {
@@ -48,6 +52,7 @@ test("project detail exposes shared project actions and redirects after success"
   assert.match(detail, /<ProjectCardMenu/);
   assert.match(detail, /redirectOnSuccess/);
   assert.match(modal, /router\.replace\("\/dashboard\/projects"\)/);
+  assert.match(modal, /dialogRef\.current\?\.close\(\);\s*onClose\(\);\s*router\.refresh\(\);\s*if \(redirectOnSuccess\) router\.replace/);
 });
 
 test("shared delete modal has pending-safe dismissal, cancel-first focus, and retry error", () => {
@@ -67,6 +72,17 @@ test("both locales provide consistent delete copy", () => {
       assert.ok(section.deleteDescription);
       assert.ok(section.deleteProject);
       assert.ok(section.deleteError);
+    }
+  }
+});
+
+test("project composer aspect-ratio messages exist in both locales", () => {
+  for (const locale of ["tr", "en"] as const) {
+    const composer = messages[locale].Dashboard.project.composer;
+    assert.equal(typeof composer.invalidAspectRatio, "string");
+    assert.equal(typeof composer.aspectRatio.label, "string");
+    for (const format of ["widescreen", "vertical", "square", "classic", "tall", "cinemascope"]) {
+      assert.equal(typeof composer.aspectRatio.names[format], "string");
     }
   }
 });

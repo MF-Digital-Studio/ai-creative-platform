@@ -5,7 +5,7 @@ import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import { sceneFamiliesByVertical } from "./scene-families";
 import type { ResolveSceneSuitabilityInput, SceneFamily, SceneSuitabilityResolution } from "./types";
 
-type Intent = "hand" | "wrist" | "studio" | "street" | "macro" | "on_foot" | "location" | "vanity" | "detail";
+type Intent = "hand" | "wrist" | "studio" | "street" | "macro" | "on_foot" | "location" | "vanity" | "detail" | "crossbody" | "shoulder" | "tabletop" | "travel";
 
 const intentPatterns: ReadonlyArray<readonly [Intent, RegExp]> = [
   ["hand", /\b(?:hand|finger|elde|elinde|parmak(?:ta|ında|ta)?)\b/i],
@@ -25,10 +25,16 @@ const presetFamilies: Readonly<Record<string, SceneFamily>> = {
   "watch-on-wrist": "watch_on_wrist", "watch-bright-studio": "watch_studio", "watch-scenic-environment": "watch_lifestyle_surface",
   "footwear-hero-focus": "footwear_detail", "footwear-studio": "footwear_studio", "footwear-street-lifestyle": "footwear_street",
   "cosmetics-studio": "cosmetics_studio", "cosmetics-aesthetic-setting": "cosmetics_vanity", "cosmetics-lifestyle-landscape": "cosmetics_lifestyle",
+  "bags-street-editorial": "bags_street_editorial", "bags-minimal-studio": "bags_studio", "bags-crossbody-lifestyle": "bags_crossbody",
 };
 
 function intentsFrom(prompt: string): Set<Intent> {
-  return new Set(intentPatterns.filter(([, pattern]) => pattern.test(prompt)).map(([intent]) => intent));
+  const intents = new Set(intentPatterns.filter(([, pattern]) => pattern.test(prompt)).map(([intent]) => intent));
+  if (/crossbody|cross-body|cross body/i.test(prompt)) intents.add("crossbody");
+  if (/shoulder carry|on shoulder|shoulder bag/i.test(prompt)) intents.add("shoulder");
+  if (/tabletop|table top/i.test(prompt)) intents.add("tabletop");
+  if (/travel|commute/i.test(prompt)) intents.add("travel");
+  return intents;
 }
 
 function verticalFrom(input: ResolveSceneSuitabilityInput): SupportedVertical | null {
@@ -56,6 +62,7 @@ function profilePriority(profile: ProductProfile): readonly SceneFamily[] {
     case "footwear": return ["footwear_studio", "footwear_on_foot", "footwear_street", "footwear_detail", "footwear_aesthetic_location"];
     case "apparel": return ["apparel_studio", "apparel_street", "apparel_location_editorial", "apparel_detail"];
     case "cosmetics": return ["cosmetics_studio", "cosmetics_aesthetic_surface", "cosmetics_lifestyle", "cosmetics_vanity", "cosmetics_macro"];
+    case "bags": return ["bags_studio", "bags_handheld", "bags_shoulder_carry", "bags_crossbody", "bags_under_arm", "bags_tabletop", "bags_luxury_still_life", "bags_street_editorial", "bags_travel_lifestyle", "bags_furniture"];
   }
 }
 
@@ -89,6 +96,17 @@ function intentFamily(vertical: SupportedVertical, intents: Set<Intent>, profile
     if (intents.has("location")) return "cosmetics_lifestyle";
     if (intents.has("studio")) return "cosmetics_studio";
   }
+  if (vertical === "bags") {
+    if (intents.has("crossbody")) return "bags_crossbody";
+    if (intents.has("shoulder")) return "bags_shoulder_carry";
+    if (intents.has("hand")) return "bags_handheld";
+    if (intents.has("tabletop")) return "bags_tabletop";
+    if (intents.has("travel")) return "bags_travel_lifestyle";
+    if (intents.has("macro") || intents.has("detail")) return "bags_luxury_still_life";
+    if (intents.has("street")) return "bags_street_editorial";
+    if (intents.has("studio")) return "bags_studio";
+    if (intents.has("location")) return "bags_travel_lifestyle";
+  }
   return null;
 }
 
@@ -97,6 +115,7 @@ function strategyFamily(vertical: SupportedVertical, strategy: ResolveSceneSuita
   if (strategy === "jewelry_still_life") return vertical === "jewelry" ? "jewelry_studio" : null;
   if (strategy === "watch_on_wrist") return vertical === "watches" ? "watch_on_wrist" : null;
   if (strategy === "footwear_on_model") return vertical === "footwear" ? "footwear_on_foot" : null;
+  if (strategy === "bags_on_model") return vertical === "bags" ? "bags_handheld" : null;
   if (strategy === "fashion_on_model") return vertical === "apparel" ? "apparel_studio" : null;
   return null;
 }

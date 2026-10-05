@@ -4,6 +4,7 @@ export const supportedVerticals = [
   "watches",
   "cosmetics",
   "footwear",
+  "bags",
 ] as const;
 
 export type SupportedVertical = (typeof supportedVerticals)[number];
@@ -17,6 +18,7 @@ export const supportedVerticalConfig: Record<
   watches: { labelKey: "watches", descriptionKey: "watchesDescription" },
   cosmetics: { labelKey: "cosmetics", descriptionKey: "cosmeticsDescription" },
   footwear: { labelKey: "footwear", descriptionKey: "footwearDescription" },
+  bags: { labelKey: "bags", descriptionKey: "bagsDescription" },
 };
 
 export function isSupportedVertical(value: unknown): value is SupportedVertical {

@@ -3,12 +3,18 @@ import test from "node:test";
 import { buildImageEditPrompt, parseImageEditIntent, validateEditFidelity } from "../src/lib/image-edit/edit-intent";
 import { orderImageEditImages } from "../src/lib/generation/image-roles";
 import { resolveImageEditCompletion } from "../src/components/projects/image-edit-completion";
+import { failGenerationProgress, finishGenerationProgress, setProgressModalVisibility, startGenerationProgress } from "../src/components/projects/generation-progress-state";
 
 test("background intent permits a background change and protects product/person/composition", () => {
   const intent = parseImageEditIntent("Arka planı açık gri yap, ürüne dokunma.");
   assert.deepEqual(intent.allowedChanges, ["background"]);
   assert.ok(intent.preservedElements.some((entry) => entry.includes("product")));
   assert.match(buildImageEditPrompt("Arka planı açık gri yap.", intent), /Do not redesign or regenerate the entire scene/);
+});
+
+test("image edit prompt retains Bags identity lock during a background change", () => {
+  const prompt = buildImageEditPrompt("change background", parseImageEditIntent("change background"));
+  assert.match(prompt, /For bags, preserve bag type and silhouette.*strap presence\/placement/i);
 });
 
 test("lighting intent leaves composition protected", () => {
@@ -36,4 +42,27 @@ test("successful UI completion closes pending state, selects returned generation
 
 test("failed UI completion exits pending while retaining selection and instruction for retry", () => {
   assert.deepEqual(resolveImageEditCompletion({ ok: false }), { pending: false, selectedGenerationId: null, clearInstruction: false, error: true, refresh: false });
+});
+
+test("generation progress opens on start, closes without changing work, and reopens at the current stage", () => {
+  const started = startGenerationProgress("generation");
+  assert.equal(started.modalOpen, true);
+  const closed = setProgressModalVisibility({ ...started, status: "validating" }, false);
+  assert.equal(closed.modalOpen, false);
+  assert.equal(closed.status, "validating");
+  const reopened = setProgressModalVisibility(closed, true);
+  assert.equal(reopened.modalOpen, true);
+  assert.equal(reopened.status, "validating");
+});
+
+test("successful generation preserves returned id and failed state remains recoverable", () => {
+  const completed = finishGenerationProgress(startGenerationProgress("generation"), "generation-123");
+  assert.equal(completed.status, "succeeded");
+  assert.equal(completed.generationId, "generation-123");
+  assert.equal(completed.modalOpen, false);
+  const failed = failGenerationProgress(startGenerationProgress("edit"), "provider error");
+  assert.equal(failed.operation, "edit");
+  assert.equal(failed.status, "failed");
+  assert.equal(failed.error, "provider error");
+  assert.equal(setProgressModalVisibility(failed, true).error, "provider error");
 });

@@ -10,6 +10,7 @@ export const sceneFamilies = [
   "watch_on_wrist", "watch_studio", "watch_lifestyle_surface", "watch_macro_detail",
   "cosmetics_studio", "cosmetics_vanity", "cosmetics_lifestyle", "cosmetics_aesthetic_surface", "cosmetics_macro",
   "footwear_on_foot", "footwear_studio", "footwear_street", "footwear_aesthetic_location", "footwear_detail",
+  "bags_handheld", "bags_shoulder_carry", "bags_crossbody", "bags_under_arm", "bags_tabletop", "bags_furniture", "bags_luxury_still_life", "bags_street_editorial", "bags_travel_lifestyle", "bags_studio",
 ] as const;
 
 export type SceneFamily = (typeof sceneFamilies)[number];

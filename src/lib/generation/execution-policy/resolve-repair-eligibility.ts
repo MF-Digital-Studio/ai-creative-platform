@@ -3,9 +3,10 @@ import type { FidelityValidationResult } from "@/lib/fidelity-validation/types";
 const nonRepairableCodes = new Set(["minor_cosmetic_imperfection", "background_variation", "composition_preference"]);
 const artworkOnlyCodes = new Set(["apparel_artwork_identity_drift", "apparel_artwork_text_drift", "apparel_artwork_structure_drift", "apparel_artwork_placement_drift", "apparel_artwork_scale_drift", "apparel_artwork_color_drift", "apparel_artwork_drift", "apparel_text_drift", "apparel_scale_drift"]);
 const severeGlobalRepairCodes = new Set(["different_product", "identity_changed", "product_identity_drift", "garment_type_changed", "apparel_garment_type_drift", "apparel_silhouette_drift", "structural_drift", "geometry_drift", "critical_component_missing", "human_product_contact_error", "body_interaction_failure", "hand_anatomy_error", "finger_count_error", "finger_geometry_error", "body_proportion_error", "pose_implausible"]);
+const jewelryIdentityRepairCodes = new Set(["jewelry_product_substitution", "jewelry_center_stone_shape_drift", "jewelry_center_stone_count_drift", "jewelry_prong_count_drift", "jewelry_setting_geometry_drift", "jewelry_halo_structure_drift", "jewelry_side_stone_drift", "jewelry_band_geometry_drift", "jewelry_metal_color_drift", "jewelry_reference_product_contamination"]);
 const severeAnatomyRepairCodes = new Set(["hand_anatomy_error", "finger_count_error", "finger_geometry_error", "body_proportion_error", "pose_implausible"]);
 const fixableCodes = new Set([
-  "product_identity_drift", "identity_changed", "different_product", "wrong_artwork", "missing_artwork", "wrong_logo", "text_unreadable", "wording_changed", "garment_type_changed", "garment_color_changed", "apparel_garment_type_drift", "apparel_silhouette_drift", "critical_component_missing", "body_proportion_error", "pose_implausible", "geometry_drift", "structural_drift",
+  "product_identity_drift", "identity_changed", "different_product", "wrong_artwork", "missing_artwork", "wrong_logo", "text_unreadable", "wording_changed", "garment_type_changed", "garment_color_changed", "apparel_garment_type_drift", "apparel_silhouette_drift", "critical_component_missing", "body_proportion_error", "pose_implausible", "geometry_drift", "structural_drift", ...jewelryIdentityRepairCodes,
   "human_product_contact_error", "body_interaction_failure", "floating_ring", "hand_anatomy_error",
   "finger_count_error", "finger_geometry_error", "apparel_artwork_identity_drift", "apparel_artwork_text_drift",
   "apparel_artwork_structure_drift", "apparel_artwork_placement_drift", "apparel_artwork_drift",
@@ -28,6 +29,8 @@ export function resolveRepairEligibility(input: {
   if (input.validation.status !== "fail") return { eligible: false, repairExpectedValue: 0, reason: "validation_does_not_reject_candidate" };
   if (!input.maximumAttemptsRemaining) return { eligible: false, repairExpectedValue: 0, reason: "repair_limit_reached" };
   const codes = issues.map(({ code }) => code.toLowerCase());
+  const jewelryIdentityOnly = issues.length > 0 && codes.every((code) => jewelryIdentityRepairCodes.has(code));
+  if (jewelryIdentityOnly && issues.some((issue) => issue.severity === "critical" && (issue.confidence ?? 0.9) >= 0.75)) return { eligible: true, repairExpectedValue: 80, reason: "critical_jewelry_identity_drift_targeted_repair" };
   const artworkOnly = codes.length > 0 && codes.every((code) => artworkOnlyCodes.has(code));
   if (artworkOnly && input.hybridProjectionEnabled && !input.hybridProjectionApplied) return { eligible: false, repairExpectedValue: 0, reason: "artwork_requires_projection_not_full_regeneration" };
   if (artworkOnly) return { eligible: false, repairExpectedValue: 0, reason: "artwork_issue_requires_localized_repair" };

@@ -20,6 +20,7 @@ const categories = [
   ["watch", "/presets/watch-on-wrist.png"],
   ["cosmetics", "/presets/cosmetics-aesthetic-setting.png"],
   ["footwear", "/presets/footwear-street-lifestyle.png"],
+  ["bags", "/features/product-to-campaign/product-input.webp"],
 ] as const;
 
 const mutedApparelImage = "/presets/apparel-scenic-editorial.png";

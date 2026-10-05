@@ -60,7 +60,7 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
         </button>
         {isOpen ? <div className="dashboard-sidebar-account-actions" role="menu">
           <Link href="/dashboard/account" role="menuitem" onClick={() => close()}>{topbar("account")}</Link>
-          <form action={`/${locale}/auth/signout`} method="post"><button type="submit" role="menuitem" onClick={() => close()}>{topbar("signOut")}</button></form>
+          <form action={`/${locale}/auth/signout`} method="post"><button type="submit" role="menuitem">{topbar("signOut")}</button></form>
         </div> : null}
       </div>
     </div>

@@ -13,5 +13,6 @@ export function compileHumanRealismPrompt(policy: HumanRealismPolicy, vertical: 
       vertical === "watches" ? "CONTACT: Strap wraps the anatomical wrist; case rests on skin with a realistic contact shadow." :
       vertical === "footwear" ? "CONTACT: Natural ankle and foot geometry, balanced stance, weight-bearing sole and ground contact." :
       vertical === "cosmetics" ? "CONTACT: Natural face and hand texture even in close-up beauty lighting; product touches skin plausibly." : "CONTACT: Product and body meet with realistic pressure, occlusion and shadow.",
+    vertical === "bags" ? "CONTACT: Fingers naturally grip handles without passing through them. Shoulder/crossbody straps follow a plausible path with believable weight, gravity, contact, and tension; no floating strap, torso clipping, or bag-body occlusion." : "",
   ].filter(Boolean).join("\n");
 }

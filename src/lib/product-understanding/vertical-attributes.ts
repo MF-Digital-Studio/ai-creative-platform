@@ -66,9 +66,22 @@ export type FootwearAttributes = {
   colorBlocking: string[];
 };
 
+export type BagAttributes = {
+  bagType: string; silhouette: string | null; proportions: string | null; bodyStructure: string | null;
+  handleCount: number | null; handleGeometry: string | null; handleAttachmentPoints: string[];
+  strapCount: number | null; strapPlacement: string[]; strapWidth: string | null; strapLengthClass: string | null;
+  closureType: string | null; flapOrOpeningShape: string | null; zipperLayout: string[]; pocketLayout: string[];
+  panelConstruction: string[]; stitchingPattern: string | null; pipingOrEdgeTreatment: string | null;
+  hardwareLayout: string[]; hardwareColor: string | null; logoOrMonogramPlacement: ProductRegion[];
+  material: string | null; materialTexture: string | null; colorBlocking: string[]; patternOrPrint: string | null;
+  baseShape: string | null; baseFeetHardware: string | null; chainStrap: boolean | null;
+  decorativeCharms: string[]; asymmetricDetails: string[];
+};
+
 export type ProductVerticalAttributes =
   | { vertical: "apparel"; details: ApparelAttributes }
   | { vertical: "jewelry"; details: JewelryAttributes }
   | { vertical: "watches"; details: WatchAttributes }
   | { vertical: "cosmetics"; details: CosmeticsAttributes }
-  | { vertical: "footwear"; details: FootwearAttributes };
+  | { vertical: "footwear"; details: FootwearAttributes }
+  | { vertical: "bags"; details: BagAttributes };

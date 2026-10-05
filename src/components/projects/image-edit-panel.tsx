@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
 import type { CreateImageEditResult } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
 import { resolveImageEditCompletion } from "@/components/projects/image-edit-completion";
+import { GenerationStatusIndicator, type GenerationState } from "@/components/projects/generation-status-indicator";
 
-export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceeded, action, messages }: { hasOutput: boolean; selectedGenerationId: string | null; onEditSucceeded: (generationId: string) => void; action: (baseGenerationId: string, instruction: string) => Promise<CreateImageEditResult>; messages: { title: string; description: string; placeholder: string; helper: string; apply: string; unavailable: string; failed: string; progressTitle: string; progressDescription: string; progressStatuses: readonly [string, string, string, string] } }) {
+export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceeded, action, messages }: { hasOutput: boolean; selectedGenerationId: string | null; onEditSucceeded: (generationId: string) => void; action: (baseGenerationId: string, instruction: string) => Promise<CreateImageEditResult>; messages: { title: string; description: string; placeholder: string; helper: string; apply: string; unavailable: string; failed: string; progressTitle: string; progressDescription: string; progressStatuses: readonly [string, string, string, string]; closeProgress: string; activeStatus: string; successStatus: string; failedStatus: string } }) {
   const inputId = useId();
   const router = useRouter();
   const instructionRef = useRef<HTMLTextAreaElement>(null);
@@ -15,6 +16,8 @@ export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceede
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progressTitle, setProgressTitle] = useState(messages.progressTitle);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [generationState, setGenerationState] = useState<GenerationState>("idle");
   function log(event: string, fields?: Record<string, boolean | string>) {
     if (process.env.NODE_ENV === "development") console.info(`[image-edit-ui] ${event}`, fields ?? {});
   }
@@ -23,17 +26,19 @@ export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceede
     const instruction = instructionRef.current?.value.trim() ?? "";
     if (!selectedGenerationId || !instruction || pendingRef.current) return;
     pendingRef.current = true; setPending(true); setError(null);
+    setGenerationState("processing"); setModalOpen(true);
     setProgressTitle(messages.progressTitle);
     log("submit_started");
     try {
       const result = await action(selectedGenerationId, instruction);
       log("action_resolved", { ok: result.ok, generationIdPresent: result.ok });
       const completion = resolveImageEditCompletion(result);
-      if (completion.error) { setError(messages.failed); return; }
-      if (completion.selectedGenerationId) onEditSucceeded(completion.selectedGenerationId);
+      if (completion.error) { setError(messages.failed); setGenerationState("failed"); return; }
+      if (completion.selectedGenerationId) { onEditSucceeded(completion.selectedGenerationId); setGenerationState("succeeded"); }
       if (completion.clearInstruction && instructionRef.current) instructionRef.current.value = "";
       if (completion.refresh) {
-        setProgressTitle(messages.progressStatuses[3]);
+        setProgressTitle(messages.progressStatuses[3]); setModalOpen(false);
+        window.setTimeout(() => setGenerationState((current) => current === "succeeded" ? "idle" : current), 7000);
         pendingRef.current = false;
         setPending(false);
         log("modal_closed", { success: true });
@@ -42,6 +47,7 @@ export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceede
       }
     } catch {
       setError(messages.failed);
+      setGenerationState("failed");
     } finally {
       pendingRef.current = false;
       setPending(false);
@@ -56,6 +62,7 @@ export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceede
       {error ? <p role="alert" className="project-generation-error">{error}</p> : null}
       <Button type="submit" variant="primary" size="md" className="project-generate-button" disabled={!hasOutput || pending}>{pending ? messages.progressTitle : messages.apply}</Button>
     </form>
-    <GenerationProgressModal open={pending} title={progressTitle} description={messages.progressDescription} statuses={messages.progressStatuses} />
+    <GenerationStatusIndicator status={generationState} label={generationState === "failed" ? messages.failedStatus : generationState === "succeeded" ? messages.successStatus : messages.activeStatus} onClick={() => { if (generationState === "succeeded") { router.refresh(); return; } setModalOpen(true); }} />
+    <GenerationProgressModal open={modalOpen && generationState !== "idle"} onClose={() => setModalOpen(false)} closeLabel={messages.closeProgress} title={generationState === "failed" ? messages.failed : progressTitle} description={messages.progressDescription} statuses={messages.progressStatuses} />
   </section>;
 }

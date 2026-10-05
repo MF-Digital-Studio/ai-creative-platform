@@ -13,15 +13,16 @@ type Props = {
   editMessages: React.ComponentProps<typeof ImageEditPanel>["messages"];
   hasOutput: boolean;
   messages: React.ComponentProps<typeof GenerationGallery>["messages"];
+  initialSelectedGenerationId?: string | null;
 };
 
-export function ProjectGenerationWorkspace({ items, runActions, controls, editAction, editMessages, hasOutput, messages }: Props) {
+export function ProjectGenerationWorkspace({ items, runActions, controls, editAction, editMessages, hasOutput, messages, initialSelectedGenerationId }: Props) {
   const defaultSelected = items.find((item) => item.previewUrl && item.status === "succeeded")?.id ?? null;
-  const [selectedGenerationId, setSelectedGenerationId] = useState<string | null>(defaultSelected);
+  const [selectedGenerationId, setSelectedGenerationId] = useState<string | null>(() => items.some((item) => item.id === initialSelectedGenerationId && item.previewUrl && item.status === "succeeded") ? initialSelectedGenerationId ?? defaultSelected : defaultSelected);
   function selectEditedGeneration(generationId: string) {
     setSelectedGenerationId(generationId);
   }
-  return <GenerationGallery items={items} runActions={runActions} messages={messages} onSelectionChange={setSelectedGenerationId} controls={<>
+  return <GenerationGallery items={items} runActions={runActions} messages={messages} onSelectionChange={setSelectedGenerationId} initialSelectedGenerationId={selectedGenerationId} controls={<>
     {controls}
     <ImageEditPanel hasOutput={hasOutput} selectedGenerationId={selectedGenerationId} onEditSucceeded={selectEditedGeneration} action={editAction} messages={editMessages} />
   </>} />;
