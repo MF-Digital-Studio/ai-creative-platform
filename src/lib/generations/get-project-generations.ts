@@ -43,7 +43,7 @@ type ProjectGenerationRow = {
   provider: string;
   model: string;
   quality: ImageGenerationQuality | null;
-  aspect_ratio: "1:1" | "4:5" | "3:4" | "16:9" | "9:16" | null;
+  aspect_ratio: "1:1" | "4:5" | "3:4" | "16:9" | "9:16" | "4:3" | "21:9" | null;
   preservation_mode: "reference_edit" | "pixel_lock" | null;
   fidelity_status: "not_checked" | "locked" | "failed" | "not_available" | null;
   fidelity_score: number | null;

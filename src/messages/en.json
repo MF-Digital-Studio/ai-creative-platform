@@ -651,6 +651,27 @@
         "productCloseUp": "A macro product close-up that highlights texture, finish and construction with controlled directional light.",
         "shortVideo": "A concise product film with slow camera movement, considered reflections and a strong final hero frame.",
         "socialCampaign": "A cohesive social campaign set with an attention-led hero image, detail crop and vertical story composition."
+      },
+      "invalidAspectRatio": "Choose one of the supported image formats.",
+      "aspectRatio": {
+        "label": "Format",
+        "helper": "Choose an image ratio for where your content will appear.",
+        "names": {
+          "widescreen": "Widescreen",
+          "vertical": "Vertical",
+          "square": "Square",
+          "classic": "Classic",
+          "tall": "Tall",
+          "cinemascope": "Cinemascope"
+        },
+        "descriptions": {
+          "widescreenUse": "YouTube, websites, landing pages",
+          "verticalUse": "TikTok, Reels, Shorts, Stories",
+          "squareUse": "Instagram and Facebook feed",
+          "classicUse": "Presentations, marketplaces, catalogues",
+          "tallUse": "Product pages, Pinterest",
+          "cinemascopeUse": "Cinematic banners, hero sections"
+        }
       }
     },
     "presets": {
@@ -963,7 +984,12 @@
         "failed": "The edit could not be completed. Please try again.",
         "progressTitle": "Applying your edit",
         "progressDescription": "The selected image is being edited while preserving its product identity.",
-        "progressStatuses": { "applying": "Applying the requested change", "preserving": "Preserving the image", "checking": "Checking product identity", "finalizing": "Finishing the edit" }
+        "progressStatuses": {
+          "applying": "Applying the requested change",
+          "preserving": "Preserving the image",
+          "checking": "Checking product identity",
+          "finalizing": "Finishing the edit"
+        }
       },
       "thumbnailAlt": "Preview for {title}",
       "types": {
@@ -1013,7 +1039,12 @@
         "failed": "The edit could not be completed. Please try again.",
         "progressTitle": "Applying your edit",
         "progressDescription": "The selected image is being edited while preserving its product identity.",
-        "progressStatuses": { "applying": "Applying the requested change", "preserving": "Preserving the image", "checking": "Checking product identity", "finalizing": "Finishing the edit" }
+        "progressStatuses": {
+          "applying": "Applying the requested change",
+          "preserving": "Preserving the image",
+          "checking": "Checking product identity",
+          "finalizing": "Finishing the edit"
+        }
       },
       "controlsHeading": "Creative controls",
       "backToWorkspace": "Back to Workspace",
@@ -1075,7 +1106,9 @@
           "generating": "Generating your image",
           "finalizing": "Finalizing the result"
         },
-        "notQueued": "This generation is no longer queued. Refresh the page and try again."
+        "notQueued": "This generation is no longer queued. Refresh the page and try again.",
+        "invalidAspectRatio": "Choose one of the supported image formats.",
+        "invalidAspectRatio": "Choose one of the supported image formats."
       },
       "outputs": {
         "heading": "Generated outputs",
@@ -1121,7 +1154,8 @@
           "processing": "Processing",
           "succeeded": "Succeeded",
           "failed": "Failed"
-        }
+        },
+        "format": "Format"
       },
       "status": {
         "draft": "Draft",

@@ -651,6 +651,27 @@
         "productCloseUp": "Kontrollü yönlü ışıkla doku, yüzey ve işçiliği öne çıkaran makro ürün yakın planı.",
         "shortVideo": "Yavaş kamera hareketi, özenli yansımalar ve güçlü bir final karesiyle kısa ürün filmi.",
         "socialCampaign": "Dikkat çekici ana görsel, detay kadrajı ve dikey hikâye kompozisyonundan oluşan tutarlı sosyal medya seti."
+      },
+      "invalidAspectRatio": "Lutfen desteklenen bicimlerden birini secin.",
+      "aspectRatio": {
+        "label": "Format",
+        "helper": "Iceriginizin yayinlanacagi formata uygun gorsel oranini secin.",
+        "names": {
+          "widescreen": "Genis ekran",
+          "vertical": "Dikey",
+          "square": "Kare",
+          "classic": "Klasik",
+          "tall": "Dikey urun",
+          "cinemascope": "Sinematik"
+        },
+        "descriptions": {
+          "widescreenUse": "YouTube, web siteleri, landing page ler",
+          "verticalUse": "TikTok, Reels, Shorts, Stories",
+          "squareUse": "Instagram ve Facebook gonderileri",
+          "classicUse": "Sunumlar, pazaryerleri, kataloglar",
+          "tallUse": "Urun sayfalari, Pinterest",
+          "cinemascopeUse": "Bannerlar ve hero alanlari"
+        }
       }
     },
     "presets": {
@@ -965,7 +986,12 @@
         "failed": "Düzenleme tamamlanamadı. Lütfen tekrar deneyin.",
         "progressTitle": "Düzenlemeniz uygulanıyor",
         "progressDescription": "Seçili görsel, ürün kimliği korunarak düzenleniyor.",
-        "progressStatuses": { "applying": "İstenen değişiklik uygulanıyor", "preserving": "Görsel korunuyor", "checking": "Ürün kimliği kontrol ediliyor", "finalizing": "Düzenleme tamamlanıyor" }
+        "progressStatuses": {
+          "applying": "İstenen değişiklik uygulanıyor",
+          "preserving": "Görsel korunuyor",
+          "checking": "Ürün kimliği kontrol ediliyor",
+          "finalizing": "Düzenleme tamamlanıyor"
+        }
       },
       "thumbnailAlt": "{title} için önizleme",
       "types": {
@@ -1017,7 +1043,12 @@
         "failed": "Düzenleme tamamlanamadı. Lütfen tekrar deneyin.",
         "progressTitle": "Düzenlemeniz uygulanıyor",
         "progressDescription": "Seçili görsel, ürün kimliği korunarak düzenleniyor.",
-        "progressStatuses": { "applying": "İstenen değişiklik uygulanıyor", "preserving": "Görsel korunuyor", "checking": "Ürün kimliği kontrol ediliyor", "finalizing": "Düzenleme tamamlanıyor" }
+        "progressStatuses": {
+          "applying": "İstenen değişiklik uygulanıyor",
+          "preserving": "Görsel korunuyor",
+          "checking": "Ürün kimliği kontrol ediliyor",
+          "finalizing": "Düzenleme tamamlanıyor"
+        }
       },
       "controlsHeading": "Yaratıcı kontroller",
       "backToWorkspace": "Çalışma Alanına Dön",
@@ -1079,7 +1110,9 @@
           "generating": "Görseliniz üretiliyor",
           "finalizing": "Sonuç tamamlanıyor"
         },
-        "notQueued": "Bu üretim artık sırada değil. Sayfayı yenileyip tekrar deneyin."
+        "notQueued": "Bu üretim artık sırada değil. Sayfayı yenileyip tekrar deneyin.",
+        "invalidAspectRatio": "Desteklenen biçimlerden birini seçin.",
+        "invalidAspectRatio": "Lutfen desteklenen bicimlerden birini secin."
       },
       "outputs": {
         "heading": "Üretilen çıktılar",
@@ -1125,7 +1158,8 @@
           "processing": "İşleniyor",
           "succeeded": "Tamamlandı",
           "failed": "Başarısız"
-        }
+        },
+        "format": "Format"
       },
       "status": {
         "draft": "Taslak",

@@ -2,7 +2,10 @@ export type GenerationProvider = "openai";
 
 export type ImageGenerationQuality = "preview" | "standard" | "low" | "medium" | "high" | "xhigh" | "max" | "auto";
 
-export type AspectRatio = "1:1" | "4:5" | "3:4" | "16:9" | "9:16";
+export type GenerationAspectRatio = "16:9" | "9:16" | "1:1" | "4:3" | "3:4" | "21:9";
+
+/** @deprecated Legacy image edit rows may still contain 4:5. */
+export type AspectRatio = GenerationAspectRatio | "4:5";
 
 export type ProductPreservationMode = "reference_edit" | "pixel_lock";
 

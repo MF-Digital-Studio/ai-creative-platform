@@ -19,6 +19,9 @@ import {
   productImageExtensions,
 } from "@/components/projects/product-image-upload";
 import { Button } from "@/components/ui/button";
+import { AspectRatioPicker } from "@/components/projects/aspect-ratio-picker";
+import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
+import type { GenerationAspectRatio } from "@/lib/generation/types";
 import { useRouter } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
 import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
@@ -53,6 +56,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const [generationState, setGenerationState] = useState<"idle" | "pending" | "failed">("idle");
   const isCreating = generationState === "pending";
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
   const selectedPreset = getCreativePreset(selectedPresetId);
 
   useEffect(() => {
@@ -231,6 +235,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
 
       const generationFormData = new FormData();
       generationFormData.set("enhance_with_ai", "on");
+      generationFormData.set("aspect_ratio", aspectRatio);
       if (selectedPreset) {
         generationFormData.set("preset_id", selectedPreset.id);
       }
@@ -317,28 +322,6 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             )}
           </div>
 
-          <input
-            ref={productInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            aria-label={t("addProduct")}
-            onChange={handleProductChange}
-          />
-
-          <div className="creative-prompt-field creative-direction-field">
-            <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
-            <textarea
-              ref={promptRef}
-              id={promptId}
-              value={prompt}
-              placeholder={t("promptPlaceholder")}
-              className="creative-prompt-textarea"
-              onChange={(event) => setPrompt(event.target.value)}
-            />
-            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
-          </div>
-
           <div className="creative-reference-field">
             <span className="creative-field-label"><span className="creative-step-number">02</span>{t("referenceLabel")}</span>
             <p>{t("referenceHelper")}</p>
@@ -364,6 +347,14 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
           </div>
 
           <input
+            ref={productInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            aria-label={t("addProduct")}
+            onChange={handleProductChange}
+          />
+          <input
             ref={referenceInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -375,6 +366,27 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
               event.target.value = "";
             }}
           />
+          <div className="creative-prompt-field creative-direction-field">
+            <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
+            <textarea
+              ref={promptRef}
+              id={promptId}
+              value={prompt}
+              placeholder={t("promptPlaceholder")}
+              className="creative-prompt-textarea"
+              onChange={(event) => setPrompt(event.target.value)}
+            />
+            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
+          </div>
+
+
+
+          <AspectRatioPicker value={aspectRatio} onChange={setAspectRatio} disabled={isCreating} messages={{
+            label: t("aspectRatio.label"), helper: t("aspectRatio.helper"),
+            names: { widescreen: t("aspectRatio.names.widescreen"), vertical: t("aspectRatio.names.vertical"), square: t("aspectRatio.names.square"), classic: t("aspectRatio.names.classic"), tall: t("aspectRatio.names.tall"), cinemascope: t("aspectRatio.names.cinemascope") },
+            descriptions: { widescreenUse: t("aspectRatio.descriptions.widescreenUse"), verticalUse: t("aspectRatio.descriptions.verticalUse"), squareUse: t("aspectRatio.descriptions.squareUse"), classicUse: t("aspectRatio.descriptions.classicUse"), tallUse: t("aspectRatio.descriptions.tallUse"), cinemascopeUse: t("aspectRatio.descriptions.cinemascopeUse") },
+          }} />
+
 
         </div>
 

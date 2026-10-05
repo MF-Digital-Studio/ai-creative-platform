@@ -2,14 +2,16 @@ import "server-only";
 
 import { toFile } from "openai";
 import type { ImageEditParamsNonStreaming } from "openai/resources/images";
+import sharp from "sharp";
 
 import { getOpenAIClient } from "@/lib/openai/client";
 
-import { resolveImageGenerationOutputCanvas, type GenerationOutputCanvas } from "../output-canvas";
+import { resolveProviderImageSize, type GenerationOutputCanvas } from "../output-canvas";
 import { normalizeImageInputForOpenAI } from "./normalize-image-input";
 import {
   GenerationProviderError,
   type AspectRatio,
+  type GenerationAspectRatio,
   type ImageGenerationProviderClient,
   type ImageGenerationQuality,
   type ImageGenerationRequest,
@@ -24,10 +26,14 @@ type OpenAIImageSize = GenerationOutputCanvas & {
   value: string;
 };
 
-export function resolveOpenAIImageSize(aspectRatio: AspectRatio): OpenAIImageSize {
-  const canvas = resolveImageGenerationOutputCanvas(aspectRatio);
-
-  return { ...canvas, value: `${canvas.width}x${canvas.height}` };
+export function resolveOpenAIImageSize(aspectRatio: AspectRatio, model: string): OpenAIImageSize {
+  if (aspectRatio === "4:5") return { width: 1024, height: 1280, value: "1024x1280" };
+  try {
+    const size = resolveProviderImageSize(model, aspectRatio as GenerationAspectRatio);
+    return { width: size.width, height: size.height, value: size.providerValue };
+  } catch {
+    throw new GenerationProviderError(`The selected image model cannot produce the requested ${aspectRatio} format.`, "openai");
+  }
 }
 
 export function resolveOpenAIImageQuality(
@@ -86,7 +92,7 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
         const suffix = normalized.mimeType === "image/jpeg" ? "jpg" : normalized.mimeType === "image/webp" ? "webp" : "png";
         return toFile(normalized.data, `${String(index + 1).padStart(2, "0")}-${image.role}.${suffix}`, { type: normalized.mimeType });
       }));
-      const size = resolveOpenAIImageSize(request.aspectRatio);
+      const size = resolveOpenAIImageSize(request.aspectRatio, request.model);
       const quality = resolveOpenAIImageQuality(request.quality);
       // The installed SDK types predate the Image 2.5 extended quality values.
       console.info("[generation] openai_request_started", {
@@ -115,6 +121,11 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
         throw new GenerationProviderError("The generated image is invalid.", "openai");
       }
 
+      const actualDimensions = await sharp(imageData).metadata();
+      if (actualDimensions.width !== size.width || actualDimensions.height !== size.height) {
+        throw new GenerationProviderError("The image provider returned dimensions that do not match the requested output format.", "openai");
+      }
+
       const requestId = getProviderRequestId(response);
       return {
         imageData,
@@ -123,7 +134,7 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
         model: request.model,
         width: size.width,
         height: size.height,
-        providerMetadata: { ...(requestId ? { requestId } : {}), model: request.model, quality: quality ?? "auto" },
+        providerMetadata: { ...(requestId ? { requestId } : {}), model: request.model, quality: quality ?? "auto", providerWidth: size.width, providerHeight: size.height, requestedAspectRatio: request.aspectRatio },
       };
     } catch (error) {
       if (error instanceof GenerationProviderError) {

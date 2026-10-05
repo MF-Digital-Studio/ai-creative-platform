@@ -15,6 +15,7 @@ export type GenerationGalleryItem = {
   createdDateTime: string;
   provider: string;
   model: string;
+  aspectRatio: string | null;
   cost: string | null;
   direction: string;
 };
@@ -29,6 +30,7 @@ type GalleryMessages = {
   selectOutput: string;
   details: string;
   status: string;
+  format: string;
   advancedDetails: string;
   direction: string;
   provider: string;
@@ -68,7 +70,7 @@ function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messag
   return <div className="project-output-disclosures">
     <details className="project-output-disclosure">
       <summary>{messages.details}</summary>
-      <dl><div><dt>{messages.created}</dt><dd><time dateTime={item.createdDateTime}>{item.createdAt}</time></dd></div><div><dt>{messages.status}</dt><dd>{item.statusLabel}</dd></div></dl>
+      <dl><div><dt>{messages.created}</dt><dd><time dateTime={item.createdDateTime}>{item.createdAt}</time></dd></div><div><dt>{messages.status}</dt><dd>{item.statusLabel}</dd></div>{item.aspectRatio ? <div><dt>{messages.format}</dt><dd>{item.aspectRatio}</dd></div> : null}</dl>
     </details>
     <details className="project-output-disclosure">
       <summary>{messages.advancedDetails}</summary>

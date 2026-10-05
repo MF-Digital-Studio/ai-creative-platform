@@ -44,9 +44,10 @@ import { buildProductIdentityManifest } from "@/lib/product-identity/build-produ
 import { resolveApparelArtworkRegion, buildApparelFidelityBenchmarkPrompts, compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
 import { evaluateApparelProductFidelity, resolveApparelFidelityMode } from "@/lib/product-identity/resolve-apparel-fidelity-mode";
 import { PRODUCT_IDENTITY_LOCK_VERSION } from "@/lib/product-identity/identity-lock-version";
-import { resolveImageGenerationOutputCanvas } from "@/lib/generation/output-canvas";
+import { resolveAspectRatioForGeneration, resolveImageGenerationOutputCanvas } from "@/lib/generation/output-canvas";
 import {
   buildImageGenerationPromptWithPolicy,
+  compileOutputFormatGuidance,
   watchOnWristInstructions,
 } from "@/lib/generation/prompts/build-image-generation-prompt";
 import { enhanceCreativeDirection } from "@/lib/generation/prompts/enhance-creative-direction";
@@ -93,6 +94,7 @@ import { resolveGenerationExecutionPolicy } from "@/lib/generation/execution-pol
 import { resolveRepairEligibility } from "@/lib/generation/execution-policy/resolve-repair-eligibility";
 import { GENERATION_EXECUTION_POLICY_VERSION } from "@/lib/generation/execution-policy/execution-policy-version";
 import { createGenerationPerformanceRecorder } from "@/lib/generation/performance";
+import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
 
 export type RegisterProductAssetResult = {
   status: "error" | "success";
@@ -109,7 +111,8 @@ export type UpdateCreativeDirectionState = {
 type CreateQueuedImageGenerationError =
   | "creationFailed"
   | "missingCreativeDirection"
-  | "missingProductImage";
+  | "missingProductImage"
+  | "invalidAspectRatio";
 
 export type CreateQueuedImageGenerationResult =
   | { ok: false; message: CreateQueuedImageGenerationError }
@@ -239,7 +242,7 @@ function safeGenerationEvent(scope: "create" | "queue", event: string, fields: R
 }
 
 function resolveAspectRatio(value: unknown): AspectRatio {
-  return value === "4:5" || value === "3:4" || value === "16:9" || value === "9:16"
+  return value === "4:5" || value === "3:4" || value === "16:9" || value === "9:16" || value === "4:3" || value === "21:9"
     ? value
     : "1:1";
 }
@@ -275,6 +278,10 @@ export async function createQueuedImageGeneration(
 ): Promise<CreateQueuedImageGenerationResult> {
   safeGenerationEvent("create", "entered");
   const enhancementEnabled = formData ? formData.get("enhance_with_ai") === "on" : true;
+  const rawAspectRatio = formData?.get("aspect_ratio") ?? DEFAULT_GENERATION_ASPECT_RATIO;
+  const aspectRatio = resolveAspectRatioForGeneration(rawAspectRatio);
+
+  if (!aspectRatio) return { ok: false, message: "invalidAspectRatio" };
 
   if (!isSupportedLocale(locale) || typeof projectId !== "string") {
     return { ok: false, message: "creationFailed" };
@@ -346,7 +353,7 @@ export async function createQueuedImageGeneration(
         provider: "openai",
         model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst",
         quality: "high",
-        aspect_ratio: "1:1",
+        aspect_ratio: aspectRatio,
         preservation_mode: strategyResolution.effectivePreservationMode,
         fidelity_status:
           strategyResolution.effectivePreservationMode === "reference_edit"
@@ -354,6 +361,7 @@ export async function createQueuedImageGeneration(
             : "not_checked",
         creative_direction_snapshot: creativeDirection,
         provider_metadata: {
+          outputFormat: { requestedAspectRatio: aspectRatio, version: "output-format-v1" },
           prompt_enhancement: {
             enabled: enhancementEnabled,
             enhanced_prompt: null,
@@ -803,7 +811,7 @@ export async function runQueuedImageGeneration(
       guaranteed: false,
       ...(usesReferenceEditing ? { unavailable_reason: "reference_edit_strategy" as const } : {}),
     };
-    const aspectRatio = resolveAspectRatio(queuedGeneration.aspect_ratio);
+    const aspectRatio = resolveAspectRatioForGeneration(queuedGeneration.aspect_ratio) ?? DEFAULT_GENERATION_ASPECT_RATIO;
     const outputCanvas = resolveImageGenerationOutputCanvas(aspectRatio);
     let pixelLockInput = null;
     const logPixelLockFallback = () => logDevelopmentGenerationEvent("preservation_mode_fallback", {
@@ -900,7 +908,7 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, visibleHuman: ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model"].includes(strategy) || strategy === "rigid_product" && qualityUseCase === "cosmetics" },
+      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, visibleHuman: ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model"].includes(strategy) || strategy === "rigid_product" && qualityUseCase === "cosmetics" },
     );
     logDevelopmentGenerationEvent("product_identity_lock", {
       generationId: queuedGeneration.id,
@@ -947,7 +955,7 @@ export async function runQueuedImageGeneration(
     effectivePreservationMode = finalPolicy.preservationMode;
     fidelityMetadata.effective_mode = effectivePreservationMode;
     let activePrompt = usesReferenceReplacement
-      ? `${buildReferenceReplacementPrompt(promptEnhancement.prompt)}${strategy === "watch_on_wrist" ? `\n\n${watchOnWristInstructions}` : ""}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
+      ? `${buildReferenceReplacementPrompt(promptEnhancement.prompt)}\n\n${compileOutputFormatGuidance(aspectRatio)}${strategy === "watch_on_wrist" ? `\n\n${watchOnWristInstructions}` : ""}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
       : finalPrompt.prompt;
     const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman: finalPrompt.layers.humanRealismApplied || strategy === "rigid_product" && qualityUseCase === "cosmetics" });
     const humanRealismDirection = compileHumanRealismPrompt(humanRealismPolicy, productProfile?.vertical ?? finalPrompt.layers.vertical);
@@ -986,6 +994,7 @@ export async function runQueuedImageGeneration(
       aspectRatio,
       ...(usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
     }));
+    console.info("[generation] output_format_resolved", { requestedAspectRatio: aspectRatio, providerWidth: outputCanvas.width, providerHeight: outputCanvas.height, exactRatio: outputCanvas.width * Number(aspectRatio.split(":")[1]) === outputCanvas.height * Number(aspectRatio.split(":")[0]) });
     executionCounts.imageGenerationCalls += 1;
     providerDiagnosticContext = null;
 
@@ -1300,6 +1309,7 @@ export async function runQueuedImageGeneration(
         fidelity_score: fidelityScore,
       provider_metadata: {
           ...(selectedProviderResult.providerMetadata ?? {}),
+          outputFormat: { requestedAspectRatio: aspectRatio, providerWidth: outputCanvas.width, providerHeight: outputCanvas.height, version: "output-format-v1" },
           execution: { version: GENERATION_EXECUTION_POLICY_VERSION, imageGenerationCalls: executionCounts.imageGenerationCalls, visionValidationCalls: executionCounts.visionValidationCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, productAnalysisCalls: executionCounts.productAnalysisCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, repairCalls: executionCounts.repairCalls, repairSuppressed: !repairPlan.shouldRetry && fidelityValidation.status === "fail", repairSuppressionReason: !repairPlan.shouldRetry && fidelityValidation.status === "fail" ? repairEligibility.reason : null, avoidedImageGenerationCalls: !repairPlan.shouldRetry && fidelityValidation.status === "fail" ? 1 : 0, totalDurationMs: stageDurations.total, stages: stageDurations, quality: executionPolicy.quality, difficulty: executionPolicy.difficulty, reasons: executionPolicy.reasons, repairQuality: repairPlan.shouldRetry ? executionPolicy.repairQuality : null, repairExpectedValue: repairEligibility.repairExpectedValue },
           ...(apparelIdentityManifest ? { apparelArtwork: { version: "apparel-artwork-localization-v1", assetId: asset.id, detected: apparelArtwork !== null, side: apparelIdentityManifest.artworkSide, boundingBox: apparelIdentityManifest.artworkBoundingRegion ? { x: apparelIdentityManifest.artworkBoundingRegion.x, y: apparelIdentityManifest.artworkBoundingRegion.y, width: apparelIdentityManifest.artworkBoundingRegion.width, height: apparelIdentityManifest.artworkBoundingRegion.height } : null, confidence: apparelArtwork?.identitySource.confidence ?? 0, containsText: apparelArtwork?.identitySource.containsText ?? false, multipleRegions: false, identitySource: apparelArtwork?.identitySource ?? null } } : {}),
           providerStatus: "succeeded",
