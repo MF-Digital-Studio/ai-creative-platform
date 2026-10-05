@@ -2629,6 +2629,23 @@ html[data-motion="ready"] .signup-form-wrap {
   object-fit: cover;
 }
 
+.creative-reference-role {
+  position: absolute;
+  right: 0.2rem;
+  bottom: 0.2rem;
+  left: 0.2rem;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--dashboard-foreground) 78%, transparent);
+  color: var(--dashboard-background);
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .creative-reference-thumbnail button {
   position: absolute;
   top: 0.25rem;

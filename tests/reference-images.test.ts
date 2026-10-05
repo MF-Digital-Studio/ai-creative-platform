@@ -19,6 +19,10 @@ import { resolveGenerationStrategy } from "../src/lib/generation/strategy/genera
 import { createReferenceAnalysisInput } from "../src/lib/generation/references/reference-analysis-input";
 import { getOpenAIDiagnostic } from "../src/lib/openai/response-diagnostics";
 import { buildImageGenerationPrompt } from "../src/lib/generation/prompts/build-image-generation-prompt";
+import { orderGenerationImages, orderReferenceReplacementImages, compileImageRoleInstructions } from "../src/lib/generation/image-roles";
+import { buildReferenceReplacementPrompt } from "../src/lib/generation/image-roles";
+import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
+import { resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
 import {
   enhanceCreativeDirectionWithClient,
   type PromptEnhancementClient,
@@ -106,8 +110,43 @@ test("no references skip vision analysis, while corrupt or failed references fal
 
 test("reference style rendering forbids copying reference identity and product details", () => {
   const rendered = renderReferenceStyleBrief(validStyleBrief);
-  assert.match(rendered, /style only/i);
-  assert.match(rendered, /never copy reference products, identities, logos, text/i);
+  assert.match(rendered, /Reference 1 is the primary authority/i);
+  assert.match(rendered, /References 2 and 3 are supporting references/i);
+  assert.match(rendered, /uploaded source product is the highest authority/i);
+  assert.match(rendered, /source product is the highest authority/i);
+  assert.doesNotMatch(rendered, /copy reference product identity/i);
+});
+
+test("upload order assigns one primary and remaining supporting roles, including after removal", () => {
+  const assets = ["a", "b", "c"].map((id) => ({ id, bucketId: "source", objectPath: id, data: Buffer.from(id), mimeType: "image/png" }));
+  assert.deepEqual(orderGenerationImages(assets[0]!, assets.slice(1)).filter((image) => image.referenceRole).map((image) => [image.id, image.referenceRole]), [["b", "primary"], ["c", "supporting"]]);
+  assert.deepEqual(orderGenerationImages(assets[0]!, [assets[2]!]).filter((image) => image.referenceRole).map((image) => [image.id, image.referenceRole]), [["c", "primary"]]);
+  assert.deepEqual(orderGenerationImages(assets[0]!).filter((image) => image.referenceRole), []);
+});
+
+test("primary role instructions protect pose and framing while source product stays authoritative", () => {
+  const assets = ["primary", "support1", "support2"].map((id) => ({ id, bucketId: "source", objectPath: id, data: Buffer.from(id), mimeType: "image/png" }));
+  const images = orderGenerationImages(assets[0]!, assets.slice(1));
+  const instructions = compileImageRoleInstructions(images);
+  assert.match(instructions, /PRIMARY and governs scene.*subject pose.*framing/i);
+  assert.match(instructions, /SUPPORTING.*lighting, mood, color/i);
+  assert.match(instructions, /never transfer reference product identity/i);
+  assert.match(buildReferenceReplacementPrompt("Make it nighttime"), /SOURCE PRODUCT.*EXACT IDENTITY/i);
+});
+
+test("direct replacement keeps primary reference before source product in provider order", () => {
+  const scene = { id: "reference", bucketId: "source", objectPath: "ref", data: Buffer.from("ref"), mimeType: "image/png" };
+  const product = { ...scene, id: "product", objectPath: "product" };
+  const ordered = orderReferenceReplacementImages(scene, product);
+  assert.deepEqual(ordered.map((image) => image.role), ["reference_base_scene", "product_identity_source"]);
+  assert.equal(ordered[0]?.referenceRole, "primary");
+});
+
+test("supporting style mismatch stays a warning and cannot trigger repair", () => {
+  const validation = resolveQualityGate([{ code: "supporting_reference_style_missed", category: "reference_match", severity: "critical", confidence: 1, identityImpact: "critical", finding: "style differs", expected: "supporting mood", sourceAuthoritative: false }]);
+  assert.equal(validation.status, "pass_with_warnings");
+  assert.equal(validation.issues[0]?.severity, "minor");
+  assert.equal(resolveRepairPlan(validation).shouldRetry, false);
 });
 
 test("OpenAI diagnostics retain safe categories but never image data, URLs, or API keys", () => {

@@ -81,15 +81,17 @@ export function isReferenceStyleBrief(value: unknown): value is ReferenceStyleBr
 
 export function renderReferenceStyleBrief(brief: ReferenceStyleBrief): string {
   return [
-    "Reference visual direction (style only; create an original image and never copy reference products, identities, logos, text, artwork, or an exact composition):",
+    "REFERENCE PRIORITY V1 — Reference 1 is the primary authority for scene, composition, pose, framing, camera, crop intent, and subject placement. Match its structure as closely as practical while creating an original image; pixel-perfect copying is not required.",
+    "References 2 and 3 are supporting references for lighting, mood, color, styling, atmosphere, environmental details, and editorial texture only. They must not replace or substantially alter Reference 1's composition, pose, camera, framing, or scene layout.",
+    "The uploaded source product is the highest authority for product identity. Replace any reference product with it and preserve its geometry, logo, artwork, color, materials, stones, dial, packaging, panels, and silhouette.",
     `Visual intent: ${brief.visualIntent}`,
-    `Composition: ${brief.composition.framing}; ${brief.composition.cameraAngle}; ${brief.composition.cameraDistance}; ${brief.composition.subjectPlacement}.`,
+    `Primary reference composition: ${brief.composition.framing}; ${brief.composition.cameraAngle}; ${brief.composition.cameraDistance}; ${brief.composition.subjectPlacement}.`,
     `Lighting: ${brief.lighting.character}; ${brief.lighting.direction}; ${brief.lighting.flashBehavior ?? "no specific flash behavior"}; ${brief.lighting.ambientExposure}; ${brief.lighting.contrast}.`,
     `Environment: ${brief.environment.setting}; ${brief.environment.architecturalCharacter ?? "no specific architectural character"}; ${brief.environment.surfaceCharacter ?? "no specific surface character"}.`,
     `Color: ${brief.color.palette}; ${brief.color.grading}; ${brief.color.saturation}.`,
     `Texture: ${brief.texture.grain}; ${brief.texture.sharpness}; ${brief.texture.retouching}.`,
     `Depth of field: ${brief.depthOfField}.`,
-    brief.poseLanguage ? `Pose language: ${brief.poseLanguage}.` : "",
+    brief.poseLanguage ? `Primary reference pose language: ${brief.poseLanguage}.` : "",
     `Realism character: ${brief.realismCharacter}.`,
   ].filter(Boolean).join("\n");
 }

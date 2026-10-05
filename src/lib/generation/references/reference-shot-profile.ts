@@ -83,10 +83,10 @@ export function getReferenceShotProfile(brief: ReferenceStyleBrief): ReferenceSh
 
 export function renderReferenceShotProfile(profile: ReferenceShotProfile, mode: ReferenceMode): string {
   const transfer = [
-    profile.framing && `framing ${profile.framing}`,
-    profile.cameraAngle && `${profile.cameraAngle} camera angle`,
-    profile.cameraDistance && `${profile.cameraDistance} camera distance`,
-    profile.subjectPlacement && `${profile.subjectPlacement} subject placement`,
+    profile.framing && `primary reference framing ${profile.framing}`,
+    profile.cameraAngle && `primary reference ${profile.cameraAngle} camera angle`,
+    profile.cameraDistance && `primary reference ${profile.cameraDistance} camera distance`,
+    profile.subjectPlacement && `primary reference ${profile.subjectPlacement} subject placement`,
     profile.productScale && `${profile.productScale} product scale`,
     profile.handDirection && profile.handDirection !== "none" && profile.handDirection !== "unknown" ? `hand entering from ${profile.handDirection}` : "",
     profile.interaction && profile.interaction !== "none" && profile.interaction !== "unknown" ? `${profile.interaction} interaction` : "",

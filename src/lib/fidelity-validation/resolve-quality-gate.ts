@@ -32,6 +32,7 @@ function defaultImpact(code: string, category: FidelityValidationIssue["category
 function confidenceAdjustedSeverity(issue: Pick<FidelityValidationIssue, "code" | "category" | "severity" | "confidence" | "identityImpact">): FidelityIssueSeverity {
   const code = issue.code.toLowerCase();
   const confidence = issue.confidence ?? 0.9;
+  if (issue.category === "reference_match" && /supporting.*(style|lighting)|style.*missed|lighting.*missed/.test(code)) return "minor";
   if (issue.category === "human_realism" && criticalHumanCodes.has(code)) return confidence < 0.55 ? "major" : "critical";
   if (issue.category === "human_realism" && majorHumanCodes.has(code) && confidence >= 0.75 && issue.severity === "minor") return "major";
   if (hardCriticalIdentityCodes.has(code) && issue.identityImpact === "critical") return confidence < 0.55 ? "major" : "critical";

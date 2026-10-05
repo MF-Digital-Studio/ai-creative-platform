@@ -29,9 +29,12 @@ export type GenerationImageRole =
   | "mask"
   | "generated_attempt";
 
+export type ReferenceRole = "primary" | "supporting";
+
 export type GenerationImageInput = ImageGenerationSourceAsset & {
   role: GenerationImageRole;
   order: number;
+  referenceRole?: ReferenceRole;
 };
 
 export type ApparelArtworkIdentitySource = {

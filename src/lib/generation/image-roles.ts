@@ -16,6 +16,7 @@ export function orderGenerationImages(
       ...reference,
       role: index === 0 ? "scene_reference" as const : "style_reference" as const,
       order: index + (artwork ? 2 : 1),
+      referenceRole: index === 0 ? "primary" as const : "supporting" as const,
     })),
   ];
 }
@@ -26,7 +27,7 @@ export function orderReferenceReplacementImages(
   product: ImageGenerationSourceAsset,
 ): GenerationImageInput[] {
   return [
-    { ...baseScene, role: "reference_base_scene", order: 0 },
+    { ...baseScene, role: "reference_base_scene", order: 0, referenceRole: "primary" as const },
     { ...product, role: "product_identity_source", order: 1 },
   ];
 }
@@ -56,7 +57,7 @@ export function compileImageRoleInstructions(images: readonly GenerationImageInp
     "Image 1 is PRODUCT IDENTITY SOURCE and is the exact product design authority.",
     artworkIndex >= 0 ? `Image ${artworkIndex + 1} is APPAREL ARTWORK IDENTITY SOURCE, a direct pixel crop from the source garment. It independently governs exact print design and typography.` : "No separate apparel artwork crop is available.",
     referenceCount
-      ? `Scene/style reference images follow the identity inputs and are scene only. Transfer pose, framing, camera, lighting, environment, props, and human interaction structure; never transfer product identity, artwork, typography, print color, placement, geometry, materials, branding, stones, watch dials, shoe structure, or packaging.`
+      ? `Reference roles are determined by upload order: the first scene/style reference is PRIMARY and governs scene, environment structure, subject pose, camera angle, framing, crop intent, composition, subject placement, and visual balance. Match that structure as closely as practical, adapting intelligently to the requested output aspect ratio. Later references are SUPPORTING and may guide lighting, mood, color, styling, atmosphere, and secondary environmental texture only; they cannot override or blend away the primary pose, framing, camera, or layout. Apply explicit user requests only to the specific attribute they name while preserving other primary composition attributes. Never transfer reference product identity, artwork, typography, print color, placement, geometry, materials, branding, stones, watch dials, shoe structure, or packaging.`
       : "No scene or style reference image is supplied.",
     "Replace any reference product with the exact product shown in Image 1.",
   ].join("\n");

@@ -39,15 +39,15 @@ export function resolveReferenceMatch(input: {
   const mode = input.mode ?? "inspired";
   const compatible = isCompatible(input.productProfile, input.sceneFamily, shot);
   const compositionAdjustments = compatible && input.composition ? [
-    shot.framing ? `preserve ${shot.framing} framing within the resolved product-safe composition` : "",
-    shot.cameraAngle ? `use ${shot.cameraAngle} camera angle when physically compatible` : "",
-    shot.subjectPlacement ? `use ${shot.subjectPlacement} subject placement without reducing product visibility` : "",
-    shot.negativeSpace && shot.negativeSpace !== "none" ? `retain ${shot.negativeSpace} negative space` : "",
+    shot.framing ? `preserve primary reference ${shot.framing} framing within the product-safe output canvas` : "",
+    shot.cameraAngle ? `preserve the primary reference ${shot.cameraAngle} camera angle when physically compatible` : "",
+    shot.subjectPlacement ? `preserve primary reference ${shot.subjectPlacement} subject placement without reducing product visibility` : "",
+    shot.negativeSpace && shot.negativeSpace !== "none" ? `retain primary reference ${shot.negativeSpace} negative space` : "",
   ].filter(Boolean) : [];
   const interactionAdjustments = compatible ? [
     shot.handDirection && shot.handDirection !== "none" && shot.handDirection !== "unknown" ? `hand enters from ${shot.handDirection}` : "",
     shot.interaction && shot.interaction !== "none" && shot.interaction !== "unknown" ? `use ${shot.interaction} interaction structure` : "",
-    shot.humanPose ? `transfer pose structure only: ${shot.humanPose}` : "",
+    shot.humanPose ? `preserve primary reference pose structure: ${shot.humanPose}` : "",
   ].filter(Boolean) : [];
   const styleAdjustments = compatible ? [
     shot.lighting && shot.lighting !== "unknown" ? `${shot.lighting} lighting` : "",

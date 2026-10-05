@@ -64,6 +64,10 @@ const mappings: Record<string, RepairMapping> = {
   apparel_silhouette_drift: { category: "geometry_reinforcement", instructions: ["PRIORITY 5 — Restore garment silhouette, sleeve, collar, fit, and construction; allow only natural drape and body curvature."] },
   apparel_scale_drift: { category: "identity_reinforcement", instructions: ["Restore the source artwork scale relative to the full garment; do not shrink or enlarge the print."] },
   reference_composition_missed: { category: "composition_repair", instructions: ["Restore the compatible reference framing, camera angle, and subject placement while keeping the uploaded product large and fully visible."] },
+  primary_reference_composition_drift: { category: "composition_repair", instructions: ["Restore Reference 1 scene layout and visual balance while keeping the source product clearly visible."] },
+  primary_reference_pose_drift: { category: "body_interaction_repair", instructions: ["Restore Reference 1 pose structure and orientation while preserving the exact source product."] },
+  primary_reference_framing_drift: { category: "composition_repair", instructions: ["Restore Reference 1 framing and crop intent, adapting to the requested canvas without cropping the source product unsafely."] },
+  primary_reference_camera_drift: { category: "composition_repair", instructions: ["Restore Reference 1 camera angle and perspective intent while preserving the product identity."] },
   reference_hand_direction_missed: { category: "body_interaction_repair", instructions: ["Restore the compatible reference hand-entry direction and pose structure without copying person identity or changing product identity."] },
   reference_background_missed: { category: "creative_requirement_repair", instructions: ["Restore the compatible reference background and lighting structure without copying reference branding or product identity."] },
 };

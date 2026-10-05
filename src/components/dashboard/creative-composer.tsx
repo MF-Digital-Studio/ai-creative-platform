@@ -331,6 +331,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
                   {/* Local object URLs are used only before creation starts. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} />
+                  <span className="creative-reference-role">{index === 0 ? t("primaryReference") : t("supportingReference")}</span>
                   <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })}>
                     <span aria-hidden="true">×</span>
                   </button>

@@ -379,6 +379,13 @@ export async function createQueuedImageGeneration(
             requested_count: references.length,
             usable_count: 0,
             asset_ids: references.map((reference) => reference.id),
+            referenceGuidance: {
+              version: "reference-priority-v1",
+              primaryReferenceId: references[0]?.id ?? null,
+              supportingReferenceIds: references.slice(1).map((reference) => reference.id),
+              primaryAuthority: ["scene", "composition", "pose", "camera", "framing"],
+              supportingAuthority: ["lighting", "mood", "color", "styling", "atmosphere"],
+            },
             analysis: {
               enabled: references.length > 0,
               succeeded: false,
@@ -1423,6 +1430,13 @@ export async function runQueuedImageGeneration(
             requested_count: requestedReferenceAssetIds.length,
             usable_count: referenceAnalysis.usableCount,
             asset_ids: requestedReferenceAssetIds,
+            referenceGuidance: {
+              version: "reference-priority-v1",
+              primaryReferenceId: requestedReferenceAssetIds[0] ?? null,
+              supportingReferenceIds: requestedReferenceAssetIds.slice(1),
+              primaryAuthority: ["scene", "composition", "pose", "camera", "framing"],
+              supportingAuthority: ["lighting", "mood", "color", "styling", "atmosphere"],
+            },
             analysis: {
               enabled: requestedReferenceAssetIds.length > 0,
               succeeded: referenceAnalysis.styleBrief !== null,
