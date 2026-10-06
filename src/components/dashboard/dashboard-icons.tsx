@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 import type { DashboardIconName } from "@/data/dashboard-navigation";
 
 type DashboardIconProps = SVGProps<SVGSVGElement> & {
-  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron";
+  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron" | "allCategories" | "apparel" | "jewelry" | "watch" | "footwear" | "cosmetics" | "bag";
 };
 
 export function DashboardIcon({ name, ...props }: DashboardIconProps) {
@@ -53,5 +53,19 @@ export function DashboardIcon({ name, ...props }: DashboardIconProps) {
       return <svg {...commonProps}><path d="M13 5h6v6m0-6-9 9" /><path d="M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4" /></svg>;
     case "chevron":
       return <svg {...commonProps}><path d="m6 9 6 6 6-6" /></svg>;
+    case "allCategories":
+      return <svg {...commonProps}><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></svg>;
+    case "apparel":
+      return <svg {...commonProps}><path d="m8 5 4-2 4 2 4 2-2 4-2-1v11H8V10l-2 1-2-4 4-2Z" /></svg>;
+    case "jewelry":
+      return <svg {...commonProps}><path d="m12 3 8 6-8 12L4 9l8-6Z" /><path d="M4 9h16M9 9l3 12 3-12M9 3l3 6 3-6" /></svg>;
+    case "watch":
+      return <svg {...commonProps}><rect x="6" y="7" width="12" height="10" rx="3" /><path d="m9 7 1-4h4l1 4m-6 10 1 4h4l1-4m-2-7v3l2 1" /></svg>;
+    case "footwear":
+      return <svg {...commonProps}><path d="M4 15c3 0 5-2 6-6l3 2c1 2 2 3 4 3l3 1v4H4v-4Z" /><path d="M8 18h1m3 0h1" /></svg>;
+    case "cosmetics":
+      return <svg {...commonProps}><path d="M9 3h6v3H9zM8 6h8l1 2v12H7V8l1-2Z" /><path d="M10 12h4" /></svg>;
+    case "bag":
+      return <svg {...commonProps}><path d="M5 9h14l1 11H4L5 9Z" /><path d="M9 9V7a3 3 0 0 1 6 0v2" /></svg>;
   }
 }

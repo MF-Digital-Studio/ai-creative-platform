@@ -11,7 +11,7 @@ const detail = read("src/components/projects/project-header.tsx");
 const menu = read("src/components/projects/project-card-menu.tsx");
 const modal = read("src/components/projects/delete-project-modal.tsx");
 const popover = read("src/hooks/use-dismissible-popover.ts");
-const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
+const accountMenu = read("src/components/dashboard/dashboard-account-menu.tsx");
 const languageSwitcher = read("src/components/layout/language-switcher.tsx");
 const workspaceSelector = read("src/components/sections/workspace-project-selector.tsx");
 const messages = {
@@ -38,14 +38,14 @@ test("custom popovers dismiss on outside pointer, Escape, and when another opens
   assert.match(popover, /event\.key !== "Escape"/);
   assert.match(popover, /triggerRef\.current\?\.focus\(\)/);
   assert.match(popover, /OPEN_POPOVER_EVENT/);
-  for (const source of [menu, sidebar, languageSwitcher, workspaceSelector]) {
+  for (const source of [menu, accountMenu, languageSwitcher, workspaceSelector]) {
     assert.match(source, /useDismissiblePopover/);
   }
 });
 
 test("account menu actions close before navigation or sign out", () => {
-  assert.match(sidebar, /aria-expanded=\{isOpen\}/);
-  assert.match(sidebar, /onClick=\{\(\) => close\(\)\}/);
+  assert.match(accountMenu, /aria-expanded=\{isOpen\}/);
+  assert.match(accountMenu, /onClick=\{\(\) => close\(\)\}/);
 });
 
 test("project detail exposes shared project actions and redirects after success", () => {

@@ -42,11 +42,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
   return (
     <main className="dashboard-main">
-      <div className="dashboard-main-inner dashboard-container">
+      <div className="dashboard-main-inner dashboard-container dashboard-home-inner">
         <CreativeComposer locale={locale} userId={userId} />
         <TemplateRail vertical={vertical} />
-        <WorkspaceOverview projectCount={dashboardData.projectCount} completedCount={dashboardData.completedCount} activeCount={dashboardData.activeCount} />
         <RecentGenerations generations={dashboardData.generations} />
+        <WorkspaceOverview projectCount={dashboardData.projectCount} completedCount={dashboardData.completedCount} activeCount={dashboardData.activeCount} />
       </div>
     </main>
   );

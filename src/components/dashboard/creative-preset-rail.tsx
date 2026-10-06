@@ -8,6 +8,17 @@ import { getRecommendedFamilyPresets } from "@/lib/creative-presets/creative-pre
 import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import type { AppLocale } from "@/i18n/routing";
 import { cn } from "@/lib/cn";
+import { PresetCategoryFilter, type PresetCategoryFilterValue } from "@/components/dashboard/preset-category-filter";
+
+const presetCategoryConfig = [
+  { value: "all", labelKey: "all", icon: "allCategories" },
+  { value: "apparel", labelKey: "apparel", icon: "apparel" },
+  { value: "jewelry", labelKey: "jewelry", icon: "jewelry" },
+  { value: "watches", labelKey: "watches", icon: "watch" },
+  { value: "footwear", labelKey: "footwear", icon: "footwear" },
+  { value: "cosmetics", labelKey: "cosmetics", icon: "cosmetics" },
+  { value: "bags", labelKey: "bags", icon: "bag" },
+] as const;
 
 export const DASHBOARD_PRESET_EVENT = "creative-ai:select-preset";
 const COLLAPSED_PRESET_COUNT = 6;
@@ -17,15 +28,22 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
   const locale = useLocale() as AppLocale;
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [categoryState, setCategory] = useState<{ vertical: SupportedVertical | null | undefined; value: PresetCategoryFilterValue }>({ vertical, value: vertical ?? "all" });
+  const category = categoryState.vertical === vertical ? categoryState.value : vertical ?? "all";
   const allPresets = getRecommendedFamilyPresets({ vertical: null, selectedPresetId });
   const recommendedPresets = getRecommendedFamilyPresets({ vertical, selectedPresetId });
-  const compactPresets = vertical
+  const categoryPresets = category === "all"
+    ? allPresets
+    : getRecommendedFamilyPresets({ vertical: category, selectedPresetId });
+  const compactPresets = category === "all" && vertical
     ? recommendedPresets
-    : allPresets.slice(0, COLLAPSED_PRESET_COUNT);
+    : category === "all" ? allPresets.slice(0, COLLAPSED_PRESET_COUNT) : categoryPresets;
   const selectedPreset = selectedPresetId
     ? allPresets.find((preset) => preset.id === selectedPresetId)
     : undefined;
-  const visiblePresets = expanded
+  const visiblePresets = category !== "all"
+    ? categoryPresets
+    : expanded
     ? allPresets
     : selectedPreset && !compactPresets.some((preset) => preset.id === selectedPreset.id)
       ? [...compactPresets.slice(0, COLLAPSED_PRESET_COUNT - 1), selectedPreset]
@@ -39,6 +57,15 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
 
   return (
     <div className="dashboard-preset-group">
+      <PresetCategoryFilter
+        value={category}
+        onChange={(value) => setCategory({ vertical, value })}
+        label={t("filterLabel")}
+        options={presetCategoryConfig.map(({ value, labelKey, icon }) => ({ value, icon, label: t(`filterCategories.${labelKey}`) }))}
+      />
+      {selectedPreset && !visiblePresets.some((preset) => preset.id === selectedPreset.id) ? (
+        <p className="preset-category-selection">{t("selectedPresetFamily", { title: selectedPreset.localizedTitle[locale] })}</p>
+      ) : null}
       <div className="dashboard-template-rail" aria-label={t("listLabel")}>
         {visiblePresets.map((preset) => (
           <button
@@ -64,13 +91,13 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
               <span>
                 <small>{t(`categories.${preset.category}`)}</small>
                 <strong>{preset.localizedTitle[locale]}</strong>
-                <span>{preset.localizedDescription[locale]}</span>
+                <span>{t(`familyDescriptions.${preset.id}`)}</span>
               </span>
             </span>
           </button>
         ))}
       </div>
-      <div className="dashboard-preset-actions">
+      {category === "all" && (allPresets.length > COLLAPSED_PRESET_COUNT || expanded) ? <div className="dashboard-preset-actions">
         <button
           className="dashboard-preset-toggle"
           type="button"
@@ -79,7 +106,7 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
         >
           {expanded ? t("showLess") : t("viewAll")}
         </button>
-      </div>
+      </div> : null}
     </div>
   );
 }

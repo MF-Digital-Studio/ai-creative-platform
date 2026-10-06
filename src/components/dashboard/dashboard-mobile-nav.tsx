@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import {
@@ -12,14 +12,12 @@ import {
 } from "@/data/dashboard-navigation";
 import { Link, usePathname } from "@/i18n/navigation";
 import { DashboardPlanCard } from "@/components/dashboard/dashboard-plan-card";
+import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
 
 export function DashboardMobileNav({ displayName }: { displayName?: string | null }) {
   const t = useTranslations("Dashboard.navigation");
-  const topbar = useTranslations("Dashboard.topbar");
-  const locale = useLocale();
   const drawerId = useId();
   const pathname = usePathname();
-  const name = displayName?.trim() || t("items.account");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -182,11 +180,9 @@ export function DashboardMobileNav({ displayName }: { displayName?: string | nul
                 <span className="dashboard-drawer-caption">{t("accountGroup")}</span>
                 {dashboardFooterNavigation.map((item) => renderItem(item, pathname === item.href))}
                 <Link href="/" className="dashboard-mobile-nav-item" onClick={() => closeDrawer()}><DashboardIcon name="website" className="dashboard-mobile-nav-icon" /><span>{t("returnToWebsite")}</span></Link>
-                <form action={`/${locale}/auth/signout`} method="post"><button type="submit" className="dashboard-mobile-nav-item dashboard-mobile-nav-logout"><DashboardIcon name="account" className="dashboard-mobile-nav-icon" /><span>{topbar("signOut")}</span></button></form>
               </nav>
               <div className="dashboard-drawer-account">
-                <span className="dashboard-sidebar-avatar" aria-hidden="true">{name.slice(0, 1).toLocaleUpperCase()}</span>
-                <span className="dashboard-sidebar-account-copy"><strong>{name}</strong><small>{t("personalWorkspace")}</small></span>
+                <DashboardAccountMenu displayName={displayName} compact />
               </div>
             </div>
           </aside>

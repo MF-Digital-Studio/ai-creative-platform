@@ -325,7 +325,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             <input id={projectNameId} value={projectName} maxLength={120} placeholder={t("projectNamePlaceholder")} className="creative-project-name-input" onChange={(event) => setProjectName(event.target.value)} />
           </div>
           <div className="creative-product-field">
-            <span className="creative-field-label"><span className="creative-step-number">01</span>{t("productLabel")}</span>
+            <span className="creative-field-label">{t("productLabel")}</span>
+            <div className="creative-upload-content">
             {productPreviewUrl ? (
               <div className="creative-selected-product">
                 <span className="creative-selected-product-media">
@@ -362,13 +363,16 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
                 <small>{t("productHelper")}</small>
               </button>
             )}
-            {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : null}
+            </div>
+            <div className="creative-panel-footer">
+              {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : <p>{productFile ? t("productReady") : ""}</p>}
+            </div>
           </div>
 
           <div className="creative-reference-field">
-            <span className="creative-field-label"><span className="creative-step-number">02</span>{t("referenceLabel")}</span>
-            <p>{t("referenceHelper")}</p>
-            <div className="creative-reference-list" aria-live="polite">
+            <span className="creative-field-label">{t("referenceLabel")}</span>
+            <div className="creative-upload-content">
+              <div className="creative-reference-list" aria-live="polite">
               {referenceFiles.map((reference, index) => (
                 <div key={reference.previewUrl} className="creative-reference-thumbnail">
                   {/* Local object URLs are used only before creation starts. */}
@@ -384,9 +388,12 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
                 <DashboardIcon name="plus" />
                 <span>{t("addReference")}</span>
               </button>
+              </div>
             </div>
-            <span className="creative-reference-count" aria-live="polite">{t("referenceCount", { count: referenceFiles.length })}</span>
-            {referenceError ? <p id={referenceErrorId} className="creative-field-error" role="alert">{referenceError}</p> : null}
+            <div className="creative-panel-footer">
+              {referenceError ? <p id={referenceErrorId} className="creative-field-error" role="alert">{referenceError}</p> : <p>{t("referenceHelper")}</p>}
+              <span className="creative-reference-count" aria-live="polite">{t("referenceCount", { count: referenceFiles.length })}</span>
+            </div>
           </div>
 
           <input
@@ -436,7 +443,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         </div>
 
         <div className="creative-composer-controls">
-          <span className="creative-generate-label"><span className="creative-step-number">03</span>{t("generateStep")}</span>
+          <p id={disabledHintId} className={!canStartImageCreation && !isCreating ? "creative-disabled-reason" : "sr-only"}>{!canStartImageCreation && !isCreating ? disabledReason || t("startDisabledHint") : ""}</p>
           <Button
             type="submit"
             variant="dark"
@@ -446,9 +453,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             className="creative-start-button"
           >
             <span>{isCreating ? t("creating") : t("createImage")}</span>
-            <DashboardIcon name="arrow" className="creative-start-icon" />
           </Button>
-          <p id={disabledHintId} className={!canStartImageCreation && !isCreating ? "creative-disabled-reason" : "sr-only"}>{!canStartImageCreation && !isCreating ? disabledReason || t("startDisabledHint") : ""}</p>
         </div>
 
         <div className="creative-composer-feedback">
