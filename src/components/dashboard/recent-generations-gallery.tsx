@@ -38,21 +38,21 @@ export function RecentGenerationsGallery({ generations, messages, locale }: { ge
         const date = new Date(generation.createdAt);
         const formattedDate = dateFormatter.format(date);
         const formatLabel = generation.aspectRatio ? ` · ${generation.aspectRatio}` : "";
+        const projectHref = `/dashboard/projects/${generation.projectId}?generation=${encodeURIComponent(generation.id)}`;
         return <li key={generation.id} className="dashboard-generation-item">
           <article className="dashboard-generation-card">
+            <Link className="dashboard-generation-card-link" href={projectHref} aria-label={`${messages.project}: ${title}`} />
             <div className="dashboard-generation-media">
               {/* Private signed Storage URLs bypass Next's public image optimizer. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={generation.previewUrl as string} alt={alt} loading="lazy" />
               <div className="dashboard-generation-actions" aria-label={title}>
                 <button type="button" aria-label={`${messages.fullscreen}: ${title}`} onClick={() => setViewerGenerationId(generation.id)}>{messages.fullscreen}</button>
-                <Link href={`/dashboard/projects/${generation.projectId}`}>{messages.project}</Link>
                 <Link href={`/dashboard/projects/${generation.projectId}?generation=${encodeURIComponent(generation.id)}#project-controls-heading`}>{messages.edit}</Link>
               </div>
               <button type="button" className="dashboard-generation-menu-trigger" aria-label={`${messages.project}: ${title}`} aria-expanded={menuGenerationId === generation.id} onClick={() => setMenuGenerationId((current) => current === generation.id ? null : generation.id)}><DashboardIcon name="menu" /></button>
               {menuGenerationId === generation.id ? <div className="dashboard-generation-mobile-menu">
                 <button type="button" onClick={() => { setViewerGenerationId(generation.id); setMenuGenerationId(null); }}>{messages.fullscreen}</button>
-                <Link href={`/dashboard/projects/${generation.projectId}`}>{messages.project}</Link>
                 <Link href={`/dashboard/projects/${generation.projectId}?generation=${encodeURIComponent(generation.id)}#project-controls-heading`}>{messages.edit}</Link>
               </div> : null}
             </div>

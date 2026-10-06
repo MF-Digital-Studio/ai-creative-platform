@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 import type { DashboardIconName } from "@/data/dashboard-navigation";
 
 type DashboardIconProps = SVGProps<SVGSVGElement> & {
-  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron" | "allCategories" | "apparel" | "jewelry" | "watch" | "footwear" | "cosmetics" | "bag";
+  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron" | "allCategories" | "apparel" | "jewelry" | "watch" | "footwear" | "cosmetics" | "bag" | "image" | "video" | "lock";
 };
 
 export function DashboardIcon({ name, ...props }: DashboardIconProps) {
@@ -67,5 +67,11 @@ export function DashboardIcon({ name, ...props }: DashboardIconProps) {
       return <svg {...commonProps}><path d="M9 3h6v3H9zM8 6h8l1 2v12H7V8l1-2Z" /><path d="M10 12h4" /></svg>;
     case "bag":
       return <svg {...commonProps}><path d="M5 9h14l1 11H4L5 9Z" /><path d="M9 9V7a3 3 0 0 1 6 0v2" /></svg>;
+    case "image":
+      return <svg {...commonProps}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="9" r="1.5" /><path d="m5.5 17 4.5-4.5 3.25 3.25 2.25-2.5 3 3.75" /></svg>;
+    case "video":
+      return <svg {...commonProps}><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3" /></svg>;
+    case "lock":
+      return <svg {...commonProps}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
   }
 }

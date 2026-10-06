@@ -18,7 +18,11 @@ const presetCategoryConfig = [
   { value: "footwear", labelKey: "footwear", icon: "footwear" },
   { value: "cosmetics", labelKey: "cosmetics", icon: "cosmetics" },
   { value: "bags", labelKey: "bags", icon: "bag" },
-] as const;
+] as const satisfies readonly {
+  value: PresetCategoryFilterValue;
+  labelKey: "all" | SupportedVertical;
+  icon: "allCategories" | "apparel" | "jewelry" | "watch" | "footwear" | "cosmetics" | "bag";
+}[];
 
 export const DASHBOARD_PRESET_EVENT = "creative-ai:select-preset";
 const COLLAPSED_PRESET_COUNT = 6;
@@ -30,11 +34,11 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
   const [expanded, setExpanded] = useState(false);
   const [categoryState, setCategory] = useState<{ vertical: SupportedVertical | null | undefined; value: PresetCategoryFilterValue }>({ vertical, value: vertical ?? "all" });
   const category = categoryState.vertical === vertical ? categoryState.value : vertical ?? "all";
-  const allPresets = getRecommendedFamilyPresets({ vertical: null, selectedPresetId });
+  const allPresets = getRecommendedFamilyPresets({ vertical: null });
   const recommendedPresets = getRecommendedFamilyPresets({ vertical, selectedPresetId });
   const categoryPresets = category === "all"
     ? allPresets
-    : getRecommendedFamilyPresets({ vertical: category, selectedPresetId });
+    : allPresets.filter((preset) => preset.vertical === category);
   const compactPresets = category === "all" && vertical
     ? recommendedPresets
     : category === "all" ? allPresets.slice(0, COLLAPSED_PRESET_COUNT) : categoryPresets;
@@ -61,7 +65,18 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
         value={category}
         onChange={(value) => setCategory({ vertical, value })}
         label={t("filterLabel")}
-        options={presetCategoryConfig.map(({ value, labelKey, icon }) => ({ value, icon, label: t(`filterCategories.${labelKey}`) }))}
+        options={presetCategoryConfig.map(({ value, labelKey, icon }) => {
+          const count = value === "all"
+            ? allPresets.length
+            : allPresets.filter((preset) => preset.vertical === value).length;
+
+          return {
+            value,
+            icon,
+            label: t(`filterCategories.${labelKey}`),
+            countLabel: t("styleCount", { count }),
+          };
+        })}
       />
       {selectedPreset && !visiblePresets.some((preset) => preset.id === selectedPreset.id) ? (
         <p className="preset-category-selection">{t("selectedPresetFamily", { title: selectedPreset.localizedTitle[locale] })}</p>

@@ -3,6 +3,10 @@
     "title": "Klay.ai",
     "description": "Premium AI campaign content for apparel, jewelry, watches, cosmetics, footwear, and bags."
   },
+  "AppStates": {
+    "notFound": {"title": "Page not found", "description": "The page you're looking for may have moved, been deleted, or never existed.", "dashboard": "Back to dashboard", "projects": "View projects"},
+    "error": {"title": "Something went wrong", "description": "We couldn't complete your request. Please try again.", "retry": "Try again", "dashboard": "Back to dashboard"}
+  },
   "Navigation": {
     "home": "Home",
     "howItWorks": "How It Works",
@@ -556,7 +560,25 @@
     "account": {
       "eyebrow": "ACCOUNT",
       "heading": "Account",
-      "description": "Manage the name shown in your Klay.ai workspace.",
+      "description": "Manage your profile, security, and workspace experience in one place.",
+      "summaryLabel": "Account summary",
+      "signInMethod": "Sign-in method",
+      "accountStatus": "Account status",
+      "activeStatus": "Active",
+      "googleSignIn": "Google",
+      "emailSignIn": "Email and password",
+      "unnamedUser": "Unnamed user",
+      "settingsNavigation": "Settings",
+      "accountNavDescription": "Profile and identity",
+      "securityNavDescription": "Password and access",
+      "appearanceNavDescription": "Theme preference",
+      "profileEyebrow": "PROFILE",
+      "profileHeading": "Your workspace identity",
+      "profileDescription": "Edit the profile information shown across your workspace and creations.",
+      "profileLabel": "Profile summary",
+      "securityEyebrow": "ACCESS",
+      "securityDescription": "Manage the security settings that protect access to your account.",
+      "appearanceEyebrow": "INTERFACE",
       "appearanceHeading": "Appearance",
       "appearanceDescription": "Choose how Klay.ai looks on this device.",
       "system": "System",
@@ -568,7 +590,36 @@
       "saving": "Savingâ€¦",
       "validationError": "Display name must be 80 characters or fewer.",
       "saveError": "We couldnâ€™t save your profile. Please try again.",
-      "saveSuccess": "Profile saved."
+      "saveSuccess": "Profile saved.",
+      "securityHeading": "Security",
+      "passwordHeading": "Password",
+      "passwordDescription": "Protect your account with a strong password.",
+      "changePassword": "Change password",
+      "emailVerificationDescription": "We need to verify your email before changing your password.",
+      "sendCode": "Send verification code",
+      "sendingCode": "Sending verification code…",
+      "requestSent": "We sent a verification code to your email.",
+      "verifyTitle": "Change password",
+      "codeLabel": "Verification code",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Update password",
+      "updatingPassword": "Updating password…",
+      "resend": "Resend code",
+      "resendCountdown": "Resend in {seconds}s",
+      "cancel": "Cancel",
+      "done": "Done",
+      "successTitle": "Password updated",
+      "successDescription": "You can use your new password the next time you sign in.",
+      "passwordRequired": "Enter the verification code and both password fields.",
+      "passwordMismatch": "Passwords do not match.",
+      "weakPassword": "This password does not meet the account password requirements.",
+      "invalidNonce": "The verification code is invalid or has expired.",
+      "rateLimited": "Too many codes were requested. Please wait and try again.",
+      "sessionExpired": "Your session has expired. Sign in again to continue.",
+      "sessionExpiredAction": "Sign in",
+      "network": "We couldn’t connect. Check your connection and try again.",
+      "unknown": "We couldn’t update your password. Please try again."
     },
     "overview": {
       "heading": "Workspace",
@@ -596,10 +647,27 @@
       "resetZoom": "Reset zoom"
     },
     "composer": {
-      "heading": "Create a new image",
+      "heading": "Create a new product",
       "description": "Upload your product, set the scene, and create a campaign image.",
+      "outputType": {
+        "label": "Creation type",
+        "image": { "title": "Image", "description": "Create a campaign-ready product image" },
+        "video": { "title": "Video", "description": "Create a short product video", "badge": "Coming soon" }
+      },
       "projectNameLabel": "Project name",
       "projectNamePlaceholder": "Optional",
+      "steps": {
+        "product": { "title": "Product image", "description": "Upload a clear, high-quality image of your product." },
+        "format": { "title": "Format", "description": "Choose an image ratio suited to where your content will be used." },
+        "project": { "title": "Project name", "description": "Optionally give this work a name." },
+        "additional": { "title": "Additional direction", "description": "Optionally add a scene, style, or reference." }
+      },
+      "dropzone": {
+        "title": "Drop your product image here",
+        "secondary": "or select it from your device",
+        "action": "Choose image",
+        "formats": "JPEG, PNG or WebP"
+      },
       "eyebrow": "Product + Creative Direction",
       "context": "New project",
       "promptLabel": "Creative direction",
@@ -728,6 +796,7 @@
       "showLess": "Show less",
       "filterLabel": "Filter presets by product category",
       "filterCategories": { "all": "All", "apparel": "Apparel", "jewelry": "Jewelry", "watches": "Watches", "footwear": "Footwear", "cosmetics": "Cosmetics", "bags": "Bags" },
+      "styleCount": "{count, plural, one {# style} other {# styles}}",
       "selectedPresetFamily": "Selected preset: {title}",
       "description": "Choose a production-ready direction, then add an optional note.",
       "listLabel": "Creative preset library",
@@ -988,7 +1057,7 @@
       "count": "{count} projects",
       "resultCount": "{count} results",
       "search": "Search projects",
-      "searchPlaceholder": "Search by project name",
+      "searchPlaceholder": "Search projects",
       "status": "Project status",
       "allStatuses": "All statuses",
       "draft": "Draft",
@@ -1002,12 +1071,12 @@
       "noPreview": "No preview yet",
       "open": "Open project",
       "actionsFor": "Actions for {title}",
-      "noResults": "No projects match this search.",
-      "noResultsDescription": "Try a different name or status.",
+      "noResults": "No results found",
+      "noResultsDescription": "Try changing your search or filters.",
       "clearFilters": "Clear filters",
-      "emptyTitle": "No projects yet.",
-      "emptyDescription": "Upload your first product to get started.",
-      "firstProject": "Create your first project",
+      "emptyTitle": "No projects yet",
+      "emptyDescription": "Create your first project by uploading a product image.",
+      "firstProject": "New project",
       "page": "Page {page} of {total}",
       "previous": "Previous",
       "next": "Next"
@@ -1149,6 +1218,7 @@
       },
       "references": {
         "heading": "Visual references",
+        "empty": "No references added",
         "add": "Add reference",
         "uploading": "Addingâ€¦",
         "invalidFile": "Choose a JPEG, PNG, or WebP image up to 20 MB.",
@@ -1261,7 +1331,8 @@
           "succeeded": "Succeeded",
           "failed": "Failed"
         },
-        "format": "Format"
+        "format": "Format",
+        "type": "Type"
       },
       "status": {
         "draft": "Draft",

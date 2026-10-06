@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { GenerationStatus } from "@/lib/projects/get-projects";
 import { ProjectImageViewer } from "@/components/projects/project-image-viewer";
+import {AppState} from "@/components/ui/app-state";
 
 export type GenerationGalleryItem = {
   id: string;
@@ -22,6 +23,7 @@ export type GenerationGalleryItem = {
 
 type GalleryMessages = {
   openFullscreen: string;
+  edit: string;
   closeFullscreen: string;
   zoomImage: string;
   zoomOutImage: string;
@@ -31,6 +33,7 @@ type GalleryMessages = {
   details: string;
   status: string;
   format: string;
+  type: string;
   advancedDetails: string;
   direction: string;
   provider: string;
@@ -68,17 +71,15 @@ function OutputState({ heading, description, busy = false, action }: { heading: 
 }
 
 function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messages: GalleryMessages }) {
-  return <div className="project-output-disclosures">
-    <details className="project-output-disclosure">
-      <summary>{messages.details}</summary>
-      <dl><div><dt>{messages.created}</dt><dd><time dateTime={item.createdDateTime}>{item.createdAt}</time></dd></div><div><dt>{messages.status}</dt><dd>{item.statusLabel}</dd></div>{item.aspectRatio ? <div><dt>{messages.format}</dt><dd>{item.aspectRatio}</dd></div> : null}</dl>
-    </details>
+  return <section className="project-inspector-details" aria-labelledby="project-output-details-heading">
+    <h3 id="project-output-details-heading">{messages.details}</h3>
+    <dl className="project-output-summary"><div><dt>{messages.format}</dt><dd>{item.aspectRatio ?? "—"}</dd></div><div><dt>{messages.created}</dt><dd><time dateTime={item.createdDateTime}>{item.createdAt}</time></dd></div><div><dt>{messages.type}</dt><dd>{item.typeLabel}</dd></div><div><dt>{messages.status}</dt><dd>{item.statusLabel}</dd></div></dl>
     <details className="project-output-disclosure">
       <summary>{messages.advancedDetails}</summary>
       <dl><div><dt>{messages.provider}</dt><dd>{item.provider}</dd></div><div><dt>{messages.model}</dt><dd>{item.model}</dd></div>{item.cost ? <div><dt>{messages.cost}</dt><dd>{item.cost}</dd></div> : null}</dl>
       <div className="project-output-advanced-direction"><strong>{messages.direction}</strong><p>{item.direction}</p></div>
     </details>
-  </div>;
+  </section>;
 }
 
 export function GenerationGallery({ items, controls, runActions, onSelectionChange, messages, initialSelectedGenerationId }: GenerationGalleryProps) {
@@ -86,15 +87,20 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
   const [viewerOpen, setViewerOpen] = useState(false);
   const latestId = items[0]?.id ?? "";
   const selected = selection?.latestId === latestId ? items.find((item) => item.id === selection.id) ?? items[0] : items[0];
-  const previewItems = items.filter((item) => item.previewUrl);
-
   function openFullscreen() {
     if (selected?.previewUrl) setViewerOpen(true);
   }
 
   return <>
     <div className="project-workspace-layout">
-      <section className="project-review-panel" aria-label={messages.galleryLabel}>
+      <section className="project-review-panel project-canvas" aria-label={messages.galleryLabel}>
+        <div className="project-canvas-toolbar">
+          <span className="dashboard-status" data-status={selected?.status ?? "draft"}><span aria-hidden="true" />{selected?.statusLabel ?? messages.emptyHeading}</span>
+          <div>
+            <a href="#project-image-edit">{messages.edit}</a>
+            <button type="button" disabled={!selected?.previewUrl} onClick={openFullscreen}>{messages.openFullscreen}</button>
+          </div>
+        </div>
         <div className="project-featured-stage">
           {selected?.previewUrl ? <>
             <button type="button" className="project-featured-image-button" aria-label={messages.openFullscreen} onClick={openFullscreen}>
@@ -102,26 +108,21 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={selected.previewUrl} alt={selected.alt} />
             </button>
-            <button type="button" className="project-fullscreen-trigger" onClick={openFullscreen}>{messages.openFullscreen}</button>
           </> : selected?.status === "failed" ? <OutputState heading={messages.failedHeading} description={messages.failedDescription} />
             : selected?.status === "processing" ? <OutputState heading={messages.processingHeading} description={messages.processingDescription} busy />
               : selected?.status === "queued" ? <OutputState heading={messages.queuedHeading} description={messages.queuedDescription} />
                 : selected ? <OutputState heading={messages.noPreview} description={messages.noPreviewDescription} />
                   : <OutputState heading={messages.emptyHeading} description={messages.emptyDescription} action={messages.goToControls} />}
         </div>
-        {previewItems.length > 1 ? <div className="project-gallery-strip" role="group" aria-label={messages.galleryLabel}>
-          {previewItems.map((item, index) => <button key={item.id} type="button" className="project-gallery-thumbnail" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput} ${index + 1}`} onClick={() => { setSelection({ id: item.id, latestId }); onSelectionChange(item.id); }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.previewUrl as string} alt="" />
-          </button>)}
-        </div> : null}
-        {selected ? <OutputDetails item={selected} messages={messages} /> : null}
       </section>
-      {controls}
+      <aside className="project-inspector" aria-label={messages.details}>
+        {controls}
+        {selected ? <OutputDetails item={selected} messages={messages} /> : null}
+      </aside>
     </div>
-    {items.length > 0 ? <section className="project-generation-history" aria-labelledby="project-generation-history-heading">
+    <section className="project-generation-history" aria-labelledby="project-generation-history-heading">
       <div className="dashboard-section-heading"><h2 id="project-generation-history-heading">{messages.historyHeading}</h2></div>
-      <ul className="project-generation-history-list">{items.map((item) => <li key={item.id} className="project-generation-history-item">
+      {items.length > 0 ? <ul className="project-generation-history-list" aria-label={messages.historyHeading}>{items.map((item) => <li key={item.id} className="project-generation-history-item">
         <button type="button" className="project-generation-history-select" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput}: ${item.createdAt}`} onClick={() => { setSelection({ id: item.id, latestId }); onSelectionChange(item.status === "succeeded" && item.previewUrl ? item.id : null); }}>
           <span className="project-generation-history-media">{item.previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -130,8 +131,8 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
           <span className="project-generation-history-copy"><strong>{item.typeLabel}</strong><time dateTime={item.createdDateTime}>{item.createdAt}</time><span className="dashboard-status" data-status={item.status}><span aria-hidden="true" />{item.statusLabel}</span></span>
         </button>
         {runActions.find((action) => action.id === item.id)?.node}
-      </li>)}</ul>
-    </section> : null}
+      </li>)}</ul> : <AppState compact icon="spark" title={messages.emptyHeading} description={messages.emptyDescription} />}
+    </section>
     {selected?.previewUrl ? <ProjectImageViewer src={selected.previewUrl} alt={selected.alt} open={viewerOpen} closeLabel={messages.closeFullscreen} zoomInLabel={messages.zoomImage} zoomOutLabel={messages.zoomOutImage} resetLabel={messages.resetImageZoom} onOpenChange={setViewerOpen} /> : null}
   </>;
 }

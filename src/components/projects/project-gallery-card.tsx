@@ -13,7 +13,6 @@ type ProjectGalleryCardProps = {
     noPreview: string;
     open: string;
     projectActions: string;
-    updated: string;
     delete: string;
     deleteProject: string;
     deleteHeading: string;
@@ -28,7 +27,7 @@ type ProjectGalleryCardProps = {
 export function ProjectGalleryCard({project, locale, messages, verticals}: ProjectGalleryCardProps) {
   const title = project.title ?? messages.untitled;
   const href = `/dashboard/projects/${project.id}` as const;
-  const date = new Intl.DateTimeFormat(locale, {dateStyle: "medium"}).format(new Date(project.updated_at));
+  const date = new Intl.DateTimeFormat(locale, {day: "numeric", month: "short", year: "numeric"}).format(new Date(project.updated_at));
   return (
     <li className="projects-gallery-item">
       <Link href={href} className="projects-gallery-card" aria-label={`${messages.open}: ${title}`}>
@@ -41,7 +40,10 @@ export function ProjectGalleryCard({project, locale, messages, verticals}: Proje
         </span>
         <span className="projects-gallery-copy">
           <span className="projects-gallery-title">{title}</span>
-          <span className="projects-gallery-meta">{project.vertical ? <span>{verticals[project.vertical]}</span> : null}<time dateTime={project.updated_at}>{messages.updated} {date}</time></span>
+          <span className="projects-gallery-meta">
+            {project.vertical ? <><span>{verticals[project.vertical]}</span><span aria-hidden="true">·</span></> : null}
+            <time dateTime={project.updated_at}>{date}</time>
+          </span>
           <StatusBadge status={project.latest_generation?.status ?? project.status} kind={project.latest_generation ? "generation" : "project"} />
         </span>
       </Link>

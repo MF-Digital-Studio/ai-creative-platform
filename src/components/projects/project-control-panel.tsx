@@ -17,7 +17,7 @@ type ProjectControlPanelProps = {
 
 export async function ProjectControlPanel({ locale, projectId, userId, hasOutput, initialAsset, referenceUrls }: ProjectControlPanelProps) {
   const t = await getTranslations("Dashboard.project");
-  return <aside className="project-settings-panel" aria-labelledby="project-controls-heading">
+  return <div className="project-settings-panel" aria-labelledby="project-controls-heading">
     <h2 id="project-controls-heading" className="project-controls-title">{t("controlsHeading")}</h2>
     <ProductImageUpload projectId={projectId} userId={userId} initialAsset={initialAsset} registerAsset={registerProductAsset.bind(null, locale)} />
     <ReferenceAssetList projectId={projectId} userId={userId} initialUrls={referenceUrls} registerAsset={registerReferenceAsset.bind(null, locale)} />
@@ -26,5 +26,5 @@ export async function ProjectControlPanel({ locale, projectId, userId, hasOutput
       invalidAspectRatio: t("composer.invalidAspectRatio"), aspectRatio: { label: t("composer.aspectRatio.label"), helper: t("composer.aspectRatio.helper"), names: { widescreen: t("composer.aspectRatio.names.widescreen"), vertical: t("composer.aspectRatio.names.vertical"), square: t("composer.aspectRatio.names.square"), classic: t("composer.aspectRatio.names.classic"), tall: t("composer.aspectRatio.names.tall"), cinemascope: t("composer.aspectRatio.names.cinemascope") }, descriptions: { widescreenUse: t("composer.aspectRatio.descriptions.widescreenUse"), verticalUse: t("composer.aspectRatio.descriptions.verticalUse"), squareUse: t("composer.aspectRatio.descriptions.squareUse"), classicUse: t("composer.aspectRatio.descriptions.classicUse"), tallUse: t("composer.aspectRatio.descriptions.tallUse"), cinemascopeUse: t("composer.aspectRatio.descriptions.cinemascopeUse") } },
       progressTitle: t("generation.progressTitle"), progressDescription: t("generation.progressDescription"), progressStatuses: [t("generation.progressStatuses.preparing"), t("generation.progressStatuses.scene"), t("generation.progressStatuses.generating"), t("generation.progressStatuses.finalizing")], closeProgress: t("generation.closeProgress"), activeStatus: t("generation.activeStatus"), successStatus: t("generation.successStatus"), failedStatus: t("generation.failedStatus"),
     }} /> : null}
-  </aside>;
+  </div>;
 }

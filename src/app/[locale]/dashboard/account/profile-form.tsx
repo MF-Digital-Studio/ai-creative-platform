@@ -11,6 +11,7 @@ const initialUpdateProfileState: UpdateProfileState = { status: "idle" };
 type ProfileFormProps = {
   displayName: string | null;
   messages: {
+    profileLabel: string;
     displayNameLabel: string;
     displayNameHelper: string;
     save: string;
@@ -35,10 +36,19 @@ export function ProfileForm({ displayName, messages }: ProfileFormProps) {
           ? messages.saveSuccess
           : null;
   const isError = state.status === "validation" || state.status === "error";
+  const initial = displayName?.trim().charAt(0).toLocaleUpperCase() || "K";
 
   return (
-    <form action={formAction} className="grid gap-5">
-      <div className="grid gap-2">
+    <form action={formAction} className="account-profile-form">
+      <div className="account-profile-identity" aria-label={messages.profileLabel}>
+        <span className="account-profile-avatar" aria-hidden="true">{initial}</span>
+        <span className="account-profile-copy">
+          <strong>{displayName || messages.displayNameLabel}</strong>
+          <span>{messages.displayNameHelper}</span>
+        </span>
+      </div>
+
+      <div className="account-profile-field">
         <label htmlFor="display-name" className="text-sm font-medium text-[var(--dashboard-foreground)]">
           {messages.displayNameLabel}
         </label>
@@ -51,7 +61,7 @@ export function ProfileForm({ displayName, messages }: ProfileFormProps) {
           defaultValue={displayName ?? ""}
           aria-invalid={isError || undefined}
           aria-describedby="display-name-helper"
-          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--dashboard-border-strong)] bg-[var(--dashboard-background)] px-3 text-sm text-[var(--dashboard-foreground)] outline-none transition-colors placeholder:text-[var(--dashboard-muted-soft)] focus-visible:border-[var(--dashboard-foreground)] focus-visible:ring-4 focus-visible:ring-[var(--dashboard-focus)]"
+          className="account-profile-input"
         />
         <p id="display-name-helper" className="text-sm leading-6 text-[var(--dashboard-muted)]">
           {messages.displayNameHelper}
@@ -68,9 +78,11 @@ export function ProfileForm({ displayName, messages }: ProfileFormProps) {
         </p>
       ) : null}
 
-      <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>
-        {pending ? messages.saving : messages.save}
-      </Button>
+      <div className="account-profile-actions">
+        <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>
+          {pending ? messages.saving : messages.save}
+        </Button>
+      </div>
     </form>
   );
 }

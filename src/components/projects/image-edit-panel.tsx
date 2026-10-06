@@ -53,7 +53,7 @@ export function ImageEditPanel({ hasOutput, selectedGenerationId, onEditSucceede
       setPending(false);
     }
   }
-  return <section className="project-control-section project-image-edit" aria-labelledby={`${inputId}-title`}>
+  return <section id="project-image-edit" className="project-control-section project-image-edit" aria-labelledby={`${inputId}-title`}>
     <h3 id={`${inputId}-title`}>{messages.title}</h3><p>{messages.description}</p>
     <form onSubmit={(event) => void submit(event)}>
       <label className="sr-only" htmlFor={inputId}>{messages.title}</label>

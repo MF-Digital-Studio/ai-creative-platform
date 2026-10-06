@@ -43,6 +43,7 @@ export function ReferenceAssetList({ projectId, userId, initialUrls, registerAss
     <div className="project-control-heading"><h3 id="project-references-heading">{t("heading")}</h3><span>{urls.length}/{MAX_PROJECT_REFERENCE_IMAGES}</span></div>
     <p>{t("description")}</p>
     <div className="project-reference-list">
+      {urls.length === 0 ? <span className="project-reference-empty">{t("empty")}</span> : null}
       {urls.map((url, index) => (
         // Private signed URLs intentionally bypass the public image optimizer.
         // eslint-disable-next-line @next/next/no-img-element

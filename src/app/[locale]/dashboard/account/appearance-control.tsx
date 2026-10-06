@@ -24,7 +24,12 @@ export function AppearanceControl({ labels }: AppearanceControlProps) {
       setPreference(next.value);
       event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=radio]")[nextIndex]?.focus();
     }}>
-      <ThemeIcon name={icon} /><span>{labels[value]}</span>{preference === value ? <span className="appearance-check" aria-hidden="true">✓</span> : null}
+      <span className={`appearance-preview appearance-preview-${value}`} aria-hidden="true">
+        <span className="appearance-preview-sidebar" />
+        <span className="appearance-preview-content"><i /><i /><i /></span>
+      </span>
+      <span className="appearance-option-label"><ThemeIcon name={icon} /><span>{labels[value]}</span></span>
+      {preference === value ? <span className="appearance-check" aria-hidden="true">✓</span> : null}
     </button>)}
   </div>;
 }

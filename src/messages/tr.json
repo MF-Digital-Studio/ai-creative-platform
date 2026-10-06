@@ -3,6 +3,10 @@
     "title": "Klay.ai",
     "description": "Kampanya görselleri için giyim, takı, saat, kozmetik, ayakkabı ve çantalar."
   },
+  "AppStates": {
+    "notFound": {"title": "Bu sayfa bulunamadı", "description": "Aradığınız sayfa taşınmış, silinmiş veya hiç var olmamış olabilir.", "dashboard": "Ana sayfaya dön", "projects": "Projeleri görüntüle"},
+    "error": {"title": "Bir şeyler ters gitti", "description": "İsteğinizi tamamlayamadık. Tekrar deneyebilirsiniz.", "retry": "Tekrar dene", "dashboard": "Ana sayfaya dön"}
+  },
   "Navigation": {
     "home": "Ana Sayfa",
     "howItWorks": "Nasıl çalışır",
@@ -556,7 +560,25 @@
     "account": {
       "eyebrow": "HESAP",
       "heading": "Hesap",
-      "description": "Klay.ai çalışma alanınızda görünen adı yönetin.",
+      "description": "Profilinizi, güvenliğinizi ve çalışma alanı deneyiminizi tek yerden yönetin.",
+      "summaryLabel": "Hesap özeti",
+      "signInMethod": "Giriş yöntemi",
+      "accountStatus": "Hesap durumu",
+      "activeStatus": "Aktif",
+      "googleSignIn": "Google",
+      "emailSignIn": "E-posta ve parola",
+      "unnamedUser": "Adsız kullanıcı",
+      "settingsNavigation": "Ayarlar",
+      "accountNavDescription": "Profil ve kimlik",
+      "securityNavDescription": "Parola ve erişim",
+      "appearanceNavDescription": "Tema tercihi",
+      "profileEyebrow": "PROFİL",
+      "profileHeading": "Çalışma alanı kimliğiniz",
+      "profileDescription": "Üretimlerinizde ve çalışma alanında görünen profil bilgilerinizi düzenleyin.",
+      "profileLabel": "Profil özeti",
+      "securityEyebrow": "ERİŞİM",
+      "securityDescription": "Hesabınıza erişimi koruyan güvenlik ayarlarını yönetin.",
+      "appearanceEyebrow": "ARAYÜZ",
       "appearanceHeading": "Görünüm",
       "appearanceDescription": "Klay.ai'nin bu cihazda nasıl görüneceğini seçin.",
       "system": "Sistem",
@@ -568,7 +590,36 @@
       "saving": "Kaydediliyor…",
       "validationError": "Görünen ad 80 karakter veya daha kısa olmalıdır.",
       "saveError": "Profiliniz kaydedilemedi. Lütfen tekrar deneyin.",
-      "saveSuccess": "Profil kaydedildi."
+      "saveSuccess": "Profil kaydedildi.",
+      "securityHeading": "Güvenlik",
+      "passwordHeading": "Parola",
+      "passwordDescription": "Hesabınızı güçlü bir parola ile koruyun.",
+      "changePassword": "Parolayı değiştir",
+      "emailVerificationDescription": "Parolanızı değiştirmeden önce e-posta adresinizi doğrulamamız gerekiyor.",
+      "sendCode": "Doğrulama kodu gönder",
+      "sendingCode": "Doğrulama kodu gönderiliyor…",
+      "requestSent": "Doğrulama kodunu e-posta adresinize gönderdik.",
+      "verifyTitle": "Parolayı değiştir",
+      "codeLabel": "Doğrulama kodu",
+      "newPassword": "Yeni parola",
+      "confirmPassword": "Yeni parolayı tekrar girin",
+      "updatePassword": "Parolayı güncelle",
+      "updatingPassword": "Parola güncelleniyor…",
+      "resend": "Kodu yeniden gönder",
+      "resendCountdown": "{seconds} sn sonra yeniden gönder",
+      "cancel": "İptal",
+      "done": "Tamam",
+      "successTitle": "Parolanız güncellendi",
+      "successDescription": "Yeni parolanızı bir sonraki girişinizde kullanabilirsiniz.",
+      "passwordRequired": "Doğrulama kodunu ve iki parola alanını girin.",
+      "passwordMismatch": "Parolalar eşleşmiyor.",
+      "weakPassword": "Bu parola hesap parola gereksinimlerini karşılamıyor.",
+      "invalidNonce": "Doğrulama kodu geçersiz veya süresi dolmuş.",
+      "rateLimited": "Çok fazla kod istendi. Lütfen biraz bekleyip tekrar deneyin.",
+      "sessionExpired": "Oturumunuzun süresi doldu. Devam etmek için yeniden giriş yapın.",
+      "sessionExpiredAction": "Giriş yap",
+      "network": "Bağlantı kurulamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+      "unknown": "Parolanız güncellenemedi. Lütfen tekrar deneyin."
     },
     "overview": {
       "heading": "Çalışma alanı",
@@ -596,10 +647,27 @@
       "resetZoom": "Yakınlaştırmayı sıfırla"
     },
     "composer": {
-      "heading": "Yeni bir görsel üret",
+      "heading": "Yeni ürün üret",
       "description": "Ürününü yükle, sahneyi belirle ve kampanya görselini oluştur.",
+      "outputType": {
+        "label": "Üretim türü",
+        "image": { "title": "Görsel", "description": "Kampanyaya hazır ürün görseli oluştur" },
+        "video": { "title": "Video", "description": "Kısa ürün videosu oluştur", "badge": "Yakında" }
+      },
       "projectNameLabel": "Proje adı",
       "projectNamePlaceholder": "İsteğe bağlı",
+      "steps": {
+        "product": { "title": "Ürün görseli", "description": "Ürününüzü net ve mümkün olduğunca yüksek kaliteli bir görselle yükleyin." },
+        "format": { "title": "Format", "description": "İçeriğinizin kullanılacağı yere uygun görsel oranını seçin." },
+        "project": { "title": "Proje adı", "description": "İsterseniz bu çalışmaya bir ad verin." },
+        "additional": { "title": "Ek yönlendirme", "description": "İsterseniz sahne, stil veya referans ekleyin." }
+      },
+      "dropzone": {
+        "title": "Ürün görselinizi buraya bırakın",
+        "secondary": "ya da cihazınızdan seçin",
+        "action": "Görsel seç",
+        "formats": "JPEG, PNG veya WebP"
+      },
       "eyebrow": "Ürün + Yaratıcı Yön",
       "context": "Yeni proje",
       "promptLabel": "Yaratıcı yön",
@@ -682,22 +750,22 @@
       "invalidAspectRatio": "Lutfen desteklenen bicimlerden birini secin.",
       "aspectRatio": {
         "label": "Format",
-        "helper": "Iceriginizin yayinlanacagi formata uygun gorsel oranini secin.",
+        "helper": "İçeriğinizin kullanılacağı yere uygun görsel oranını seçin.",
         "names": {
-          "widescreen": "Genis ekran",
+          "widescreen": "Geniş ekran",
           "vertical": "Dikey",
           "square": "Kare",
           "classic": "Klasik",
-          "tall": "Dikey urun",
+          "tall": "Dikey ürün",
           "cinemascope": "Sinematik"
         },
         "descriptions": {
-          "widescreenUse": "YouTube, web siteleri, landing page ler",
+          "widescreenUse": "Web siteleri ve hero alanları",
           "verticalUse": "TikTok, Reels, Shorts, Stories",
-          "squareUse": "Instagram ve Facebook gonderileri",
-          "classicUse": "Sunumlar, pazaryerleri, kataloglar",
-          "tallUse": "Urun sayfalari, Pinterest",
-          "cinemascopeUse": "Bannerlar ve hero alanlari"
+          "squareUse": "Sosyal medya gönderileri",
+          "classicUse": "Sunumlar ve kataloglar",
+          "tallUse": "Ürün sayfaları ve Pinterest",
+          "cinemascopeUse": "Banner ve geniş hero alanları"
         }
       }
     },
@@ -728,6 +796,7 @@
       "showLess": "Daha az göster",
       "filterLabel": "Presetleri ürün kategorisine göre filtrele",
       "filterCategories": { "all": "Tümü", "apparel": "Giyim", "jewelry": "Takı", "watches": "Saat", "footwear": "Ayakkabı", "cosmetics": "Kozmetik", "bags": "Çantalar" },
+      "styleCount": "{count} stil",
       "selectedPresetFamily": "Seçili preset: {title}",
       "description": "Üretime hazır bir yön seçin, ardından isteğe bağlı notunuzu ekleyin.",
       "listLabel": "Yaratıcı preset kütüphanesi",
@@ -988,7 +1057,7 @@
       "count": "{count} proje",
       "resultCount": "{count} sonuç",
       "search": "Proje ara",
-      "searchPlaceholder": "Proje adına göre ara",
+      "searchPlaceholder": "Projelerde ara",
       "status": "Proje durumu",
       "allStatuses": "Tüm durumlar",
       "draft": "Taslak",
@@ -1002,12 +1071,12 @@
       "noPreview": "Henüz önizleme yok",
       "open": "Projeyi aç",
       "actionsFor": "{title} için işlemler",
-      "noResults": "Bu aramaya uygun proje yok.",
-      "noResultsDescription": "Başka bir ad veya durum deneyebilirsin.",
+      "noResults": "Sonuç bulunamadı",
+      "noResultsDescription": "Aramanızı veya filtrelerinizi değiştirmeyi deneyin.",
       "clearFilters": "Filtreleri temizle",
-      "emptyTitle": "Henüz bir projen yok.",
-      "emptyDescription": "İlk ürününü yükleyerek üretime başlayabilirsin.",
-      "firstProject": "İlk projeyi oluştur",
+      "emptyTitle": "Henüz proje yok",
+      "emptyDescription": "İlk ürün görselinizi yükleyerek yeni bir proje oluşturun.",
+      "firstProject": "Yeni proje",
       "page": "Sayfa {page} / {total}",
       "previous": "Önceki",
       "next": "Sonraki"
@@ -1144,6 +1213,7 @@
       },
       "references": {
         "heading": "Görsel referanslar",
+        "empty": "Referans eklenmedi",
         "add": "Referans ekle",
         "uploading": "Ekleniyor…",
         "invalidFile": "JPEG, PNG veya WebP; en fazla 20 MB görsel seçin.",
@@ -1256,7 +1326,8 @@
           "succeeded": "Tamamlandı",
           "failed": "Başarısız"
         },
-        "format": "Format"
+        "format": "Format",
+        "type": "Tür"
       },
       "status": {
         "draft": "Taslak",

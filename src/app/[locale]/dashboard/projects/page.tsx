@@ -6,6 +6,7 @@ import {createProject} from "@/app/[locale]/dashboard/actions";
 import {NewProjectButton} from "@/components/dashboard/new-project-button";
 import {ProjectGalleryCard} from "@/components/projects/project-gallery-card";
 import {ProjectsToolbar} from "@/components/projects/projects-toolbar";
+import {AppState} from "@/components/ui/app-state";
 import {Link, getPathname} from "@/i18n/navigation";
 import {isSupportedLocale} from "@/i18n/routing";
 import {getAuthenticatedUserId} from "@/lib/auth/require-user";
@@ -56,7 +57,6 @@ export default async function ProjectsPage({params, searchParams}: ProjectsPageP
     noPreview: t("noPreview"),
     open: t("open"),
     projectActions: tRecent("projectActions"),
-    updated: t("updatedLabel"),
     delete: tRecent("delete"),
     deleteProject: tRecent("deleteProject"),
     deleteHeading: tRecent("deleteHeading"),
@@ -84,12 +84,7 @@ export default async function ProjectsPage({params, searchParams}: ProjectsPageP
             </ul>
           </section>
         ) : (
-          <section className="projects-index-empty" aria-live="polite">
-            <span className="projects-index-empty-mark" aria-hidden="true">K</span>
-            <h2>{result.totalCount === 0 ? t("emptyTitle") : t("noResults")}</h2>
-            <p>{result.totalCount === 0 ? t("emptyDescription") : t("noResultsDescription")}</p>
-            {result.totalCount === 0 ? <NewProjectButton action={createProject.bind(null, locale)} variant="primary" className="projects-create-button" messages={{create: t("firstProject"), creating: tRecent("creating"), error: tRecent("createError")}} /> : <Link href="/dashboard/projects" className="projects-empty-action">{t("clearFilters")}</Link>}
-          </section>
+          <AppState className="projects-index-empty" icon={result.totalCount === 0 ? "projects" : "search"} role="status" title={result.totalCount === 0 ? t("emptyTitle") : t("noResults")} description={result.totalCount === 0 ? t("emptyDescription") : t("noResultsDescription")} actions={result.totalCount === 0 ? <NewProjectButton action={createProject.bind(null, locale)} variant="primary" className="projects-create-button" messages={{create: t("firstProject"), creating: tRecent("creating"), error: tRecent("createError")}} /> : <Link href="/dashboard/projects" className="projects-empty-action">{t("clearFilters")}</Link>} />
         )}
 
         {result.pageCount > 1 ? <nav className="projects-pagination" aria-label={t("title")}>{result.page > 1 ? <Link href={pageHref(result.page - 1)}>{t("previous")}</Link> : <span className="projects-pagination-disabled">{t("previous")}</span>}<span>{t("page", {page: result.page, total: result.pageCount})}</span>{result.page < result.pageCount ? <Link href={pageHref(result.page + 1)}>{t("next")}</Link> : <span className="projects-pagination-disabled">{t("next")}</span>}</nav> : null}

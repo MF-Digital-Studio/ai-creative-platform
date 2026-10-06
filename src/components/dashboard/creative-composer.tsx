@@ -64,6 +64,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const [generationState, setGenerationState] = useState<"idle" | "pending">("idle");
   const [modalOpen, setModalOpen] = useState(false);
   const [statusState, setStatusState] = useState<GenerationState>("idle");
+  const [additionalOpen, setAdditionalOpen] = useState(false);
   const isCreating = generationState === "pending";
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
@@ -86,8 +87,9 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
 
       setSelectedPresetId(preset.id);
       setStatusMessage("");
+      setAdditionalOpen(true);
       composerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      promptRef.current?.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => promptRef.current?.focus({ preventScroll: true }));
     }
 
     window.addEventListener(DASHBOARD_PRESET_EVENT, handlePreset);
@@ -311,6 +313,19 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         <p id={descriptionId}>{t("description")}</p>
       </div>
 
+      <div className="creative-output-picker" role="radiogroup" aria-label={t("outputType.label")}>
+        <button type="button" className="creative-output-option is-selected" role="radio" aria-checked="true">
+          <span className="creative-output-icon"><DashboardIcon name="image" /></span>
+          <span className="creative-output-copy"><strong>{t("outputType.image.title")}</strong><small>{t("outputType.image.description")}</small></span>
+          <span className="creative-output-check" aria-hidden="true">✓</span>
+        </button>
+        <button type="button" className="creative-output-option is-locked" role="radio" aria-checked="false" disabled aria-describedby="creative-video-availability">
+          <span className="creative-output-icon"><DashboardIcon name="video" /></span>
+          <span className="creative-output-copy"><strong>{t("outputType.video.title")}</strong><small>{t("outputType.video.description")}</small></span>
+          <span className="creative-output-lock" id="creative-video-availability"><DashboardIcon name="lock" />{t("outputType.video.badge")}</span>
+        </button>
+      </div>
+
       <form
         className="creative-composer"
         aria-describedby={descriptionId}
@@ -320,81 +335,53 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         }}
       >
         <div className="creative-composer-body">
-          <div className="creative-project-name-field creative-prompt-field">
-            <label htmlFor={projectNameId} className="creative-field-label">{t("projectNameLabel")}</label>
-            <input id={projectNameId} value={projectName} maxLength={120} placeholder={t("projectNamePlaceholder")} className="creative-project-name-input" onChange={(event) => setProjectName(event.target.value)} />
-          </div>
-          <div className="creative-product-field">
-            <span className="creative-field-label">{t("productLabel")}</span>
-            <div className="creative-upload-content">
-            {productPreviewUrl ? (
-              <div className="creative-selected-product">
-                <span className="creative-selected-product-media">
-                  {/* Local object URLs are used only before creation starts. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={productPreviewUrl} alt={t("selectedProductAlt")} />
-                </span>
-                <span className="creative-selected-product-copy">
-                  <strong title={productFile?.name}>{productFile?.name}</strong>
-                  <small className="creative-product-ready">{t("productReady")}</small>
-                  <span>
-                    <button type="button" onClick={() => productInputRef.current?.click()} disabled={isCreating} aria-describedby={productError ? productErrorId : undefined}>
-                      {t("replaceProduct")}
-                    </button>
-                    <button type="button" onClick={removeProduct} disabled={isCreating}>
-                      {t("removeProduct")}
-                    </button>
+          <section className="creative-workspace-step creative-product-step" aria-labelledby="creative-product-step-title">
+            <header className="creative-step-heading">
+              <span className="creative-step-number" aria-hidden="true">01</span>
+              <span><h2 id="creative-product-step-title">{t("steps.product.title")}</h2><p>{t("steps.product.description")}</p></span>
+            </header>
+            <div className="creative-product-field">
+              <div className="creative-upload-content">
+              {productPreviewUrl ? (
+                <div className="creative-selected-product">
+                  <span className="creative-selected-product-media">
+                    {/* Local object URLs are used only before creation starts. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={productPreviewUrl} alt={t("selectedProductAlt")} />
                   </span>
-                </span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className={`creative-product-upload${isProductDragging ? " is-dragging" : ""}`}
-                aria-describedby={`${statusId} ${productError ? productErrorId : ""}`.trim()}
-                onClick={() => productInputRef.current?.click()}
-                onDragOver={(event) => { event.preventDefault(); setIsProductDragging(true); }}
-                onDragLeave={() => setIsProductDragging(false)}
-                onDrop={handleProductDrop}
-                disabled={isCreating}
-              >
-                <span className="creative-product-upload-icon"><DashboardIcon name="plus" /></span>
-                <span>{t("addProduct")}</span>
-                <small>{t("productHelper")}</small>
-              </button>
-            )}
-            </div>
-            <div className="creative-panel-footer">
-              {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : <p>{productFile ? t("productReady") : ""}</p>}
-            </div>
-          </div>
-
-          <div className="creative-reference-field">
-            <span className="creative-field-label">{t("referenceLabel")}</span>
-            <div className="creative-upload-content">
-              <div className="creative-reference-list" aria-live="polite">
-              {referenceFiles.map((reference, index) => (
-                <div key={reference.previewUrl} className="creative-reference-thumbnail">
-                  {/* Local object URLs are used only before creation starts. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} />
-                  <span className="creative-reference-role">{index === 0 ? t("primaryReference") : t("supportingReference")}</span>
-                  <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })} disabled={isCreating}>
-                    <span aria-hidden="true">×</span>
-                  </button>
+                  <span className="creative-selected-product-copy">
+                    <strong title={productFile?.name}>{productFile?.name}</strong>
+                    <small className="creative-product-ready">{t("productReady")}</small>
+                    <span>
+                      <button type="button" onClick={() => productInputRef.current?.click()} disabled={isCreating} aria-describedby={productError ? productErrorId : undefined}>{t("replaceProduct")}</button>
+                      <button type="button" onClick={removeProduct} disabled={isCreating}>{t("removeProduct")}</button>
+                    </span>
+                  </span>
                 </div>
-              ))}
-              <button type="button" className={`creative-reference-add${isReferenceDragging ? " is-dragging" : ""}`} onClick={() => referenceInputRef.current?.click()} onDragOver={(event) => { event.preventDefault(); setIsReferenceDragging(true); }} onDragLeave={() => setIsReferenceDragging(false)} onDrop={(event) => { event.preventDefault(); setIsReferenceDragging(false); selectReferences(Array.from(event.dataTransfer.files)); }} disabled={referenceFiles.length >= 3 || isCreating} aria-describedby={referenceError ? referenceErrorId : undefined}>
-                <DashboardIcon name="plus" />
-                <span>{t("addReference")}</span>
-              </button>
+              ) : (
+                <button
+                  type="button"
+                  className={`creative-product-upload${isProductDragging ? " is-dragging" : ""}`}
+                  aria-describedby={`${statusId} ${productError ? productErrorId : ""}`.trim()}
+                  onClick={() => productInputRef.current?.click()}
+                  onDragOver={(event) => { event.preventDefault(); setIsProductDragging(true); }}
+                  onDragLeave={() => setIsProductDragging(false)}
+                  onDrop={handleProductDrop}
+                  disabled={isCreating}
+                >
+                  <span className="creative-product-upload-icon"><DashboardIcon name="plus" /></span>
+                  <strong>{t("dropzone.title")}</strong>
+                  <span className="creative-dropzone-secondary">{t("dropzone.secondary")}</span>
+                  <span className="creative-dropzone-action">{t("dropzone.action")}</span>
+                  <small>{t("dropzone.formats")}</small>
+                </button>
+              )}
+              </div>
+              <div className="creative-panel-footer">
+                {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : <p>{productFile ? t("productReady") : ""}</p>}
               </div>
             </div>
-            <div className="creative-panel-footer">
-              {referenceError ? <p id={referenceErrorId} className="creative-field-error" role="alert">{referenceError}</p> : <p>{t("referenceHelper")}</p>}
-              <span className="creative-reference-count" aria-live="polite">{t("referenceCount", { count: referenceFiles.length })}</span>
-            </div>
-          </div>
+          </section>
 
           <input
             ref={productInputRef}
@@ -418,28 +405,73 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
               event.target.value = "";
             }}
           />
-          <div className="creative-prompt-field creative-direction-field">
-            <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
-            <textarea
-              ref={promptRef}
-              id={promptId}
-              value={prompt}
-              placeholder={t("promptPlaceholder")}
-              className="creative-prompt-textarea"
-              onChange={(event) => setPrompt(event.target.value)}
-            />
-            {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: getPresetFamily(selectedPreset.id)?.title[locale] ?? presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
-          </div>
+          <section className="creative-workspace-step creative-format-step" aria-labelledby="creative-format-step-title">
+            <header className="creative-step-heading">
+              <span className="creative-step-number" aria-hidden="true">02</span>
+              <span><h2 id="creative-format-step-title">{t("steps.format.title")}</h2><p>{t("steps.format.description")}</p></span>
+            </header>
+            <AspectRatioPicker value={aspectRatio} onChange={setAspectRatio} disabled={isCreating} messages={{
+              label: t("aspectRatio.label"), helper: t("aspectRatio.helper"),
+              names: { widescreen: t("aspectRatio.names.widescreen"), vertical: t("aspectRatio.names.vertical"), square: t("aspectRatio.names.square"), classic: t("aspectRatio.names.classic"), tall: t("aspectRatio.names.tall"), cinemascope: t("aspectRatio.names.cinemascope") },
+              descriptions: { widescreenUse: t("aspectRatio.descriptions.widescreenUse"), verticalUse: t("aspectRatio.descriptions.verticalUse"), squareUse: t("aspectRatio.descriptions.squareUse"), classicUse: t("aspectRatio.descriptions.classicUse"), tallUse: t("aspectRatio.descriptions.tallUse"), cinemascopeUse: t("aspectRatio.descriptions.cinemascopeUse") },
+            }} />
+          </section>
 
+          <section className="creative-workspace-step creative-project-step" aria-labelledby="creative-project-step-title">
+            <header className="creative-step-heading">
+              <span className="creative-step-number" aria-hidden="true">03</span>
+              <span><h2 id="creative-project-step-title">{t("steps.project.title")}</h2><p>{t("steps.project.description")}</p></span>
+            </header>
+            <div className="creative-project-name-field creative-prompt-field">
+              <label htmlFor={projectNameId} className="sr-only">{t("projectNameLabel")}</label>
+              <input id={projectNameId} value={projectName} maxLength={120} placeholder={t("projectNamePlaceholder")} className="creative-project-name-input" onChange={(event) => setProjectName(event.target.value)} />
+            </div>
+          </section>
 
+          <section className="creative-workspace-step creative-additional-step" aria-labelledby="creative-additional-step-title">
+            <button
+              type="button"
+              className="creative-additional-trigger"
+              aria-expanded={additionalOpen}
+              aria-controls="creative-optional-controls"
+              onClick={() => setAdditionalOpen((current) => !current)}
+            >
+              <span className="creative-step-number" aria-hidden="true">04</span>
+              <span><span id="creative-additional-step-title" className="creative-step-title">{t("steps.additional.title")}</span><span className="creative-step-description">{t("steps.additional.description")}</span></span>
+              <DashboardIcon name="chevron" className="creative-additional-chevron" />
+            </button>
+            <div id="creative-optional-controls" className="creative-optional-controls" hidden={!additionalOpen}>
+              <div className="creative-prompt-field creative-direction-field">
+                <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
+                <textarea ref={promptRef} id={promptId} value={prompt} placeholder={t("promptPlaceholder")} className="creative-prompt-textarea" onChange={(event) => setPrompt(event.target.value)} />
+                {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: getPresetFamily(selectedPreset.id)?.title[locale] ?? presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
+              </div>
 
-          <AspectRatioPicker value={aspectRatio} onChange={setAspectRatio} disabled={isCreating} messages={{
-            label: t("aspectRatio.label"), helper: t("aspectRatio.helper"),
-            names: { widescreen: t("aspectRatio.names.widescreen"), vertical: t("aspectRatio.names.vertical"), square: t("aspectRatio.names.square"), classic: t("aspectRatio.names.classic"), tall: t("aspectRatio.names.tall"), cinemascope: t("aspectRatio.names.cinemascope") },
-            descriptions: { widescreenUse: t("aspectRatio.descriptions.widescreenUse"), verticalUse: t("aspectRatio.descriptions.verticalUse"), squareUse: t("aspectRatio.descriptions.squareUse"), classicUse: t("aspectRatio.descriptions.classicUse"), tallUse: t("aspectRatio.descriptions.tallUse"), cinemascopeUse: t("aspectRatio.descriptions.cinemascopeUse") },
-          }} />
-
-
+              <div className="creative-reference-field">
+                <span className="creative-field-label">{t("referenceLabel")}</span>
+                <div className="creative-upload-content">
+                  <div className="creative-reference-list" aria-live="polite">
+                  {referenceFiles.map((reference, index) => (
+                    <div key={reference.previewUrl} className="creative-reference-thumbnail">
+                      {/* Local object URLs are used only before creation starts. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} />
+                      <span className="creative-reference-role">{index === 0 ? t("primaryReference") : t("supportingReference")}</span>
+                      <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })} disabled={isCreating}><span aria-hidden="true">×</span></button>
+                    </div>
+                  ))}
+                  <button type="button" className={`creative-reference-add${isReferenceDragging ? " is-dragging" : ""}`} onClick={() => referenceInputRef.current?.click()} onDragOver={(event) => { event.preventDefault(); setIsReferenceDragging(true); }} onDragLeave={() => setIsReferenceDragging(false)} onDrop={(event) => { event.preventDefault(); setIsReferenceDragging(false); selectReferences(Array.from(event.dataTransfer.files)); }} disabled={referenceFiles.length >= 3 || isCreating} aria-describedby={referenceError ? referenceErrorId : undefined}>
+                    <DashboardIcon name="plus" /><span>{t("addReference")}</span>
+                  </button>
+                  </div>
+                </div>
+                <div className="creative-panel-footer">
+                  {referenceError ? <p id={referenceErrorId} className="creative-field-error" role="alert">{referenceError}</p> : <p>{t("referenceHelper")}</p>}
+                  <span className="creative-reference-count" aria-live="polite">{t("referenceCount", { count: referenceFiles.length })}</span>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div className="creative-composer-controls">

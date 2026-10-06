@@ -3,6 +3,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
+  experimental: {globalNotFound: true},
 };
 
 const withNextIntl = createNextIntlPlugin();
