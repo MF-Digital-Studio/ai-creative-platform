@@ -3,7 +3,9 @@ export async function dispatchQueuedGeneration(
   run: (generationId: string) => Promise<{ ok: boolean; message?: string }>,
   markFailed: (generationId: string) => Promise<void>,
 ): Promise<boolean> {
+  console.info("[generation-dispatch] start", { generationId });
   try {
+    console.info("[generation-dispatch] pipeline_entered", { generationId });
     const result = await run(generationId);
     if (result.ok) return true;
     console.error("[generation-queue] dispatch_failed", { generationId, errorName: "GenerationDispatchError", errorCode: result.message ?? "unknown" });
@@ -14,6 +16,10 @@ export async function dispatchQueuedGeneration(
       errorCode: "dispatch_exception",
     });
   }
-  await markFailed(generationId);
+  try {
+    await markFailed(generationId);
+  } catch {
+    console.error("[generation-queue] failure_persist_failed", { generationId, errorCode: "failure_persistence_exception" });
+  }
   return false;
 }

@@ -122,6 +122,7 @@ export type ImageGenerationPromptOptions = {
   exactProductApparel?: boolean;
   generationImages?: readonly GenerationImageInput[];
   aspectRatio?: GenerationAspectRatio;
+  presetFamilyId?: string | null;
 };
 
 export function compileOutputFormatGuidance(aspectRatio: GenerationAspectRatio, vertical?: SupportedVertical | null): string {
@@ -133,7 +134,7 @@ export function compileOutputFormatGuidance(aspectRatio: GenerationAspectRatio, 
     "3:4": "Compose for a portrait 3:4 commercial frame. Keep the full product clearly visible.",
     "21:9": "Compose for a very wide cinematic 21:9 frame. Avoid placing identity-critical product details near the extreme edges; keep the full product visible.",
   };
-  const bagGuidance = vertical === "bags" ? ` Bag framing: ${aspectRatio === "9:16" ? "use a full-body, shoulder, or crossbody carry composition with the entire bag readable" : aspectRatio === "1:1" ? "use a social, tabletop, or close lifestyle composition with handles and closure visible" : aspectRatio === "3:4" ? "use an editorial or product-page frame showing the full bag" : aspectRatio === "16:9" || aspectRatio === "21:9" ? "protect the bag from edge cropping and keep handles and strap within frame" : "keep the complete bag body and identity-critical features visible"} Never distort bag proportions to fill the canvas.` : "";
+  const bagGuidance = vertical === "bags" ? ` Bag framing: ${aspectRatio === "9:16" ? "use a vertical product-led composition with the entire bag readable" : aspectRatio === "1:1" ? "use a balanced product composition with handles and closure visible" : aspectRatio === "3:4" ? "use an editorial or product-page frame showing the full bag" : aspectRatio === "16:9" || aspectRatio === "21:9" ? "protect the bag from edge cropping and keep handles and strap within frame" : "keep the complete bag body and identity-critical features visible"} For an on-model family, keep the full-body, shoulder, or crossbody view inside the safe area. Never distort bag proportions to fill the canvas.` : "";
   return `Output format and composition guidance (reference images must adapt to this final canvas; do not crop the reference): ${guidance[aspectRatio]}${bagGuidance} Product identity, reference authority, human realism, and the selected preset intent remain higher priority.`;
 }
 
@@ -166,6 +167,11 @@ export function buildImageGenerationPromptWithPolicy(
     ? compileProductProfilePrompt(options.productProfile)
     : null;
   const sceneDirection = compileSceneDirection(options.sceneSuitability ?? null, isProductProfile(options.productProfile) ? options.productProfile : null);
+  const bagFamilyCompliance = vertical === "bags" && strategy !== "bags_on_model" && (options.presetFamilyId === "bags-studio" || options.sceneSuitability?.selectedSceneFamily === "bags_studio")
+    ? "BAG STUDIO PRESET COMPLIANCE: Create product-only studio photography on a simple seamless or single-color studio background with controlled commercial lighting, a clean surface, pedestal, or block when useful, and a realistic shadow. Explicitly suppress: no people, no models, no hands, no body contact, no worn bag, no carry interaction, and no lifestyle environment."
+    : vertical === "bags" && strategy !== "bags_on_model" && options.presetFamilyId === "bags-lifestyle"
+      ? "BAG AESTHETIC ENVIRONMENT PRESET COMPLIANCE: Create a product-only aesthetic environment. Place the bag naturally on a stable surface in the environment and keep it as the clear hero. Explicitly suppress: no people, no models, no hands, no worn bag, no shoulder carry, and no body contact."
+      : "";
   const compositionDirection = compileCompositionDirection(options.composition ?? null);
   const complianceDirection = compileCreativeComplianceDirection(options.creativeCompliance ?? null);
   const referenceMatchDirection = options.referenceMatch?.compatible
@@ -228,6 +234,7 @@ export function buildImageGenerationPromptWithPolicy(
       ...productProfilePrompt.interaction,
     ].join("\n") : "",
     fidelityPolicy,
+    bagFamilyCompliance,
     humanRealismDirection,
     sceneDirection ? `Scene suitability (product-compatible scene structure; product identity remains higher priority):\n${sceneDirection}` : "",
     compositionDirection ? `Composition intelligence (product visibility and physical plausibility are required):\n${compositionDirection}` : "",

@@ -37,5 +37,5 @@ export const compositionTemplates = {
   bags_luxury_still_life: hero("full_product", "large", "close", "three_quarter", "moderate", ["Keep the complete bag silhouette and all distinctive construction readable."]),
   bags_street_editorial: primary("medium_close", "large", "medium", "eye_level", "moderate", ["Keep bag hero visibility ahead of street styling."]),
   bags_travel_lifestyle: primary("medium_close", "large", "medium", "eye_level", "moderate", ["Do not hide or crop the bag in a travel scene."]),
-  bags_studio: hero("full_product", "large", "close", "three_quarter", "moderate", ["Keep handles, closure, logo, hardware, and full body uncropped."]),
+  bags_studio: hero("full_product", "large", "close", "three_quarter", "moderate", ["Keep handles, closure, logo, hardware, and full body uncropped.", "Do not introduce a person, hand, body contact, shoulder carry, worn bag, fashion portrait, or lifestyle environment."]),
 } as const;

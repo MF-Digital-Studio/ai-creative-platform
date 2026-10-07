@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ProjectImageViewerProps = {
   src: string;
@@ -17,6 +17,7 @@ type Point = { x: number; y: number };
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 8;
+const IMAGE_GUTTER = 16;
 
 export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zoomOutLabel, resetLabel, onOpenChange }: ProjectImageViewerProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -29,7 +30,7 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
   const [scale, setScale] = useState(MIN_SCALE);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const scaleRef = useRef(scale);
   const panRef = useRef(pan);
@@ -37,7 +38,22 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
   useEffect(() => { scaleRef.current = scale; }, [scale]);
   useEffect(() => { panRef.current = pan; }, [pan]);
 
+  const fittedSize = useMemo(() => {
+    if (!naturalSize.width || !naturalSize.height || !viewportSize.width || !viewportSize.height) return { width: 0, height: 0 };
+    const availableWidth = Math.max(0, viewportSize.width - IMAGE_GUTTER * 2);
+    const availableHeight = Math.max(0, viewportSize.height - IMAGE_GUTTER * 2);
+    const fitScale = Math.min(availableWidth / naturalSize.width, availableHeight / naturalSize.height, 1);
+    return { width: naturalSize.width * fitScale, height: naturalSize.height * fitScale };
+  }, [naturalSize, viewportSize]);
+
+  const updatePan = useCallback((nextPan: Point) => {
+    panRef.current = nextPan;
+    setPan(nextPan);
+  }, []);
+
   const fit = useCallback(() => {
+    scaleRef.current = MIN_SCALE;
+    panRef.current = { x: 0, y: 0 };
     setScale(MIN_SCALE);
     setPan({ x: 0, y: 0 });
     pointersRef.current.clear();
@@ -47,10 +63,13 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
   }, []);
 
   const bounds = useCallback((nextScale: number) => {
-    const width = Math.min(viewportSize.width, imageSize.width || viewportSize.width) * nextScale;
-    const height = Math.min(viewportSize.height, imageSize.height || viewportSize.height) * nextScale;
-    return { x: Math.max(0, (width - viewportSize.width) / 2), y: Math.max(0, (height - viewportSize.height) / 2) };
-  }, [imageSize, viewportSize]);
+    const width = fittedSize.width * nextScale;
+    const height = fittedSize.height * nextScale;
+    return {
+      x: Math.max(0, (width - viewportSize.width) / 2 + IMAGE_GUTTER),
+      y: Math.max(0, (height - viewportSize.height) / 2 + IMAGE_GUTTER),
+    };
+  }, [fittedSize, viewportSize]);
 
   const clampPan = useCallback((value: Point, nextScale: number) => {
     const limit = bounds(nextScale);
@@ -63,9 +82,14 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
     const ratio = boundedScale / scaleRef.current;
     const centered = { x: origin.x - viewportSize.width / 2, y: origin.y - viewportSize.height / 2 };
     const nextPan = { x: centered.x - (centered.x - panRef.current.x) * ratio, y: centered.y - (centered.y - panRef.current.y) * ratio };
+    scaleRef.current = boundedScale;
     setScale(boundedScale);
-    setPan(clampPan(nextPan, boundedScale));
-  }, [clampPan, viewportSize]);
+    updatePan(clampPan(nextPan, boundedScale));
+  }, [clampPan, updatePan, viewportSize]);
+
+  useEffect(() => {
+    updatePan(clampPan(panRef.current, scaleRef.current));
+  }, [clampPan, updatePan]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -104,12 +128,12 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
       } else if (event.key.startsWith("Arrow") && scaleRef.current > MIN_SCALE) {
         event.preventDefault();
         const delta = event.key === "ArrowLeft" ? { x: 60, y: 0 } : event.key === "ArrowRight" ? { x: -60, y: 0 } : event.key === "ArrowUp" ? { x: 0, y: 60 } : { x: 0, y: -60 };
-        setPan((current) => clampPan({ x: current.x + delta.x, y: current.y + delta.y }, scaleRef.current));
+        updatePan(clampPan({ x: panRef.current.x + delta.x, y: panRef.current.y + delta.y }, scaleRef.current));
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [clampPan, fit, onOpenChange, open, zoomAt]);
+  }, [clampPan, fit, onOpenChange, open, updatePan, zoomAt]);
 
   function close() {
     onOpenChange(false);
@@ -140,7 +164,7 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
       if (rect) zoomAt(pinchRef.current.scale * (distance / pinchRef.current.distance), { x: pinchRef.current.center.x - rect.left, y: pinchRef.current.center.y - rect.top });
     } else if (dragOriginRef.current) {
       const origin = dragOriginRef.current;
-      setPan(clampPan({ x: origin.pan.x + event.clientX - origin.point.x, y: origin.pan.y + event.clientY - origin.point.y }, scaleRef.current));
+      updatePan(clampPan({ x: origin.pan.x + event.clientX - origin.point.x, y: origin.pan.y + event.clientY - origin.point.y }, scaleRef.current));
     }
   }
 
@@ -168,7 +192,7 @@ export function ProjectImageViewer({ src, alt, open, closeLabel, zoomInLabel, zo
     <div ref={viewportRef} className={`project-lightbox-viewport${dragging ? " is-dragging" : scale > MIN_SCALE ? " is-zoomed" : ""}`} onWheel={(event) => { event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect(); zoomAt(scaleRef.current * Math.exp(-event.deltaY * 0.002), { x: event.clientX - rect.left, y: event.clientY - rect.top }); }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd} onDoubleClick={onDoubleClick}>
       {/* Private signed URLs intentionally bypass the public image optimizer. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img ref={imageRef} className="project-lightbox-image" src={src} alt={alt} draggable={false} onLoad={(event) => setImageSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})` }} />
+      <img ref={imageRef} className="project-lightbox-image" src={src} alt={alt} draggable={false} onLoad={(event) => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} style={{ width: fittedSize.width || undefined, height: fittedSize.height || undefined, transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})` }} />
     </div>
     <div className="project-lightbox-controls" aria-label="Image zoom controls">
       <button type="button" aria-label={zoomOutLabel} onClick={() => zoomAt(scaleRef.current / 1.2)}>−</button>

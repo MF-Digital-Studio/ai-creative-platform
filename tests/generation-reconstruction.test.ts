@@ -18,8 +18,10 @@ test("server-side dispatch follows successful queue insert and runner has atomic
   assert.match(source, /dispatchQueuedGeneration\(generation\.id,[\s\S]{0,180}\(\) => runQueuedImageGeneration\(project\.id, generation\.id\)/);
   assert.match(source, /\.eq\("status", "queued"\)\s*\.select\("id"\)/);
   assert.match(dispatch, /await run\(generationId\)/);
-  assert.doesNotMatch(source, /safeGenerationEvent\("queue", "dispatch_requested"/);
-  assert.doesNotMatch(dispatch, /dispatch_requested/);
+  assert.match(dispatch, /\[generation-dispatch\] start/);
+  assert.match(dispatch, /\[generation-dispatch\] pipeline_entered/);
+  assert.match(source, /safeGenerationEvent\("provider", "request_start"/);
+  assert.match(source, /eq\("id", generationId\)\.eq\("status", "queued"\)/);
 });
 
 test("human realism prompt is included for visible model strategies", () => {

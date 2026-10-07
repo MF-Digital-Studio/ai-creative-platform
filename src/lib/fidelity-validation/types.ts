@@ -64,6 +64,7 @@ export type FidelityValidationBrief = {
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
   apparelArtworkIdentity?: { available: boolean; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
+  preset?: { familyId: string; variantId: string | null } | null;
 };
 
 export type FidelityValidationInput = {
@@ -85,6 +86,7 @@ export type FidelityValidationInput = {
   identityManifest?: ProductIdentityManifest | null;
   apparelArtworkIdentity?: { data: Buffer; mimeType: string; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
   exactProductApparel?: boolean;
+  preset?: { familyId: string; variantId: string | null } | null;
 };
 
 export type FidelityValidationClient = {

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { mapStructuredValidationOutput, resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
-import type { FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
+import type { FidelityValidationBrief, FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
+import { renderValidationInstructions } from "../src/lib/fidelity-validation/build-validation-brief";
 
 function issue(overrides: Partial<FidelityValidationIssue>): FidelityValidationIssue {
   return {
@@ -22,6 +23,30 @@ function issue(overrides: Partial<FidelityValidationIssue>): FidelityValidationI
 
 test("critical issue fails the quality gate", () => {
   assert.equal(resolveQualityGate([issue({ code: "different_product", severity: "critical", category: "product_identity" })]).status, "fail");
+});
+
+test("bag Studio scene mismatch is a meaningful failure and never identity repair", async () => {
+  const mismatch = resolveQualityGate([issue({ code: "bag_preset_scene_mismatch", category: "composition_visibility", severity: "minor", identityImpact: "none", confidence: 0.9 })]);
+  assert.equal(mismatch.status, "fail");
+  const { resolveRepairEligibility } = await import("../src/lib/generation/execution-policy/resolve-repair-eligibility");
+  const eligibility = resolveRepairEligibility({ validation: mismatch, exactProduct: false, hybridProjectionApplied: false, maximumAttemptsRemaining: true });
+  assert.equal(eligibility.eligible, false);
+});
+
+test("bag validator enforces human-free Studio and Aesthetic Environment families", () => {
+  const baseBrief: Omit<FidelityValidationBrief, "preset"> = {
+    vertical: "bags", strategy: "rigid_product", sourceAuthority: "source", referencePreservation: false,
+    productProfile: null, sceneSuitability: null, composition: null, appliedRequirements: [],
+    allowedTransformations: [], verticalChecks: [],
+  };
+  const studio = renderValidationInstructions({ ...baseBrief, preset: { familyId: "bags-studio", variantId: "white" } });
+  const lifestyle = renderValidationInstructions({ ...baseBrief, preset: { familyId: "bags-lifestyle", variantId: "cafe-table" } });
+  assert.match(studio, /person, hand, worn bag, body contact/i);
+  assert.match(studio, /BAG_PRESET_SCENE_MISMATCH/i);
+  assert.match(lifestyle, /person, hand, worn bag, body contact/i);
+  assert.match(lifestyle, /BAG_PRESET_SCENE_MISMATCH/i);
+  const overridden = renderValidationInstructions({ ...baseBrief, strategy: "bags_on_model", preset: { familyId: "bags-lifestyle", variantId: "cafe-table" } });
+  assert.doesNotMatch(overridden, /Bag Aesthetic Environment compliance gate/i);
 });
 
 test("multiple major identity issues fail the quality gate", () => {

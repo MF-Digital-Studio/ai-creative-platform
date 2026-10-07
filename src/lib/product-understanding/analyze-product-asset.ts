@@ -8,9 +8,11 @@ import { structuredResponseText } from "@/lib/openai/structured-response";
 import { getReferenceAnalysisModel } from "@/lib/generation/references/reference-analysis";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
-  mapProductAnalysisModelOutput,
   createProductAnalysisInput,
   productAnalysisModelOutputSchema,
+  getProductAnalysisOutputErrorPaths,
+  validateProductAnalysisModelOutput,
+  type ProductAnalysisOutputValidation,
 } from "./product-analysis-model-output";
 
 import {
@@ -36,13 +38,15 @@ type ProductUnderstandingRepository = {
 };
 
 export type ProductAnalysisClient = {
-  analyze(input: { assetId: string; image: { data: Buffer; mimeType: string } }): Promise<unknown>;
+  analyze(input: { assetId: string; image: { data: Buffer; mimeType: string } }): Promise<ProductAnalysisOutputValidation | unknown>;
 };
+
+export type ProductAnalysisFailureReason = "asset_not_found" | "asset_unavailable" | "analysis_failed" | "provider_empty_response" | "response_shape_mismatch" | "json_parse_failed" | "schema_validation_failed" | "id_mismatch" | "persistence_failed";
 
 export type ProductAnalysisResult =
   | { status: "supported"; profile: ProductProfile; reused: boolean }
   | { status: "unsupported"; inferredCategory: string | null; reason: "unsupported_product" }
-  | { status: "failed"; reason: "asset_not_found" | "asset_unavailable" | "analysis_failed" | "invalid_response" };
+  | { status: "failed"; reason: ProductAnalysisFailureReason };
 
 export type AnalyzeProductAssetOptions = {
   assetId: string;
@@ -107,8 +111,21 @@ export async function analyzeProductAssetWithDependencies(
   if (!prepared) return { status: "failed", reason: "asset_unavailable" };
 
   let response: unknown;
+  let responseDiagnostics: { responseCategory: string; topLevelKeys: string; outputTextPresent: boolean; outputArrayPresent: boolean; choicesArrayPresent: boolean; contentArrayPresent: boolean; parsedJsonPresent: boolean; profileFieldPresent: boolean };
   try {
+    logAnalysis("provider_request_start", { assetId: asset.id, model: getProductUnderstandingModel(), imageMimeType: prepared.mimeType, imageBytes: prepared.data.length });
     response = await dependencies.client.analyze({ assetId: asset.id, image: prepared });
+    const record = response && typeof response === "object" && !Array.isArray(response) ? response as Record<string, unknown> : null;
+    responseDiagnostics = {
+      responseCategory: response && typeof response === "object" ? Array.isArray(response) ? "array" : "object" : response === null ? "null" : typeof response,
+      topLevelKeys: record ? Object.keys(record).join(",").slice(0, 300) : "",
+      outputTextPresent: Boolean(record && typeof record.output_text === "string"),
+      outputArrayPresent: Boolean(record && Array.isArray(record.output)),
+      choicesArrayPresent: Boolean(record && Array.isArray(record.choices)),
+      contentArrayPresent: Boolean(record && Array.isArray(record.content)),
+      parsedJsonPresent: Boolean(record && "parsed" in record),
+      profileFieldPresent: Boolean(record && "profile" in record),
+    };
   } catch (error) {
     const diagnostic = getOpenAIDiagnostic(error);
     logAnalysis("openai_error", {
@@ -123,6 +140,7 @@ export async function analyzeProductAssetWithDependencies(
     });
     return { status: "failed", reason: "analysis_failed" };
   }
+  logAnalysis("provider_response_received", { assetId: asset.id, ...responseDiagnostics });
 
   if (isUnsupportedResponse(response)) {
     logAnalysis("unsupported", {
@@ -133,19 +151,67 @@ export async function analyzeProductAssetWithDependencies(
     return { status: "unsupported", inferredCategory: response.inferredCategory, reason: "unsupported_product" };
   }
 
-  const candidate = response && typeof response === "object" && "profile" in response
-    ? response.profile
-    : null;
-  if (!isCurrentProfile(candidate) || candidate.productId !== asset.id) {
-    logAnalysis("failed", { assetId: asset.id, reason: "invalid_response", status: null });
-    return { status: "failed", reason: "invalid_response" };
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    logAnalysis("failed", {
+      assetId: asset.id,
+      reason: response === null || response === undefined ? "provider_empty_response" : "response_shape_mismatch",
+      topLevelKeys: "",
+      profileFieldPresent: false,
+    });
+    return { status: "failed", reason: response === null || response === undefined ? "provider_empty_response" : "response_shape_mismatch" };
+  }
+
+  const envelope = response as ProductAnalysisOutputValidation;
+  // Injected clients may provide the normalized profile envelope directly. Production
+  // uses validateProductAnalysisModelOutput in the provider adapter above.
+  if ("status" in envelope && envelope.status === "supported" && "profile" in envelope) {
+    const profile = envelope.profile;
+    if (!isCurrentProfile(profile)) {
+      logAnalysis("failed", { assetId: asset.id, reason: "schema_validation_failed", schemaErrorPaths: "$.profile" });
+      return { status: "failed", reason: "schema_validation_failed" };
+    }
+    if (profile.productId !== asset.id) {
+      logAnalysis("failed", { assetId: asset.id, reason: "id_mismatch", expectedProductId: asset.id, matchingIdFieldPresent: false });
+      return { status: "failed", reason: "id_mismatch" };
+    }
+    response = { output: profile, errorPaths: [] } satisfies ProductAnalysisOutputValidation;
+  }
+  if ("status" in envelope && envelope.status === "unsupported") {
+    return { status: "unsupported", inferredCategory: envelope.output && "status" in envelope.output ? envelope.output.inferredCategory : null, reason: "unsupported_product" };
+  }
+  const normalizedEnvelope = response as ProductAnalysisOutputValidation;
+  if (!normalizedEnvelope.output) {
+    const paths = normalizedEnvelope.errorPaths;
+    if (paths.includes("$.json")) {
+      logAnalysis("failed", { assetId: asset.id, reason: "json_parse_failed", schemaErrorPaths: "$.json" });
+      return { status: "failed", reason: "json_parse_failed" };
+    }
+    const shapeMismatch = paths.includes("$") || paths.includes("$.status");
+    const category = shapeMismatch ? "response_shape_mismatch" : "schema_validation_failed";
+    logAnalysis("failed", { assetId: asset.id, reason: category, schemaErrorPaths: paths.slice(0, 12).join(",") });
+    return { status: "failed", reason: category };
+  }
+  if ("status" in normalizedEnvelope.output) {
+    const inferredCategory = normalizedEnvelope.output.inferredCategory;
+    logAnalysis("unsupported", { assetId: asset.id, inferredCategory, analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION });
+    return { status: "unsupported", inferredCategory, reason: "unsupported_product" };
+  }
+  const finalCandidate = normalizedEnvelope.output;
+  if (!isCurrentProfile(finalCandidate)) {
+    const errorPaths = getProductAnalysisOutputErrorPaths(finalCandidate);
+    logAnalysis("failed", { assetId: asset.id, reason: "schema_validation_failed", schemaErrorPaths: errorPaths.slice(0, 12).join(",") });
+    return { status: "failed", reason: "schema_validation_failed" };
+  }
+  if (finalCandidate.productId !== asset.id) {
+    logAnalysis("failed", { assetId: asset.id, reason: "id_mismatch", expectedProductId: asset.id, matchingIdFieldPresent: Boolean("productId" in finalCandidate && finalCandidate.productId === asset.id) });
+    return { status: "failed", reason: "id_mismatch" };
   }
 
   const profile: ProductProfile = {
-    ...candidate,
+    ...finalCandidate,
     // Server values are authoritative even if a model echoes a different source record.
     source: {
-      ...candidate.source,
+      ...finalCandidate.source,
       analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION,
       model: getProductUnderstandingModel(),
       analyzedAt: new Date().toISOString(),
@@ -157,7 +223,8 @@ export async function analyzeProductAssetWithDependencies(
     subcategory: profile.subcategory,
   });
   if (!await dependencies.repository.saveProfile(options.userId, asset.id, profile)) {
-    return { status: "failed", reason: "analysis_failed" };
+    logAnalysis("failed", { assetId: asset.id, reason: "persistence_failed" });
+    return { status: "failed", reason: "persistence_failed" };
   }
   logAnalysis("profile_persisted", { assetId: asset.id });
 
@@ -288,7 +355,7 @@ export function getProductUnderstandingModel() {
 }
 
 class OpenAIProductAnalysisClient implements ProductAnalysisClient {
-  async analyze({ assetId, image }: Parameters<ProductAnalysisClient["analyze"]>[0]): Promise<unknown> {
+  async analyze({ assetId, image }: Parameters<ProductAnalysisClient["analyze"]>[0]): Promise<ProductAnalysisOutputValidation> {
     const response = await getOpenAIClient().responses.create({
       model: getProductUnderstandingModel(),
       instructions: analyzerInstructions,
@@ -304,17 +371,18 @@ class OpenAIProductAnalysisClient implements ProductAnalysisClient {
       }),
     });
     const output = response.output_text?.trim();
-    if (!output) throw new Error("Product analysis returned no structured output.");
-    const parsed = JSON.parse(output) as unknown;
-    const mapped = mapProductAnalysisModelOutput(parsed, {
+    if (!output) return { output: null, errorPaths: response.output?.length ? ["$.output_text"] : ["$"] };
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(output) as unknown;
+    } catch {
+      return { output: null, errorPaths: ["$.json"] };
+    }
+    return validateProductAnalysisModelOutput(parsed, {
       assetId,
       analyzedAt: new Date().toISOString(),
       model: getProductUnderstandingModel(),
     });
-    if (!mapped) return { status: "invalid" };
-    return "status" in mapped
-      ? { status: "unsupported", inferredCategory: mapped.inferredCategory }
-      : { status: "supported", inferredCategory: null, profile: mapped };
   }
 }
 

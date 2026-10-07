@@ -36,8 +36,11 @@ export function DeleteProjectModal({action, open, onClose, redirectOnSuccess = f
     if (state.status !== "success") return;
     dialogRef.current?.close();
     onClose();
+    if (redirectOnSuccess) {
+      router.replace("/dashboard/projects");
+      return;
+    }
     router.refresh();
-    if (redirectOnSuccess) router.replace("/dashboard/projects");
   }, [state.status, redirectOnSuccess, router, onClose]);
 
   function close() {

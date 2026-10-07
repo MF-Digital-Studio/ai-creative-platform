@@ -548,6 +548,8 @@
       }
     },
     "topbar": {
+      "welcome": "Welcome, {name}",
+      "welcomeWithoutName": "Welcome",
       "newProject": "New project",
       "newBlankProject": "Create blank project",
       "workspace": "Creative Workspace",
@@ -556,6 +558,24 @@
       "account": "Account",
       "profile": "Account",
       "signOut": "Sign Out"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "trigger": "Open notifications",
+      "triggerUnread": "Open notifications, {count} unread notifications",
+      "markAllRead": "Mark all as read",
+      "today": "Today",
+      "earlier": "Earlier",
+      "unread": "Unread",
+      "emptyTitle": "No notifications yet",
+      "emptyDescription": "Important updates will appear here.",
+      "loadError": "Notifications could not be loaded.",
+      "retry": "Try again",
+      "fallbackProject": "your project",
+      "generation_completed": {"title": "Your image is ready", "message": "Generation in {projectName} has completed."},
+      "generation_failed": {"title": "Generation failed", "message": "Generation in {projectName} could not be completed."},
+      "image_edit_completed": {"title": "Edit completed", "message": "Your image edit in {projectName} is ready."},
+      "image_edit_failed": {"title": "Edit failed", "message": "The image edit in {projectName} could not be completed."}
     },
     "account": {
       "eyebrow": "ACCOUNT",

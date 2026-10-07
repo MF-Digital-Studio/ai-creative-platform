@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 import type { DashboardIconName } from "@/data/dashboard-navigation";
 
 type DashboardIconProps = SVGProps<SVGSVGElement> & {
-  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron" | "allCategories" | "apparel" | "jewelry" | "watch" | "footwear" | "cosmetics" | "bag" | "image" | "video" | "lock";
+  name: DashboardIconName | "menu" | "close" | "plus" | "arrow" | "collapse" | "expand" | "website" | "chevron" | "allCategories" | "apparel" | "jewelry" | "watch" | "footwear" | "cosmetics" | "bag" | "image" | "video" | "lock" | "bell" | "alert" | "edit";
 };
 
 export function DashboardIcon({ name, ...props }: DashboardIconProps) {
@@ -73,5 +73,11 @@ export function DashboardIcon({ name, ...props }: DashboardIconProps) {
       return <svg {...commonProps}><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3" /></svg>;
     case "lock":
       return <svg {...commonProps}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
+    case "bell":
+      return <svg {...commonProps}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" /><path d="M10 21h4" /></svg>;
+    case "alert":
+      return <svg {...commonProps}><path d="M12 3 2.8 20h18.4L12 3Z" /><path d="M12 9v5m0 3h.01" /></svg>;
+    case "edit":
+      return <svg {...commonProps}><path d="M4 20h4l11-11-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4" /></svg>;
   }
 }

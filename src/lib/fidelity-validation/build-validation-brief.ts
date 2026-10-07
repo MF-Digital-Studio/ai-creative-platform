@@ -32,6 +32,7 @@ function buildBrief(input: {
   apparelArtworkIdentity?: FidelityValidationBrief["apparelArtworkIdentity"];
   referencePreservation?: boolean;
   humanRealism?: FidelityValidationBrief["humanRealism"];
+  preset?: FidelityValidationBrief["preset"];
 }): FidelityValidationBrief {
   return {
     vertical: input.vertical,
@@ -48,6 +49,7 @@ function buildBrief(input: {
     referenceMatch: input.referenceMatch ?? null,
     identityManifest: input.identityManifest ?? null,
     apparelArtworkIdentity: input.apparelArtworkIdentity ?? null,
+    preset: input.preset ?? null,
   };
 }
 
@@ -65,6 +67,8 @@ export function renderValidationInstructions(brief: FidelityValidationBrief): st
     brief.vertical === "footwear" ? "Footwear calibration: remain strict on silhouette, sole, major panel layout, laces/closure, logo placement and color blocking. Allow foot angle, perspective, sole compression, creases/flex, and minor shadow/color variation." : "",
     brief.vertical === "cosmetics" ? "Cosmetics calibration: remain strict on package silhouette, cap/pump/applicator, label identity, major text, material/color and proportions. Allow reflections, condensation, hand grip, perspective and mild label curvature." : "",
     brief.vertical === "bags" ? "Bag fidelity path: compare source and output directly. Use BAG_PRODUCT_SUBSTITUTION, BAG_SILHOUETTE_DRIFT, BAG_PROPORTION_DRIFT, BAG_HANDLE_COUNT_DRIFT, BAG_HANDLE_GEOMETRY_DRIFT, BAG_STRAP_DRIFT, BAG_CLOSURE_DRIFT, BAG_FLAP_GEOMETRY_DRIFT, BAG_ZIPPER_LAYOUT_DRIFT, BAG_POCKET_LAYOUT_DRIFT, BAG_PANEL_SEAM_DRIFT, BAG_HARDWARE_DRIFT, BAG_LOGO_MONOGRAM_DRIFT, BAG_PATTERN_DRIFT, BAG_COLOR_DRIFT, BAG_MATERIAL_DRIFT, BAG_CONTACT_IMPLAUSIBLE, or BAG_REFERENCE_PRODUCT_CONTAMINATION. Fail high-confidence substitution, wrong silhouette/handle count/strap system/closure/logo/hardware/color, or missing major construction. Treat meaningful geometry/layout drift as major. Natural leather deformation, soft-bag compression, strap bend, perspective width variation, and small reflection changes are minor and must not fail identity. A reference bag never overrides source identity; Reference 1 still controls transferable pose and framing." : "",
+    brief.vertical === "bags" && brief.strategy !== "bags_on_model" && brief.preset?.familyId === "bags-studio" ? "Bag Studio compliance gate: the selected preset is product-only studio photography. If the output clearly shows any person, hand, worn bag, body contact, carry interaction, or lifestyle environment, report BAG_PRESET_SCENE_MISMATCH as a critical composition_visibility finding with high confidence. This is preset compliance, not product identity drift. Do not report this for a non-human support, prop, pedestal, or realistic product shadow." : "",
+    brief.vertical === "bags" && brief.strategy !== "bags_on_model" && brief.preset?.familyId === "bags-lifestyle" ? "Bag Aesthetic Environment compliance gate: the selected preset is product-only lifestyle placement. If the output clearly shows any person, hand, worn bag, body contact, or carry interaction, report BAG_PRESET_SCENE_MISMATCH as a critical composition_visibility finding with high confidence. This is preset compliance, not product identity drift. Do not report this for a non-human environmental support or prop." : "",
     "Ignore harmless perspective, lighting, natural folds, expected body fitting, and tiny unreadable text unless prominent branding or layout is materially corrupted.",
     brief.vertical === "apparel" ? `Apparel source identity gate: compare the garment against the uploaded product before judging scene quality. Compare artwork composition, typography, major illustration shapes, dominant graphic colors, relative placement, scale and orientation. Report APPAREL_ARTWORK_IDENTITY_DRIFT as critical for materially different/replaced artwork; APPAREL_ARTWORK_TEXT_DRIFT as critical for materially changed text; APPAREL_ARTWORK_STRUCTURE_DRIFT as major for missing/changed major graphic elements; APPAREL_ARTWORK_PLACEMENT_DRIFT, APPAREL_ARTWORK_SCALE_DRIFT, or APPAREL_ARTWORK_COLOR_DRIFT as major for material changes. Small fold-related deviations are minor. Artwork identity evidence: ${brief.apparelArtworkIdentity ? JSON.stringify(brief.apparelArtworkIdentity) : "no separate crop available; do not claim exact artwork verification"}. Visible text is identity-critical. Reference images may guide pose/environment/light/crop only and must never override garment or artwork identity, placement, scale, color, text, or construction.` : "",
     "Validate only creative requirements listed as applied. Rejected or adjusted requirements are not failures. Preferred/decorative misses are warnings.",

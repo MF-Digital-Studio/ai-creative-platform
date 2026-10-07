@@ -9,6 +9,7 @@ import {
 } from "../src/lib/product-understanding/product-analysis-core";
 import {
   mapProductAnalysisModelOutput,
+  validateProductAnalysisModelOutput,
   createProductAnalysisInput,
   productAnalysisModelOutputSchema,
 } from "../src/lib/product-understanding/product-analysis-model-output";
@@ -129,7 +130,7 @@ test("a persistence failure remains observable and does not replace a valid prof
     true,
   );
 
-  assert.deepEqual(response, { status: "failed", reason: "analysis_failed" });
+  assert.deepEqual(response, { status: "failed", reason: "persistence_failed" });
   assert.equal(repository.saved, null);
 });
 
@@ -169,6 +170,33 @@ test("flat jewelry model output maps into the discriminated ProductProfile", () 
   assert.ok(mapped && !("status" in mapped));
   assert.equal(mapped && !("status" in mapped) ? mapped.vertical : null, "jewelry");
   assert.equal(mapped && !("status" in mapped) ? mapped.interactionTargets.includes("finger") : false, true);
+});
+
+test("current Responses API output_text flat JSON maps and associates the asset ID server-side", () => {
+  const bagOutput = {
+    status: "supported", inferredCategory: null, vertical: "bags", subcategory: "tote", wearability: "wearable", rigidity: "semi_rigid",
+    materials: ["grained leather"], dominantColors: ["black"], productShape: "structured tote with two handles",
+    identityCriticalAttributes: [], visibleBranding: { hasLogo: false, hasReadableText: false, hasArtwork: false, logoRegions: [], textRegions: [], artworkRegions: [] },
+    interactionTargets: ["hand"], allowedTransformations: ["perspective_change"], forbiddenTransformations: ["recolor", "geometry_redesign"],
+    recommendedSceneTags: ["bags_studio"], discouragedSceneTags: [], confidence: { overall: 0.9, vertical: 0.95, subcategory: 0.8, materials: 0.7, wearability: 0.9, rigidity: 0.8, visibleBranding: 0.9, verticalAttributes: 0.85 },
+    apparel: null, jewelry: null, watch: null, cosmetics: null, footwear: null,
+    bags: { bagType: "tote", silhouette: "structured rectangular body", proportions: "wide", bodyStructure: "semi-rigid", handleCount: 2, handleGeometry: "arched", handleAttachmentPoints: ["top corners"], strapCount: null, strapPlacement: [], strapWidth: null, strapLengthClass: null, closureType: null, flapOrOpeningShape: "open top", zipperLayout: [], pocketLayout: [], panelConstruction: ["front panel"], stitchingPattern: "edge stitch", pipingOrEdgeTreatment: null, hardwareLayout: [], hardwareColor: null, logoOrMonogramPlacement: [], material: "leather", materialTexture: "grained", colorBlocking: ["black"], patternOrPrint: null, baseShape: "flat", baseFeetHardware: null, chainStrap: null, decorativeCharms: [], asymmetricDetails: [] },
+  };
+  const validated = validateProductAnalysisModelOutput(bagOutput, { assetId, model: "gpt-4o-mini", analyzedAt: "2026-10-01T00:00:00.000Z" });
+  assert.equal(validated.errorPaths.length, 0);
+  assert.ok(validated.output && !("status" in validated.output));
+  if (validated.output && !("status" in validated.output)) {
+    assert.equal(validated.output.vertical, "bags");
+    assert.equal(validated.output.productId, assetId);
+    assert.equal(validated.output.schemaVersion, PRODUCT_PROFILE_SCHEMA_VERSION);
+  }
+});
+
+test("malformed JSON and schema mismatch produce safe diagnostic paths", () => {
+  const validation = validateProductAnalysisModelOutput({ status: "supported", vertical: "bags" }, { assetId, model: "test", analyzedAt: "now" });
+  assert.ok(validation.errorPaths.includes("$.bags"));
+  assert.ok(validation.errorPaths.includes("$.wearability"));
+  assert.throws(() => JSON.parse("{\"status\":"));
 });
 
 test("product analysis image input uses a JPEG data URL at high detail", () => {

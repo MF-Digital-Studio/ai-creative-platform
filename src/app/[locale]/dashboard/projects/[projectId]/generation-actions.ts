@@ -98,6 +98,7 @@ import { resolveRepairEligibility } from "@/lib/generation/execution-policy/reso
 import { GENERATION_EXECUTION_POLICY_VERSION } from "@/lib/generation/execution-policy/execution-policy-version";
 import { createGenerationPerformanceRecorder } from "@/lib/generation/performance";
 import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
+import { createNotification } from "@/lib/notifications/create-notification";
 
 export type RegisterProductAssetResult = {
   status: "error" | "success";
@@ -128,7 +129,7 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
   const userId = await getAuthenticatedUserId();
   if (!userId) return { ok: false, error: "Edit could not be authorized.", code: "creationFailed" };
   const supabase = await createClient();
-  const { data: project } = await supabase.from("projects").select("id,user_id").eq("id", projectId).eq("user_id", userId).maybeSingle();
+  const { data: project } = await supabase.from("projects").select("id,user_id,title").eq("id", projectId).eq("user_id", userId).maybeSingle();
   if (!project || project.user_id !== userId) return { ok: false, error: "Project could not be loaded.", code: "creationFailed" };
   const { data: base } = await supabase.from("generations").select("id,project_id,input_asset_id,generation_type,status,output_bucket_id,output_object_path,aspect_ratio,provider_metadata").eq("id", baseGenerationId).eq("project_id", projectId).maybeSingle();
   if (!base || base.generation_type !== "image" || base.status !== "succeeded" || !base.output_bucket_id || !base.output_object_path || base.output_bucket_id !== generatedAssetsBucket || !hasValidObjectPath(userId, projectId, base.output_object_path)) return { ok: false, error: "Selected output is unavailable.", code: "missingOutput" };
@@ -165,11 +166,13 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
     const processingCompletedAt = new Date();
     const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : "not_checked", provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
     if (saveError) throw new Error("Unable to save edited image record.");
+    await createNotification({ userId, type: "image_edit_completed", projectId, projectName: project.title, generationId: edit.id });
     revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
     return { ok: true, generationId: edit.id, status: "succeeded" };
   } catch {
     const completedAt = new Date();
     await admin.from("generations").update({ status: "failed", error_message: generationFailureCode, processing_completed_at: completedAt.toISOString(), processing_duration_ms: completedAt.getTime() - now.getTime(), provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "fail", repairAttempted: false, editVersion: 1 } } }).eq("id", edit.id).eq("status", "processing");
+    await createNotification({ userId, type: "image_edit_failed", projectId, projectName: project.title, generationId: edit.id });
     return { ok: false, error: "Edit could not be completed.", code: "creationFailed" };
   }
 }
@@ -180,7 +183,7 @@ export type RunQueuedImageGenerationResult =
   | { ok: false; message: RunQueuedImageGenerationError }
   | { ok: true };
 
-const projectGenerationFields = "id, user_id, creative_direction";
+const projectGenerationFields = "id, user_id, title, creative_direction";
 const productAssetGenerationFields =
   "id, user_id, project_id, bucket_id, object_path, created_at";
 const queuedGenerationFields = [
@@ -240,7 +243,7 @@ function isGenerationProvider(value: unknown): value is GenerationProvider {
   return value === "openai";
 }
 
-function safeGenerationEvent(scope: "create" | "queue", event: string, fields: Record<string, boolean | number | string | null> = {}) {
+function safeGenerationEvent(scope: "create" | "queue" | "dispatch" | "provider", event: string, fields: Record<string, boolean | number | string | null> = {}) {
   console.info(`[generation-${scope}] ${event}`, fields);
 }
 
@@ -254,7 +257,7 @@ function resolvePreservationMode(value: unknown): ProductPreservationMode {
   return value === "pixel_lock" ? "pixel_lock" : "reference_edit";
 }
 
-async function markGenerationFailed(generationId: string, processingStartedAt: Date) {
+async function markGenerationFailed(input: { generationId: string; processingStartedAt: Date; userId: string; projectId: string; projectName: string }) {
   try {
     const admin = getSupabaseAdminClient();
     const completedAt = new Date();
@@ -264,10 +267,11 @@ async function markGenerationFailed(generationId: string, processingStartedAt: D
         status: "failed",
         error_message: generationFailureCode,
         processing_completed_at: completedAt.toISOString(),
-        processing_duration_ms: completedAt.getTime() - processingStartedAt.getTime(),
+        processing_duration_ms: completedAt.getTime() - input.processingStartedAt.getTime(),
       })
-      .eq("id", generationId)
+      .eq("id", input.generationId)
       .eq("status", "processing");
+    await createNotification({ userId: input.userId, type: "generation_failed", projectId: input.projectId, projectName: input.projectName, generationId: input.generationId });
   } catch {
     // The primary action result remains safe even if a failure status cannot be persisted.
   }
@@ -412,6 +416,10 @@ export async function createQueuedImageGeneration(
         status: "failed", error_message: "dispatch_failed", processing_completed_at: new Date().toISOString(),
       }).eq("id", failedId).eq("status", "queued");
       if (dispatchError) safeGenerationEvent("queue", "queue_stalled", { generationId: failedId });
+      else {
+        safeGenerationEvent("queue", "status_transition", { generationId: failedId, status: "failed" });
+        await createNotification({ userId, type: "generation_failed", projectId: project.id, projectName: project.title, generationId: failedId });
+      }
     });
     if (!dispatchSucceeded) safeGenerationEvent("queue", "queue_stalled", { generationId: generation.id, status: "failed" });
 
@@ -437,17 +445,19 @@ export async function runQueuedImageGeneration(
   }
 
   let processingStartedAt: Date | null = null;
+  let projectName = "";
   const generationStartedAt = Date.now();
   let performance: ReturnType<typeof createGenerationPerformanceRecorder> | null = null;
   const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, artworkAnalysisCalls: 0, repairCalls: 0 };
   safeGenerationEvent("queue", "processor_entered", { generationId });
+  safeGenerationEvent("dispatch", "pipeline_entered", { generationId });
   let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null } | null = null;
 
   try {
     const supabase = await createClient();
     const { data: project, error: projectError } = await supabase
       .from("projects")
-      .select("id, user_id")
+      .select("id, user_id, title")
       .eq("id", projectId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -455,6 +465,7 @@ export async function runQueuedImageGeneration(
     if (projectError || !project || project.user_id !== userId) {
       return { ok: false, message: "generationFailed" };
     }
+    projectName = project.title;
 
     const { data: generation, error: generationError } = await supabase
       .from("generations")
@@ -669,6 +680,8 @@ export async function runQueuedImageGeneration(
       productProfile,
       requestedPreservationMode: resolvePreservationMode(queuedGeneration.preservation_mode),
       referenceInteraction,
+      presetFamilyId: presetFamily?.id ?? null,
+      hasReference: usableReferenceImages.length > 0,
       userPrompt: metadataUserPrompt || fallbackCreativeDirection,
     });
     const strategyCategory = getGenerationStrategyCategory(strategyResolution.strategy);
@@ -678,8 +691,11 @@ export async function runQueuedImageGeneration(
       preset,
       productProfile,
       strategy: strategyResolution.strategy,
-      userPrompt: metadataUserPrompt || fallbackCreativeDirection,
+      // The fallback contains rendered preset prose. It is not an explicit user
+      // request and must not be reinterpreted as a carry or lifestyle instruction.
+      userPrompt: metadataUserPrompt,
       vertical: qualityUseCase === "product" ? null : qualityUseCase,
+      presetAuthority: usableReferenceImages.length === 0 && !metadataUserPrompt ? "strong" : "supporting",
     });
     const strategyPolicy = validateGenerationPolicy({
       strategy: strategyResolution.strategy,
@@ -695,7 +711,7 @@ export async function runQueuedImageGeneration(
       productProfile,
       sceneFamily: sceneSuitability?.selectedSceneFamily,
       strategy,
-      userPrompt: metadataUserPrompt || fallbackCreativeDirection,
+      userPrompt: metadataUserPrompt,
       referenceStyle: referenceAnalysis.styleBrief,
       presetId: preset?.id,
     });
@@ -938,7 +954,7 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, visibleHuman: ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model"].includes(strategy) || strategy === "rigid_product" && qualityUseCase === "cosmetics" },
+      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, visibleHuman: ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model"].includes(strategy) || strategy === "rigid_product" && qualityUseCase === "cosmetics" },
     );
     logDevelopmentGenerationEvent("product_identity_lock", {
       generationId: queuedGeneration.id,
@@ -1012,6 +1028,7 @@ export async function runQueuedImageGeneration(
       explicitInputFidelity: imageModelCapabilities.supportsExplicitInputFidelity,
       imageCount: generationImages.length,
     });
+    safeGenerationEvent("provider", "request_start", { generationId: queuedGeneration.id, provider: queuedGeneration.provider, model: queuedGeneration.model });
     const result = await performance.measure("provider_initial", () => getImageGenerationProvider(queuedGeneration.provider).generate({
       generationId: queuedGeneration.id,
       projectId: project.id,
@@ -1075,6 +1092,7 @@ export async function runQueuedImageGeneration(
       referenceStyleContext: referenceAnalysis.styleBrief ? JSON.stringify(referenceAnalysis.styleBrief) : null,
       referenceMatch,
       identityManifest,
+      preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId } : null,
       ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
       exactProductApparel: apparelFidelityMode.exactProductApparel,
     }));
@@ -1513,6 +1531,8 @@ export async function runQueuedImageGeneration(
     if (completionError || !completedGeneration) {
       throw new Error("Unable to save the generated image.");
     }
+    safeGenerationEvent("queue", "status_transition", { generationId, status: "succeeded" });
+    await createNotification({ userId, type: "generation_completed", projectId: project.id, projectName: project.title, generationId: queuedGeneration.id });
 
     logDevelopmentGenerationEvent("succeeded", {
       effectivePreservationMode,
@@ -1532,7 +1552,16 @@ export async function runQueuedImageGeneration(
     }
     logDevelopmentGenerationEvent("failed", { generationId });
     if (processingStartedAt) {
-      await markGenerationFailed(generationId, processingStartedAt);
+      await markGenerationFailed({ generationId, processingStartedAt, userId, projectId, projectName });
+    } else {
+      const completedAt = new Date();
+      const { error: failureError } = await getSupabaseAdminClient().from("generations").update({
+        status: "failed",
+        error_message: generationFailureCode,
+        processing_completed_at: completedAt.toISOString(),
+      }).eq("id", generationId).eq("status", "queued");
+      if (failureError) safeGenerationEvent("queue", "failure_persist_failed", { generationId });
+      else safeGenerationEvent("queue", "status_transition", { generationId, status: "failed" });
     }
     safeGenerationEvent("queue", "processor_exit", { generationId, status: "failed" });
 

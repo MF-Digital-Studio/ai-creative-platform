@@ -4,6 +4,7 @@ import {
   PRODUCT_PROFILE_SCHEMA_VERSION,
   type ProductProfile,
 } from "./product-profile";
+import { validateProductAnalysisModelOutput, type ProductAnalysisOutputValidation } from "./product-analysis-model-output";
 
 export { PRODUCT_PROFILE_ANALYSIS_VERSION, PRODUCT_PROFILE_SCHEMA_VERSION } from "./product-profile";
 
@@ -20,7 +21,7 @@ export type ProductAnalysisRepository = {
 export type ProductAnalysisResult =
   | { status: "supported"; profile: ProductProfile; reused: boolean }
   | { status: "unsupported"; inferredCategory: string | null; reason: "unsupported_product" }
-  | { status: "failed"; reason: "asset_not_found" | "analysis_failed" | "invalid_response" };
+  | { status: "failed"; reason: "asset_not_found" | "analysis_failed" | "response_shape_mismatch" | "schema_validation_failed" | "id_mismatch" | "persistence_failed" };
 
 function isCurrentProfile(value: unknown): value is ProductProfile {
   return isProductProfile(value)
@@ -46,24 +47,31 @@ export async function persistProductAnalysisResult(input: {
     return { status: "supported", profile: asset.productProfile, reused: true };
   }
 
-  if (input.response && typeof input.response === "object" && "status" in input.response && input.response.status === "unsupported") {
-    const inferredCategory = "inferredCategory" in input.response && typeof input.response.inferredCategory === "string"
-      ? input.response.inferredCategory
-      : null;
-    return { status: "unsupported", inferredCategory, reason: "unsupported_product" };
+  const raw = input.response;
+  let validation: ProductAnalysisOutputValidation;
+  if (raw && typeof raw === "object" && "output" in raw) {
+    validation = raw as ProductAnalysisOutputValidation;
+  } else if (raw && typeof raw === "object" && "status" in raw && raw.status === "unsupported") {
+    validation = { output: { status: "unsupported", inferredCategory: "inferredCategory" in raw && typeof raw.inferredCategory === "string" ? raw.inferredCategory : null }, errorPaths: [] };
+  } else if (raw && typeof raw === "object" && "profile" in raw) {
+    validation = { output: (raw as { profile: unknown }).profile as ProductProfile, errorPaths: [] };
+  } else {
+    validation = validateProductAnalysisModelOutput(raw, { assetId: asset.id, model: input.model, analyzedAt: new Date().toISOString() });
   }
-  const candidate = input.response && typeof input.response === "object" && "profile" in input.response
-    ? input.response.profile
-    : null;
+  if (!validation.output) return { status: "failed", reason: "schema_validation_failed" };
+  if ("status" in validation.output) {
+    return { status: "unsupported", inferredCategory: validation.output.inferredCategory, reason: "unsupported_product" };
+  }
+  const candidate = validation.output;
   if (!isCurrentProfile(candidate) || candidate.productId !== asset.id) {
-    return { status: "failed", reason: "invalid_response" };
+    return { status: "failed", reason: isProductProfile(candidate) ? "id_mismatch" : "schema_validation_failed" };
   }
   const profile: ProductProfile = {
     ...candidate,
     source: { ...candidate.source, model: input.model, analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION, analyzedAt: new Date().toISOString() },
   };
   if (!await input.repository.saveProfile(input.userId, asset.id, profile)) {
-    return { status: "failed", reason: "analysis_failed" };
+    return { status: "failed", reason: "persistence_failed" };
   }
   return { status: "supported", profile, reused: false };
 }

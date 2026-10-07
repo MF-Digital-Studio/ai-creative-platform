@@ -82,6 +82,50 @@ export function createProductAnalysisInput(input: { assetId: string; image: { da
 
 function isRecord(value: unknown): value is Record<string, unknown> { return Boolean(value && typeof value === "object" && !Array.isArray(value)); }
 
+export type ProductAnalysisOutputValidation = {
+  output: ProductProfile | { status: "unsupported"; inferredCategory: string | null } | null;
+  errorPaths: string[];
+};
+
+export function getProductAnalysisOutputErrorPaths(value: unknown): string[] {
+  if (!isRecord(value)) return ["$"];
+  const paths: string[] = [];
+  if (value.status !== "supported" && value.status !== "unsupported") paths.push("$.status");
+  if (value.status === "supported") {
+    if (!isSupportedVertical(value.vertical)) paths.push("$.vertical");
+    else {
+      const blockName = value.vertical === "watches" ? "watch" : value.vertical;
+      const details = value[blockName];
+      if (!isRecord(details)) paths.push(`$.${blockName}`);
+      else {
+        const requiredByVertical: Record<SupportedVertical, string[]> = {
+          apparel: ["garmentType", "primaryColor", "artworkOrLogoLocations", "closures", "pocketStructure", "hoodOrCollar", "constructionDetails", "identitySides"],
+          jewelry: ["jewelryType", "metalColorOrMaterial", "centerStone", "centerStoneShape", "centerStoneColor", "stoneCount", "stoneLayout", "settingStyle", "bandOrChainStructure", "bodyPlacementTarget"],
+          watches: ["caseShape", "caseMaterialOrColor", "dialColor", "bezel", "crownSide", "pushers", "braceletOrStrap", "indicesOrMarkers", "dateWindow", "subdials", "dialBrandingRegions"],
+          cosmetics: ["packageType", "packageGeometry", "containerForm", "closureOrDispenser", "materialOpacity", "liquidVisibility", "labelRegions", "logoRegions"],
+          footwear: ["shoeType", "silhouette", "upperMaterial", "outsole", "midsole", "panelStructure", "lacing", "tongue", "heel", "logoRegions", "colorBlocking"],
+          bags: ["bagType", "silhouette", "proportions", "bodyStructure", "handleCount", "handleGeometry", "handleAttachmentPoints", "strapCount", "strapPlacement", "strapWidth", "strapLengthClass", "closureType", "flapOrOpeningShape", "zipperLayout", "pocketLayout", "panelConstruction", "stitchingPattern", "pipingOrEdgeTreatment", "hardwareLayout", "hardwareColor", "logoOrMonogramPlacement", "material", "materialTexture", "colorBlocking", "patternOrPrint", "baseShape", "baseFeetHardware", "chainStrap", "decorativeCharms", "asymmetricDetails"],
+        };
+        for (const key of requiredByVertical[value.vertical]) if (!(key in details)) paths.push(`$.${blockName}.${key}`);
+      }
+    }
+    for (const key of ["wearability", "rigidity", "materials", "dominantColors", "productShape", "identityCriticalAttributes", "visibleBranding", "interactionTargets", "allowedTransformations", "forbiddenTransformations", "recommendedSceneTags", "discouragedSceneTags", "confidence"]) {
+      if (!(key in value)) paths.push(`$.${key}`);
+    }
+  }
+  return paths.length ? paths : ["$.profile_schema"];
+}
+
+/** Maps the current flat Responses API output into the server-owned profile contract. */
+export function validateProductAnalysisModelOutput(
+  value: unknown,
+  source: { assetId: string; model: string; analyzedAt: string },
+): ProductAnalysisOutputValidation {
+  const output = mapProductAnalysisModelOutput(value, source);
+  if (output) return { output, errorPaths: [] };
+  return { output: null, errorPaths: getProductAnalysisOutputErrorPaths(value) };
+}
+
 export function mapProductAnalysisModelOutput(value: unknown, source: { assetId: string; model: string; analyzedAt: string }): ProductProfile | { status: "unsupported"; inferredCategory: string | null } | null {
   if (!isRecord(value)) return null;
   if (value.status === "unsupported") return { status: "unsupported", inferredCategory: typeof value.inferredCategory === "string" ? value.inferredCategory : null };

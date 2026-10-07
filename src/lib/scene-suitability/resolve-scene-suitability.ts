@@ -126,9 +126,10 @@ export function resolveSceneSuitability(input: ResolveSceneSuitabilityInput): Sc
   const profile = isProductProfile(input.productProfile) ? input.productProfile : null;
   const suitable = profile ? profilePriority(profile) : sceneFamiliesByVertical[vertical];
   const avoided = Object.values(sceneFamiliesByVertical).flat().filter((family) => !suitable.includes(family));
+  const preset = input.preset ? presetFamilies[input.preset.id] : null;
+  if (input.presetAuthority === "strong" && preset && suitable.includes(preset) && !(vertical === "bags" && (intentsFrom(input.userPrompt).has("crossbody") || intentsFrom(input.userPrompt).has("shoulder") || intentsFrom(input.userPrompt).has("hand")))) return { selectedSceneFamily: preset, suitableSceneFamilies: suitable, avoidedSceneFamilies: avoided, reason: "selected preset family is authoritative for preset-only generation", confidence: "high", source: "trusted_preset" };
   const intent = intentFamily(vertical, intentsFrom(input.userPrompt), profile);
   if (intent) return { selectedSceneFamily: intent, suitableSceneFamilies: suitable, avoidedSceneFamilies: avoided, reason: "compatible explicit user scene intent", confidence: "high", source: "explicit_user_intent" };
-  const preset = input.preset ? presetFamilies[input.preset.id] : null;
   if (preset && suitable.includes(preset)) return { selectedSceneFamily: preset, suitableSceneFamilies: suitable, avoidedSceneFamilies: avoided, reason: "trusted preset scene intent", confidence: "high", source: "trusted_preset" };
   if (profile) return { selectedSceneFamily: suitable[0], suitableSceneFamilies: suitable, avoidedSceneFamilies: avoided, reason: "ProductProfile physical interaction and subcategory evidence", confidence: "high", source: "product_profile" };
   const strategy = strategyFamily(vertical, input.strategy);

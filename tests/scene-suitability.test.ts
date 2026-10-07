@@ -63,3 +63,11 @@ test("missing ProductProfile can still use safe vertical and strategy data", () 
   const result = resolveSceneSuitability({ userPrompt: "", vertical: "footwear", strategy: "rigid_product" });
   assert.equal(result?.selectedSceneFamily, "footwear_studio");
 });
+
+test("strong Bag Studio preset beats generic bag heuristics while explicit carry can refine it", () => {
+  const bag = profile("bags", "tote", ["hand", "torso"]);
+  const studio = resolveSceneSuitability({ productProfile: bag, preset: { id: "bags-minimal-studio" }, strategy: "bags_on_model", vertical: "bags", userPrompt: "", presetAuthority: "strong" });
+  assert.equal(studio?.selectedSceneFamily, "bags_studio");
+  const carry = resolveSceneSuitability({ productProfile: bag, preset: { id: "bags-minimal-studio" }, strategy: "bags_on_model", vertical: "bags", userPrompt: "woman carrying the bag on shoulder", presetAuthority: "strong" });
+  assert.equal(carry?.selectedSceneFamily, "bags_shoulder_carry");
+});

@@ -52,7 +52,7 @@ test("project detail exposes shared project actions and redirects after success"
   assert.match(detail, /<ProjectCardMenu/);
   assert.match(detail, /redirectOnSuccess/);
   assert.match(modal, /router\.replace\("\/dashboard\/projects"\)/);
-  assert.match(modal, /dialogRef\.current\?\.close\(\);\s*onClose\(\);\s*router\.refresh\(\);\s*if \(redirectOnSuccess\) router\.replace/);
+  assert.match(modal, /if \(redirectOnSuccess\) \{\s*router\.replace\("\/dashboard\/projects"\);\s*return;\s*\}\s*router\.refresh\(\)/);
 });
 
 test("shared delete modal has pending-safe dismissal, cancel-first focus, and retry error", () => {

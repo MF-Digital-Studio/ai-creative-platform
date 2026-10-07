@@ -37,4 +37,6 @@ export type ResolveSceneSuitabilityInput = {
   strategy?: GenerationStrategy | null;
   userPrompt: string;
   vertical?: SupportedVertical | null;
+  /** A preset-only generation may make its selected family authoritative over generic heuristics. */
+  presetAuthority?: "strong" | "supporting";
 };

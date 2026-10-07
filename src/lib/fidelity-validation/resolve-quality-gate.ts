@@ -3,6 +3,7 @@ import { FIDELITY_VALIDATION_VERSION } from "./validation-version";
 
 const validCategories = new Set<string>(fidelityValidationCategories);
 const criticalHumanCodes = new Set(["finger_count_error", "hand_anatomy_error", "finger_geometry_error", "severe_physical_failure", "bag_contact_implausible"]);
+const presetComplianceCodes = new Set(["bag_preset_scene_mismatch"]);
 const majorHumanCodes = new Set(["plastic_skin", "over_retouched_skin", "facial_realism_drift", "body_proportion_error", "hair_realism_drift", "human_product_contact_error", "body_interaction_failure", "nail_anatomy_error", "pose_implausible"]);
 const severeStructuralCodes = new Set(["severe_physical_failure", "malformed_product", "structural_duplication", "duplicate_product", "product_duplication"]);
 const jewelryCriticalCodes = new Set(["jewelry_product_substitution", "jewelry_center_stone_shape_drift", "jewelry_center_stone_count_drift", "jewelry_prong_count_drift", "jewelry_setting_geometry_drift", "jewelry_halo_structure_drift", "jewelry_side_stone_drift", "jewelry_band_geometry_drift", "jewelry_metal_color_drift", "jewelry_reference_product_contamination"]);
@@ -34,6 +35,7 @@ function defaultImpact(code: string, category: FidelityValidationIssue["category
 
 function confidenceAdjustedSeverity(issue: Pick<FidelityValidationIssue, "code" | "category" | "severity" | "confidence" | "identityImpact">): FidelityIssueSeverity {
   const code = issue.code.toLowerCase();
+  if (presetComplianceCodes.has(code)) return "critical";
   if (bagMinorCodes.has(code)) return "minor";
   const confidence = issue.confidence ?? 0.9;
   if (issue.category === "reference_match" && /supporting.*(style|lighting)|style.*missed|lighting.*missed/.test(code)) return "minor";
@@ -75,7 +77,8 @@ export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityV
   const severeStructure = normalized.some((issue) => severeStructuralCodes.has(issue.code.toLowerCase()) && issue.severity !== "minor");
   const majorIdentityCount = normalized.filter((issue) => issue.identityImpact === "major" && issue.severity === "major").length;
   const majorHumanCount = normalized.filter((issue) => issue.category === "human_realism" && issue.severity === "major").length;
-  const status = criticalIdentity || criticalHuman || severeStructure || majorIdentityCount >= 2 || majorHumanCount >= 2
+  const presetComplianceFailure = normalized.some((issue) => presetComplianceCodes.has(issue.code.toLowerCase()) && issue.severity !== "minor" && issue.confidence >= 0.75);
+  const status = criticalIdentity || criticalHuman || severeStructure || presetComplianceFailure || majorIdentityCount >= 2 || majorHumanCount >= 2
     ? "fail"
     : normalized.length > 0 ? "pass_with_warnings" : "pass";
   const severity = normalized.some((issue) => issue.severity === "critical") ? "critical" : normalized.some((issue) => issue.severity === "major") ? "major" : normalized.length ? "minor" : null;

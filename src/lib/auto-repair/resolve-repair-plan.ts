@@ -5,6 +5,7 @@ import type { RepairCategory, RepairPlan } from "./types";
 type RepairMapping = { category: RepairCategory; instructions: string[] };
 
 const mappings: Record<string, RepairMapping> = {
+  bag_preset_scene_mismatch: { category: "composition_repair", instructions: ["BAG STUDIO COMPLIANCE: Recreate this as a product-only studio still life. Remove the model, hands, carry pose, body contact, fashion portrait, and lifestyle setting; retain the exact source bag identity." ] },
   bag_product_substitution: { category: "identity_reinforcement", instructions: ["BAG ONLY REPAIR: Keep the current generated image unchanged except for the bag. Restore the exact source bag silhouette, proportions, handles, straps, closure, pockets, hardware, logo/monogram, material, and color. Preserve the existing model, pose, camera, scene, environment, and lighting."] },
   bag_silhouette_drift: { category: "geometry_reinforcement", instructions: ["BAG ONLY REPAIR: Restore only the exact source bag silhouette and body proportions; preserve the existing scene, model, pose, camera, and lighting."] },
   bag_handle_count_drift: { category: "identity_reinforcement", instructions: ["BAG ONLY REPAIR: Restore the exact source handle count, handle geometry, and attachment points; preserve the existing scene unchanged."] },

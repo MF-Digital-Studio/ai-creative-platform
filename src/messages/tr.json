@@ -548,6 +548,8 @@
       }
     },
     "topbar": {
+      "welcome": "Hoş geldiniz, {name}",
+      "welcomeWithoutName": "Hoş geldiniz",
       "newProject": "Yeni proje",
       "newBlankProject": "Boş proje oluştur",
       "workspace": "Yaratıcı Çalışma Alanı",
@@ -556,6 +558,24 @@
       "account": "Hesap",
       "profile": "Hesap",
       "signOut": "Çıkış Yap"
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "trigger": "Bildirimleri aç",
+      "triggerUnread": "Bildirimleri aç, {count} okunmamış bildirim",
+      "markAllRead": "Tümünü okundu işaretle",
+      "today": "Bugün",
+      "earlier": "Daha önce",
+      "unread": "Okunmamış",
+      "emptyTitle": "Henüz bildirim yok",
+      "emptyDescription": "Önemli güncellemeler burada görünecek.",
+      "loadError": "Bildirimler yüklenemedi.",
+      "retry": "Tekrar dene",
+      "fallbackProject": "projeniz",
+      "generation_completed": {"title": "Görseliniz hazır", "message": "{projectName} projesindeki üretim tamamlandı."},
+      "generation_failed": {"title": "Üretim tamamlanamadı", "message": "{projectName} projesindeki üretim başarısız oldu."},
+      "image_edit_completed": {"title": "Düzenleme tamamlandı", "message": "{projectName} projesindeki görsel düzenlemesi hazır."},
+      "image_edit_failed": {"title": "Düzenleme tamamlanamadı", "message": "{projectName} projesindeki görsel düzenleme başarısız oldu."}
     },
     "account": {
       "eyebrow": "HESAP",

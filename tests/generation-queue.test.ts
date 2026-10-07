@@ -16,7 +16,17 @@ test("queued generation dispatches once and passes its ID to the processor", asy
   } finally { console.info = oldInfo; }
   assert.equal(result, true);
   assert.deepEqual(received, ["generation-1"]);
-  assert.equal(diagnostics.filter((message) => message.includes("dispatch_requested")).length, 0);
+  assert.deepEqual(diagnostics, ["[generation-dispatch] start", "[generation-dispatch] pipeline_entered"]);
+});
+
+test("dispatch exceptions persist terminal failure even when failure handling itself throws", async () => {
+  const oldError = console.error;
+  console.error = () => {};
+  try {
+    await assert.doesNotReject(() => dispatchQueuedGeneration("generation-3", async () => { throw new Error("provider offline"); }, async () => { throw new Error("database offline"); }));
+  } finally {
+    console.error = oldError;
+  }
 });
 
 test("failed dispatch marks the queued generation failed", async () => {

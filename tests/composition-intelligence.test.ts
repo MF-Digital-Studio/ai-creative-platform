@@ -58,3 +58,9 @@ test("missing ProductProfile receives a safe strategy composition and adjectives
   assert.equal(resolveComposition(input)?.framing, "medium_close");
   assert.deepEqual(resolveComposition(input), resolveComposition(input));
 });
+
+test("generic bag composition heuristics cannot turn a selected Studio family into a portrait", () => {
+  const studio = resolveComposition({ productProfile: product("bags"), sceneFamily: "bags_studio", userPrompt: "close-up", presetId: "bags-studio" });
+  assert.equal(studio?.framing, "full_product");
+  assert.equal(studio?.productDominance, "hero");
+});

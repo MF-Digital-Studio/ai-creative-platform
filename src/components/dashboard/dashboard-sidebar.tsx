@@ -40,11 +40,11 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
         })}
       </nav>
     </div>
-    <div className="dashboard-sidebar-plan-slot">
-      <DashboardPlanCard collapsed={collapsed} />
-    </div>
     <div className="dashboard-sidebar-spacer" />
     <div className="dashboard-sidebar-footer">
+      <div className="dashboard-sidebar-plan-slot">
+        <DashboardPlanCard collapsed={collapsed} />
+      </div>
       <Link href="/" className="dashboard-nav-item dashboard-site-link" aria-label={t("returnToWebsite")} data-tooltip={collapsed ? t("returnToWebsite") : undefined}>
         <DashboardIcon name="website" className="dashboard-nav-icon" /><span className="dashboard-nav-label">{t("returnToWebsite")}</span>
       </Link>

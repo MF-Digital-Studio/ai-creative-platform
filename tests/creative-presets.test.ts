@@ -31,6 +31,7 @@ import {
   type PromptEnhancementClient,
 } from "../src/lib/generation/prompts/prompt-enhancement-core";
 import { supportedVerticals } from "../src/lib/verticals/supported-verticals";
+import { buildImageGenerationPromptWithPolicy } from "../src/lib/generation/prompts/build-image-generation-prompt";
 
 const validBrief: CreativeBrief = {
   subject: "The supplied product remains the single premium campaign subject.",
@@ -163,6 +164,86 @@ test("variant selection is deterministic, valid, and avoids the most recent alte
   assert.ok(family.variants.some((variant) => variant.id === next.id));
   assert.notEqual(next.id, first.id);
   assert.equal(resolvePresetVariant({ family, generationSeed: "generation-a" }).id, first.id);
+});
+
+test("Bag Studio variants, routing, prompt suppression, and metadata stay family compliant", () => {
+  const family = getPresetFamily("bags-studio");
+  assert.ok(family);
+  for (const seed of ["bag-a", "bag-b", "bag-c", "bag-d"]) {
+    const variant = resolvePresetVariant({ family, generationSeed: seed });
+    assert.equal(variant.familyId, "bags-studio");
+    assert.ok(family.variants.includes(variant));
+  }
+  const studioPreset = buildPresetVariantDirection(requiredPreset("bags-studio"), family.variants[0]!);
+  assert.doesNotMatch(studioPreset.creativeDirection.pose, /crossbody|shoulder fit|hand-held/i);
+  assert.match(studioPreset.creativeDirection.environment, /studio/i);
+  assert.deepEqual(createCreativePresetMetadata(studioPreset, family.variants[0]!.id), {
+    id: "bags-studio", title: "Studio", category: "bags", vertical: "bags", useCase: "bags",
+    version: "preset-system-v2", familyId: "bags-studio", variantId: family.variants[0]!.id,
+  });
+});
+
+test("bag family routing keeps Studio and Lifestyle product-only while On Model owns carry", () => {
+  const profile = { vertical: "bags", wearability: "wearable", interactionTargets: ["hand", "torso"] } as never;
+  const studio = resolveGenerationStrategy({ preset: requiredPreset("bags-studio"), presetFamilyId: "bags-studio", productProfile: profile, userPrompt: "" });
+  const lifestyle = resolveGenerationStrategy({ preset: requiredPreset("bags-lifestyle"), presetFamilyId: "bags-lifestyle", productProfile: profile, userPrompt: "" });
+  const onModel = resolveGenerationStrategy({ preset: requiredPreset("bags-on-model"), presetFamilyId: "bags-on-model", productProfile: profile, userPrompt: "" });
+  const requestedCarry = resolveGenerationStrategy({ preset: requiredPreset("bags-studio"), presetFamilyId: "bags-studio", productProfile: profile, userPrompt: "Woman carrying the tote on shoulder" });
+  assert.equal(studio.strategy, "rigid_product");
+  assert.equal(lifestyle.strategy, "rigid_product");
+  assert.equal(onModel.strategy, "bags_on_model");
+  assert.notEqual(studio.strategy, "bags_on_model");
+  assert.notEqual(lifestyle.strategy, "bags_on_model");
+  assert.notEqual(lifestyle.strategy, "bags_handheld");
+  assert.equal(requestedCarry.strategy, "bags_on_model");
+  assert.match(buildPresetVariantDirection(requiredPreset("bags-on-model"), getPresetFamily("bags-on-model")!.variants[0]!).creativeDirection.pose, /crossbody only with its source crossbody strap/i);
+});
+
+test("reference interaction remains authoritative over bag preset strategy", () => {
+  const result = resolveGenerationStrategy({
+    preset: requiredPreset("bags-studio"), presetFamilyId: "bags-studio", hasReference: true,
+    productProfile: { vertical: "bags", wearability: "wearable", interactionTargets: ["hand", "torso"] } as never,
+    referenceInteraction: "worn", userPrompt: "",
+  });
+  assert.equal(result.strategy, "bags_on_model");
+});
+
+test("Bag Studio and Aesthetic Environment prompts suppress humans unless strategy is explicitly overridden", () => {
+  const studioFamily = { selectedSceneFamily: "bags_studio", suitableSceneFamilies: [], avoidedSceneFamilies: [], reason: "preset", confidence: "high", source: "trusted_preset" } as never;
+  const noReference = buildImageGenerationPromptWithPolicy("A premium tabletop studio bag photograph.", "pixel_lock", {
+    strategy: "rigid_product", useCase: "bags", productProfile: null, sceneSuitability: studioFamily,
+    presetFamilyId: "bags-studio", generationImages: [{ role: "product_identity_source" } as never],
+  }).prompt;
+  assert.match(noReference, /no people, no models, no hands, no body contact, no worn bag, no carry interaction/i);
+  const withReference = buildImageGenerationPromptWithPolicy("A premium bag photograph.", "reference_edit", {
+    strategy: "rigid_product", useCase: "bags", productProfile: null, sceneSuitability: studioFamily,
+    presetFamilyId: "bags-studio", generationImages: [{ role: "product_identity_source" }, { role: "scene_reference" }] as never,
+  }).prompt;
+  assert.match(withReference, /BAG STUDIO PRESET COMPLIANCE/);
+  const lifestyle = buildImageGenerationPromptWithPolicy("A premium bag in a beautiful environment.", "pixel_lock", {
+    strategy: "rigid_product", useCase: "bags", productProfile: null,
+    presetFamilyId: "bags-lifestyle", generationImages: [{ role: "product_identity_source" } as never],
+  }).prompt;
+  assert.match(lifestyle, /product-only aesthetic environment/i);
+  assert.match(lifestyle, /no people, no models, no hands, no worn bag/i);
+  const explicitHumanOverride = buildImageGenerationPromptWithPolicy("A woman carrying the bag.", "pixel_lock", {
+    strategy: "bags_on_model", useCase: "bags", productProfile: null,
+    presetFamilyId: "bags-lifestyle", generationImages: [{ role: "product_identity_source" } as never],
+  }).prompt;
+  assert.doesNotMatch(explicitHumanOverride, /BAG AESTHETIC ENVIRONMENT PRESET COMPLIANCE/);
+});
+
+test("bag families expose distinct compliant internal variants", () => {
+  const onModel = getPresetFamily("bags-on-model")!;
+  const studio = getPresetFamily("bags-studio")!;
+  const lifestyle = getPresetFamily("bags-lifestyle")!;
+  assert.ok(new Set(onModel.variants.map(({ environmentDirection }) => environmentDirection)).size >= 6);
+  assert.ok(onModel.variants.every(({ environmentDirection }) => /woman|model/i.test(environmentDirection)));
+  assert.ok(studio.variants.every(({ environmentDirection }) => /studio/i.test(environmentDirection)));
+  assert.ok(studio.variants.every(({ environmentDirection }) => /no people|no model|no human|product-only|unsupported by people/i.test(environmentDirection)));
+  assert.ok(new Set(lifestyle.variants.map(({ environmentDirection }) => environmentDirection)).size >= 6);
+  assert.ok(lifestyle.variants.every(({ environmentDirection }) => /product-only/i.test(environmentDirection)));
+  assert.ok(lifestyle.variants.every(({ environmentDirection }) => /no people|no person|no human|without people/i.test(environmentDirection)));
 });
 
 test("family and resolved variant metadata persist with the v2 version", () => {

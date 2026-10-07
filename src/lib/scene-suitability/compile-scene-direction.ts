@@ -34,7 +34,7 @@ const directions = {
   bags_luxury_still_life: "Luxury still life with a fully readable bag silhouette and distinctive source construction.",
   bags_street_editorial: "Street editorial led by the bag; keep the product large, unobstructed, and identity-accurate.",
   bags_travel_lifestyle: "Travel lifestyle setting with the bag visible and supported; the environment remains secondary.",
-  bags_studio: "Studio bag hero with full body, handles, closure, logo, and hardware clearly readable.",
+  bags_studio: "Product-only studio bag hero with full body, handles, closure, logo, and hardware clearly readable. Use a tabletop, pedestal, seamless backdrop, or restrained abstract set piece with controlled studio lighting. No person, model, hand, shoulder carry, worn bag, body contact, fashion portrait, walking scene, or lifestyle environment unless an explicit user instruction requires a person.",
 } as const;
 
 export function compileSceneDirection(resolution: SceneSuitabilityResolution | null, productProfile?: ProductProfile | null): string {

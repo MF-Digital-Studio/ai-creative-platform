@@ -173,9 +173,9 @@ export function DashboardMobileNav({ displayName }: { displayName?: string | nul
               <span className="dashboard-drawer-caption">{t("workspaceGroup")}</span>
               {dashboardPrimaryNavigation.map((item) => renderItem(item, item.key === "home" ? pathname === "/dashboard" : item.key === "projects" ? pathname.startsWith("/dashboard/projects") : false))}
             </nav>
-            <div className="dashboard-drawer-plan-slot"><DashboardPlanCard /></div>
             <div className="dashboard-drawer-spacer" />
             <div className="dashboard-drawer-footer">
+              <div className="dashboard-drawer-plan-slot"><DashboardPlanCard /></div>
               <nav aria-label={t("secondaryLabel")} className="dashboard-drawer-nav dashboard-drawer-nav-secondary">
                 <span className="dashboard-drawer-caption">{t("accountGroup")}</span>
                 {dashboardFooterNavigation.map((item) => renderItem(item, pathname === item.href))}

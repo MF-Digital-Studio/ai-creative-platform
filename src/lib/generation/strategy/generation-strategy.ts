@@ -168,9 +168,23 @@ export function resolveGenerationStrategy(input: {
   productContext?: GenerationProductContext | null;
   requestedPreservationMode?: ProductPreservationMode | null;
   referenceInteraction?: TrustedReferenceInteraction | null;
+  presetFamilyId?: string | null;
+  hasReference?: boolean;
   userPrompt: string;
 }): GenerationStrategyResolution {
   const context = resolveImageGenerationContext(input.userPrompt, input.preset?.useCase);
+
+  if (input.presetFamilyId?.startsWith("bags-") && !input.hasReference) {
+    const explicitBagCarry = /\b(?:handheld|hand held|carry|carrying|shoulder|crossbody|cross-body|under-arm|under arm|on model|worn|wearing|person|woman|man|model)\b/i.test(input.userPrompt);
+    if (explicitBagCarry) return resolution("bags_on_model", "prompt_intent", context.visualIntent);
+    if (input.presetFamilyId === "bags-on-model") return resolution("bags_on_model", "preset_strategy_hint", context.visualIntent);
+    return resolution("rigid_product", "preset_strategy_hint", context.visualIntent);
+  }
+
+  if (input.presetFamilyId?.startsWith("bags-") && input.hasReference) {
+    const referenceRequestsCarry = input.referenceInteraction === "held" || input.referenceInteraction === "worn";
+    if (referenceRequestsCarry) return resolution("bags_on_model", "product_profile", context.visualIntent);
+  }
 
   if (isProductProfile(input.productProfile)) {
     return resolution(

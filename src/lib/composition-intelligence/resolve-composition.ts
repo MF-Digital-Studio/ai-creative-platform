@@ -31,7 +31,7 @@ export function resolveComposition(input: ResolveCompositionInput): CompositionP
   const source = macro && canUseMacro ? "explicit_user_intent" : referenceClose && canUseMacro ? "reference_style" : input.presetId ? "preset_hint" : input.sceneFamily ? "scene_template" : "safe_fallback";
   const profile: CompositionProfile = { ...template, source, version: COMPOSITION_INTELLIGENCE_VERSION };
   if ((macro || referenceClose) && canUseMacro) return { ...profile, framing: "macro", subjectScale: "extreme_close", cameraDistance: "macro", depthOfField: "shallow_product_locked" };
-  if (close && profile.framing === "medium") return { ...profile, framing: "medium_close", cameraDistance: "close", source: "explicit_user_intent" };
+  if (close && profile.framing === "medium" && !(family === "bags_studio" && input.presetId)) return { ...profile, framing: "medium_close", cameraDistance: "close", source: "explicit_user_intent" };
   // Wide/full-body wording is intentionally ignored for small product families.
   if (unsafeWide && (family.startsWith("jewelry_") || family === "watch_on_wrist")) return profile;
   return profile;

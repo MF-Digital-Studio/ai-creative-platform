@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ImageGenerationQuality } from "@/lib/generation/types";
+import { createNotification } from "@/lib/notifications/create-notification";
 
 const generationFields = [
   "id",
@@ -97,6 +98,8 @@ export async function getProjectGenerations(
     if (stalled) {
       generation.status = "failed";
       generation.error_message = "queue_stalled";
+      const { data: project } = await supabase.from("projects").select("title").eq("id", projectId).eq("user_id", userId).maybeSingle();
+      if (project) await createNotification({ userId, type: "generation_failed", projectId, projectName: project.title, generationId: generation.id });
       console.info("[generation-queue] status_transition", { generationId: generation.id, from: "queued", to: "failed" });
     }
   }
