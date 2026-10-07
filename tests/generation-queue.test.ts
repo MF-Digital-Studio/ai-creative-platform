@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { dispatchQueuedGeneration } from "../src/lib/generation/dispatch-queued-generation";
 
-test("queued generation dispatches once and passes its ID to the processor", async () => {
+test("queued generation enqueues once and passes only its ID", async () => {
   const received: string[] = [];
   const oldInfo = console.info;
   const diagnostics: string[] = [];
@@ -11,32 +11,31 @@ test("queued generation dispatches once and passes its ID to the processor", asy
   let result: boolean;
   try { result = await dispatchQueuedGeneration("generation-1", async (id) => {
     received.push(id);
-    return { ok: true };
-  }, async () => assert.fail("successful dispatch must not mark failed"));
+  });
   } finally { console.info = oldInfo; }
   assert.equal(result, true);
   assert.deepEqual(received, ["generation-1"]);
-  assert.deepEqual(diagnostics, ["[generation-dispatch] start", "[generation-dispatch] pipeline_entered"]);
+  assert.deepEqual(diagnostics, ["[background-job] enqueued"]);
 });
 
-test("dispatch exceptions persist terminal failure even when failure handling itself throws", async () => {
+test("enqueue exceptions return false", async () => {
   const oldError = console.error;
   console.error = () => {};
   try {
-    await assert.doesNotReject(() => dispatchQueuedGeneration("generation-3", async () => { throw new Error("provider offline"); }, async () => { throw new Error("database offline"); }));
+    assert.equal(await dispatchQueuedGeneration("generation-3", async () => { throw new Error("queue offline"); }), false);
   } finally {
     console.error = oldError;
   }
 });
 
-test("failed dispatch marks the queued generation failed", async () => {
-  const failed: string[] = [];
+test("dispatch never executes the image pipeline in the request", async () => {
+  let enqueueFinished = false;
   const originalError = console.error;
   console.error = () => {};
   try {
-    const result = await dispatchQueuedGeneration("generation-2", async () => ({ ok: false, message: "generationFailed" }), async (id) => { failed.push(id); });
-    assert.equal(result, false);
-    assert.deepEqual(failed, ["generation-2"]);
+    const result = await dispatchQueuedGeneration("generation-2", async () => { enqueueFinished = true; });
+    assert.equal(result, true);
+    assert.equal(enqueueFinished, true);
   } finally {
     console.error = originalError;
   }

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { markAllNotificationsRead, markNotificationRead } from "@/app/[locale]/dashboard/notification-actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { useDismissiblePopover } from "@/hooks/use-dismissible-popover";
-import { countUnreadNotifications, getNotificationHref, markAllNotificationsReadInList, markNotificationReadInList, type NotificationItem, type NotificationType } from "@/lib/notifications/types";
+import { countUnreadNotifications, getNotificationHref, markAllNotificationsReadInList, markNotificationReadInList, maxVisibleNotifications, type NotificationItem, type NotificationType } from "@/lib/notifications/types";
 
 type NotificationCenterProps = {
   initialItems: NotificationItem[];
@@ -33,7 +33,7 @@ export function NotificationCenter({ initialItems, loadFailed = false, renderedA
   const router = useRouter();
   const { close, isOpen, rootRef, toggle, triggerRef } = useDismissiblePopover();
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState(() => initialItems.slice(0, maxVisibleNotifications));
   const [isPending, startTransition] = useTransition();
   const unreadCount = countUnreadNotifications(items);
   const groups = useMemo(() => ({

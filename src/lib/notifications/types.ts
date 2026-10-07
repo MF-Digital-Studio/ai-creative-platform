@@ -7,6 +7,8 @@ export const notificationTypes = [
 
 export type NotificationType = (typeof notificationTypes)[number];
 
+export const maxVisibleNotifications = 5;
+
 export type NotificationItem = {
   id: string;
   type: NotificationType;

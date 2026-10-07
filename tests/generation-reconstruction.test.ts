@@ -12,16 +12,17 @@ test("creation persists Sunburst and xhigh defaults with environment override", 
   assert.match(source, /quality: "xhigh"/);
 });
 
-test("server-side dispatch follows successful queue insert and runner has atomic queued guard", async () => {
+test("server action commits before durable enqueue and runner has atomic queued guard", async () => {
   const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
   const dispatch = await readFile("src/lib/generation/dispatch-queued-generation.ts", "utf8");
-  assert.match(source, /dispatchQueuedGeneration\(generation\.id,[\s\S]{0,180}\(\) => runQueuedImageGeneration\(project\.id, generation\.id\)/);
+  assert.match(source, /\.insert\([\s\S]+dispatchQueuedGeneration\(generation\.id\)/);
+  assert.doesNotMatch(source, /dispatchQueuedGeneration\(generation\.id,[\s\S]{0,180}runQueuedImageGeneration/);
   assert.match(source, /\.eq\("status", "queued"\)\s*\.select\("id"\)/);
-  assert.match(dispatch, /await run\(generationId\)/);
-  assert.match(dispatch, /\[generation-dispatch\] start/);
-  assert.match(dispatch, /\[generation-dispatch\] pipeline_entered/);
+  assert.match(dispatch, /await enqueue\(generationId\)/);
+  assert.match(dispatch, /tasks\.trigger\([\s\S]*"image-generation-v1"[\s\S]*\{ generationId \}/);
+  assert.match(dispatch, /\[background-job\] enqueued/);
   assert.match(source, /safeGenerationEvent\("provider", "request_start"/);
-  assert.match(source, /eq\("id", generationId\)\.eq\("status", "queued"\)/);
+  assert.match(source, /\.eq\("id", queuedGeneration\.id\)[\s\S]{0,120}\.eq\("status", "queued"\)/);
 });
 
 test("human realism prompt is included for visible model strategies", () => {

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { countUnreadNotifications, getNotificationHref, markAllNotificationsReadInList, markNotificationReadInList, notificationTypes, type NotificationItem } from "../src/lib/notifications/types";
+import { countUnreadNotifications, getNotificationHref, markAllNotificationsReadInList, markNotificationReadInList, maxVisibleNotifications, notificationTypes, type NotificationItem } from "../src/lib/notifications/types";
 
 const baseItem: NotificationItem = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -16,6 +16,12 @@ const baseItem: NotificationItem = {
 
 test("V1 supports the four final generation and image-edit events", () => {
   assert.deepEqual(notificationTypes, ["generation_completed", "generation_failed", "image_edit_completed", "image_edit_failed"]);
+});
+
+test("notification panel is limited to the five most recent items", () => {
+  assert.equal(maxVisibleNotifications, 5);
+  const source = readFileSync("src/lib/notifications/get-notifications.ts", "utf8");
+  assert.match(source, /\.order\("created_at", \{ ascending: false \}\)[\s\S]*\.limit\(maxVisibleNotifications\)/);
 });
 
 test("unread notifications are counted and local read state is deterministic", () => {

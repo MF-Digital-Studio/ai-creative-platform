@@ -4,6 +4,8 @@ import { useState, type ReactNode } from "react";
 import type { GenerationStatus } from "@/lib/projects/get-projects";
 import { ProjectImageViewer } from "@/components/projects/project-image-viewer";
 import {AppState} from "@/components/ui/app-state";
+import { FavoriteButton } from "@/components/ui/favorite-button";
+import { filterFavoriteGenerations, type FavoriteGenerationResult } from "@/lib/generations/favorite-generation";
 
 export type GenerationGalleryItem = {
   id: string;
@@ -19,6 +21,7 @@ export type GenerationGalleryItem = {
   aspectRatio: string | null;
   cost: string | null;
   direction: string;
+  isFavorite: boolean;
 };
 
 type GalleryMessages = {
@@ -52,6 +55,13 @@ type GalleryMessages = {
   processingHeading: string;
   processingDescription: string;
   historyHeading: string;
+  favoriteAdd: string;
+  favoriteRemove: string;
+  favoriteError: string;
+  filterAll: string;
+  filterFavorites: string;
+  favoritesEmptyHeading: string;
+  favoritesEmptyDescription: string;
 };
 
 type GenerationGalleryProps = {
@@ -59,6 +69,7 @@ type GenerationGalleryProps = {
   controls: ReactNode;
   runActions: { id: string; node: ReactNode }[];
   onSelectionChange: (id: string | null) => void;
+  favoriteAction: (generationId: string, nextValue: boolean) => Promise<FavoriteGenerationResult>;
   messages: GalleryMessages;
   initialSelectedGenerationId?: string | null;
 };
@@ -82,11 +93,37 @@ function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messag
   </section>;
 }
 
-export function GenerationGallery({ items, controls, runActions, onSelectionChange, messages, initialSelectedGenerationId }: GenerationGalleryProps) {
+export function GenerationGallery({ items, controls, runActions, onSelectionChange, favoriteAction, messages, initialSelectedGenerationId }: GenerationGalleryProps) {
+  const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
   const [selection, setSelection] = useState<{ id: string; latestId: string } | null>(() => initialSelectedGenerationId ? { id: initialSelectedGenerationId, latestId: items[0]?.id ?? "" } : null);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const latestId = items[0]?.id ?? "";
-  const selected = selection?.latestId === latestId ? items.find((item) => item.id === selection.id) ?? items[0] : items[0];
+  const [filter, setFilter] = useState<"all" | "favorites">("all");
+  const [pendingFavoriteIds, setPendingFavoriteIds] = useState<Set<string>>(() => new Set());
+  const [favoriteError, setFavoriteError] = useState(false);
+  const galleryItems = items.map((item) => favoriteOverrides[item.id] === undefined ? item : { ...item, isFavorite: favoriteOverrides[item.id] });
+  const latestId = galleryItems[0]?.id ?? "";
+  const selected = selection?.latestId === latestId ? galleryItems.find((item) => item.id === selection.id) ?? galleryItems[0] : galleryItems[0];
+  const filteredItems = filterFavoriteGenerations(galleryItems, filter);
+
+  async function toggleFavorite(item: GenerationGalleryItem) {
+    if (item.status !== "succeeded" || !item.previewUrl || pendingFavoriteIds.has(item.id)) return;
+    const nextValue = !item.isFavorite;
+    setFavoriteError(false);
+    setFavoriteOverrides((current) => ({ ...current, [item.id]: nextValue }));
+    setPendingFavoriteIds((current) => new Set(current).add(item.id));
+    let failed = false;
+    try {
+      const result = await favoriteAction(item.id, nextValue);
+      failed = result.status === "error";
+    } catch {
+      failed = true;
+    }
+    if (failed) {
+      setFavoriteOverrides((current) => ({ ...current, [item.id]: item.isFavorite }));
+      setFavoriteError(true);
+    }
+    setPendingFavoriteIds((current) => { const next = new Set(current); next.delete(item.id); return next; });
+  }
   function openFullscreen() {
     if (selected?.previewUrl) setViewerOpen(true);
   }
@@ -97,6 +134,7 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
         <div className="project-canvas-toolbar">
           <span className="dashboard-status" data-status={selected?.status ?? "draft"}><span aria-hidden="true" />{selected?.statusLabel ?? messages.emptyHeading}</span>
           <div>
+            {selected?.status === "succeeded" && selected.previewUrl ? <FavoriteButton active={selected.isFavorite} disabled={pendingFavoriteIds.has(selected.id)} label={selected.isFavorite ? messages.favoriteRemove : messages.favoriteAdd} onClick={() => void toggleFavorite(selected)} /> : null}
             <a href="#project-image-edit">{messages.edit}</a>
             <button type="button" disabled={!selected?.previewUrl} onClick={openFullscreen}>{messages.openFullscreen}</button>
           </div>
@@ -120,9 +158,10 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
         {selected ? <OutputDetails item={selected} messages={messages} /> : null}
       </aside>
     </div>
+    {favoriteError ? <p className="favorite-feedback" role="alert">{messages.favoriteError}</p> : null}
     <section className="project-generation-history" aria-labelledby="project-generation-history-heading">
-      <div className="dashboard-section-heading"><h2 id="project-generation-history-heading">{messages.historyHeading}</h2></div>
-      {items.length > 0 ? <ul className="project-generation-history-list" aria-label={messages.historyHeading}>{items.map((item) => <li key={item.id} className="project-generation-history-item">
+      <div className="dashboard-section-heading project-generation-history-heading"><h2 id="project-generation-history-heading">{messages.historyHeading}</h2><div className="project-generation-filter" role="group" aria-label={messages.historyHeading}><button type="button" aria-pressed={filter === "all"} onClick={() => setFilter("all")}>{messages.filterAll}</button><button type="button" aria-pressed={filter === "favorites"} onClick={() => setFilter("favorites")}>{messages.filterFavorites}</button></div></div>
+      {filteredItems.length > 0 ? <ul className="project-generation-history-list" aria-label={messages.historyHeading}>{filteredItems.map((item) => <li key={item.id} className="project-generation-history-item">
         <button type="button" className="project-generation-history-select" aria-pressed={item.id === selected?.id} aria-label={`${messages.selectOutput}: ${item.createdAt}`} onClick={() => { setSelection({ id: item.id, latestId }); onSelectionChange(item.status === "succeeded" && item.previewUrl ? item.id : null); }}>
           <span className="project-generation-history-media">{item.previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -130,8 +169,9 @@ export function GenerationGallery({ items, controls, runActions, onSelectionChan
           ) : <span aria-hidden="true" />}</span>
           <span className="project-generation-history-copy"><strong>{item.typeLabel}</strong><time dateTime={item.createdDateTime}>{item.createdAt}</time><span className="dashboard-status" data-status={item.status}><span aria-hidden="true" />{item.statusLabel}</span></span>
         </button>
+        {item.status === "succeeded" && item.previewUrl ? <FavoriteButton active={item.isFavorite} disabled={pendingFavoriteIds.has(item.id)} className="project-generation-favorite" label={item.isFavorite ? messages.favoriteRemove : messages.favoriteAdd} onClick={() => void toggleFavorite(item)} /> : null}
         {runActions.find((action) => action.id === item.id)?.node}
-      </li>)}</ul> : <AppState compact icon="spark" title={messages.emptyHeading} description={messages.emptyDescription} />}
+      </li>)}</ul> : <AppState compact icon="spark" title={filter === "favorites" ? messages.favoritesEmptyHeading : messages.emptyHeading} description={filter === "favorites" ? messages.favoritesEmptyDescription : messages.emptyDescription} />}
     </section>
     {selected?.previewUrl ? <ProjectImageViewer src={selected.previewUrl} alt={selected.alt} open={viewerOpen} closeLabel={messages.closeFullscreen} zoomInLabel={messages.zoomImage} zoomOutLabel={messages.zoomOutImage} resetLabel={messages.resetImageZoom} onOpenChange={setViewerOpen} /> : null}
   </>;

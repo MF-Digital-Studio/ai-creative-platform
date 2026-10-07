@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { isNotificationType, type NotificationItem } from "@/lib/notifications/types";
+import { isNotificationType, maxVisibleNotifications, type NotificationItem } from "@/lib/notifications/types";
 
 type NotificationRow = {
   id: string;
@@ -18,7 +18,7 @@ export async function getRecentNotifications(userId: string): Promise<{ items: N
     .select("id,type,project_id,generation_id,is_read,created_at,metadata")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(maxVisibleNotifications);
 
   if (error) throw new Error("Unable to load notifications.");
 

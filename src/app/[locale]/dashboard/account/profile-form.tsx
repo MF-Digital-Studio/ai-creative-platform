@@ -79,7 +79,7 @@ export function ProfileForm({ displayName, messages }: ProfileFormProps) {
       ) : null}
 
       <div className="account-profile-actions">
-        <Button type="submit" variant="primary" size="md" disabled={pending} aria-busy={pending}>
+        <Button type="submit" variant="primary" size="sm" disabled={pending} aria-busy={pending}>
           {pending ? messages.saving : messages.save}
         </Button>
       </div>

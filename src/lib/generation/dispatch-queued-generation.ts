@@ -1,25 +1,26 @@
+import { tasks } from "@trigger.dev/sdk";
+
+export type DurableGenerationEnqueuer = (generationId: string) => Promise<void>;
+
+export async function enqueueImageGeneration(generationId: string): Promise<void> {
+  await tasks.trigger(
+    "image-generation-v1",
+    { generationId },
+    { idempotencyKey: `image-generation:${generationId}`, idempotencyKeyTTL: "24h" },
+  );
+}
+
 export async function dispatchQueuedGeneration(
   generationId: string,
-  run: (generationId: string) => Promise<{ ok: boolean; message?: string }>,
-  markFailed: (generationId: string) => Promise<void>,
+  enqueue: DurableGenerationEnqueuer = enqueueImageGeneration,
 ): Promise<boolean> {
-  console.info("[generation-dispatch] start", { generationId });
+  const startedAt = Date.now();
   try {
-    console.info("[generation-dispatch] pipeline_entered", { generationId });
-    const result = await run(generationId);
-    if (result.ok) return true;
-    console.error("[generation-queue] dispatch_failed", { generationId, errorName: "GenerationDispatchError", errorCode: result.message ?? "unknown" });
-  } catch (error) {
-    console.error("[generation-queue] dispatch_failed", {
-      generationId,
-      errorName: error instanceof Error ? error.name : "UnknownError",
-      errorCode: "dispatch_exception",
-    });
-  }
-  try {
-    await markFailed(generationId);
+    await enqueue(generationId);
+    console.info("[background-job] enqueued", { generationId, attempt: 0, duration: Date.now() - startedAt });
+    return true;
   } catch {
-    console.error("[generation-queue] failure_persist_failed", { generationId, errorCode: "failure_persistence_exception" });
+    console.error("[background-job] failed", { generationId, attempt: 0, failureCategory: "enqueue_failed", duration: Date.now() - startedAt });
+    return false;
   }
-  return false;
 }

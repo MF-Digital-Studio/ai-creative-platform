@@ -5,6 +5,8 @@ import { ProjectImageViewer } from "@/components/projects/project-image-viewer";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { Link } from "@/i18n/navigation";
 import type { DashboardGeneration } from "@/lib/generations/get-dashboard-generations";
+import { FavoriteButton } from "@/components/ui/favorite-button";
+import type { FavoriteGenerationResult } from "@/lib/generations/favorite-generation";
 
 type Messages = {
   heading: string;
@@ -20,17 +22,44 @@ type Messages = {
   zoomIn: string;
   zoomOut: string;
   resetZoom: string;
+  favoriteAdd: string;
+  favoriteRemove: string;
+  favoriteError: string;
 };
 
-export function RecentGenerationsGallery({ generations, messages, locale }: { generations: DashboardGeneration[]; messages: Messages; locale: string }) {
-  const completed = generations.filter((generation) => generation.status === "succeeded" && generation.type === "image" && generation.previewUrl);
+export function RecentGenerationsGallery({ generations, messages, locale, favoriteAction }: { generations: DashboardGeneration[]; messages: Messages; locale: string; favoriteAction: (generationId: string, nextValue: boolean) => Promise<FavoriteGenerationResult> }) {
+  const [generationItems, setGenerationItems] = useState(generations);
+  const [pendingFavoriteIds, setPendingFavoriteIds] = useState<Set<string>>(() => new Set());
+  const [favoriteError, setFavoriteError] = useState(false);
+  const completed = generationItems.filter((generation) => generation.status === "succeeded" && generation.type === "image" && generation.previewUrl);
   const [viewerGenerationId, setViewerGenerationId] = useState<string | null>(null);
   const [menuGenerationId, setMenuGenerationId] = useState<string | null>(null);
   const viewerGeneration = completed.find((generation) => generation.id === viewerGenerationId) ?? null;
   const dateFormatter = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" });
 
+  async function toggleFavorite(generation: DashboardGeneration) {
+    if (pendingFavoriteIds.has(generation.id)) return;
+    const nextValue = !generation.isFavorite;
+    setFavoriteError(false);
+    setGenerationItems((current) => current.map((item) => item.id === generation.id ? { ...item, isFavorite: nextValue } : item));
+    setPendingFavoriteIds((current) => new Set(current).add(generation.id));
+    let failed = false;
+    try {
+      const result = await favoriteAction(generation.id, nextValue);
+      failed = result.status === "error";
+    } catch {
+      failed = true;
+    }
+    if (failed) {
+      setGenerationItems((current) => current.map((item) => item.id === generation.id ? { ...item, isFavorite: generation.isFavorite } : item));
+      setFavoriteError(true);
+    }
+    setPendingFavoriteIds((current) => { const next = new Set(current); next.delete(generation.id); return next; });
+  }
+
   return <section className="dashboard-content-section" aria-labelledby="recent-generations-title">
     <div className="dashboard-section-heading"><h2 id="recent-generations-title">{messages.heading}</h2></div>
+    {favoriteError ? <p className="favorite-feedback" role="alert">{messages.favoriteError}</p> : null}
     {completed.length === 0 ? <div className="dashboard-empty-state"><div className="dashboard-empty-mark" aria-hidden="true"><DashboardIcon name="assets" /></div><div><h3>{messages.emptyHeading}</h3><p>{messages.emptyDescription}</p></div><a href="#composer" className="dashboard-view-all-button">{messages.start}</a></div> :
       <ul className="dashboard-generation-grid">{completed.map((generation) => {
         const title = generation.projectTitle?.trim() || messages.untitled;
@@ -46,6 +75,7 @@ export function RecentGenerationsGallery({ generations, messages, locale }: { ge
               {/* Private signed Storage URLs bypass Next's public image optimizer. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={generation.previewUrl as string} alt={alt} loading="lazy" />
+              <FavoriteButton active={generation.isFavorite} disabled={pendingFavoriteIds.has(generation.id)} className="dashboard-generation-favorite" label={generation.isFavorite ? messages.favoriteRemove : messages.favoriteAdd} onClick={() => void toggleFavorite(generation)} />
               <div className="dashboard-generation-actions" aria-label={title}>
                 <button type="button" aria-label={`${messages.fullscreen}: ${title}`} onClick={() => setViewerGenerationId(generation.id)}>{messages.fullscreen}</button>
                 <Link href={`/dashboard/projects/${generation.projectId}?generation=${encodeURIComponent(generation.id)}#project-controls-heading`}>{messages.edit}</Link>

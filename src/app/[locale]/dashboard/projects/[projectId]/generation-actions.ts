@@ -180,7 +180,7 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
 type RunQueuedImageGenerationError = "generationFailed" | "notQueued";
 
 export type RunQueuedImageGenerationResult =
-  | { ok: false; message: RunQueuedImageGenerationError }
+  | { ok: false; message: RunQueuedImageGenerationError; retryable?: boolean; failureCategory?: string }
   | { ok: true };
 
 const projectGenerationFields = "id, user_id, title, creative_direction";
@@ -255,26 +255,6 @@ function resolveAspectRatio(value: unknown): AspectRatio {
 
 function resolvePreservationMode(value: unknown): ProductPreservationMode {
   return value === "pixel_lock" ? "pixel_lock" : "reference_edit";
-}
-
-async function markGenerationFailed(input: { generationId: string; processingStartedAt: Date; userId: string; projectId: string; projectName: string }) {
-  try {
-    const admin = getSupabaseAdminClient();
-    const completedAt = new Date();
-    await admin
-      .from("generations")
-      .update({
-        status: "failed",
-        error_message: generationFailureCode,
-        processing_completed_at: completedAt.toISOString(),
-        processing_duration_ms: completedAt.getTime() - input.processingStartedAt.getTime(),
-      })
-      .eq("id", input.generationId)
-      .eq("status", "processing");
-    await createNotification({ userId: input.userId, type: "generation_failed", projectId: input.projectId, projectName: input.projectName, generationId: input.generationId });
-  } catch {
-    // The primary action result remains safe even if a failure status cannot be persisted.
-  }
 }
 
 export async function createQueuedImageGeneration(
@@ -411,17 +391,18 @@ export async function createQueuedImageGeneration(
 
     safeGenerationEvent("create", "insert_success", { generationId: generation.id });
     safeGenerationEvent("queue", "created", { generationId: generation.id });
-    const dispatchSucceeded = await dispatchQueuedGeneration(generation.id, () => runQueuedImageGeneration(project.id, generation.id), async (failedId) => {
-      const { error: dispatchError } = await admin.from("generations").update({
+    const dispatchSucceeded = await dispatchQueuedGeneration(generation.id);
+    if (!dispatchSucceeded) {
+      const { data: failedGeneration, error: dispatchError } = await admin.from("generations").update({
         status: "failed", error_message: "dispatch_failed", processing_completed_at: new Date().toISOString(),
-      }).eq("id", failedId).eq("status", "queued");
-      if (dispatchError) safeGenerationEvent("queue", "queue_stalled", { generationId: failedId });
+      }).eq("id", generation.id).eq("status", "queued").select("id").maybeSingle();
+      if (dispatchError) safeGenerationEvent("queue", "queue_stalled", { generationId: generation.id });
       else {
-        safeGenerationEvent("queue", "status_transition", { generationId: failedId, status: "failed" });
-        await createNotification({ userId, type: "generation_failed", projectId: project.id, projectName: project.title, generationId: failedId });
+        safeGenerationEvent("queue", "status_transition", { generationId: generation.id, status: "failed" });
+        if (failedGeneration) await createNotification({ userId, type: "generation_failed", projectId: project.id, projectName: project.title, generationId: generation.id });
       }
-    });
-    if (!dispatchSucceeded) safeGenerationEvent("queue", "queue_stalled", { generationId: generation.id, status: "failed" });
+      return { ok: false, message: "creationFailed" };
+    }
 
     revalidatePath(`/${locale}/dashboard/projects/${project.id}`, "page");
 
@@ -432,20 +413,23 @@ export async function createQueuedImageGeneration(
 }
 
 export async function runQueuedImageGeneration(
-  projectId: string,
   generationId: string,
 ): Promise<RunQueuedImageGenerationResult> {
-  if (!uuidPattern.test(projectId) || !uuidPattern.test(generationId)) {
+  if (!uuidPattern.test(generationId)) {
     return { ok: false, message: "generationFailed" };
   }
 
-  const userId = await getAuthenticatedUserId();
-  if (!userId) {
+  const admin = getSupabaseAdminClient();
+  const { data: jobGeneration } = await admin.from("generations").select("project_id").eq("id", generationId).maybeSingle();
+  if (!jobGeneration) {
     return { ok: false, message: "generationFailed" };
   }
+  const projectId = jobGeneration.project_id;
+  const { data: owningProject } = await admin.from("projects").select("user_id").eq("id", projectId).maybeSingle();
+  if (!owningProject) return { ok: false, message: "generationFailed" };
+  const userId = owningProject.user_id;
 
   let processingStartedAt: Date | null = null;
-  let projectName = "";
   const generationStartedAt = Date.now();
   let performance: ReturnType<typeof createGenerationPerformanceRecorder> | null = null;
   const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, artworkAnalysisCalls: 0, repairCalls: 0 };
@@ -454,7 +438,7 @@ export async function runQueuedImageGeneration(
   let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null } | null = null;
 
   try {
-    const supabase = await createClient();
+    const supabase = admin;
     const { data: project, error: projectError } = await supabase
       .from("projects")
       .select("id, user_id, title")
@@ -465,7 +449,6 @@ export async function runQueuedImageGeneration(
     if (projectError || !project || project.user_id !== userId) {
       return { ok: false, message: "generationFailed" };
     }
-    projectName = project.title;
 
     const { data: generation, error: generationError } = await supabase
       .from("generations")
@@ -511,7 +494,6 @@ export async function runQueuedImageGeneration(
       return { ok: false, message: "generationFailed" };
     }
 
-    const admin = getSupabaseAdminClient();
     processingStartedAt = new Date();
     performance = createGenerationPerformanceRecorder(queuedGeneration.id, generationStartedAt);
     const { data: processingGeneration, error: processingError } = await admin
@@ -532,6 +514,7 @@ export async function runQueuedImageGeneration(
     if (processingError || !processingGeneration) {
       return { ok: false, message: "notQueued" };
     }
+    console.info("[background-job] claim_success", { generationId, attempt: 0, duration: Date.now() - generationStartedAt });
     safeGenerationEvent("queue", "status_transition", { generationId, status: "processing" });
 
     const { data: inputImage, error: downloadError } = await performance.measure("asset_load", () => admin.storage
@@ -1551,20 +1534,9 @@ export async function runQueuedImageGeneration(
       }));
     }
     logDevelopmentGenerationEvent("failed", { generationId });
-    if (processingStartedAt) {
-      await markGenerationFailed({ generationId, processingStartedAt, userId, projectId, projectName });
-    } else {
-      const completedAt = new Date();
-      const { error: failureError } = await getSupabaseAdminClient().from("generations").update({
-        status: "failed",
-        error_message: generationFailureCode,
-        processing_completed_at: completedAt.toISOString(),
-      }).eq("id", generationId).eq("status", "queued");
-      if (failureError) safeGenerationEvent("queue", "failure_persist_failed", { generationId });
-      else safeGenerationEvent("queue", "status_transition", { generationId, status: "failed" });
-    }
     safeGenerationEvent("queue", "processor_exit", { generationId, status: "failed" });
-
-    return { ok: false, message: "generationFailed" };
+    const errorMessage = error instanceof Error ? error.message.toLowerCase() : "";
+    const retryable = /network|timeout|temporar|rate limit|download|upload|database|fetch failed|econn|5\d\d/.test(errorMessage);
+    return { ok: false, message: "generationFailed", retryable, failureCategory: retryable ? "transient_infrastructure" : "generation_failed" };
   }
 }

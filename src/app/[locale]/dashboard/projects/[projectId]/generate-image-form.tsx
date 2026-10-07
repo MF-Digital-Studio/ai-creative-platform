@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
@@ -9,6 +9,7 @@ import { AspectRatioPicker, type AspectRatioPickerMessages } from "@/components/
 import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
 import type { GenerationAspectRatio } from "@/lib/generation/types";
 import { type CreateQueuedImageGenerationResult } from "./generation-actions";
+import { getActiveGenerationStatuses } from "@/app/[locale]/dashboard/generation-status-actions";
 
 type GenerateImageFormProps = {
   action: (state: CreateQueuedImageGenerationResult | null, formData: FormData) => Promise<CreateQueuedImageGenerationResult>;
@@ -37,6 +38,26 @@ export function GenerateImageForm({ action, messages }: GenerateImageFormProps) 
   const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
   const pendingRef = useRef(false);
 
+  useEffect(() => {
+    const generationId = new URLSearchParams(window.location.search).get("generation");
+    if (!generationId || (generationState !== "queued" && generationState !== "processing")) return;
+    let cancelled = false;
+    const poll = async () => {
+      if (document.hidden) return;
+      const [generation] = await getActiveGenerationStatuses([generationId]);
+      if (cancelled || !generation) return;
+      setGenerationState(generation.status);
+      if (generation.status === "succeeded" || generation.status === "failed") {
+        pendingRef.current = false;
+        setModalOpen(false);
+        router.refresh();
+      }
+    };
+    const interval = window.setInterval(() => void poll(), 2500);
+    void poll();
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [generationState, router]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pendingRef.current) return;
@@ -48,7 +69,7 @@ export function GenerateImageForm({ action, messages }: GenerateImageFormProps) 
     try {
       const queued = await action(null, formData);
       if (!queued.ok) { setGenerationState("failed"); setMessage(messages[queued.message]); pendingRef.current = false; return; }
-      setGenerationState("processing");
+      setGenerationState("queued");
       router.replace(`?generation=${encodeURIComponent(queued.generationId)}`);
       router.refresh();
     } catch { setGenerationState("failed"); setMessage(messages.generationFailed); pendingRef.current = false; }

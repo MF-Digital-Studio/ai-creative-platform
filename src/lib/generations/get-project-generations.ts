@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ImageGenerationQuality } from "@/lib/generation/types";
 import { createNotification } from "@/lib/notifications/create-notification";
+import { isMissingFavoriteColumnError } from "@/lib/generations/favorite-generation";
 
 const generationFields = [
   "id",
@@ -28,6 +29,7 @@ const generationFields = [
   "processing_completed_at",
   "processing_duration_ms",
   "provider_metadata",
+  "is_favorite",
   "created_at",
   "updated_at",
 ].join(", ");
@@ -58,6 +60,7 @@ type ProjectGenerationRow = {
   processing_completed_at: string | null;
   processing_duration_ms: number | null;
   provider_metadata: Record<string, unknown> | null;
+  is_favorite: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -75,12 +78,29 @@ export async function getProjectGenerations(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const primaryResult = await supabase
     .from("generations")
     .select(generationFields)
     .eq("project_id", projectId)
     .order("created_at", { ascending: false })
     .limit(12);
+  let data = primaryResult.data as unknown[] | null;
+  let error = primaryResult.error;
+
+  if (isMissingFavoriteColumnError(error)) {
+    if (process.env.NODE_ENV === "development") console.warn("[generation-favorites] migration_pending", { migration: "20261007010000_add_generation_favorites.sql" });
+    const fallback = await supabase
+      .from("generations")
+      .select(generationFields.replace(", is_favorite", ""))
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(12);
+    data = fallback.data?.map((generation) => ({
+      ...(generation as unknown as Omit<ProjectGenerationRow, "is_favorite">),
+      is_favorite: false,
+    })) ?? null;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error("Unable to load project generations.");
@@ -88,12 +108,19 @@ export async function getProjectGenerations(
 
   const generations = (data ?? []) as unknown as ProjectGenerationRow[];
 
-  const staleBefore = Date.now() - 10 * 60 * 1000;
+  const staleQueuedBefore = Date.now() - 10 * 60 * 1000;
+  const staleProcessingBefore = Date.now() - 20 * 60 * 1000;
   for (const generation of generations) {
-    if (generation.status !== "queued" || new Date(generation.created_at).getTime() >= staleBefore) continue;
+    const referenceTime = generation.status === "processing" && generation.processing_started_at
+      ? new Date(generation.processing_started_at).getTime()
+      : new Date(generation.created_at).getTime();
+    const stale = generation.status === "queued"
+      ? referenceTime < staleQueuedBefore
+      : generation.status === "processing" && referenceTime < staleProcessingBefore;
+    if (!stale) continue;
     const { data: stalled } = await getSupabaseAdminClient().from("generations")
       .update({ status: "failed", error_message: "queue_stalled", processing_completed_at: new Date().toISOString() })
-      .eq("id", generation.id).eq("project_id", projectId).eq("status", "queued")
+      .eq("id", generation.id).eq("project_id", projectId).eq("status", generation.status)
       .select("id").maybeSingle();
     if (stalled) {
       generation.status = "failed";
