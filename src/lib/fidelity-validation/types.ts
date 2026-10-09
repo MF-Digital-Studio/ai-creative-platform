@@ -44,7 +44,7 @@ export type FidelityValidationResult = {
   issues: FidelityValidationIssue[];
   severity: FidelityIssueSeverity | null;
   retryRecommended: boolean;
-  commerciallyUsable: boolean;
+  commerciallyUsable: boolean | null;
   summary: string;
   version: string;
 };
@@ -53,8 +53,11 @@ export type FidelityValidationBrief = {
   vertical: SupportedVertical | "product";
   strategy: GenerationStrategy;
   humanRealism?: HumanRealismPolicy;
+  footwearAnatomyRequired?: boolean;
   sourceAuthority: string;
+  productImageCount?: number;
   referencePreservation: boolean;
+  presetOverrideReason?: "reference_authority" | null;
   productProfile: ProductProfile | null;
   sceneSuitability: SceneSuitabilityResolution | null;
   composition: CompositionProfile | null;
@@ -64,11 +67,21 @@ export type FidelityValidationBrief = {
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
   apparelArtworkIdentity?: { available: boolean; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
-  preset?: { familyId: string; variantId: string | null } | null;
+  preset?: {
+    familyId: string; variantId: string | null; vertical?: string;
+    allowedSceneTypes?: readonly string[]; disallowedSceneTypes?: readonly string[];
+    hardRules?: readonly string[]; softRules?: readonly string[];
+    presentationMode?: string | null;
+    humanPresence?: "none" | "partial" | "full" | null;
+    interactionMode?: string | null;
+    strictProductOnlyStudio?: boolean;
+  } | null;
+  variationHistory?: { recentVariantIds: readonly string[]; repeatedSceneCount: number } | null;
 };
 
 export type FidelityValidationInput = {
   originalProduct: Buffer;
+  supportingProducts?: Array<{ data: Buffer; mimeType: string }>;
   generatedImage: Buffer;
   originalMimeType: string;
   referenceBaseScene?: Buffer;
@@ -82,11 +95,13 @@ export type FidelityValidationInput = {
   composition: CompositionProfile | null;
   creativeCompliance: CreativeComplianceResolution | null;
   referenceStyleContext?: string | null;
+  referenceAuthority?: boolean;
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
   apparelArtworkIdentity?: { data: Buffer; mimeType: string; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
   exactProductApparel?: boolean;
-  preset?: { familyId: string; variantId: string | null } | null;
+  preset?: FidelityValidationBrief["preset"];
+  variationHistory?: FidelityValidationBrief["variationHistory"];
 };
 
 export type FidelityValidationClient = {

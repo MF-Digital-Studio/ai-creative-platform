@@ -31,6 +31,7 @@ import { resolveHumanRealismPolicy } from "@/lib/human-realism/human-realism-pol
 import { compileHumanRealismPrompt } from "@/lib/human-realism/compile-human-realism-prompt";
 import type { HumanFocusArea } from "@/lib/human-realism/types";
 import { compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
+import { footwearAnatomyPrompt, resolveFootwearAnatomyPolicy } from "@/lib/footwear/footwear-anatomy-policy";
 
 const productPreservationInstructions = [
   "The supplied product is the exact commercial product being advertised.",
@@ -123,6 +124,9 @@ export type ImageGenerationPromptOptions = {
   generationImages?: readonly GenerationImageInput[];
   aspectRatio?: GenerationAspectRatio;
   presetFamilyId?: string | null;
+  presetRules?: { allowedSceneTypes: readonly string[]; disallowedSceneTypes: readonly string[]; hardRules: readonly string[]; softRules: readonly string[]; variantId: string | null; presentationMode?: string | null; humanPresence?: "none" | "partial" | "full" | null } | null;
+  referenceAuthority?: boolean;
+  strictProductOnlyStudio?: boolean;
 };
 
 export function compileOutputFormatGuidance(aspectRatio: GenerationAspectRatio, vertical?: SupportedVertical | null): string {
@@ -149,8 +153,15 @@ export function buildImageGenerationPromptWithPolicy(
   const fashionOnModel = strategy === "fashion_on_model";
   const jewelryOnModel = strategy === "jewelry_on_model";
   const jewelryStillLife = strategy === "jewelry_still_life";
-  const category = isProductProfile(options.productProfile) ? options.productProfile.vertical : fashionOnModel ? "apparel" : strategy.startsWith("jewelry_") ? "jewelry" : strategy === "watch_on_wrist" ? "watches" : strategy === "footwear_on_model" ? "footwear" : strategy === "bags_on_model" ? "bags" : context.category;
+  const presetVertical = options.useCase && isSupportedVertical(options.useCase) ? options.useCase : null;
+  const strategyVertical = fashionOnModel ? "apparel" : strategy.startsWith("jewelry_") ? "jewelry" : strategy === "watch_on_wrist" ? "watches" : strategy === "footwear_on_model" ? "footwear" : strategy === "bags_on_model" ? "bags" : null;
+  const category = isProductProfile(options.productProfile) ? options.productProfile.vertical : presetVertical ?? strategyVertical ?? context.category;
   const vertical = isSupportedVertical(category) ? category : null;
+  const footwearAnatomy = resolveFootwearAnatomyPolicy({
+    vertical,
+    productProfile: isProductProfile(options.productProfile) ? options.productProfile : null,
+    creativeDirection,
+  });
   const humanRealism = resolveHumanRealismPolicy({ strategy, vertical, visibleHuman: options.visibleHuman, faceVisible: options.faceVisible, handsVisible: options.handsVisible });
   const humanRealismDirection = compileHumanRealismPrompt(humanRealism, vertical);
   const verticalQuality = vertical ? getVerticalQualityProfile(vertical) : null;
@@ -167,11 +178,29 @@ export function buildImageGenerationPromptWithPolicy(
     ? compileProductProfilePrompt(options.productProfile)
     : null;
   const sceneDirection = compileSceneDirection(options.sceneSuitability ?? null, isProductProfile(options.productProfile) ? options.productProfile : null);
-  const bagFamilyCompliance = vertical === "bags" && strategy !== "bags_on_model" && (options.presetFamilyId === "bags-studio" || options.sceneSuitability?.selectedSceneFamily === "bags_studio")
+  const bagFamilyCompliance = !options.referenceAuthority && vertical === "bags" && strategy !== "bags_on_model" && (options.presetFamilyId === "bags-studio" || options.sceneSuitability?.selectedSceneFamily === "bags_studio")
     ? "BAG STUDIO PRESET COMPLIANCE: Create product-only studio photography on a simple seamless or single-color studio background with controlled commercial lighting, a clean surface, pedestal, or block when useful, and a realistic shadow. Explicitly suppress: no people, no models, no hands, no body contact, no worn bag, no carry interaction, and no lifestyle environment."
-    : vertical === "bags" && strategy !== "bags_on_model" && options.presetFamilyId === "bags-lifestyle"
+    : !options.referenceAuthority && vertical === "bags" && strategy !== "bags_on_model" && options.presetFamilyId === "bags-lifestyle"
       ? "BAG AESTHETIC ENVIRONMENT PRESET COMPLIANCE: Create a product-only aesthetic environment. Place the bag naturally on a stable surface in the environment and keep it as the clear hero. Explicitly suppress: no people, no models, no hands, no worn bag, no shoulder carry, and no body contact."
       : "";
+  const strictProductOnlyStudioDirection = options.strictProductOnlyStudio
+    ? "BINDING PRODUCT-ONLY STUDIO PRESENTATION: Render only a human-free, controlled Apparel Studio product scene. The garment is the sole subject: no model, person, skin, hands, feet, face, body part, mannequin hardware, or phantom limb. Use only a seamless or deliberately controlled neutral studio backdrop and studio lighting. Never show a street, sidewalk, city, outdoor setting, cafe, terrace, exterior, architecture, lifestyle interior, or on-model interaction. References may inform material, lighting, or styling only; they cannot replace this studio/product-only scene. For Fabric Motion, allow only subtle suspended or wind-shaped fabric movement inside this controlled studio setup."
+    : "";
+  const presetFamilyDirection = options.presetRules && options.referenceAuthority && !options.strictProductOnlyStudio ? [
+    `PRESET SUPPORTING DIRECTION (${options.presetFamilyId ?? "selected"}): Reference 1 has higher authority for scene, environment, composition, pose, camera, framing, crop, interaction, and subject placement. Do not use preset allow/disallow rules or composition variants to replace those reference dimensions.`,
+    `Use the preset only for category-appropriate rendering, commercial polish, vertical presentation conventions, subtle lighting treatment, and fields that Reference 1 does not specify. Soft guidance: ${options.presetRules.softRules.join(" ")}`,
+    `Selected variant ${options.presetRules.variantId ?? "unspecified"} is supporting aesthetic context only. Source product identity remains above both reference and preset.`,
+  ].join("\n") : options.presetRules ? [
+    `PRESET FAMILY INTENT (${options.presetFamilyId ?? "selected"}): keep this family as the dominant scene identity even when references are supplied.`,
+    `Allowed scene grammar: ${options.presetRules.allowedSceneTypes.join(", ")}.`,
+    `Disallowed scene grammar: ${options.presetRules.disallowedSceneTypes.join(", ") || "none"}.`,
+    `Hard rules: ${options.presetRules.hardRules.join(" ")}`,
+    `Soft rules: ${options.presetRules.softRules.join(" ")}`,
+    `Selected variant ${options.presetRules.variantId ?? "unspecified"}; presentation mode ${options.presetRules.presentationMode ?? "unspecified"}: follow the selected environment, composition, lighting, physical support, gravity, interaction, and style direction in the creative brief.`,
+    options.presetRules.humanPresence === "none" ? "PRODUCT-ONLY PRESENTATION: no person, skin, hands, feet, phantom body parts, or visible mannequin hardware. Shape and support the product with physically believable gravity." : "",
+    options.presetRules.disallowedSceneTypes.includes("people") ? "Negative instructions: no people, no models, no hands, no body contact, no wearing or carrying." : "",
+    options.presetRules.allowedSceneTypes.includes("urban_street") ? "Street requirement: show recognizable urban street environment details such as sidewalk, facade, storefront, crosswalk, alley, or urban architecture." : "",
+  ].filter(Boolean).join("\n") : "";
   const compositionDirection = compileCompositionDirection(options.composition ?? null);
   const complianceDirection = compileCreativeComplianceDirection(options.creativeCompliance ?? null);
   const referenceMatchDirection = options.referenceMatch?.compatible
@@ -234,9 +263,12 @@ export function buildImageGenerationPromptWithPolicy(
       ...productProfilePrompt.interaction,
     ].join("\n") : "",
     fidelityPolicy,
+    footwearAnatomy.applies ? footwearAnatomyPrompt : "",
     bagFamilyCompliance,
+    presetFamilyDirection,
     humanRealismDirection,
     sceneDirection ? `Scene suitability (product-compatible scene structure; product identity remains higher priority):\n${sceneDirection}` : "",
+    strictProductOnlyStudioDirection,
     compositionDirection ? `Composition intelligence (product visibility and physical plausibility are required):\n${compositionDirection}` : "",
     productProfilePrompt?.presentation.join("\n") ?? "",
     complianceDirection,

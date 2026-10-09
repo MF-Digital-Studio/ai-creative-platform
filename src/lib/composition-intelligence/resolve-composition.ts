@@ -3,6 +3,7 @@ import type { SceneFamily } from "@/lib/scene-suitability/types";
 
 import { compositionTemplates } from "./composition-templates";
 import { COMPOSITION_INTELLIGENCE_VERSION, type CompositionProfile, type ResolveCompositionInput } from "./types";
+import { getReferenceShotProfile } from "@/lib/generation/references/reference-shot-profile";
 
 function has(prompt: string, pattern: RegExp): boolean { return pattern.test(prompt); }
 
@@ -30,6 +31,21 @@ export function resolveComposition(input: ResolveCompositionInput): CompositionP
   const canUseMacro = family.endsWith("macro_still_life") || family.endsWith("macro_detail") || family.endsWith("_detail") || family === "jewelry_studio" || family === "watch_studio" || family === "cosmetics_studio" || family === "footwear_studio";
   const source = macro && canUseMacro ? "explicit_user_intent" : referenceClose && canUseMacro ? "reference_style" : input.presetId ? "preset_hint" : input.sceneFamily ? "scene_template" : "safe_fallback";
   const profile: CompositionProfile = { ...template, source, version: COMPOSITION_INTELLIGENCE_VERSION };
+  if (input.referenceAuthority && input.referenceStyle && !input.strictProductOnlyStudio) {
+    const shot = getReferenceShotProfile(input.referenceStyle);
+    const referenceProfile: CompositionProfile = {
+      ...profile,
+      ...(shot.framing ? { framing: shot.framing === "full_product" ? "full_product" : shot.framing } : {}),
+      ...(shot.productScale ? { subjectScale: shot.productScale } : {}),
+      ...(shot.cameraDistance && shot.cameraDistance !== "unknown" ? { cameraDistance: shot.cameraDistance === "wide" ? "medium" : shot.cameraDistance } : {}),
+      ...(shot.cameraAngle && shot.cameraAngle !== "unknown" ? { preferredAngle: shot.cameraAngle === "top_down" ? "elevated" : shot.cameraAngle === "low_angle" ? "low" : shot.cameraAngle } : {}),
+      ...(shot.depthOfField ? { depthOfField: shot.depthOfField === "shallow" ? "shallow_product_locked" : shot.depthOfField } : {}),
+      source: "reference_authority",
+    };
+    if (macro && canUseMacro) return { ...referenceProfile, framing: "macro", subjectScale: "extreme_close", cameraDistance: "macro", depthOfField: "shallow_product_locked", source: "explicit_user_intent" };
+    if (close) return { ...referenceProfile, framing: "medium_close", cameraDistance: "close", source: "explicit_user_intent" };
+    return referenceProfile;
+  }
   if ((macro || referenceClose) && canUseMacro) return { ...profile, framing: "macro", subjectScale: "extreme_close", cameraDistance: "macro", depthOfField: "shallow_product_locked" };
   if (close && profile.framing === "medium" && !(family === "bags_studio" && input.presetId)) return { ...profile, framing: "medium_close", cameraDistance: "close", source: "explicit_user_intent" };
   // Wide/full-body wording is intentionally ignored for small product families.

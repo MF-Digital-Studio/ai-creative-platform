@@ -4,7 +4,8 @@ import test from "node:test";
 import { compileRepairInstructions } from "../src/lib/auto-repair/compile-repair-instructions";
 import { MAX_AUTO_REPAIR_ATTEMPTS } from "../src/lib/auto-repair/repair-version";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
-import { resolveFinalCandidateSelection, selectFinalAttempt } from "../src/lib/auto-repair/select-final-attempt";
+import { resolveFinalCandidateSelection, resolveGenerationTerminalDecision, selectFinalAttempt } from "../src/lib/auto-repair/select-final-attempt";
+import { resolveRepairEligibility } from "../src/lib/generation/execution-policy/resolve-repair-eligibility";
 import type { GenerationAttempt } from "../src/lib/auto-repair/types";
 import type { FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 
@@ -13,7 +14,7 @@ function issue(code: string, severity: FidelityValidationIssue["severity"] = "ma
 }
 
 function validation(status: FidelityValidationResult["status"], issues: FidelityValidationIssue[] = [], retryRecommended = status === "fail"): FidelityValidationResult {
-  return { status, issues, retryRecommended, commerciallyUsable: status !== "fail", checks: [], severity: issues[0]?.severity ?? null, summary: status, version: "fidelity-validator-v2-calibrated" };
+  return { status, issues, retryRecommended, commerciallyUsable: status === "validation_unavailable" ? null : status !== "fail", checks: [], severity: issues[0]?.severity ?? null, summary: status, version: "fidelity-validator-v2-calibrated" };
 }
 
 function attempt(status: FidelityValidationResult["status"], issues: FidelityValidationIssue[] = [], imageData = Buffer.from(status)): GenerationAttempt {
@@ -120,12 +121,35 @@ test("final candidate selection records pass and chooses objectively less severe
 
   const unavailable = resolveFinalCandidateSelection(attempt("validation_unavailable"), null);
   assert.equal(unavailable.validationStatus, "validation_unavailable");
-  assert.equal(unavailable.qualityGatePassed, false);
+  assert.equal(unavailable.qualityGatePassed, null);
   assert.equal(unavailable.qualityRejected, false);
+  assert.equal(resolveGenerationTerminalDecision({ validationStatus: unavailable.validationStatus, qualityGatePassed: unavailable.qualityGatePassed, commerciallyUsable: null }), "succeeded_unverified");
+  assert.equal(resolveGenerationTerminalDecision({ validationStatus: "fail", qualityGatePassed: false, commerciallyUsable: false }), "rejected");
+  assert.equal(resolveGenerationTerminalDecision({ validationStatus: "pass", qualityGatePassed: true, commerciallyUsable: true }), "succeeded");
 });
 
 test("at most one automatic repair is permitted", () => {
   assert.equal(MAX_AUTO_REPAIR_ATTEMPTS, 1);
   const repair = { ...attempt("fail", []), attempt: 1 as const };
   assert.equal(resolveFinalCandidateSelection(attempt("fail", [issue("geometry_drift")]), repair).selectedAttempt, 1);
+});
+
+test("high-confidence preset scene mismatch reaches one scene-only repair decision", () => {
+  const sceneIssue = { ...issue("preset_scene_mismatch", "critical"), category: "composition_visibility" as const, identityImpact: "none" as const, confidence: 0.9 };
+  const failed = validation("fail", [sceneIssue]);
+  const eligibility = resolveRepairEligibility({ validation: failed, exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true });
+  const plan = resolveRepairPlan(failed);
+  assert.equal(eligibility.eligible, true);
+  assert.equal(plan.shouldRetry, true);
+  assert.deepEqual(plan.issueCodes, ["preset_scene_mismatch"]);
+  assert.deepEqual(plan.categories, ["composition_repair"]);
+  assert.match(plan.repairInstructions.join(" "), /do not perform product identity repair/i);
+});
+
+test("scene-only preset mismatch never enters product identity repair", () => {
+  const sceneIssue = { ...issue("preset_scene_mismatch", "critical"), category: "composition_visibility" as const, identityImpact: "none" as const, confidence: 0.9 };
+  const eligibility = resolveRepairEligibility({ validation: validation("fail", [sceneIssue]), exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true });
+  const plan = resolveRepairPlan(validation("fail", [sceneIssue]));
+  assert.equal(eligibility.reason, "high_confidence_preset_scene_correction");
+  assert.ok(!plan.categories.includes("identity_reinforcement"));
 });

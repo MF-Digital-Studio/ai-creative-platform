@@ -26,6 +26,7 @@ test("low-risk still-life resolves high; visible artwork, jewelry, and watches r
 
 test("strong preset skips enhancement, custom ambiguous note enables it", () => {
   assert.equal(resolveGenerationExecutionPolicy({ ...defaults, productProfile: profile("cosmetics") }).promptEnhancement, false);
+  assert.equal(resolveGenerationExecutionPolicy({ ...defaults, productProfile: profile("cosmetics"), hasReference: true }).promptEnhancement, false);
   assert.equal(resolveGenerationExecutionPolicy({ ...defaults, productProfile: profile("cosmetics"), hasCustomNote: true, ambiguousNote: true }).promptEnhancement, true);
 });
 

@@ -5,6 +5,12 @@ import { supportedVerticals, type SupportedVertical } from "@/lib/verticals/supp
 
 export const creativePresetCategories = supportedVerticals;
 export type CreativePresetCategory = SupportedVertical;
+export const PRESET_SYSTEM_VERSION = "preset-system-v5" as const;
+export const compatiblePresetSystemVersions = ["preset-system-v4", PRESET_SYSTEM_VERSION] as const;
+
+export function isCompatiblePresetSystemVersion(value: unknown): value is (typeof compatiblePresetSystemVersions)[number] {
+  return typeof value === "string" && compatiblePresetSystemVersions.includes(value as (typeof compatiblePresetSystemVersions)[number]);
+}
 
 export type CreativePreset = {
   id: string;
@@ -26,6 +32,12 @@ export type CreativePreset = {
 };
 
 export type LocalizedPresetText = { tr: string; en: string };
+export type CreativeCaptureProfileId = FashionCaptureProfileId | "macro_luxury" | "clean_commercial" | "sculptural_editorial" | "natural_lifestyle" | "architectural_campaign" | "clinical_beauty" | "glossy_beauty" | "documentary_motion";
+export type PresetHumanPresence = "none" | "partial" | "full";
+export type PresetPresentationMode = {
+  id: string;
+  variantPresentationModes: readonly string[];
+};
 export type PresetVariant = {
   id: string;
   familyId: string;
@@ -33,11 +45,24 @@ export type PresetVariant = {
   compositionDirection: string;
   lightingDirection: string;
   environmentDirection: string;
+  styleDirection?: string;
+  poseDirection?: string;
   constraints?: string[];
+  environment?: string; environmentSubtype?: string; timeOfDay?: string; weather?: string; lighting?: string; cameraDistance?: string; cameraAngle?: string; framing?: string; composition?: string; subjectPlacement?: string; pose?: string; movement?: string; interaction?: string; surface?: string; architecture?: string; propLanguage?: string; mood?: string; stylingNotes?: string; modelPresentation?: string; urbanArchitecture?: string; captureProfile?: CreativeCaptureProfileId;
+  presentationMode?: string; productOrientation?: string; physicalSupport?: string; gravityBehavior?: string; humanPresence?: PresetHumanPresence; interactionMode?: string;
 };
 export type PresetFamily = {
   id: string;
   vertical: SupportedVertical;
+  allowedSceneTypes: readonly string[];
+  disallowedSceneTypes: readonly string[];
+  styleVariants: readonly string[];
+  compositionVariants: readonly string[];
+  lightingVariants: readonly string[];
+  poseVariants: readonly string[];
+  environmentVariants: readonly string[];
+  hardRules: readonly string[];
+  softRules: readonly string[];
   title: LocalizedPresetText;
   description: LocalizedPresetText;
   previewImage: string;
@@ -72,7 +97,7 @@ type VerticalDefaults = Pick<
 const verticalDefaults: Record<CreativePresetCategory, VerticalDefaults> = {
   apparel: {
     subject: "One adult fashion model naturally wearing the supplied garment as the clear campaign hero.",
-    pose: "Use a relaxed, believable editorial pose with open product-defining panels and no hands obscuring the garment.",
+    pose: "Use a relaxed, believable editorial pose with open product-defining panels and no hands obscuring the garment. Choose a natural pose that fits this scene; avoid defaulting to hands in pockets.",
     realism: "Use natural adult anatomy, visible skin and hair texture, credible posture, and fabric weight, drape, folds, seams, and print placement that follow the body.",
     productTreatment: "Preserve the supplied garment's exact silhouette, color, fabric, seams, collar or hood, sleeve structure, logo, print placement, and front or back distinction.",
     negativeConstraints: "No added garments, altered artwork, mirrored print, mannequin stiffness, pasted flat apparel, distorted hands, plastic skin, or CGI finish.",
@@ -427,7 +452,7 @@ export const creativePresets: readonly CreativePreset[] = activePresetSeeds.map(
   createPreset(preset, index + 1),
 );
 
-type FamilySeed = Omit<PresetFamily, "variants"> & { variantSeeds: readonly PresetVariant[] };
+type FamilySeed = Omit<PresetFamily, "variants" | "allowedSceneTypes" | "disallowedSceneTypes" | "styleVariants" | "compositionVariants" | "lightingVariants" | "poseVariants" | "environmentVariants" | "hardRules" | "softRules"> & { variantSeeds: readonly PresetVariant[] };
 function variants(familyId: string, entries: readonly [string, string, string, string][]): PresetVariant[] {
   return entries.map(([id, sceneDirection, compositionDirection, lightingDirection]) => ({
     id: `${familyId}-${id}`, familyId, sceneDirection, compositionDirection,
@@ -436,8 +461,21 @@ function variants(familyId: string, entries: readonly [string, string, string, s
 }
 
 const familySeeds: FamilySeed[] = [
-  { id:"apparel-street", vertical:"apparel", title:{tr:"Sokak",en:"Street"}, description:{tr:"Gerçek şehir atmosferinde moda editoriali.",en:"Fashion editorial in a believable city setting."}, previewImage:"/images/presets/apparel-street.webp", generationStrategyHint:"fashion_on_model", legacyPresetId:"apparel-street-style", variantSeeds:variants("apparel-street",[
-    ["metropolitan-sidewalk","Modern metropolitan sidewalk with restrained storefront architecture.","Walking or standing medium-to-full fashion frame.","Soft natural daylight."],["concrete-editorial","Brutalist concrete architecture and tactile surfaces.","Stronger editorial pose with garment silhouette open.","Directional daylight."],["rainy-city","Rain-washed downtown street with restrained pavement reflections.","Three-quarter street portrait with clean city depth.","Soft overcast cinematic daylight."],["downtown-crossing","Believable crosswalk and urban movement.","Editorial street photography with grounded environmental scale.","Balanced open-shade daylight."],["industrial-alley","Muted warehouse textures and industrial architecture.","Fashion campaign framing with product clearly separated.","Soft directional side light."],["evening-city","Premium city evening with subtle practical lights.","Refined night editorial, garment kept readable.","Natural practical lighting, no neon excess."],["historic-street","Tasteful historic stone architecture.","Elegant location editorial without tourist-photo framing.","Soft late daylight."],["minimal-urban","Clean urban wall and simple architectural lines.","Product-focused street composition with quiet negative space.","Neutral diffused daylight."]]) },
+  { id:"apparel-street", vertical:"apparel", title:{tr:"Sokak",en:"Street"}, description:{tr:"Gerçek şehir atmosferinde moda editoriali.",en:"Fashion editorial in a believable city setting."}, previewImage:"/images/presets/apparel-street.webp", generationStrategyHint:"fashion_on_model", legacyPresetId:"apparel-street-style", variantSeeds:[
+    { ...variants("apparel-street",[["modern-boulevard","Bright modern boulevard with clean concrete architecture.","Full-body wide environmental portrait, walking toward camera.","Soft daylight."]])[0]!, environment:"modern boulevard",timeOfDay:"day",weather:"dry",lighting:"soft daylight",cameraDistance:"wide",cameraAngle:"eye-level",framing:"full-body off-center",pose:"arms relaxed",movement:"walking toward camera",modelPresentation:"commercial fashion model with varied presentation",urbanArchitecture:"modern concrete",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["overcast-sidewalk","Overcast city sidewalk with tactile pavement.","Knees-up side-profile walking frame.","Overcast diffused light."]])[0]!, environment:"city sidewalk",timeOfDay:"day",weather:"overcast",lighting:"diffused",cameraDistance:"medium",cameraAngle:"side angle",framing:"knees-up",pose:"looking away",movement:"side-profile walking",urbanArchitecture:"contemporary street",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["storefront-day","Daytime storefront on a lively pedestrian street.","Waist-up candid turn with storefront context.","Storefront daylight spill."]])[0]!, environment:"daytime storefront",timeOfDay:"day",weather:"clear",lighting:"ambient storefront spill",cameraDistance:"close",cameraAngle:"three-quarter",framing:"waist-up",pose:"adjusting cuff",movement:"candid turn",urbanArchitecture:"retail frontage",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["residential-european","Quiet European residential street with stone facades.","Full-body seated urban moment, wide frame.","Soft late daylight."]])[0]!, environment:"residential street",timeOfDay:"afternoon",weather:"dry",lighting:"soft daylight",cameraDistance:"wide",cameraAngle:"eye-level",framing:"full-body",pose:"seated",movement:"still moment",urbanArchitecture:"residential stone",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["hard-sun-crossing","Sunlit city crossing with crisp architectural shadows.","Low-angle full-body crossing street.","Hard midday sun."]])[0]!, environment:"city crossing",timeOfDay:"midday",weather:"clear",lighting:"hard sun",cameraDistance:"wide",cameraAngle:"low angle",framing:"full-body",pose:"natural stride",movement:"crossing street",urbanArchitecture:"boulevard",captureProfile:"editorial_flash" },
+    { ...variants("apparel-street",[["rainy-city","Rainy night street with restrained wet pavement reflections.","Knees-up direct flash street portrait.","Direct flash against night ambience."]])[0]!, environment:"rainy downtown",timeOfDay:"night",weather:"rain",lighting:"direct flash",cameraDistance:"medium",cameraAngle:"eye-level",framing:"knees-up",pose:"one hand relaxed",movement:"editorial standing",urbanArchitecture:"downtown storefronts",captureProfile:"urban_night_flash" },
+    { ...variants("apparel-street",[["dry-neon-district","Dry neon district with graphic signs and no rain.","Wide side-angle moving-through-frame portrait.","Ambient night light."]])[0]!, environment:"neon district",timeOfDay:"night",weather:"dry",lighting:"ambient night",cameraDistance:"wide",cameraAngle:"side angle",framing:"wide environmental",pose:"arms naturally down",movement:"moving through frame",urbanArchitecture:"commercial neon",captureProfile:"editorial_flash" },
+    { ...variants("apparel-street",[["parking-structure","Open concrete parking structure with deep geometric lines.","Low-angle knees-up leaning portrait.","Hard directional practical light."]])[0]!, environment:"parking structure",timeOfDay:"evening",weather:"dry",lighting:"hard directional",cameraDistance:"medium",cameraAngle:"low angle",framing:"knees-up",pose:"leaning against architecture",movement:"static editorial",urbanArchitecture:"parking concrete",captureProfile:"editorial_flash" },
+    { ...variants("apparel-street",[["metro-exit","Busy metro entrance with candid urban movement.","Off-center wide documentary frame, model descending stairs.","Mixed ambient light."]])[0]!, environment:"metro entrance",timeOfDay:"evening",weather:"dry",lighting:"mixed ambient",cameraDistance:"wide",cameraAngle:"high angle",framing:"off-center wide",pose:"natural stride",movement:"descending stairs",urbanArchitecture:"transit architecture",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["industrial-alley","Industrial alley with brick, raw concrete, and loading doors.","Three-quarter side angle, walking away then turning.","Soft directional side light."]])[0]!, environment:"industrial alley",timeOfDay:"day",weather:"overcast",lighting:"soft side light",cameraDistance:"medium",cameraAngle:"side angle",framing:"three-quarter",pose:"candid turn",movement:"turning while walking",urbanArchitecture:"industrial brick",captureProfile:"editorial_flash" },
+    { ...variants("apparel-street",[["glass-facade","Glass office facade with crisp reflections and clean lines.","Slight telephoto knees-up architectural portrait.","Architectural daylight."]])[0]!, environment:"glass office facade",timeOfDay:"day",weather:"clear",lighting:"architectural daylight",cameraDistance:"telephoto",cameraAngle:"eye-level",framing:"knees-up",pose:"editorial standing",movement:"still moment",urbanArchitecture:"glass office",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["golden-hour-street","Warm evening storefront with late sun on stone buildings.","Full-body leaning portrait with warm city depth.","Warm dusk light."]])[0]!, environment:"warm storefront",timeOfDay:"golden hour",weather:"clear",lighting:"warm dusk",cameraDistance:"medium",cameraAngle:"three-quarter",framing:"full-body",pose:"leaning against architecture",movement:"still moment",urbanArchitecture:"stone retail district",captureProfile:"natural_editorial_daylight" },
+    { ...variants("apparel-street",[["stone-architecture","Historic stone architecture on a calm city block.","Slight telephoto off-center static editorial portrait.","Soft daylight."]])[0]!, environment:"historic street",timeOfDay:"afternoon",weather:"overcast",lighting:"diffused",cameraDistance:"telephoto",cameraAngle:"three-quarter",framing:"off-center portrait",pose:"editorial standing",movement:"static editorial",urbanArchitecture:"historic stone",captureProfile:"natural_editorial_daylight" },
+  ] },
   { id:"apparel-studio", vertical:"apparel", title:{tr:"Stüdyo",en:"Studio"}, description:{tr:"Kontrollü stüdyo ışığında ürün odaklı moda.",en:"Product-led fashion under controlled studio light."}, previewImage:"/images/presets/apparel-studio.webp", generationStrategyHint:"fashion_on_model", legacyPresetId:"apparel-studio-style", variantSeeds:variants("apparel-studio",[
     ["soft-gray","Soft gray seamless cyclorama.","Balanced three-quarter framing.","Large soft key and gentle fill."],["warm-beige","Warm beige studio backdrop.","Relaxed editorial stance, full garment visible.","Warm soft directional light."],["high-key-white","Clean high-key white editorial set.","Open full-body composition.","Bright wraparound studio light."],["dark-charcoal","Dark charcoal fashion studio.","Confident medium-to-full framing.","Controlled sculpting key with detail-preserving fill."],["hard-light","Minimal neutral studio.","Graphic fashion pose with clear garment panels.","Directional hard-light editorial shadows."],["window-light","Quiet studio with a broad window-like source.","Natural relaxed pose and medium framing.","Soft window light."],["shadow-play","Simple studio wall with architectural shadow shapes.","Clean negative space around silhouette.","Soft light with deliberate shadow play."],["monochrome","Premium tonal monochrome studio.","Polished campaign framing.","Refined low-contrast studio lighting."]]) },
   { id:"apparel-scenic", vertical:"apparel", title:{tr:"Estetik manzara",en:"Scenic"}, description:{tr:"Doğal ve rafine mekanlarda premium moda çekimi.",en:"Premium fashion imagery in refined natural locations."}, previewImage:"/images/presets/apparel-scenic.webp", generationStrategyHint:"fashion_on_model", legacyPresetId:"apparel-scenic-editorial", variantSeeds:variants("apparel-scenic",[
@@ -472,13 +510,188 @@ const familySeeds: FamilySeed[] = [
     ["cafe-table","Product-only café tabletop setting; no people, hands, or body contact.","Bag placed naturally on the table with body and handles fully visible.","Warm soft daylight."],["terrace","Product-only beautiful terrace setting; no people or worn interaction.","Naturally supported hero placement with the complete bag unobstructed.","Soft late-afternoon daylight."],["elegant-interior","Product-only elegant interior with restrained furniture and no human presence.","Natural supported placement with the bag dominant.","Refined window light."],["scenic-outdoor","Product-only scenic outdoor setting with no people or hands.","Stable environmental placement; full silhouette remains clear.","Balanced natural daylight."],["bench","Product-only placement on a tasteful architectural bench; no person or body contact.","Natural resting position without excessive crop.","Soft open-shade daylight."],["window-light","Product-only interior placement near a window with no human interaction.","Bag placed naturally on a stable surface and kept large in frame.","Directional natural window light."],["architecture","Product-only refined architectural environment; no people or worn carry.","Clean composition protecting handles, body, and identifying details.","Graphic directional light."],["travel-setting","Product-only refined travel setting without people, hands, or branded props.","Supported complete product view with the environment secondary.","Natural balanced light."]]) },
 ];
 
+const familyVariantSupplements: Partial<Record<string, readonly PresetVariant[]>> = {
+  "apparel-studio": variants("apparel-studio", [["color-field", "Controlled studio with a restrained tonal color field.", "Asymmetric full-body fashion frame with clean silhouette separation.", "Soft colored bounce with neutral product color."], ["floor-seated", "Minimal daylight studio with a visible seamless floor.", "Grounded seated editorial pose with every garment-defining panel readable.", "Broad side key with gentle floor bounce."], ["folded-catalogue", "Clean product studio with a quiet tonal sweep and no person.", "Folded garment composition with every identity-critical panel legible.", "Broad catalogue light with realistic fold shadows."], ["fabric-motion", "Minimal product studio with no person or body parts.", "Suspended garment in a subtle fabric-motion moment with the complete SKU recognizable.", "Short directional studio light that freezes believable cloth movement."]]),
+  "apparel-scenic": variants("apparel-scenic", [["modern-terrace", "Elevated modern terrace with honest architectural depth.", "Three-quarter walking portrait with the landscape kept secondary.", "Clear morning side light."], ["stone-courtyard", "Quiet stone courtyard with tactile walls and open sky.", "Centered full-body still portrait with generous breathing room.", "Soft blue-hour ambient light."]]),
+  "watches-on-wrist": variants("watches-on-wrist", [["travel-lounge", "Restrained premium travel lounge context.", "Candid wrist interaction with luggage details kept abstract and secondary.", "Soft window daylight."], ["stone-terrace", "Outdoor stone terrace with no visual clutter.", "Natural resting forearm with dial and crown side fully legible.", "Warm late-day side light."]]),
+  "jewelry-on-model": variants("jewelry-on-model", [["direct-flash-beauty", "Minimal beauty set with honest skin texture.", "Tight graphic crop at the subtype-correct body region.", "Restrained direct flash with controlled metal highlights."], ["profile-window", "Quiet window-side editorial setting.", "Subtype-aware profile composition with natural contact and scale.", "Raking window light with soft falloff."]]),
+  "jewelry-lifestyle": variants("jewelry-lifestyle", [["mirror-plane", "Human-free editorial environment with one clean mirror plane.", "Low sculptural macro angle with a single controlled reflection.", "Narrow directional highlight."], ["plaster-gallery", "Human-free plaster gallery ledge with subtle texture.", "Off-center jewelry hero with architectural negative space.", "Diffuse skylight."]]),
+  "footwear-street": variants("footwear-street", [["metro-platform", "Urban metro platform with recognizable transit geometry.", "Low moving frame with credible planted foot and sharp footwear.", "Mixed practical transit light."], ["storefront-night", "Dry night storefront street with restrained practical light.", "Ground-level paused stride with both shoes readable.", "Compact direct flash balanced with storefront ambience."]]),
+  "footwear-scenic": variants("footwear-scenic", [["gallery-courtyard", "Human-free contemporary gallery courtyard.", "Sculptural product placement against clean architectural depth.", "Open-shade daylight."], ["hotel-interior", "Human-free premium hotel interior with stone and wood restraint.", "Close three-quarter footwear hero on a stable architectural surface.", "Warm window and practical light mix."]]),
+  "cosmetics-scenic": variants("cosmetics-scenic", [["glasshouse", "Human-free glasshouse ledge with soft condensation beyond the product.", "Package-forward frame with clear label and layered natural depth.", "Diffused humid daylight."], ["mineral-shelf", "Human-free mineral plaster shelf with one tonal material accent.", "Asymmetric close hero with ample label clearance.", "Raking afternoon light."]]),
+  "bags-on-model": variants("bags-on-model", [["hotel-arrival", "Adult model arriving through a refined hotel entrance with source-compatible carry.", "Candid three-quarter movement with the complete bag clear of the body.", "Soft entrance daylight."], ["gallery-walk", "Adult model walking through minimal gallery architecture with natural bag interaction.", "Wide architectural fashion frame while the bag remains sharp and dominant.", "Diffuse skylight."]]),
+  "bags-lifestyle": variants("bags-lifestyle", [["gallery-plinth", "Product-only gallery plinth setting with no people or hands.", "Sculptural three-quarter bag view with complete handles and base visible.", "Directional gallery light."], ["hotel-console", "Product-only premium hotel console setting without people or branded props.", "Natural supported placement with restrained interior depth.", "Warm practical and window-light balance."]]),
+};
+
+const structuredDimensionCycles = {
+  cameraDistance: ["macro", "close", "medium", "wide", "telephoto", "close", "medium", "wide"],
+  cameraAngle: ["eye-level", "low angle", "three-quarter", "overhead", "side angle", "high angle", "front-on", "ground-level"],
+  framing: ["tight detail", "close hero", "three-quarter", "environmental wide", "off-center negative space", "centered symmetry", "diagonal composition", "full silhouette"],
+  subjectPlacement: ["centered", "lower third", "left third", "right third", "foreground anchored", "asymmetric center", "diagonal anchor", "center with negative space"],
+  timeOfDay: ["day", "morning", "afternoon", "golden hour", "evening", "day", "blue hour", "midday"],
+  weather: ["controlled", "clear", "overcast", "dry", "controlled", "clear", "dry", "controlled"],
+} as const;
+
+const humanPresentations = [
+  "adult woman with short natural curls and understated styling", "adult man with close-cropped hair and relaxed styling", "adult androgynous model with shoulder-length dark hair", "mature adult woman with a natural updo and refined styling", "adult man with wavy medium-length hair and minimal styling", "adult woman with a short graphic haircut and confident posture", "mature adult man with natural gray hair and quiet styling", "adult androgynous model with tied-back textured hair",
+] as const;
+
+const captureProfilesByVertical: Record<SupportedVertical, readonly CreativeCaptureProfileId[]> = {
+  apparel: ["natural_editorial_daylight", "soft_studio_fashion", "editorial_flash", "urban_night_flash"], jewelry: ["macro_luxury", "sculptural_editorial", "clean_commercial", "natural_lifestyle"], watches: ["clean_commercial", "architectural_campaign", "macro_luxury", "natural_lifestyle"], cosmetics: ["clinical_beauty", "glossy_beauty", "clean_commercial", "sculptural_editorial"], footwear: ["architectural_campaign", "documentary_motion", "clean_commercial", "natural_lifestyle"], bags: ["natural_lifestyle", "architectural_campaign", "clean_commercial", "sculptural_editorial"],
+};
+
+const presentationModesByFamily: Record<string, readonly string[]> = {
+  "apparel-studio": ["model_studio", "ghost_mannequin", "floating_front", "floating_three_quarter", "suspended_garment", "hanger_editorial", "flat_lay", "sculptural_product_stage", "macro_detail", "catalogue_product_only", "folded_composition", "fabric_motion"],
+  "apparel-street": ["walking", "curb", "crosswalk", "metro_stairs", "storefront", "concrete_district", "low_angle_street", "movement_detail", "seated_urban_moment", "night_editorial"],
+  "apparel-scenic": ["model_landscape", "architectural_model", "walking_location", "seated_location", "environmental_portrait"],
+  "footwear-studio": ["isolated_hero", "floating_product", "pedestal", "reflective_floor", "sculptural_blocks", "pair_composition", "single_shoe_three_quarter", "top_down", "side_profile_campaign", "macro_material_detail"],
+  "footwear-scenic": ["architectural_stone", "gallery", "terrace", "courtyard", "luxury_interior", "coast", "modern_exterior", "stairs", "hotel_setting", "minimal_landscape"],
+  "footwear-street": ["walking", "curb", "crosswalk", "metro_stairs", "storefront", "concrete_district", "low_angle_street", "movement_detail", "seated_urban_moment", "night_editorial"],
+  "bags-studio": ["front_hero", "three_quarter_hero", "suspended_bag", "pedestal", "stacked_blocks", "reflective_floor", "top_down", "hardware_macro"],
+  "bags-lifestyle": ["cafe", "terrace", "gallery", "hotel", "architecture", "window_light", "travel_setting", "shelf_styling", "stone_surface", "editorial_still_life"],
+  "bags-on-model": ["shoulder_carry", "hand_carry", "crossbody", "seated", "walking", "full_body", "waist_crop", "side_angle", "movement", "urban_editorial"],
+  "jewelry-studio": ["macro", "suspended", "pedestal", "reflection", "textile", "stone", "shadow", "clean_packshot"],
+  "jewelry-lifestyle": ["stone", "textile", "reflection", "vanity", "architecture", "shadow", "editorial_still_life", "botanical"],
+  "jewelry-on-model": ["on_hand", "on_neck", "on_ear", "on_wrist", "beauty_macro", "profile", "movement", "editorial_closeup"],
+  "watches-on-wrist": ["wrist", "cuff", "desk_interaction", "travel", "architectural", "outdoor", "evening", "editorial_closeup"],
+  "watches-product-composition": ["product_hero", "side_profile", "crown_macro", "desk", "travel", "architectural", "reflection", "soft_support"],
+  "watches-editorial-studio": ["product_hero", "side_profile", "crown_macro", "pedestal", "reflection", "architectural", "shadow", "editorial_studio"],
+  "cosmetics-studio": ["packshot", "floating", "liquid_interaction", "acrylic", "reflection", "monochrome", "clinical", "glossy_editorial"],
+  "cosmetics-scenic": ["botanical", "stone", "water_interaction", "window_light", "shelf_styling", "travel_setting", "clinical_lifestyle", "glossy_editorial"],
+};
+
+const productOnlyApparelModes = new Set(["ghost_mannequin", "floating_front", "floating_three_quarter", "suspended_garment", "hanger_editorial", "flat_lay", "folded_composition", "sculptural_product_stage", "fabric_motion", "macro_detail", "catalogue_product_only"]);
+
+export function isProductOnlyPresentationMode(mode: string | null | undefined): boolean {
+  return Boolean(mode && productOnlyApparelModes.has(mode));
+}
+
+const presentationModeGroups: Partial<Record<string, readonly PresetPresentationMode[]>> = {
+  "apparel-studio": [
+    { id: "model_studio", variantPresentationModes: ["model_studio"] }, { id: "ghost_mannequin", variantPresentationModes: ["ghost_mannequin"] },
+    { id: "floating", variantPresentationModes: ["floating_front", "floating_three_quarter"] }, { id: "hanger", variantPresentationModes: ["hanger_editorial"] },
+    { id: "flat_lay", variantPresentationModes: ["flat_lay"] }, { id: "folded", variantPresentationModes: ["folded_composition"] },
+    { id: "sculptural_stage", variantPresentationModes: ["sculptural_product_stage"] }, { id: "fabric_motion", variantPresentationModes: ["fabric_motion"] },
+    { id: "detail", variantPresentationModes: ["macro_detail"] }, { id: "catalogue_product", variantPresentationModes: ["catalogue_product_only"] },
+  ],
+  "footwear-studio": ["isolated_hero", "floating_product", "pedestal", "reflective_floor", "sculptural_blocks", "pair_composition", "top_down", "side_profile_campaign", "macro_material_detail"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "footwear-street": ["walking", "crosswalk", "concrete_district", "metro_stairs", "seated_urban_moment", "movement_detail", "low_angle_street"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "footwear-scenic": ["architectural_stone", "terrace", "gallery", "courtyard", "hotel_setting", "minimal_landscape"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "bags-studio": ["front_hero", "three_quarter_hero", "suspended_bag", "pedestal", "top_down", "reflective_floor", "hardware_macro"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "bags-on-model": ["shoulder_carry", "hand_carry", "crossbody", "walking", "seated", "full_body", "waist_crop", "urban_editorial"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "bags-lifestyle": ["cafe", "terrace", "gallery", "hotel", "architecture", "window_light", "travel_setting", "editorial_still_life"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "jewelry-studio": ["macro", "pedestal", "reflection", "stone", "textile", "shadow", "clean_packshot"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "jewelry-on-model": ["on_neck", "on_ear", "on_hand", "on_wrist", "beauty_macro", "editorial_closeup"].map((id) => ({ id, variantPresentationModes: [id] })),
+  "jewelry-lifestyle": [{ id: "stone", variantPresentationModes: ["stone"] }, { id: "textile", variantPresentationModes: ["textile"] }, { id: "mirror", variantPresentationModes: ["reflection"] }, { id: "gallery", variantPresentationModes: ["architecture"] }, { id: "reflective_surface", variantPresentationModes: ["reflection"] }, { id: "editorial_still_life", variantPresentationModes: ["editorial_still_life"] }],
+  "watches-on-wrist": [{ id: "wrist_hero", variantPresentationModes: ["wrist"] }, { id: "executive", variantPresentationModes: ["cuff"] }, { id: "travel", variantPresentationModes: ["travel"] }, { id: "outdoor", variantPresentationModes: ["outdoor"] }, { id: "architecture", variantPresentationModes: ["architectural"] }, { id: "lifestyle_closeup", variantPresentationModes: ["editorial_closeup"] }],
+  "watches-product-composition": [{ id: "desk", variantPresentationModes: ["desk"] }, { id: "stone", variantPresentationModes: ["side_profile"] }, { id: "leather", variantPresentationModes: ["crown_macro"] }, { id: "metal", variantPresentationModes: ["travel"] }, { id: "fabric", variantPresentationModes: ["soft_support"] }, { id: "box_composition", variantPresentationModes: ["product_hero"] }, { id: "macro_detail", variantPresentationModes: ["crown_macro"] }],
+  "watches-editorial-studio": [{ id: "dark_studio", variantPresentationModes: ["product_hero"] }, { id: "gradient", variantPresentationModes: ["reflection"] }, { id: "metallic", variantPresentationModes: ["architectural"] }, { id: "spotlight", variantPresentationModes: ["crown_macro"] }, { id: "reflection", variantPresentationModes: ["reflection"] }, { id: "catalogue", variantPresentationModes: ["editorial_studio"] }],
+  "cosmetics-studio": [{ id: "packshot", variantPresentationModes: ["packshot"] }, { id: "floating", variantPresentationModes: ["floating"] }, { id: "acrylic", variantPresentationModes: ["acrylic"] }, { id: "reflection", variantPresentationModes: ["reflection"] }, { id: "monochrome", variantPresentationModes: ["monochrome"] }, { id: "clinical", variantPresentationModes: ["clinical"] }, { id: "glossy", variantPresentationModes: ["glossy_editorial"] }, { id: "shadow_play", variantPresentationModes: ["glossy_editorial"] }],
+  "cosmetics-scenic": [{ id: "water", variantPresentationModes: ["water_interaction"] }, { id: "stone", variantPresentationModes: ["stone"] }, { id: "botanical", variantPresentationModes: ["botanical"] }, { id: "glasshouse", variantPresentationModes: ["glasshouse"] }, { id: "architecture", variantPresentationModes: ["shelf_styling"] }, { id: "material_study", variantPresentationModes: ["clinical_lifestyle"] }, { id: "natural_light", variantPresentationModes: ["window_light"] }],
+};
+
+export function getPresetPresentationModes(familyId: unknown): readonly PresetPresentationMode[] {
+  const family = getPresetFamily(familyId);
+  if (!family) return [];
+  const configured = presentationModeGroups[family.id] ?? [];
+  const valid = configured.filter(({ variantPresentationModes }) => family.variants.some((variant) => variant.presentationMode && variantPresentationModes.includes(variant.presentationMode)));
+  return valid.length ? valid : [...new Set(family.variants.map(({ presentationMode }) => presentationMode).filter((mode): mode is string => Boolean(mode)))].map((id) => ({ id, variantPresentationModes: [id] }));
+}
+
+export function getPresetPresentationMode(familyId: unknown, modeId: unknown): PresetPresentationMode | null {
+  return typeof modeId === "string" ? getPresetPresentationModes(familyId).find(({ id }) => id === modeId) ?? null : null;
+}
+
+export function getPresetVariantsForPresentationMode(family: PresetFamily, modeId: string | null | undefined): readonly PresetVariant[] {
+  const mode = getPresetPresentationMode(family.id, modeId);
+  return mode ? family.variants.filter((variant) => variant.presentationMode && mode.variantPresentationModes.includes(variant.presentationMode)) : family.variants;
+}
+
+function isHumanFamily(family: Pick<FamilySeed, "generationStrategyHint">): boolean {
+  return ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(family.generationStrategyHint);
+}
+
+function structureVariant(family: FamilySeed, variant: PresetVariant, index: number): PresetVariant {
+  const cycle = <T,>(values: readonly T[], offset = 0) => values[(index + offset) % values.length]!;
+  const studio = /studio/.test(family.id);
+  const human = isHumanFamily(family);
+  const environment = variant.environment ?? variant.environmentDirection.replace(/[.;]$/g, "");
+  const presentationModes = presentationModesByFamily[family.id] ?? [human ? "on_model" : "product_hero"];
+  const presentationMode = variant.presentationMode ?? cycle(presentationModes);
+  const humanPresence: PresetHumanPresence = variant.humanPresence ?? (isProductOnlyPresentationMode(presentationMode) ? "none" : human ? presentationMode.includes("macro") || presentationMode.includes("wrist") || presentationMode.includes("hand") ? "partial" : "full" : "none");
+  const floating = /floating|suspended|fabric_motion/.test(presentationMode);
+  const flat = /flat_lay|top_down|folded/.test(presentationMode);
+  return {
+    ...variant,
+    environment,
+    environmentSubtype: variant.environmentSubtype ?? variant.id.slice(`${family.id}-`.length),
+    timeOfDay: variant.timeOfDay ?? (studio ? "controlled" : cycle(structuredDimensionCycles.timeOfDay)),
+    weather: variant.weather ?? (studio ? "controlled" : cycle(structuredDimensionCycles.weather, 2)),
+    lighting: variant.lighting ?? variant.lightingDirection.replace(/[.;]$/g, ""),
+    cameraDistance: variant.cameraDistance ?? cycle(structuredDimensionCycles.cameraDistance), cameraAngle: variant.cameraAngle ?? cycle(structuredDimensionCycles.cameraAngle, 1), framing: variant.framing ?? cycle(structuredDimensionCycles.framing, 2), composition: variant.composition ?? variant.compositionDirection, subjectPlacement: variant.subjectPlacement ?? cycle(structuredDimensionCycles.subjectPlacement, 3),
+    pose: variant.pose ?? variant.poseDirection ?? (human ? cycle(["relaxed stance", "natural stride", "seated interaction", "editorial stillness", "candid turn", "grounded step", "profile stance", "subtle lean"]) : "stable product placement"),
+    movement: variant.movement ?? (human ? cycle(["still moment", "walking", "subtle turn", "seated pause", "reaching naturally", "mid-step", "weight shift", "candid movement"]) : "still life"),
+    interaction: variant.interaction ?? (human ? family.vertical === "watches" ? "natural wrist fit" : family.vertical === "jewelry" ? "subtype-appropriate body contact" : family.vertical === "bags" ? "source-compatible natural carry" : family.vertical === "footwear" ? "credible foot contact and weight" : "garment worn naturally" : "product-only supported placement"),
+    surface: variant.surface ?? (studio ? cycle(["seamless sweep", "matte tabletop", "tonal pedestal", "reflective acrylic", "textured paper", "stone plinth", "gloss floor", "fabric support"]) : cycle(["stone", "concrete", "wood", "glass", "textile", "pavement", "metal", "natural ground"])),
+    architecture: variant.architecture ?? variant.urbanArchitecture ?? (studio ? "controlled studio set" : environment),
+    propLanguage: variant.propLanguage ?? (studio ? cycle(["none", "single pedestal", "geometric block", "mirror plane", "single translucent panel", "shadow-only", "tonal support", "one material sample"]) : cycle(["none", "restrained functional objects", "one contextual object", "architectural elements only", "natural material accents", "no decorative clutter", "single tactile accent", "environmental details only"])),
+    mood: variant.mood ?? cycle(["quiet luxury", "graphic precision", "tactile warmth", "confident editorial", "clean modernity", "intimate refinement", "architectural calm", "raw premium realism"]),
+    stylingNotes: variant.stylingNotes ?? (human ? "Vary age presentation, hair, wardrobe styling, posture, and camera relationship; do not preserve a face unless continuity is explicit." : "Keep styling product-led and props subordinate to identity-critical details."),
+    modelPresentation: variant.modelPresentation ?? (human ? cycle(humanPresentations) : undefined), captureProfile: variant.captureProfile ?? cycle(captureProfilesByVertical[family.vertical]),
+    presentationMode,
+    productOrientation: variant.productOrientation ?? (flat ? "top_down" : /side_profile|profile/.test(presentationMode) ? "side_profile" : /front|packshot|catalogue/.test(presentationMode) ? "front" : "three_quarter"),
+    physicalSupport: variant.physicalSupport ?? (floating ? "suspended_without_visible_body" : flat ? "studio_surface" : humanPresence === "none" ? cycle(["surface", "pedestal", "sculptural_block", "reflective_floor"]) : "anatomically_plausible_body_contact"),
+    gravityBehavior: variant.gravityBehavior ?? (floating ? "natural_suspension_and_fabric_weight" : humanPresence === "none" ? "grounded_with_realistic_weight" : "natural_body_load_and_contact"),
+    humanPresence,
+    interactionMode: variant.interactionMode ?? (humanPresence === "none" ? "product_only" : variant.interaction ?? "natural_product_body_interaction"),
+  };
+}
+
+function sceneContract(family: FamilySeed): Pick<PresetFamily, "allowedSceneTypes" | "disallowedSceneTypes" | "styleVariants" | "compositionVariants" | "lightingVariants" | "poseVariants" | "environmentVariants" | "hardRules" | "softRules"> {
+  const id = family.id;
+  const studio = /studio/.test(id) || id === "watches-editorial-studio";
+  const street = /street/.test(id);
+  const onModel = isHumanFamily(family);
+  const mixedApparelStudio = id === "apparel-studio";
+  const productStudio = studio && !onModel;
+  const aesthetic = !studio && !street && !onModel;
+  const allowedSceneTypes = street ? ["urban_street", ...(onModel ? ["human_interaction"] : [])] : mixedApparelStudio ? ["controlled_human_studio", "controlled_product_studio", "human_interaction", "product_only_apparel"] : studio && onModel ? ["controlled_human_studio", "human_interaction"] : productStudio ? ["controlled_product_studio"] : onModel ? ["human_interaction", "editorial_lifestyle"] : ["human_free_editorial_environment"];
+  const disallowedSceneTypes = productStudio ? ["people", "hands", "body_contact", "street", "cafe", "living_space", "outdoors"] : aesthetic ? ["people", "hands", "body_contact", "worn", "carried"] : onModel && !mixedApparelStudio ? ["product_only_still_life"] : [];
+  const hardRules = mixedApparelStudio
+    ? ["Controlled apparel studio photography only.", "Honor the selected presentation mode: human modes require a real model; product-only modes require no visible person, skin, phantom limbs, or mannequin hardware."]
+    : productStudio
+    ? ["Product-led controlled studio photography only.", "No people, hands, body contact, street, cafe, living space, or outdoor location."]
+    : studio && onModel
+      ? ["Controlled studio photography with a visible model interaction only; never turn this family into a lifestyle location or product-only still life."]
+    : aesthetic
+      ? ["Keep the product as hero in a visibly styled environment.", "No people, hands, body contact, wearing, or carrying."]
+      : onModel
+        ? ["A visible person or body part must meaningfully interact with the product."]
+        : ["The scene must contain recognizable urban street architecture or street-level context."];
+  return {
+    allowedSceneTypes, disallowedSceneTypes,
+    styleVariants: [...new Set(family.variantSeeds.map((variant) => variant.styleDirection ?? variant.sceneDirection))],
+    compositionVariants: [...new Set(family.variantSeeds.map((variant) => variant.compositionDirection))],
+    lightingVariants: [...new Set(family.variantSeeds.map((variant) => variant.lightingDirection))],
+    poseVariants: onModel ? [...new Set(family.variantSeeds.map((variant) => variant.pose ?? variant.poseDirection ?? variant.compositionDirection))] : [],
+    environmentVariants: [...new Set(family.variantSeeds.map((variant) => variant.environmentDirection))],
+    hardRules,
+    softRules: ["Keep the supplied product dominant and identity details visible.", "Vary framing and styling within the selected family without changing its scene identity."],
+  };
+}
+
 export const presetFamilies: readonly PresetFamily[] = familySeeds.map(({ variantSeeds, ...family }) => ({
   ...family,
-  variants: variantSeeds,
+  ...sceneContract({ ...family, variantSeeds: [...variantSeeds, ...(familyVariantSupplements[family.id] ?? [])] }),
+  variants: [...variantSeeds, ...(familyVariantSupplements[family.id] ?? [])].map((variant, index, expandedVariants) => structureVariant({ ...family, variantSeeds: expandedVariants }, variant, index)),
 }));
 
 export function getPresetFamily(id: unknown): PresetFamily | null {
   return typeof id === "string" ? presetFamilies.find((family) => family.id === id) ?? null : null;
+}
+
+export function getPresetFamilyForPresetId(id: unknown): PresetFamily | null {
+  return typeof id === "string" ? presetFamilies.find((family) => family.id === id || family.legacyPresetId === id) ?? null : null;
 }
 
 export function resolvePresetVariant({ family, previousVariantId, generationSeed }: {
@@ -489,6 +702,38 @@ export function resolvePresetVariant({ family, previousVariantId, generationSeed
   let hash = 2166136261;
   for (const character of generationSeed) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
   return pool[(hash >>> 0) % pool.length];
+}
+
+export function resolvePresetVariantFromRun(family: PresetFamily, generationSeed: string): PresetVariant {
+  let hash = 2166136261;
+  for (const character of generationSeed) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  return family.variants[(hash >>> 0) % family.variants.length]!;
+}
+
+type PresetVariationDimension = "environment" | "environmentSubtype" | "timeOfDay" | "weather" | "lighting" | "cameraDistance" | "cameraAngle" | "framing" | "composition" | "subjectPlacement" | "pose" | "movement" | "interaction" | "surface" | "architecture" | "propLanguage" | "mood" | "modelPresentation" | "captureProfile" | "presentationMode" | "productOrientation" | "physicalSupport" | "gravityBehavior" | "humanPresence" | "interactionMode";
+export type PresetVariationHistory = { [Key in PresetVariationDimension]?: PresetVariant[Key] | null } & { variantId?: string | null };
+
+const semanticDimensions = ["environment", "environmentSubtype", "timeOfDay", "weather", "lighting", "cameraDistance", "cameraAngle", "framing", "composition", "subjectPlacement", "pose", "movement", "interaction", "surface", "architecture", "propLanguage", "mood", "modelPresentation", "captureProfile", "presentationMode", "productOrientation", "physicalSupport", "gravityBehavior", "humanPresence", "interactionMode"] as const;
+
+export function scorePresetVariantSemanticDistance(variant: PresetVariant, previous: PresetVariationHistory): number {
+  return semanticDimensions.reduce((score, key) => previous[key] === undefined || previous[key] === null ? score : score + (previous[key] === variant[key] ? -3 : 1), previous.variantId === variant.id ? -16 : 0);
+}
+
+export function resolvePresetVariantWithHistory(family: PresetFamily, generationSeed: string, previousVariantId?: string | null, history: readonly PresetVariationHistory[] = []): PresetVariant {
+  const hash = (value: string) => { let result = 2166136261; for (const character of value) result = Math.imul(result ^ character.charCodeAt(0), 16777619); return result >>> 0; };
+  const ranked = family.variants.map((variant) => {
+    const distance = history.reduce((score, previous, historyIndex) => score + scorePresetVariantSemanticDistance(variant, previous) * Math.max(1, 4 - historyIndex), 0);
+    return { variant, distance };
+  }).sort((a, b) => b.distance - a.distance || a.variant.id.localeCompare(b.variant.id));
+  const max = ranked[0]?.distance ?? 0;
+  const pool = ranked.filter(({ distance }) => distance === max);
+  const chosen = pool[hash(generationSeed) % pool.length]?.variant ?? resolvePresetVariantFromRun(family, generationSeed);
+  if (!history.length && chosen.id === previousVariantId && family.variants.length > 1) return family.variants[(family.variants.findIndex(({ id }) => id === chosen.id) + 1) % family.variants.length]!;
+  return chosen;
+}
+
+export function getPresetVariationMetadata(variant: PresetVariant) {
+  return { environment: variant.environment ?? variant.environmentDirection, environmentSubtype: variant.environmentSubtype ?? null, timeOfDay: variant.timeOfDay ?? null, weather: variant.weather ?? null, lighting: variant.lighting ?? variant.lightingDirection, cameraDistance: variant.cameraDistance ?? null, cameraAngle: variant.cameraAngle ?? null, framing: variant.framing ?? variant.compositionDirection, composition: variant.composition ?? variant.compositionDirection, subjectPlacement: variant.subjectPlacement ?? null, pose: variant.pose ?? variant.poseDirection ?? variant.compositionDirection, movement: variant.movement ?? null, interaction: variant.interaction ?? null, surface: variant.surface ?? null, architecture: variant.architecture ?? variant.urbanArchitecture ?? null, propLanguage: variant.propLanguage ?? null, mood: variant.mood ?? null, stylingNotes: variant.stylingNotes ?? null, modelPresentation: variant.modelPresentation ?? null, captureProfile: variant.captureProfile ?? null, presentationMode: variant.presentationMode ?? null, productOrientation: variant.productOrientation ?? null, physicalSupport: variant.physicalSupport ?? null, gravityBehavior: variant.gravityBehavior ?? null, humanPresence: variant.humanPresence ?? null, interactionMode: variant.interactionMode ?? null };
 }
 
 export function buildPresetVariantDirection(preset: CreativePreset, variant: PresetVariant): CreativePreset {
@@ -503,17 +748,26 @@ export function buildPresetVariantDirection(preset: CreativePreset, variant: Pre
     creativeDirection: {
       ...brief,
       ...(preset.vertical === "bags" && preset.id === "bags-studio" ? { pose: "Show the complete bag standing naturally on a tabletop, pedestal, or stable product support with handles and straps arranged visibly." } : {}),
-      subject: preset.vertical === "bags"
-        ? brief.subject.replace(/Show a natural crossbody carry with credible gravity and strap tension; keep the strap clear of the logo\./i, "Show the source bag with its existing carry system and credible gravity; keep identifying details clear.")
-        : brief.subject,
-      pose: `${preset.vertical === "bags" && preset.id === "bags-studio" ? "Present the complete bag on a stable tabletop, pedestal, or product support, with its handles and straps naturally arranged and all construction visible." : brief.pose} ${variant.compositionDirection} ${subtypeGuidance}`.trim(),
+      pose: `${preset.vertical === "bags" && preset.id === "bags-studio" ? "Present the complete bag on a stable tabletop, pedestal, or product support, with its handles and straps naturally arranged and all construction visible." : isProductOnlyPresentationMode(variant.presentationMode) ? "Present the garment without a human body, visible skin, hands, feet, or phantom limbs." : brief.pose} ${variant.compositionDirection} ${subtypeGuidance}`.trim(),
       environment: variant.environmentDirection,
       composition: variant.compositionDirection,
       lighting: variant.lightingDirection,
+      realism: isProductOnlyPresentationMode(variant.presentationMode)
+        ? "Use physically plausible fabric weight, gravity, folds, collar and sleeve shaping, seams, surface texture, and contact shadows. Ghost volume must contain no visible mannequin, skin, or implied human limbs. Floating modes must never create phantom hands, feet, or body parts."
+        : brief.realism,
+      subject: `${isProductOnlyPresentationMode(variant.presentationMode) ? "The supplied garment alone is the commercial hero. Preserve its exact cut, construction, seams, color, graphics and proportions." : preset.vertical === "bags" ? brief.subject.replace(/Show a natural crossbody carry with credible gravity and strap tension; keep the strap clear of the logo\./i, "Show the source bag with its existing carry system and credible gravity; keep identifying details clear.") : brief.subject} ${variant.familyId === "apparel-street" ? `Model presentation: ${variant.modelPresentation ?? "commercial adult fashion model with natural, varied styling"}. Vary human identity unless the reference or explicit user direction requires continuity.` : ""} Presentation mode: ${variant.presentationMode ?? "family_default"}; orientation: ${variant.productOrientation ?? "natural"}; support: ${variant.physicalSupport ?? "natural"}; gravity: ${variant.gravityBehavior ?? "physically_plausible"}; human presence: ${variant.humanPresence ?? "family_default"}; interaction: ${variant.interactionMode ?? "family_default"}. Selected preset scene identity: ${familySceneSummary(variant.familyId)}.`,
+      camera: `${brief.camera} ${variant.styleDirection ?? ""}`.trim(),
+      capture: preset.vertical === "apparel" && variant.captureProfile ? getFashionCaptureProfile(variant.captureProfile as FashionCaptureProfileId) : brief.capture,
       mood: `${brief.mood} ${variant.sceneDirection}`,
-      negativeConstraints: `${brief.negativeConstraints} ${variant.constraints?.join(" ") ?? ""}`.trim(),
+      negativeConstraints: `${brief.negativeConstraints} ${isProductOnlyPresentationMode(variant.presentationMode) ? "No person, skin, hands, feet, face, phantom limbs, visible mannequin, rigid cardboard cutout, altered garment cut, graphics, seams, color, or proportions." : ""} ${getPresetFamily(variant.familyId)?.hardRules.join(" ") ?? ""} ${variant.constraints?.join(" ") ?? ""}`.trim(),
     },
   };
+}
+
+function familySceneSummary(familyId: string): string {
+  const family = getPresetFamily(familyId);
+  if (!family) return "preserve the selected preset family";
+  return `family ${family.id}; allowed scenes ${family.allowedSceneTypes.join(", ")}; excluded scenes ${family.disallowedSceneTypes.join(", ")}`;
 }
 
 export function getRecommendedPresets({

@@ -4,7 +4,7 @@ import { type ChangeEvent, type DragEvent, useEffect, useId, useRef, useState } 
 import { useTranslations } from "next-intl";
 
 import { createWorkspaceProject } from "@/app/[locale]/dashboard/actions";
-import { DASHBOARD_PRESET_EVENT } from "@/components/dashboard/creative-preset-rail";
+import { DASHBOARD_PRESET_EVENT, type DashboardPresetSelection } from "@/components/dashboard/creative-preset-rail";
 import {
   registerProductAsset,
   registerReferenceAsset,
@@ -28,6 +28,7 @@ import type { AppLocale } from "@/i18n/routing";
 import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
 import { getCreativePreset, getPresetFamily } from "@/lib/creative-presets/creative-presets";
 import { createClient } from "@/lib/supabase/client";
+import { MAX_PROJECT_PRODUCT_IMAGES } from "@/lib/assets/product-asset-constraints";
 
 type CreativeComposerProps = {
   locale: AppLocale;
@@ -57,8 +58,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const [referenceError, setReferenceError] = useState("");
   const [isProductDragging, setIsProductDragging] = useState(false);
   const [isReferenceDragging, setIsReferenceDragging] = useState(false);
-  const [productFile, setProductFile] = useState<File | null>(null);
-  const [productPreviewUrl, setProductPreviewUrl] = useState<string | null>(null);
+  const [productFiles, setProductFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
+  const productFilesRef = useRef(productFiles);
   const [referenceFiles, setReferenceFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
   const referenceFilesRef = useRef(referenceFiles);
   const [generationState, setGenerationState] = useState<"idle" | "pending">("idle");
@@ -67,6 +68,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
   const [additionalOpen, setAdditionalOpen] = useState(false);
   const isCreating = generationState === "pending";
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [selectedPresentationMode, setSelectedPresentationMode] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
   const selectedPreset = getCreativePreset(selectedPresetId);
 
@@ -76,16 +78,19 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         return;
       }
 
-      if (event.detail === null) {
+      const selection = event.detail as DashboardPresetSelection | null;
+      if (!selection || selection.presetId === null) {
         setSelectedPresetId(null);
+        setSelectedPresentationMode(null);
         setStatusMessage("");
         return;
       }
 
-      const preset = getCreativePreset(event.detail);
+      const preset = getCreativePreset(selection.presetId);
       if (!preset) return;
 
       setSelectedPresetId(preset.id);
+      setSelectedPresentationMode(selection.presentationMode);
       setStatusMessage("");
       setAdditionalOpen(true);
       composerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -96,13 +101,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     return () => window.removeEventListener(DASHBOARD_PRESET_EVENT, handlePreset);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (productPreviewUrl) {
-        URL.revokeObjectURL(productPreviewUrl);
-      }
-    };
-  }, [productPreviewUrl]);
+  useEffect(() => { productFilesRef.current = productFiles; }, [productFiles]);
+  useEffect(() => () => { productFilesRef.current.forEach((product) => URL.revokeObjectURL(product.previewUrl)); }, []);
 
   useEffect(() => {
     referenceFilesRef.current = referenceFiles;
@@ -112,47 +112,40 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     referenceFilesRef.current.forEach((reference) => URL.revokeObjectURL(reference.previewUrl));
   }, []);
 
-  function selectProduct(file: File) {
-    if (!isSupportedProductImageType(file.type)) {
-      setProductError(t("invalidProductType"));
-      return;
-    }
-
-    if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
-      setProductError(t("productTooLarge"));
-      return;
-    }
-
-    if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
-    setProductFile(file);
-    setProductPreviewUrl(URL.createObjectURL(file));
-    setProductError("");
-    setStatusMessage("");
+  function selectProducts(files: File[]) {
+    const available = MAX_PROJECT_PRODUCT_IMAGES - productFilesRef.current.length;
+    if (files.length > available) { setProductError(t("productLimit")); return; }
+    if (files.some((file) => !isSupportedProductImageType(file.type))) { setProductError(t("invalidProductType")); return; }
+    if (files.some((file) => file.size > MAX_PRODUCT_IMAGE_FILE_SIZE)) { setProductError(t("productTooLarge")); return; }
+    setProductFiles((current) => [...current, ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }))]);
+    setProductError(""); setStatusMessage("");
   }
 
   function handleProductChange(event: ChangeEvent<HTMLInputElement>) {
-    const [file] = Array.from(event.target.files ?? []);
-    if (file) {
-      selectProduct(file);
-    }
+    selectProducts(Array.from(event.target.files ?? []));
     event.target.value = "";
   }
 
   function handleProductDrop(event: DragEvent<HTMLButtonElement>) {
     event.preventDefault();
     setIsProductDragging(false);
-    const [file] = Array.from(event.dataTransfer.files);
-    if (file) {
-      selectProduct(file);
-    }
+    selectProducts(Array.from(event.dataTransfer.files));
   }
 
-  function removeProduct() {
-    if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
-    setProductFile(null);
-    setProductPreviewUrl(null);
-    setProductError("");
-    setStatusMessage("");
+  function removeProduct(index: number) {
+    setProductFiles((current) => { const target = current[index]; if (target) URL.revokeObjectURL(target.previewUrl); return current.filter((_, itemIndex) => itemIndex !== index); });
+    setProductError(""); setStatusMessage("");
+  }
+
+  function makeProductPrimary(index: number) {
+    if (index === 0) return;
+    setProductFiles((current) => { const selected = current[index]; return selected ? [selected, ...current.filter((_, itemIndex) => itemIndex !== index)] : current; });
+  }
+
+  function moveProduct(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (index < 1 || nextIndex < 1 || nextIndex >= productFiles.length) return;
+    setProductFiles((current) => { const next = [...current]; [next[index], next[nextIndex]] = [next[nextIndex]!, next[index]!]; return next; });
   }
 
   function selectReferences(files: File[]) {
@@ -193,10 +186,10 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     const creativeDirection = prompt.trim();
     if (
       !userId ||
-      !productFile ||
+      !productFiles.length ||
       (!creativeDirection && !selectedPreset) ||
       isCreating ||
-      !isSupportedProductImageType(productFile.type) ||
+      productFiles.some(({ file }) => !isSupportedProductImageType(file.type)) ||
       submissionLockRef.current
     ) {
       return;
@@ -217,23 +210,18 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
         throw new Error("Unable to create a project.");
       }
 
-      const extension = productImageExtensions[productFile.type];
-      const objectPath = `${userId}/${project.projectId}/${crypto.randomUUID()}.${extension}`;
       const supabase = createClient();
       activePhase = "productUpload";
       setStatusMessage(t("productUploading"));
-      const { error: uploadError } = await supabase.storage
-        .from("product-assets")
-        .upload(objectPath, productFile, { contentType: productFile.type, upsert: false });
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      activePhase = "productAnalysis";
-      setStatusMessage(t("productAnalyzing"));
-      const registration = await registerProductAsset(locale, project.projectId, objectPath);
-      if (registration.status !== "success") {
-        throw new Error("Unable to register the product asset.");
+      for (const { file } of productFiles) {
+        const extension = productImageExtensions[file.type as keyof typeof productImageExtensions];
+        const objectPath = `${userId}/${project.projectId}/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await supabase.storage.from("product-assets").upload(objectPath, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw uploadError;
+        activePhase = "productAnalysis";
+        setStatusMessage(t("productAnalyzing"));
+        const registration = await registerProductAsset(locale, project.projectId, objectPath);
+        if (registration.status !== "success") throw new Error("Unable to register the product asset.");
       }
 
       for (const reference of referenceFiles) {
@@ -275,6 +263,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
       if (selectedPreset) {
         generationFormData.set("preset_id", selectedPreset.id);
       }
+      if (selectedPresentationMode) generationFormData.set("presentation_mode", selectedPresentationMode);
       const generation = await createQueuedImageGeneration(
         locale,
         project.projectId,
@@ -297,8 +286,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
     }
   }
 
-  const canStartImageCreation = canCreateImageWithPreset(Boolean(productFile), prompt, selectedPreset) && Boolean(userId) && !isCreating;
-  const disabledReason = !userId ? t("signInRequired") : !productFile ? t("productRequired") : !prompt.trim() && !selectedPreset ? t("directionRequired") : "";
+  const canStartImageCreation = canCreateImageWithPreset(productFiles.length > 0, prompt, selectedPreset) && Boolean(userId) && !isCreating;
+  const disabledReason = !userId ? t("signInRequired") : !productFiles.length ? t("productRequired") : !prompt.trim() && !selectedPreset ? t("directionRequired") : "";
 
   return (
     <>
@@ -342,21 +331,20 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             </header>
             <div className="creative-product-field">
               <div className="creative-upload-content">
-              {productPreviewUrl ? (
-                <div className="creative-selected-product">
-                  <span className="creative-selected-product-media">
-                    {/* Local object URLs are used only before creation starts. */}
+              {productFiles.length ? (
+                <div className="project-product-grid creative-product-grid" aria-live="polite">
+                  {productFiles.map((product, index) => <article className="project-product-card" key={product.previewUrl}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={productPreviewUrl} alt={t("selectedProductAlt")} />
-                  </span>
-                  <span className="creative-selected-product-copy">
-                    <strong title={productFile?.name}>{productFile?.name}</strong>
-                    <small className="creative-product-ready">{t("productReady")}</small>
-                    <span>
-                      <button type="button" onClick={() => productInputRef.current?.click()} disabled={isCreating} aria-describedby={productError ? productErrorId : undefined}>{t("replaceProduct")}</button>
-                      <button type="button" onClick={removeProduct} disabled={isCreating}>{t("removeProduct")}</button>
-                    </span>
-                  </span>
+                    <img src={product.previewUrl} alt={t("productPreviewAlt", { index: index + 1 })} />
+                    <span className="project-product-role">{index === 0 ? t("primaryProduct") : t("supportingProduct")}</span>
+                    <div className="project-product-actions">
+                      {index > 0 ? <button type="button" onClick={() => makeProductPrimary(index)} disabled={isCreating}>{t("setPrimaryProduct")}</button> : null}
+                      {index > 1 ? <button type="button" aria-label={t("moveProductEarlier", { index: index + 1 })} onClick={() => moveProduct(index, -1)} disabled={isCreating}>↑</button> : null}
+                      {index > 0 && index < productFiles.length - 1 ? <button type="button" aria-label={t("moveProductLater", { index: index + 1 })} onClick={() => moveProduct(index, 1)} disabled={isCreating}>↓</button> : null}
+                      <button type="button" aria-label={t("removeProductView", { index: index + 1 })} onClick={() => removeProduct(index)} disabled={isCreating}>×</button>
+                    </div>
+                  </article>)}
+                  {productFiles.length < MAX_PROJECT_PRODUCT_IMAGES ? <button type="button" className="project-product-add" onClick={() => productInputRef.current?.click()} disabled={isCreating}><DashboardIcon name="plus" /><strong>{t("addProductView")}</strong></button> : null}
                 </div>
               ) : (
                 <button
@@ -378,7 +366,7 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
               )}
               </div>
               <div className="creative-panel-footer">
-                {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : <p>{productFile ? t("productReady") : ""}</p>}
+                {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : <p>{productFiles.length ? t("productCount", { count: productFiles.length }) : t("productMultiViewHelper")}</p>}
               </div>
             </div>
           </section>
@@ -389,7 +377,8 @@ export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
             aria-label={t("addProduct")}
-            disabled={isCreating}
+            multiple
+            disabled={isCreating || productFiles.length >= MAX_PROJECT_PRODUCT_IMAGES}
             onChange={handleProductChange}
           />
           <input

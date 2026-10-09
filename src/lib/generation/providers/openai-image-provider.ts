@@ -69,6 +69,14 @@ function getProviderRequestId(response: unknown): string | null {
   return null;
 }
 
+function getProviderUsage(response: unknown): ImageGenerationResult["usage"] {
+  if (!response || typeof response !== "object" || !("usage" in response) || !response.usage || typeof response.usage !== "object") return undefined;
+  const usage = response.usage as Record<string, unknown>;
+  const number = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  const inputTokens = number(usage.input_tokens), outputTokens = number(usage.output_tokens), totalTokens = number(usage.total_tokens);
+  return inputTokens === undefined && outputTokens === undefined && totalTokens === undefined ? undefined : { inputTokens, outputTokens, totalTokens };
+}
+
 export class OpenAIImageProvider implements ImageGenerationProviderClient {
   async generate(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
     const operation = request.operation ?? "image_generation";
@@ -134,6 +142,7 @@ export class OpenAIImageProvider implements ImageGenerationProviderClient {
         model: request.model,
         width: size.width,
         height: size.height,
+        usage: getProviderUsage(response),
         providerMetadata: { ...(requestId ? { requestId } : {}), model: request.model, quality: quality ?? "auto", providerWidth: size.width, providerHeight: size.height, requestedAspectRatio: request.aspectRatio },
       };
     } catch (error) {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 
 import {
   getProductProfileFromStoredValue,
@@ -73,6 +74,33 @@ test("unsupported products never write a fake profile", async () => {
   const { repository, response } = await run({ status: "unsupported", inferredCategory: "beverage", profile: null });
   assert.deepEqual(response, { status: "unsupported", inferredCategory: "beverage", reason: "unsupported_product" });
   assert.equal(repository.saveCount, 0);
+});
+
+test("validated output wrapper is unwrapped, mapped profile persists, and unsupported wrapper remains safe", async () => {
+  const repository = new FakeRepository();
+  const result = await persistProductAnalysisResult({
+    assetId, userId, model: "fake-vision", repository,
+    response: { output: profiles.jewelry, errorPaths: [] },
+  });
+  assert.equal(result.status, "supported");
+  assert.equal(repository.saved?.productId, assetId);
+  assert.equal(repository.saveCount, 1);
+
+  const unsupported = await persistProductAnalysisResult({
+    assetId, userId, model: "fake-vision", repository: new FakeRepository(),
+    response: { output: { status: "unsupported", inferredCategory: "beverage" }, errorPaths: [] },
+  });
+  assert.deepEqual(unsupported, { status: "unsupported", inferredCategory: "beverage", reason: "unsupported_product" });
+});
+
+test("upload analyzer consumes the validated output wrapper and records validation/persistence", async () => {
+  const source = await readFile("src/lib/product-understanding/analyze-product-asset.ts", "utf8");
+  assert.match(source, /const normalizedEnvelope = response as ProductAnalysisOutputValidation/);
+  assert.match(source, /const finalCandidate = normalizedEnvelope\.output/);
+  assert.match(source, /validatedOutputVertical/);
+  assert.match(source, /validatedProfilePresent: isProductProfile\(validatedOutput\)/);
+  assert.match(source, /logAnalysis\("validated"/);
+  assert.match(source, /logAnalysis\("persisted"/);
 });
 
 test("invalid structured output and API failure preserve the asset", async () => {

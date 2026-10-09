@@ -64,3 +64,22 @@ test("generic bag composition heuristics cannot turn a selected Studio family in
   assert.equal(studio?.framing, "full_product");
   assert.equal(studio?.productDominance, "hero");
 });
+
+test("composition preserves the final preset-compliant street family", () => {
+  const street = resolveComposition({ productProfile: product("apparel"), sceneFamily: "apparel_street", strategy: "fashion_on_model", userPrompt: "", presetId: "apparel-street" });
+  assert.equal(street?.source, "preset_hint");
+  assert.deepEqual(street, resolveComposition({ productProfile: product("apparel"), sceneFamily: "apparel_street", strategy: "fashion_on_model", userPrompt: "", presetId: "apparel-street" }));
+});
+
+test("Reference 1 controls camera framing pose geometry while preset fills unspecified dimensions", () => {
+  const referenceStyle = {
+    composition: { framing: "environmental", cameraAngle: "low angle", cameraDistance: "wide", subjectPlacement: "left" },
+    shotProfile: { framing: "environmental", cameraAngle: "low_angle", cameraDistance: "wide", subjectPlacement: "rule_of_thirds_left", productScale: "contextual", interaction: "worn", humanPose: "walking profile", handDirection: "none", lighting: null, background: "street", environment: "urban street", surfaces: null, props: null, depthOfField: null, negativeSpace: "right", realism: "editorial", compositionNotes: null, nonTransferableIdentityFeatures: [] },
+  } as never;
+  const result = resolveComposition({ productProfile: product("apparel"), sceneFamily: "apparel_street", userPrompt: "", presetId: "apparel-studio", referenceStyle, referenceAuthority: true });
+  assert.equal(result?.source, "reference_authority");
+  assert.equal(result?.framing, "environmental");
+  assert.equal(result?.preferredAngle, "low");
+  assert.equal(result?.subjectScale, "contextual");
+  assert.equal(result?.productDominance, "primary");
+});

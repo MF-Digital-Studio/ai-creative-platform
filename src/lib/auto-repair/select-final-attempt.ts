@@ -36,7 +36,7 @@ export type FinalCandidateSelection = {
   selectedAttempt: 0 | 1;
   reason: FinalCandidateSelectionReason;
   validationStatus: GenerationAttempt["validation"]["status"];
-  qualityGatePassed: boolean;
+  qualityGatePassed: boolean | null;
   qualityRejected: boolean;
   attempt: GenerationAttempt;
 };
@@ -55,7 +55,7 @@ export function resolveFinalCandidateSelection(original: GenerationAttempt, repa
     if (attempt.validation.status === "validation_unavailable") reason = "validation_unavailable";
     else reason = attempt.attempt === 0 ? "initial_less_bad_but_quality_rejected" : "repair_less_bad_but_quality_rejected";
   }
-  const qualityGatePassed = accepted(attempt);
+  const qualityGatePassed = attempt.validation.status === "validation_unavailable" ? null : accepted(attempt);
   return {
     attempt,
     selectedAttempt: attempt.attempt,
@@ -64,4 +64,16 @@ export function resolveFinalCandidateSelection(original: GenerationAttempt, repa
     qualityGatePassed,
     qualityRejected: attempt.validation.status !== "validation_unavailable" && !qualityGatePassed,
   };
+}
+
+export type GenerationTerminalDecision = "succeeded" | "succeeded_unverified" | "rejected";
+
+export function resolveGenerationTerminalDecision(input: {
+  validationStatus: GenerationAttempt["validation"]["status"];
+  qualityGatePassed: boolean | null;
+  commerciallyUsable: boolean | null;
+}): GenerationTerminalDecision {
+  if (input.validationStatus === "validation_unavailable") return "succeeded_unverified";
+  if (input.validationStatus === "fail" || input.qualityGatePassed === false || input.commerciallyUsable === false) return "rejected";
+  return "succeeded";
 }

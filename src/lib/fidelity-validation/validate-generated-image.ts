@@ -4,7 +4,7 @@ import { getOpenAIClient } from "@/lib/openai/client";
 import { structuredResponseText } from "@/lib/openai/structured-response";
 import { getReferenceAnalysisModel } from "@/lib/generation/references/reference-analysis";
 import { buildValidationBrief, renderValidationInstructions } from "./build-validation-brief";
-import { mapStructuredValidationOutput, resolveQualityGate } from "./resolve-quality-gate";
+import { mapStructuredValidationOutput, resolveQualityGate, suppressReferenceAuthorityPresetIssues } from "./resolve-quality-gate";
 import { FIDELITY_VALIDATION_VERSION } from "./validation-version";
 import type { FidelityValidationClient, FidelityValidationInput, FidelityValidationResult } from "./types";
 import { fidelityValidationCategories } from "./types";
@@ -45,12 +45,16 @@ function imageInput(data: Buffer, mimeType: string) {
 
 class OpenAIFidelityValidationClient implements FidelityValidationClient {
   async validate(input: FidelityValidationInput, brief: ReturnType<typeof buildValidationBrief>): Promise<unknown> {
+    const supportingProducts = input.supportingProducts ?? [];
+    const productCount = 1 + supportingProducts.length;
+    const outputIndex = productCount + (input.apparelArtworkIdentity ? 1 : 0) + (input.referenceBaseScene ? 1 : 0) + 1;
     const response = await getOpenAIClient().responses.create({
       model: getFidelityValidationModel(),
       instructions: renderValidationInstructions(brief),
       input: [{ role: "user", content: [
-        { type: "input_text", text: input.apparelArtworkIdentity ? "Image 1 is source garment authority. Image 2 is exact source artwork identity crop. The final image is generated output; if a reference scene is also shown, it is scene authority only. Compare typography/artwork to image 2 and placement to image 1." : input.referenceBaseScene ? "Image 1 is the authoritative source product. Image 2 is the authoritative reference base scene. Image 3 is the edited output. Check product identity against Image 1 and scene preservation against Image 2." : "Image 1 is the authoritative source product. Image 2 is the generated output. Identify only material deviations under the supplied validation policy." },
+        { type: "input_text", text: `Images 1-${productCount} show the same physical product from different viewpoints. Treat them collectively as identity evidence for one single product; Image 1 is primary and later product images are supporting authority. Do not interpret them as separate products. Image ${outputIndex} is the generated output.${input.referenceBaseScene ? " The image immediately before the output is scene authority only." : ""} Identify only material deviations under the supplied validation policy.` },
         imageInput(input.originalProduct, input.originalMimeType),
+        ...supportingProducts.map((product) => imageInput(product.data, product.mimeType)),
         ...(input.apparelArtworkIdentity ? [imageInput(input.apparelArtworkIdentity.data, input.apparelArtworkIdentity.mimeType)] : []),
         ...(input.referenceBaseScene ? [imageInput(input.referenceBaseScene, input.referenceBaseSceneMimeType ?? "image/png")] : []),
         imageInput(input.generatedImage, input.generatedMimeType),
@@ -72,15 +76,19 @@ class OpenAIFidelityValidationClient implements FidelityValidationClient {
 }
 
 export async function validateGeneratedImage(input: FidelityValidationInput, client: FidelityValidationClient = new OpenAIFidelityValidationClient()): Promise<FidelityValidationResult> {
-  const brief = buildValidationBrief({ ...input, referencePreservation: Boolean(input.referenceBaseScene), apparelArtworkIdentity: input.apparelArtworkIdentity ? { available: true, containsText: input.apparelArtworkIdentity.containsText, side: input.apparelArtworkIdentity.side, confidence: input.apparelArtworkIdentity.confidence } : null });
+  const brief = buildValidationBrief({ ...input, productImageCount: 1 + (input.supportingProducts?.length ?? 0), referencePreservation: input.referenceAuthority === true || Boolean(input.referenceBaseScene || input.referenceMatch), apparelArtworkIdentity: input.apparelArtworkIdentity ? { available: true, containsText: input.apparelArtworkIdentity.containsText, side: input.apparelArtworkIdentity.side, confidence: input.apparelArtworkIdentity.confidence } : null });
+  const normalize = (value: unknown) => suppressReferenceAuthorityPresetIssues(mapStructuredValidationOutput(value).filter((issue) => {
+    if (!brief.humanRealism?.applied && issue.category === "human_realism") return false;
+    return true;
+  }), brief.presetOverrideReason === "reference_authority" && !brief.preset?.strictProductOnlyStudio);
   if (input.exactProductApparel && input.apparelArtworkIdentity) {
     const result = await client.validate(input, brief);
-    const raw = mapStructuredValidationOutput(result).filter((issue) => brief.humanRealism?.applied || issue.category !== "human_realism");
+    const raw = normalize(result);
     const gate = resolveQualityGate(raw);
     return { ...gate, version: FIDELITY_VALIDATION_VERSION };
   }
   const raw = await client.validate(input, brief);
-  const result = resolveQualityGate(mapStructuredValidationOutput(raw).filter((issue) => brief.humanRealism?.applied || issue.category !== "human_realism"));
+  const result = resolveQualityGate(normalize(raw));
   return { ...result, version: FIDELITY_VALIDATION_VERSION };
 }
 
@@ -94,7 +102,7 @@ export async function validateGeneratedImageBestEffort(input: FidelityValidation
       issues: [],
       severity: null,
       retryRecommended: false,
-      commerciallyUsable: false,
+      commerciallyUsable: null,
       summary: "Semantic fidelity validation was unavailable; generation remains accessible and was not marked as passed.",
       version: FIDELITY_VALIDATION_VERSION,
     };

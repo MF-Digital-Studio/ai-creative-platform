@@ -23,26 +23,36 @@ import {
 import {
   getCreativePreset,
   getPresetFamily,
+  getPresetFamilyForPresetId,
   getHistoricalCreativePreset,
-  resolvePresetVariant,
+  resolvePresetVariantWithHistory,
   buildPresetVariantDirection,
+  getPresetVariationMetadata,
+  PRESET_SYSTEM_VERSION,
+  getPresetPresentationMode,
+  getPresetVariantsForPresentationMode,
+  isProductOnlyPresentationMode,
 } from "@/lib/creative-presets/creative-presets";
 import {
   getProjectReferenceAssets,
   isReferenceImageMimeType,
   MAX_PROJECT_REFERENCE_IMAGES,
 } from "@/lib/assets/reference-assets";
+import { getProjectProductAssets } from "@/lib/assets/product-assets";
+import { MAX_PROJECT_PRODUCT_IMAGES } from "@/lib/assets/product-asset-constraints";
 import {
   analyzeReferenceImages,
   getReferenceAnalysisModel,
   REFERENCE_ANALYSIS_VERSION,
 } from "@/lib/generation/references/reference-analysis";
+import { readReferenceAnalysisCache } from "@/lib/generation/references/reference-analysis-cache";
+import { createCostTelemetry } from "@/lib/generation/cost-telemetry";
 import { resolveReferenceMatch } from "@/lib/generation/references/resolve-reference-match";
 import { resolveReferenceGenerationPath } from "@/lib/generation/references/reference-product-replacement";
 import { getReferenceShotProfile, REFERENCE_MATCH_VERSION, type ReferenceMode } from "@/lib/generation/references/reference-shot-profile";
 import { buildReferenceReplacementPrompt, orderGenerationImages, orderReferenceReplacementImages, orderImageEditImages } from "@/lib/generation/image-roles";
 import { buildImageEditPrompt, parseImageEditIntent } from "@/lib/image-edit/edit-intent";
-import { validateImageEdit } from "@/lib/image-edit/validate-image-edit";
+import { validateImageEditBestEffort } from "@/lib/image-edit/validate-image-edit";
 import { buildProductIdentityManifest } from "@/lib/product-identity/build-product-identity-manifest";
 import { resolveApparelArtworkRegion, buildApparelFidelityBenchmarkPrompts, compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
 import { evaluateApparelProductFidelity, resolveApparelFidelityMode } from "@/lib/product-identity/resolve-apparel-fidelity-mode";
@@ -71,9 +81,7 @@ import type {
 } from "@/lib/generation/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getProductProfileForAsset,
-} from "@/lib/product-understanding/analyze-product-asset";
+import { resolveCanonicalProductProfile } from "@/lib/product-understanding/canonical-product-profile";
 import { compileProductProfilePrompt } from "@/lib/product-understanding/compile-product-profile-prompt";
 import { resolveSceneSuitability } from "@/lib/scene-suitability/resolve-scene-suitability";
 import { SCENE_SUITABILITY_VERSION } from "@/lib/scene-suitability/types";
@@ -84,7 +92,7 @@ import { CREATIVE_DIRECTION_COMPLIANCE_VERSION } from "@/lib/creative-direction-
 import { validateGeneratedImageBestEffort } from "@/lib/fidelity-validation/validate-generated-image";
 import { compileRepairInstructions } from "@/lib/auto-repair/compile-repair-instructions";
 import { resolveRepairPlan } from "@/lib/auto-repair/resolve-repair-plan";
-import { resolveFinalCandidateSelection } from "@/lib/auto-repair/select-final-attempt";
+import { resolveFinalCandidateSelection, resolveGenerationTerminalDecision } from "@/lib/auto-repair/select-final-attempt";
 import { AUTO_REPAIR_VERSION } from "@/lib/auto-repair/repair-version";
 import type { GenerationAttempt, RepairMetadata } from "@/lib/auto-repair/types";
 import { dispatchQueuedGeneration } from "@/lib/generation/dispatch-queued-generation";
@@ -133,9 +141,22 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
   if (!project || project.user_id !== userId) return { ok: false, error: "Project could not be loaded.", code: "creationFailed" };
   const { data: base } = await supabase.from("generations").select("id,project_id,input_asset_id,generation_type,status,output_bucket_id,output_object_path,aspect_ratio,provider_metadata").eq("id", baseGenerationId).eq("project_id", projectId).maybeSingle();
   if (!base || base.generation_type !== "image" || base.status !== "succeeded" || !base.output_bucket_id || !base.output_object_path || base.output_bucket_id !== generatedAssetsBucket || !hasValidObjectPath(userId, projectId, base.output_object_path)) return { ok: false, error: "Selected output is unavailable.", code: "missingOutput" };
-  const { data: asset } = await supabase.from("assets").select("id,bucket_id,object_path").eq("id", base.input_asset_id ?? "").eq("project_id", projectId).eq("user_id", userId).maybeSingle();
+  const currentProductAssets = await getProjectProductAssets(userId, projectId);
+  const asset = currentProductAssets.find(({ id }) => id === base.input_asset_id) ?? currentProductAssets[0] ?? null;
   if (!asset || asset.bucket_id !== "product-assets" || !hasValidObjectPath(userId, projectId, asset.object_path)) return { ok: false, error: "Source product image is unavailable.", code: "creationFailed" };
+  const baseProductMetadata = base.provider_metadata?.product_images;
+  const editProductIds = baseProductMetadata && typeof baseProductMetadata === "object" && "asset_ids" in baseProductMetadata && Array.isArray(baseProductMetadata.asset_ids)
+    ? [asset.id, ...baseProductMetadata.asset_ids.filter((id: unknown): id is string => typeof id === "string" && id !== asset.id)].slice(0, MAX_PROJECT_PRODUCT_IMAGES)
+    : [asset.id];
+  const { data: editProductRows } = await supabase.from("assets").select("id,bucket_id,object_path").eq("project_id", projectId).eq("user_id", userId).eq("asset_type", "product").in("id", editProductIds);
+  const orderedEditProducts = editProductIds.map((id) => editProductRows?.find((row) => row.id === id)).filter((row): row is NonNullable<typeof editProductRows>[number] => Boolean(row && row.bucket_id === "product-assets" && hasValidObjectPath(userId, projectId, row.object_path)));
   const intent = parseImageEditIntent(instruction.trim());
+    const baseHumanMetadata = base.provider_metadata?.humanRealism;
+    const baseStrategyMetadata = base.provider_metadata?.strategy;
+    const baseStrategy = baseStrategyMetadata && typeof baseStrategyMetadata === "object" && "selected" in baseStrategyMetadata && typeof baseStrategyMetadata.selected === "string" ? baseStrategyMetadata.selected : "reference_edit";
+    const humanRealismExpected = Boolean(baseHumanMetadata && typeof baseHumanMetadata === "object" && "applied" in baseHumanMetadata && baseHumanMetadata.applied === true) || ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(baseStrategy);
+    const editHumanRealismPolicy = resolveHumanRealismPolicy({ strategy: "reference_edit", vertical: null, visibleHuman: humanRealismExpected });
+    const editHumanRealismDirection = compileHumanRealismPrompt(editHumanRealismPolicy, null);
   const admin = getSupabaseAdminClient();
   const { data: edit, error } = await admin.from("generations").insert({ project_id: projectId, input_asset_id: asset.id, generation_type: "image", status: "processing", provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspect_ratio: base.aspect_ratio ?? "1:1", preservation_mode: "reference_edit", fidelity_status: "not_checked", creative_direction_snapshot: instruction.trim(), provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "pending", repairAttempted: false, editVersion: 1 } } }).select("id").single();
   if (error || !edit) return { ok: false, error: "Edit record could not be created.", code: "creationFailed" };
@@ -143,28 +164,32 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
   const { data: marked } = await admin.from("generations").update({ status: "processing", processing_started_at: now.toISOString() }).eq("id", edit.id).select("id").maybeSingle();
   if (!marked) return { ok: false, error: "Edit could not be started.", code: "creationFailed" };
   try {
-    const [baseDownload, productDownload] = await Promise.all([admin.storage.from(base.output_bucket_id).download(base.output_object_path), admin.storage.from(asset.bucket_id).download(asset.object_path)]);
-    if (baseDownload.error || !baseDownload.data || productDownload.error || !productDownload.data) throw new Error("Unable to load edit images.");
+    const [baseDownload, productDownloads] = await Promise.all([admin.storage.from(base.output_bucket_id).download(base.output_object_path), Promise.all(orderedEditProducts.map((product) => admin.storage.from(product.bucket_id).download(product.object_path)))]);
+    if (baseDownload.error || !baseDownload.data || productDownloads.some((download) => download.error || !download.data)) throw new Error("Unable to load edit images.");
     const baseBuffer = Buffer.from(await baseDownload.data.arrayBuffer());
-    const productBuffer = Buffer.from(await productDownload.data.arrayBuffer());
     const baseInput = { id: base.id, bucketId: base.output_bucket_id, objectPath: base.output_object_path, data: baseBuffer, mimeType: "image/png" };
-    const productInput = { id: asset.id, bucketId: asset.bucket_id, objectPath: asset.object_path, data: productBuffer, mimeType: productDownload.data.type || "image/jpeg" };
-    let result = await getImageGenerationProvider("openai").generate({ generationId: edit.id, projectId, sourceAsset: productInput, images: orderImageEditImages(baseInput, productInput), prompt: buildImageEditPrompt(instruction.trim(), intent), provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspectRatio: resolveAspectRatio(base.aspect_ratio), operation: "image_edit" });
-    let validation = await validateImageEdit({ base: baseBuffer, edited: result.imageData, instruction: instruction.trim() });
+    const productInputs = await Promise.all(orderedEditProducts.map(async (product, index) => { const data = productDownloads[index]!.data!; return { id: product.id, bucketId: product.bucket_id, objectPath: product.object_path, data: Buffer.from(await data.arrayBuffer()), mimeType: data.type || "image/jpeg" }; }));
+    const productInput = productInputs[0]!;
+    let result = await getImageGenerationProvider("openai").generate({ generationId: edit.id, projectId, sourceAsset: productInput, images: orderImageEditImages(baseInput, productInputs), prompt: buildImageEditPrompt(instruction.trim(), intent, editHumanRealismDirection), provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspectRatio: resolveAspectRatio(base.aspect_ratio), operation: "image_edit" });
+    let validationCalls = 1;
+    let imageGenerationCalls = 1;
+    let validation = await validateImageEditBestEffort({ base: baseBuffer, edited: result.imageData, instruction: instruction.trim(), humanRealismExpected });
     let repairAttempted = false;
-    if (validation.status === "fail" && validation.issueCodes.some((code) => code === "EDIT_REQUEST_NOT_APPLIED" || code === "EDIT_SCOPE_OVERREACH" || code === "EDIT_PRODUCT_IDENTITY_DRIFT")) {
+    if (validation.status === "fail" && validation.issueCodes.some((code) => code === "EDIT_REQUEST_NOT_APPLIED" || code === "EDIT_SCOPE_OVERREACH" || code === "EDIT_PRODUCT_IDENTITY_DRIFT" || code === "EDIT_HUMAN_REALISM_ERROR")) {
       repairAttempted = true;
       const previous = result.imageData;
-      const repairPrompt = `Use the previous edited image and original base image. Correct only the failed edit behavior: ${validation.issueCodes.join(", ")}. Restore all unrequested elements to the base image appearance. Preserve the exact product identity.\n\nOriginal instruction: ${instruction.trim()}`;
-      result = await getImageGenerationProvider("openai").generate({ generationId: edit.id, projectId, sourceAsset: productInput, images: orderImageEditImages({ ...baseInput, data: previous }, productInput), prompt: repairPrompt, provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: "xhigh", aspectRatio: resolveAspectRatio(base.aspect_ratio), operation: "image_edit" });
-      validation = await validateImageEdit({ base: baseBuffer, edited: result.imageData, instruction: instruction.trim() });
+      const repairPrompt = `Use the previous edited image and original base image. Correct only the failed edit behavior: ${validation.issueCodes.join(", ")}. Restore all unrequested elements to the base image appearance. Preserve the exact product identity, person identity, pose, camera, environment, lighting, and composition. For EDIT_HUMAN_REALISM_ERROR, repair only the affected anatomical or skin region.\n\n${editHumanRealismDirection}\n\nOriginal instruction: ${instruction.trim()}`;
+      result = await getImageGenerationProvider("openai").generate({ generationId: edit.id, projectId, sourceAsset: productInput, images: orderImageEditImages({ ...baseInput, data: previous }, productInputs), prompt: repairPrompt, provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: "xhigh", aspectRatio: resolveAspectRatio(base.aspect_ratio), operation: "image_edit" });
+      imageGenerationCalls += 1;
+      validationCalls += 1;
+      validation = await validateImageEditBestEffort({ base: baseBuffer, edited: result.imageData, instruction: instruction.trim(), humanRealismExpected });
     }
     if (validation.status === "fail") throw new Error("Edit fidelity validation failed.");
     const objectPath = `${userId}/${projectId}/${edit.id}.png`;
     const upload = await admin.storage.from(generatedAssetsBucket).upload(objectPath, result.imageData, { contentType: "image/png", upsert: false });
     if (upload.error) throw new Error("Unable to store edited image.");
     const processingCompletedAt = new Date();
-    const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : "not_checked", provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
+    const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : validation.status === "validation_unavailable" ? "not_available" : "not_checked", provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, costTelemetry: createCostTelemetry({ productUnderstandingCalls: 0, referenceAnalysisCalls: 0, imageGenerationCalls: imageGenerationCalls - (repairAttempted ? 1 : 0), validationCalls, repairGenerationCalls: repairAttempted ? 1 : 0, inputProductImageCount: productInputs.length, inputReferenceCount: 0, repairAttempted, finalOutcome: validation.status === "validation_unavailable" ? "unverified" : "succeeded", validationOutcome: validation.status, providerUsage: result.usage }), provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
     if (saveError) throw new Error("Unable to save edited image record.");
     await createNotification({ userId, type: "image_edit_completed", projectId, projectName: project.title, generationId: edit.id });
     revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
@@ -184,8 +209,6 @@ export type RunQueuedImageGenerationResult =
   | { ok: true };
 
 const projectGenerationFields = "id, user_id, title, creative_direction";
-const productAssetGenerationFields =
-  "id, user_id, project_id, bucket_id, object_path, created_at";
 const queuedGenerationFields = [
   "id",
   "project_id",
@@ -296,6 +319,8 @@ export async function createQueuedImageGeneration(
 
     const userCreativeDirection = project.creative_direction?.trim() ?? "";
     const preset = getCreativePreset(formData?.get("preset_id"));
+    const presetFamily = preset ? getPresetFamily(preset.id) : null;
+    const selectedPresentationMode = getPresetPresentationMode(presetFamily?.id, formData?.get("presentation_mode"))?.id ?? null;
     const creativeDirection = buildCreativePresetDirection(userCreativeDirection, preset);
     if (!creativeDirection || Array.from(userCreativeDirection).length > 4000) {
       return { ok: false, message: "missingCreativeDirection" };
@@ -306,21 +331,11 @@ export async function createQueuedImageGeneration(
       userPrompt: userCreativeDirection || creativeDirection,
     });
 
-    const { data: asset, error: assetError } = await supabase
-      .from("assets")
-      .select(productAssetGenerationFields)
-      .eq("project_id", project.id)
-      .eq("user_id", userId)
-      .eq("asset_type", "product")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const productAssets = await getProjectProductAssets(userId, project.id);
+    const asset = productAssets[0] ?? null;
 
     if (
-      assetError ||
       !asset ||
-      asset.user_id !== userId ||
-      asset.project_id !== project.id ||
       asset.bucket_id !== "product-assets"
     ) {
       return { ok: false, message: "missingProductImage" };
@@ -355,7 +370,7 @@ export async function createQueuedImageGeneration(
             succeeded: false,
             user_prompt: userCreativeDirection,
           },
-          ...(preset ? { preset: createCreativePresetMetadata(preset) } : {}),
+          ...(preset ? { preset: { ...createCreativePresetMetadata(preset), ...(presetFamily ? { variantSeed: crypto.randomUUID(), variationSource: "generation_seed", selectedPresetFamily: presetFamily.id, selectedPresentationMode, presentationModeSource: selectedPresentationMode ? "user" : "automatic" } : {}) } } : {}),
           strategy: {
             effective_preservation_mode: strategyResolution.effectivePreservationMode,
             reason: strategyResolution.reason,
@@ -380,6 +395,13 @@ export async function createQueuedImageGeneration(
               version: REFERENCE_ANALYSIS_VERSION,
             },
           },
+          product_images: {
+            version: "multi-view-product-input-v1",
+            asset_ids: productAssets.map(({ id }) => id),
+            primary_asset_id: asset.id,
+            supporting_asset_ids: productAssets.slice(1).map(({ id }) => id),
+            same_physical_product: true,
+          },
         },
       })
       .select("id")
@@ -393,14 +415,15 @@ export async function createQueuedImageGeneration(
     safeGenerationEvent("queue", "created", { generationId: generation.id });
     const dispatchSucceeded = await dispatchQueuedGeneration(generation.id);
     if (!dispatchSucceeded) {
-      const { data: failedGeneration, error: dispatchError } = await admin.from("generations").update({
-        status: "failed", error_message: "dispatch_failed", processing_completed_at: new Date().toISOString(),
-      }).eq("id", generation.id).eq("status", "queued").select("id").maybeSingle();
-      if (dispatchError) safeGenerationEvent("queue", "queue_stalled", { generationId: generation.id });
-      else {
-        safeGenerationEvent("queue", "status_transition", { generationId: generation.id, status: "failed" });
-        if (failedGeneration) await createNotification({ userId, type: "generation_failed", projectId: project.id, projectName: project.title, generationId: generation.id });
+      const completedAt = new Date();
+      const { data: failedGeneration, error: dispatchFailureError } = await admin.from("generations").update({ status: "failed", error_message: "dispatch_failed", processing_completed_at: completedAt.toISOString() })
+        .eq("id", generation.id).eq("status", "queued").select("id").maybeSingle();
+      if (dispatchFailureError) safeGenerationEvent("dispatch", "terminal_state_persist_failed", { generationId: generation.id });
+      else if (failedGeneration) {
+        safeGenerationEvent("dispatch", "status_transition", { generationId: generation.id, status: "failed" });
+        await createNotification({ userId, type: "generation_failed", projectId: project.id, projectName: project.title, generationId: generation.id });
       }
+      revalidatePath(`/${locale}/dashboard/projects/${project.id}`, "page");
       return { ok: false, message: "creationFailed" };
     }
 
@@ -415,6 +438,7 @@ export async function createQueuedImageGeneration(
 export async function runQueuedImageGeneration(
   generationId: string,
 ): Promise<RunQueuedImageGenerationResult> {
+  safeGenerationEvent("dispatch", "pipeline_entered", { generationId });
   if (!uuidPattern.test(generationId)) {
     return { ok: false, message: "generationFailed" };
   }
@@ -432,9 +456,8 @@ export async function runQueuedImageGeneration(
   let processingStartedAt: Date | null = null;
   const generationStartedAt = Date.now();
   let performance: ReturnType<typeof createGenerationPerformanceRecorder> | null = null;
-  const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, artworkAnalysisCalls: 0, repairCalls: 0 };
+  const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, referenceAnalysisCalls: 0, artworkAnalysisCalls: 0, segmentationCalls: 0, projectionAnalysisCalls: 0, repairCalls: 0 };
   safeGenerationEvent("queue", "processor_entered", { generationId });
-  safeGenerationEvent("dispatch", "pipeline_entered", { generationId });
   let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null } | null = null;
 
   try {
@@ -489,6 +512,22 @@ export async function runQueuedImageGeneration(
       return { ok: false, message: "generationFailed" };
     }
 
+    const productImageMetadata = queuedGeneration.provider_metadata?.product_images;
+    const snapshotProductIds = productImageMetadata && typeof productImageMetadata === "object" && "asset_ids" in productImageMetadata && Array.isArray(productImageMetadata.asset_ids)
+      ? productImageMetadata.asset_ids.filter((id: unknown): id is string => typeof id === "string" && uuidPattern.test(id)).slice(0, MAX_PROJECT_PRODUCT_IMAGES)
+      : [];
+    const requestedProductIds = [asset.id, ...snapshotProductIds.filter((id) => id !== asset.id)].slice(0, MAX_PROJECT_PRODUCT_IMAGES);
+    const { data: productAssetRows, error: productAssetsError } = await supabase
+      .from("assets")
+      .select("id, user_id, project_id, bucket_id, object_path, product_profile, product_role, sort_order")
+      .eq("project_id", project.id)
+      .eq("user_id", userId)
+      .eq("asset_type", "product")
+      .in("id", requestedProductIds);
+    if (productAssetsError) return { ok: false, message: "generationFailed" };
+    const orderedProductAssets = requestedProductIds.map((id) => productAssetRows?.find((row) => row.id === id)).filter((row): row is NonNullable<typeof productAssetRows>[number] => Boolean(row && row.bucket_id === "product-assets" && hasValidObjectPath(userId, project.id, row.object_path)));
+    if (!orderedProductAssets.length || orderedProductAssets[0]?.id !== asset.id) return { ok: false, message: "generationFailed" };
+
     const outputObjectPath = `${userId}/${project.id}/${queuedGeneration.id}.png`;
     if (!hasValidObjectPath(userId, project.id, outputObjectPath)) {
       return { ok: false, message: "generationFailed" };
@@ -514,15 +553,20 @@ export async function runQueuedImageGeneration(
     if (processingError || !processingGeneration) {
       return { ok: false, message: "notQueued" };
     }
-    console.info("[background-job] claim_success", { generationId, attempt: 0, duration: Date.now() - generationStartedAt });
+    safeGenerationEvent("queue", "claim_success", { generationId, duration: Date.now() - generationStartedAt });
     safeGenerationEvent("queue", "status_transition", { generationId, status: "processing" });
 
-    const { data: inputImage, error: downloadError } = await performance.measure("asset_load", () => admin.storage
-      .from(asset.bucket_id)
-      .download(asset.object_path));
-    if (downloadError || !inputImage) {
+    const productDownloads = await performance.measure("asset_load", () => Promise.all(orderedProductAssets.map(async (productAsset) => {
+      const { data, error } = await admin.storage.from(productAsset.bucket_id).download(productAsset.object_path);
+      if (error || !data || !isReferenceImageMimeType(data.type) || data.size > 20 * 1024 * 1024) return null;
+      return { asset: productAsset, blob: data, data: Buffer.from(await data.arrayBuffer()), mimeType: data.type };
+    })));
+    const usableProductImages = productDownloads.filter((image): image is NonNullable<typeof image> => image !== null);
+    const primaryProductImage = usableProductImages.find(({ asset: productAsset }) => productAsset.id === asset.id);
+    if (!primaryProductImage) {
       throw new Error("Unable to download the input image.");
     }
+    const inputImage = primaryProductImage.blob;
 
     const metadataPreset = queuedGeneration.provider_metadata?.preset;
     const presetId =
@@ -538,22 +582,46 @@ export async function runQueuedImageGeneration(
     // Resolve it only for replaying that historical generation, never for new selection.
     let preset = getCreativePreset(presetId) ?? getHistoricalCreativePreset(presetId);
     let resolvedVariantId: string | null = null;
-    const presetFamily = getPresetFamily(presetId);
+    let resolvedPresetVariant: import("@/lib/creative-presets/creative-presets").PresetVariant | null = null;
+    let selectedPresentationMode: string | null = null;
+    let presentationModeOverrideReason: "reference_authority" | null = null;
+    const presetFamily = getPresetFamilyForPresetId(presetId);
     if (presetFamily) {
-      const { data: recentGenerations } = await admin.from("generations")
-        .select("provider_metadata")
-        .eq("project_id", project.id)
-        .eq("generation_type", "image")
-        .neq("id", queuedGeneration.id)
-        .order("created_at", { ascending: false })
-        .limit(30);
-      const previousVariantId = recentGenerations?.map((row) => row.provider_metadata)
-        .map((metadata) => metadata && typeof metadata === "object" ? metadata.preset : null)
-        .map((value) => value && typeof value === "object" ? value : null)
-        .find((value) => value && (value.familyId === presetFamily.id || value.id === presetFamily.id) && typeof value.variantId === "string")?.variantId;
-      const variant = resolvePresetVariant({ family: presetFamily, previousVariantId: typeof previousVariantId === "string" ? previousVariantId : null, generationSeed: queuedGeneration.id });
+      const metadataVariantSeed = queuedGeneration.provider_metadata?.preset && typeof queuedGeneration.provider_metadata.preset === "object" && "variantSeed" in queuedGeneration.provider_metadata.preset && typeof queuedGeneration.provider_metadata.preset.variantSeed === "string"
+        ? queuedGeneration.provider_metadata.preset.variantSeed : queuedGeneration.id;
+      const { data: recentGenerations } = await admin.from("generations").select("provider_metadata").eq("project_id", project.id).eq("generation_type", "image").eq("status", "succeeded").neq("id", queuedGeneration.id).order("created_at", { ascending: false }).limit(30);
+      const history = (recentGenerations ?? []).flatMap(({ provider_metadata }) => {
+        const metadata = provider_metadata && typeof provider_metadata === "object" ? provider_metadata.preset : null;
+        return metadata && typeof metadata === "object" && (metadata.familyId === presetFamily.id || metadata.id === presetFamily.id) ? [metadata as import("@/lib/creative-presets/creative-presets").PresetVariationHistory] : [];
+      });
+      const previousVariantId = history[0]?.variantId;
+      const refMeta = queuedGeneration.provider_metadata?.references;
+      const sceneLockedReference = refMeta && typeof refMeta === "object" && "mode" in refMeta && refMeta.mode === "match";
+      const promptMeta = queuedGeneration.provider_metadata?.prompt_enhancement;
+      const userDirection = promptMeta && typeof promptMeta === "object" && "user_prompt" in promptMeta && typeof promptMeta.user_prompt === "string" ? promptMeta.user_prompt : "";
+      selectedPresentationMode = metadataPreset && typeof metadataPreset === "object" && "selectedPresentationMode" in metadataPreset
+        ? getPresetPresentationMode(presetFamily.id, metadataPreset.selectedPresentationMode)?.id ?? null
+        : null;
+      const selectedPresentationVariants = selectedPresentationMode
+        ? getPresetVariantsForPresentationMode(presetFamily, selectedPresentationMode)
+        : [];
+      const selectedStrictProductOnlyStudio = presetFamily.id === "apparel-studio"
+        && selectedPresentationVariants.length > 0
+        && selectedPresentationVariants.every(({ presentationMode }) => isProductOnlyPresentationMode(presentationMode));
+      const explicitContinuity = /same\s+(?:model|person|scene|location)|keep\s+(?:the\s+)?same|preserve\s+(?:the\s+)?scene/i.test(userDirection);
+      const continuityVariant = explicitContinuity || sceneLockedReference ? presetFamily.variants.find(({ id }) => id === previousVariantId) : null;
+      presentationModeOverrideReason = selectedPresentationMode && sceneLockedReference && !selectedStrictProductOnlyStudio ? "reference_authority" : null;
+      const eligibleVariants = selectedPresentationMode && !presentationModeOverrideReason
+        ? getPresetVariantsForPresentationMode(presetFamily, selectedPresentationMode)
+        : presetFamily.variants;
+      const variantFamily = eligibleVariants.length === presetFamily.variants.length ? presetFamily : { ...presetFamily, variants: eligibleVariants };
+      const variant = continuityVariant && eligibleVariants.some(({ id }) => id === continuityVariant.id)
+        ? continuityVariant
+        : resolvePresetVariantWithHistory(variantFamily, metadataVariantSeed, typeof previousVariantId === "string" ? previousVariantId : null, sceneLockedReference || explicitContinuity ? [] : history);
+      resolvedPresetVariant = variant;
       resolvedVariantId = variant.id;
       if (preset) preset = buildPresetVariantDirection(preset, variant);
+      console.info("[preset] resolved", { generationId, selectedPresetId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: variant.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? presentationModeOverrideReason ? "reference_authority" : "user" : "automatic", presentationModeOverrideReason, selectedVariantId: variant.id, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, overrideReason: presentationModeOverrideReason, variationSource: "generation_seed" });
     }
     const metadataEnhancement = queuedGeneration.provider_metadata?.prompt_enhancement;
     const metadataReferences = queuedGeneration.provider_metadata?.references;
@@ -579,7 +647,15 @@ export async function runQueuedImageGeneration(
     if (requestedReferenceAssetIds.length && process.env.NODE_ENV === "development") {
       console.info("[reference] analysis_started", { generationId: queuedGeneration.id, requestedCount: requestedReferenceAssetIds.length, usableCount: usableReferenceImages.length });
     }
-    const referenceAnalysis = await analyzeReferenceImages(usableReferenceImages.map(({ data, mimeType }) => ({ data, mimeType })));
+    const referenceCacheKey = { version: REFERENCE_ANALYSIS_VERSION, model: getReferenceAnalysisModel(), orderedAssetIds: usableReferenceImages.map(({ asset: reference }) => reference.id) };
+    const cachedReferenceAnalysis = readReferenceAnalysisCache(usableReferenceImages[0]?.asset.reference_analysis_cache, referenceCacheKey);
+    const referenceAnalysis = cachedReferenceAnalysis
+      ? { diagnostic: null, styleBrief: cachedReferenceAnalysis.styleBrief, usableCount: usableReferenceImages.length }
+      : await analyzeReferenceImages(usableReferenceImages.map(({ data, mimeType }) => ({ data, mimeType })));
+    if (!cachedReferenceAnalysis && usableReferenceImages.length) executionCounts.referenceAnalysisCalls += 1;
+    if (!cachedReferenceAnalysis && referenceAnalysis.styleBrief && usableReferenceImages[0]) {
+      await admin.from("assets").update({ reference_analysis_cache: { ...referenceCacheKey, styleBrief: referenceAnalysis.styleBrief, analyzedAt: new Date().toISOString() } }).eq("id", usableReferenceImages[0].asset.id).eq("user_id", userId).eq("asset_type", "reference_image");
+    }
     if (process.env.NODE_ENV === "development" && requestedReferenceAssetIds.length) {
       console.info(referenceAnalysis.styleBrief ? "[reference] analysis_completed" : "[reference] analysis_failed", {
         generationId: queuedGeneration.id,
@@ -603,7 +679,7 @@ export async function runQueuedImageGeneration(
     // This read validates both ownership and the persisted JSON before it can
     // influence routing. A missing/invalid profile deliberately keeps legacy
     // preset and prompt fallbacks available.
-    const productProfile = await performance.measure("product_understanding", () => getProductProfileForAsset(userId, asset.id));
+    const productProfile = await performance.measure("product_understanding", async () => resolveCanonicalProductProfile(orderedProductAssets.map((productAsset) => productAsset.product_profile)));
     let cachedLocalization: Record<string, unknown> | null = null;
     const priorArtwork = queuedGeneration.provider_metadata?.apparelArtwork;
     if (priorArtwork && typeof priorArtwork === "object" && "assetId" in priorArtwork && priorArtwork.assetId === asset.id && "version" in priorArtwork && priorArtwork.version === "apparel-artwork-localization-v1") cachedLocalization = priorArtwork as Record<string, unknown>;
@@ -658,6 +734,8 @@ export async function runQueuedImageGeneration(
     const referenceInteraction = referenceAnalysis.styleBrief
       ? getReferenceShotProfile(referenceAnalysis.styleBrief).interaction
       : null;
+    const strictProductOnlyStudio = presetFamily?.id === "apparel-studio"
+      && isProductOnlyPresentationMode(resolvedPresetVariant?.presentationMode);
     const strategyResolution = resolveGenerationStrategy({
       preset,
       productProfile,
@@ -665,20 +743,26 @@ export async function runQueuedImageGeneration(
       referenceInteraction,
       presetFamilyId: presetFamily?.id ?? null,
       hasReference: usableReferenceImages.length > 0,
+      presentationMode: resolvedPresetVariant?.presentationMode ?? null,
+      presentationHumanPresence: resolvedPresetVariant?.humanPresence ?? null,
+      explicitUserPrompt: metadataUserPrompt,
       userPrompt: metadataUserPrompt || fallbackCreativeDirection,
     });
     const strategyCategory = getGenerationStrategyCategory(strategyResolution.strategy);
     const qualityUseCase = preset?.useCase ?? strategyCategory;
     const initialPreservationMode = strategyResolution.effectivePreservationMode;
     const sceneSuitability = resolveSceneSuitability({
-      preset,
+      preset: preset ? { ...preset, ...(presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes } : {}) } : null,
       productProfile,
       strategy: strategyResolution.strategy,
       // The fallback contains rendered preset prose. It is not an explicit user
       // request and must not be reinterpreted as a carry or lifestyle instruction.
       userPrompt: metadataUserPrompt,
       vertical: qualityUseCase === "product" ? null : qualityUseCase,
-      presetAuthority: usableReferenceImages.length === 0 && !metadataUserPrompt ? "strong" : "supporting",
+      presetAuthority: usableReferenceImages.length === 0 ? "strong" : "supporting",
+      reference: referenceAnalysis.styleBrief,
+      referenceAuthority: usableReferenceImages.length > 0,
+      strictProductOnlyStudio,
     });
     const strategyPolicy = validateGenerationPolicy({
       strategy: strategyResolution.strategy,
@@ -697,6 +781,8 @@ export async function runQueuedImageGeneration(
       userPrompt: metadataUserPrompt,
       referenceStyle: referenceAnalysis.styleBrief,
       presetId: preset?.id,
+      referenceAuthority: usableReferenceImages.length > 0,
+      strictProductOnlyStudio,
     });
     const customNote = Boolean(metadataUserPrompt && metadataUserPrompt !== fallbackCreativeDirection);
     const strongPreset = Boolean(preset?.creativeDirection && composition?.source !== "safe_fallback");
@@ -718,7 +804,7 @@ export async function runQueuedImageGeneration(
       mode: referenceMode,
     });
     const referenceGenerationPath = resolveReferenceGenerationPath({
-      compatibleReferenceCount: usableReferenceImages.length,
+      compatibleReferenceCount: strictProductOnlyStudio ? 0 : usableReferenceImages.length,
       referenceCompatible: referenceMatch?.compatible ?? true,
       fallbackStrategy: strategy,
     });
@@ -864,6 +950,7 @@ export async function runQueuedImageGeneration(
           }),
           segmentationProvider: new FalBirefnetProvider(),
         });
+        if (maskResolution.source === "automatic" || maskResolution.failureReason === "segmentation_provider_unavailable" || maskResolution.failureReason === "empty_mask") executionCounts.segmentationCalls += 1;
 
         if (!maskResolution.mask || !maskResolution.source) {
           effectivePreservationMode = "reference_edit";
@@ -919,6 +1006,16 @@ export async function runQueuedImageGeneration(
       data: pixelLockInput?.productCanvas ?? inputImage,
       mimeType: pixelLockInput ? "image/png" : inputImage.type || "image/png",
     };
+    const providerProductAssets = [
+      providerProductAsset,
+      ...usableProductImages.filter(({ asset: productAsset }) => productAsset.id !== asset.id).map(({ asset: productAsset, data, mimeType }) => ({
+        id: productAsset.id,
+        bucketId: productAsset.bucket_id,
+        objectPath: productAsset.object_path,
+        data,
+        mimeType,
+      })),
+    ];
     const generationImages = usesReferenceReplacement
       ? orderReferenceReplacementImages({
         id: usableReferenceImages[0].asset.id,
@@ -926,8 +1023,8 @@ export async function runQueuedImageGeneration(
         objectPath: usableReferenceImages[0].asset.object_path,
         data: usableReferenceImages[0].data,
         mimeType: usableReferenceImages[0].mimeType,
-      }, providerProductAsset)
-      : orderGenerationImages(providerProductAsset, usableReferenceImages.map(({ asset: reference, data, mimeType }) => ({
+      }, providerProductAssets)
+      : orderGenerationImages(providerProductAssets, usableReferenceImages.map(({ asset: reference, data, mimeType }) => ({
       id: reference.id,
       bucketId: reference.bucket_id,
       objectPath: reference.object_path,
@@ -937,14 +1034,30 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, visibleHuman: ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model"].includes(strategy) || strategy === "rigid_product" && qualityUseCase === "cosmetics" },
+      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null } : null, referenceAuthority: usableReferenceImages.length > 0, strictProductOnlyStudio, visibleHuman: !strictProductOnlyStudio && !/\b(?:no|without)\s+(?:visible\s+)?(?:person|people|human|model|body|skin|hands?)\b/i.test(metadataUserPrompt) && (["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(strategy) || /\b(?:person|woman|man|model|hand|arm|leg|foot|feet|face|wrist|neck|ear|body)\b/i.test(metadataUserPrompt) || ["held", "worn", "near_face"].includes(referenceInteraction ?? "")) },
     );
+    if (presetFamily) {
+      console.info("[preset] validator_context", { generationId, selectedPresetId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedVariantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, overrideReason: usableReferenceImages.length > 0 ? "reference_authority" : strategyResolution.reason !== "preset_strategy_hint" ? strategyResolution.reason : null, variationSource: "generation_seed" });
+    }
+    console.info("[generation] authority_resolved", {
+      generationId,
+      referenceCount: usableReferenceImages.length,
+      referenceAuthorityActive: usableReferenceImages.length > 0,
+      primaryReferenceId: usableReferenceImages[0]?.asset.id ?? null,
+      sceneAuthoritySource: sceneSuitability?.source === "reference_authority" ? "reference_1" : sceneSuitability?.source === "trusted_preset" ? "preset" : sceneSuitability?.source ?? null,
+      compositionAuthoritySource: composition?.source === "reference_authority" ? "reference_1" : composition?.source === "preset_hint" || composition?.source === "scene_template" ? "preset" : composition?.source ?? null,
+      presetOverrideReason: usableReferenceImages.length > 0 ? "reference_authority" : null,
+      referenceReplacementMode: usesReferenceReplacement ? "reference_product_replacement" : null,
+      referenceVertical: productProfile?.vertical ?? qualityUseCase,
+      resolvedSceneFamily: sceneSuitability?.selectedSceneFamily ?? null,
+    });
     logDevelopmentGenerationEvent("product_identity_lock", {
       generationId: queuedGeneration.id,
       vertical: identityManifest.vertical,
       identityAnchorCount: identityManifest.immutableAttributes.length + identityManifest.geometryAnchors.length + identityManifest.colorMaterialAnchors.length + identityManifest.brandingAnchors.length,
       sourceImageRoleApplied: generationImages[0]?.role === "product_identity_source",
-      referenceCount: generationImages.length - 1,
+      referenceCount: usableReferenceImages.length,
+      productImageCount: providerProductAssets.length,
       version: PRODUCT_IDENTITY_LOCK_VERSION,
     });
     logDevelopmentGenerationEvent("product_profile_prompt", {
@@ -986,7 +1099,7 @@ export async function runQueuedImageGeneration(
     let activePrompt = usesReferenceReplacement
       ? `${buildReferenceReplacementPrompt(promptEnhancement.prompt)}\n\n${compileOutputFormatGuidance(aspectRatio)}${strategy === "watch_on_wrist" ? `\n\n${watchOnWristInstructions}` : ""}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
       : finalPrompt.prompt;
-    const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman: finalPrompt.layers.humanRealismApplied || strategy === "rigid_product" && qualityUseCase === "cosmetics" });
+    const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman: finalPrompt.layers.humanRealismApplied });
     const humanRealismDirection = compileHumanRealismPrompt(humanRealismPolicy, productProfile?.vertical ?? finalPrompt.layers.vertical);
     if (humanRealismDirection && !activePrompt.includes(humanRealismDirection)) activePrompt = `${activePrompt}\n\n${humanRealismDirection}`;
     let hybridProjectionMetadata: Record<string, unknown> | null = null;
@@ -1060,8 +1173,20 @@ export async function runQueuedImageGeneration(
 
     const originalMimeType = pixelLockInput && effectivePreservationMode === "pixel_lock" ? "image/png" : result.mimeType;
     const inputPixels = Buffer.from(await inputImage.arrayBuffer());
+    let variationHistory: { recentVariantIds: string[]; repeatedSceneCount: number } | null = null;
+    if (presetFamily) {
+      const { data: recentPresetGenerations } = await admin.from("generations").select("provider_metadata").eq("project_id", project.id).eq("generation_type", "image").eq("status", "succeeded").neq("id", queuedGeneration.id).order("created_at", { ascending: false }).limit(5);
+      const recent = (recentPresetGenerations ?? []).flatMap(({ provider_metadata }) => { const value = provider_metadata && typeof provider_metadata === "object" ? provider_metadata.preset : null; return value && typeof value === "object" && value.familyId === presetFamily.id ? [value] : []; });
+      const recentVariantIds = recent.map((value) => value.variantId).filter((value): value is string => typeof value === "string");
+      const selected = presetFamily.variants.find(({ id }) => id === resolvedVariantId);
+      const current = selected ? getPresetVariationMetadata(selected) : null;
+      const dimensions = ["environment", "timeOfDay", "weather", "lighting", "pose", "framing", "cameraAngle", "captureProfile"] as const;
+      const repeatedDimensionCount = current ? Math.max(0, ...recent.map((previous) => dimensions.filter((key) => previous[key] === current[key]).length)) : 0;
+      variationHistory = { recentVariantIds, repeatedSceneCount: repeatedDimensionCount >= 5 ? repeatedDimensionCount : 0 };
+    }
     const fidelityValidation = await performance.measure("validation_initial", () => validateGeneratedImageBestEffort({
       originalProduct: inputPixels,
+      supportingProducts: usableProductImages.filter(({ asset: productAsset }) => productAsset.id !== asset.id).map(({ data, mimeType }) => ({ data, mimeType })),
       generatedImage: finalImageData,
       originalMimeType: inputImage.type || "image/png",
       ...(usesReferenceReplacement ? { referenceBaseScene: usableReferenceImages[0].data, referenceBaseSceneMimeType: usableReferenceImages[0].mimeType } : {}),
@@ -1073,19 +1198,21 @@ export async function runQueuedImageGeneration(
       composition,
       creativeCompliance,
       referenceStyleContext: referenceAnalysis.styleBrief ? JSON.stringify(referenceAnalysis.styleBrief) : null,
+      referenceAuthority: usableReferenceImages.length > 0,
       referenceMatch,
       identityManifest,
-      preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId } : null,
+      preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio } : null,
+      variationHistory,
       ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
       exactProductApparel: apparelFidelityMode.exactProductApparel,
     }));
-    executionCounts.visionValidationCalls += fidelityValidation.status === "validation_unavailable" ? 0 : 1;
+    executionCounts.visionValidationCalls += 1;
     const hybridEligible = resolveHybridProjectionEligibility({ vertical: productProfile?.vertical ?? null, artworkPresent: Boolean(apparelArtwork), exactProductApparel: apparelFidelityMode.exactProductApparel, artworkSide: apparelArtwork?.side ?? "unknown", localized: Boolean(apparelArtwork) });
     if (hybridEligible && apparelArtwork && apparelIdentityManifest?.artworkBoundingRegion) {
       try {
         const projection = await import("@/lib/apparel-projection/project-artwork");
         const artworkBox = apparelIdentityManifest.artworkBoundingRegion;
-        const projected = await performance.measure("hybrid_projection", () => projection.projectApparelArtwork({ sourceImage: inputPixels, artworkCrop: apparelArtwork.data, artworkBox, generatedImage: finalImageData, side: apparelArtwork.side as "front" | "back", generationId: queuedGeneration.id, log: (event, fields) => console.info(`[hybrid-projection] ${event}`, fields) }));
+        const projected = await performance.measure("hybrid_projection", () => projection.projectApparelArtwork({ sourceImage: inputPixels, artworkCrop: apparelArtwork.data, artworkBox, generatedImage: finalImageData, side: apparelArtwork.side as "front" | "back", generationId: queuedGeneration.id, onAnalysisCall: () => { executionCounts.projectionAnalysisCalls += 1; }, log: (event, fields) => console.info(`[hybrid-projection] ${event}`, fields) }));
         finalImageData = projected.image;
         hybridProjectionMetadata = { ...projected.metadata };
       } catch (error) {
@@ -1153,6 +1280,8 @@ export async function runQueuedImageGeneration(
       generationId: queuedGeneration.id,
       shouldRetry: repairPlan.shouldRetry,
       issueCodes: repairPlan.issueCodes,
+      presetValidationIssues: fidelityValidation.issues.filter(({ code }) => code.toLowerCase().startsWith("preset_") || code.toLowerCase() === "bag_preset_scene_mismatch").map(({ code }) => code),
+      repairEligiblePresetIssues: repairEligibility.eligible ? repairPlan.issueCodes.filter((code) => code.toLowerCase().startsWith("preset_") || code.toLowerCase() === "bag_preset_scene_mismatch") : [],
       categories: repairPlan.categories,
       repairExpectedValue: repairEligibility.repairExpectedValue,
       reason: repairEligibility.reason,
@@ -1207,6 +1336,7 @@ export async function runQueuedImageGeneration(
         }
         const repairValidation = await performance.measure("validation_repair", () => validateGeneratedImageBestEffort({
           originalProduct: inputPixels,
+          supportingProducts: usableProductImages.filter(({ asset: productAsset }) => productAsset.id !== asset.id).map(({ data, mimeType }) => ({ data, mimeType })),
           generatedImage: repairImageData,
           originalMimeType: inputImage.type || "image/png",
           ...(usesReferenceReplacement ? { referenceBaseScene: usableReferenceImages[0].data, referenceBaseSceneMimeType: usableReferenceImages[0].mimeType } : {}),
@@ -1218,12 +1348,14 @@ export async function runQueuedImageGeneration(
           composition,
           creativeCompliance,
           referenceStyleContext: referenceAnalysis.styleBrief ? JSON.stringify(referenceAnalysis.styleBrief) : null,
+          referenceAuthority: usableReferenceImages.length > 0,
           referenceMatch,
           identityManifest,
+          preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio } : null,
           ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
           exactProductApparel: apparelFidelityMode.exactProductApparel,
         }));
-        executionCounts.visionValidationCalls += repairValidation.status === "validation_unavailable" ? 0 : 1;
+        executionCounts.visionValidationCalls += 1;
         const repairIssueCounts = {
           critical: repairValidation.issues.filter(({ severity }) => severity === "critical").length,
           major: repairValidation.issues.filter(({ severity }) => severity === "major").length,
@@ -1279,7 +1411,9 @@ export async function runQueuedImageGeneration(
         benchmarkStatus: queuedGeneration.provider_metadata?.apparel_product_fidelity_benchmark === "passed" ? "passed" : "not_run",
       })
       : null;
-    const qualityGatePassed = finalSelection.qualityGatePassed && (apparelFidelityGate?.qualityGatePassed ?? true);
+    const qualityGatePassed = selectedValidation.status === "validation_unavailable" ? null : finalSelection.qualityGatePassed && (apparelFidelityGate?.qualityGatePassed ?? true);
+    const terminalDecision = resolveGenerationTerminalDecision({ validationStatus: selectedValidation.status, qualityGatePassed, commerciallyUsable: selectedValidation.commerciallyUsable });
+    const finalQualityAccepted = terminalDecision !== "rejected";
     if (selectedValidation.status === "validation_unavailable") fidelityStatus = "not_available";
     else if (selectedValidation.status === "fail" || !qualityGatePassed) fidelityStatus = "failed";
     else if (fidelityStatus !== "locked") fidelityStatus = selectedValidation.status === "pass" || selectedValidation.status === "pass_with_warnings" ? "locked" : "not_checked";
@@ -1306,7 +1440,20 @@ export async function runQueuedImageGeneration(
       initialValidationStatus: fidelityValidation.status,
       repairValidationStatus: repairAttempt?.validation.status ?? null,
       qualityGatePassed,
+      terminalDecision,
+      commerciallyUsable: selectedValidation.commerciallyUsable,
+      finalValidationStatus: selectedValidation.status,
     });
+    if (!finalQualityAccepted) {
+      logDevelopmentGenerationEvent("quality_gate_rejected_terminal", {
+        generationId: queuedGeneration.id,
+        qualityGatePassed,
+        commerciallyUsable: selectedValidation.commerciallyUsable,
+        finalValidationStatus: selectedValidation.status,
+        issueCodes: selectedValidation.issues.map(({ code }) => code).slice(0, 20),
+      });
+      throw new Error("Generated candidate rejected by quality gate.");
+    }
     const validationIssueCounts = {
       critical: selectedValidation.issues.filter(({ severity }) => severity === "critical").length,
       major: selectedValidation.issues.filter(({ severity }) => severity === "major").length,
@@ -1351,12 +1498,15 @@ export async function runQueuedImageGeneration(
         fidelity_score: fidelityScore,
       provider_metadata: {
           ...(selectedProviderResult.providerMetadata ?? {}),
+          ...(presetFamily ? { preset: { ...(createCreativePresetMetadata(getCreativePreset(presetId), resolvedVariantId) ?? {}), version: PRESET_SYSTEM_VERSION, familyId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: resolvedPresetVariant?.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? presentationModeOverrideReason ? "reference_authority" : "user" : "automatic", presentationModeOverrideReason, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, ...(presetFamily.variants.find(({ id }) => id === resolvedVariantId) ? getPresetVariationMetadata(presetFamily.variants.find(({ id }) => id === resolvedVariantId)!) : {}) } } : {}),
           outputFormat: { requestedAspectRatio: aspectRatio, providerWidth: outputCanvas.width, providerHeight: outputCanvas.height, version: "output-format-v1" },
           execution: { version: GENERATION_EXECUTION_POLICY_VERSION, imageGenerationCalls: executionCounts.imageGenerationCalls, visionValidationCalls: executionCounts.visionValidationCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, productAnalysisCalls: executionCounts.productAnalysisCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, repairCalls: executionCounts.repairCalls, repairSuppressed: !repairPlan.shouldRetry && fidelityValidation.status === "fail", repairSuppressionReason: !repairPlan.shouldRetry && fidelityValidation.status === "fail" ? repairEligibility.reason : null, avoidedImageGenerationCalls: !repairPlan.shouldRetry && fidelityValidation.status === "fail" ? 1 : 0, totalDurationMs: stageDurations.total, stages: stageDurations, quality: executionPolicy.quality, difficulty: executionPolicy.difficulty, reasons: executionPolicy.reasons, repairQuality: repairPlan.shouldRetry ? executionPolicy.repairQuality : null, repairExpectedValue: repairEligibility.repairExpectedValue },
+          costTelemetry: createCostTelemetry({ productUnderstandingCalls: executionCounts.productAnalysisCalls, referenceAnalysisCalls: executionCounts.referenceAnalysisCalls, imageGenerationCalls: executionCounts.imageGenerationCalls - executionCounts.repairCalls, validationCalls: executionCounts.visionValidationCalls, repairGenerationCalls: executionCounts.repairCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, segmentationCalls: executionCounts.segmentationCalls, projectionAnalysisCalls: executionCounts.projectionAnalysisCalls, inputProductImageCount: usableProductImages.length, inputReferenceCount: usableReferenceImages.length, repairAttempted: repairAttempt !== null, finalOutcome: fidelityValidation.status === "validation_unavailable" ? "unverified" : "succeeded", validationOutcome: selectedAttempt.validation.status, providerUsage: selectedProviderResult.usage }),
           ...(apparelIdentityManifest ? { apparelArtwork: { version: "apparel-artwork-localization-v1", assetId: asset.id, detected: apparelArtwork !== null, side: apparelIdentityManifest.artworkSide, boundingBox: apparelIdentityManifest.artworkBoundingRegion ? { x: apparelIdentityManifest.artworkBoundingRegion.x, y: apparelIdentityManifest.artworkBoundingRegion.y, width: apparelIdentityManifest.artworkBoundingRegion.width, height: apparelIdentityManifest.artworkBoundingRegion.height } : null, confidence: apparelArtwork?.identitySource.confidence ?? 0, containsText: apparelArtwork?.identitySource.containsText ?? false, multipleRegions: false, identitySource: apparelArtwork?.identitySource ?? null } } : {}),
           providerStatus: "succeeded",
           qualityGatePassed,
-          qualityRejected: finalSelection.validationStatus === "validation_unavailable" ? false : !qualityGatePassed,
+          qualityRejected: finalSelection.validationStatus === "validation_unavailable" ? false : qualityGatePassed === false,
+          validationUnavailable: finalSelection.validationStatus === "validation_unavailable",
           humanRealism: humanRealismMetadata,
           ...(apparelArtwork ? { apparelArtwork: { version: "apparel-artwork-identity-source-v2", detected: true, side: apparelArtwork.side, identitySource: apparelArtwork.identitySource } } : apparelIdentityManifest ? { apparelArtwork: { version: "apparel-artwork-identity-source-v2", detected: false, side: apparelIdentityManifest.artworkSide, identitySource: null } } : {}),
           ...(hybridEligible ? { apparelProjection: hybridProjectionMetadata ?? { enabled: true, applied: false, fallbackReason: "projection_unavailable", version: "hybrid-apparel-projection-v1", artworkExtractionMode: "unavailable", garmentSurfaceConfidence: 0, warpMode: "unavailable", validationStatus: "not_applied" } } : {}),
@@ -1438,7 +1588,7 @@ export async function runQueuedImageGeneration(
             succeeded: promptEnhancement.succeeded,
             user_prompt: promptEnhancement.userPrompt,
           },
-          ...(preset ? { preset: createCreativePresetMetadata(preset, resolvedVariantId) } : {}),
+          ...(preset ? { preset: { ...createCreativePresetMetadata(preset, resolvedVariantId), ...(presetFamily ? { selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: resolvedPresetVariant?.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? presentationModeOverrideReason ? "reference_authority" : "user" : "automatic", presentationModeOverrideReason, resolvedSceneFamily: sceneSuitability?.selectedSceneFamily ?? null, sceneAuthoritySource: sceneSuitability?.source ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, presentationModeCategory: strictProductOnlyStudio ? "product_only" : resolvedPresetVariant?.humanPresence === "full" ? "on_model" : "lifestyle", referenceSceneSuppressedByPresentationMode: strictProductOnlyStudio && usableReferenceImages.length > 0, variationSource: "generation_seed", variationHistory } : {}) } } : {}),
           strategy: {
             effective_preservation_mode: effectivePreservationMode,
             reason: strategyResolution.reason,
@@ -1468,6 +1618,15 @@ export async function runQueuedImageGeneration(
             vertical: productProfile.vertical,
             subcategory: productProfile.subcategory,
           } } : {}),
+          product_images: {
+            version: "multi-view-product-input-v1",
+            asset_ids: orderedProductAssets.map(({ id }) => id),
+            primary_asset_id: asset.id,
+            supporting_asset_ids: orderedProductAssets.filter(({ id }) => id !== asset.id).map(({ id }) => id),
+            requested_count: requestedProductIds.length,
+            usable_count: usableProductImages.length,
+            same_physical_product: true,
+          },
           references: {
             mode: referenceMode,
             requested_count: requestedReferenceAssetIds.length,
@@ -1535,6 +1694,20 @@ export async function runQueuedImageGeneration(
     }
     logDevelopmentGenerationEvent("failed", { generationId });
     safeGenerationEvent("queue", "processor_exit", { generationId, status: "failed" });
+    const completedAt = new Date();
+    const { data: failedGeneration, error: failurePersistenceError } = await admin.from("generations").update({
+      status: "failed",
+      error_message: "generation_failed",
+      processing_completed_at: completedAt.toISOString(),
+      ...(processingStartedAt ? { processing_duration_ms: completedAt.getTime() - processingStartedAt.getTime() } : {}),
+    }).eq("id", generationId).in("status", ["queued", "processing"]).select("id, project_id").maybeSingle();
+    if (failurePersistenceError) {
+      safeGenerationEvent("queue", "failure_persist_error", { generationId });
+    } else if (failedGeneration) {
+      const { data: failedProject } = await admin.from("projects").select("user_id, title").eq("id", failedGeneration.project_id).maybeSingle();
+      if (failedProject) await createNotification({ userId: failedProject.user_id, type: "generation_failed", projectId: failedGeneration.project_id, projectName: failedProject.title, generationId });
+      safeGenerationEvent("queue", "status_transition", { generationId, status: "failed" });
+    }
     const errorMessage = error instanceof Error ? error.message.toLowerCase() : "";
     const retryable = /network|timeout|temporar|rate limit|download|upload|database|fetch failed|econn|5\d\d/.test(errorMessage);
     return { ok: false, message: "generationFailed", retryable, failureCategory: retryable ? "transient_infrastructure" : "generation_failed" };

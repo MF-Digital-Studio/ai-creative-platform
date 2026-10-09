@@ -11,7 +11,7 @@ export type CompositionProductDominance = "hero" | "primary" | "balanced";
 export type CompositionCameraDistance = "macro" | "close" | "medium";
 export type CompositionPreferredAngle = "eye_level" | "three_quarter" | "low" | "elevated" | "product_level";
 export type CompositionDepthOfField = "shallow_product_locked" | "moderate" | "deep";
-export type CompositionSource = "scene_template" | "explicit_user_intent" | "preset_hint" | "reference_style" | "safe_fallback";
+export type CompositionSource = "scene_template" | "explicit_user_intent" | "preset_hint" | "reference_style" | "reference_authority" | "safe_fallback";
 
 export type CompositionProfile = {
   framing: CompositionFraming;
@@ -32,4 +32,7 @@ export type ResolveCompositionInput = {
   userPrompt: string;
   referenceStyle?: ReferenceStyleBrief | null;
   presetId?: string | null;
+  referenceAuthority?: boolean;
+  /** Keep product-only Apparel Studio composition independent of reference scene framing. */
+  strictProductOnlyStudio?: boolean;
 };

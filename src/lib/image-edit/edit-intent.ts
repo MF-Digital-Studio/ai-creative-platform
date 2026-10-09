@@ -27,19 +27,20 @@ export function parseImageEditIntent(instruction: string): ImageEditIntent {
   };
 }
 
-export function buildImageEditPrompt(instruction: string, intent: ImageEditIntent): string {
+export function buildImageEditPrompt(instruction: string, intent: ImageEditIntent, humanRealismDirection = ""): string {
   return [
     "Edit the provided base image. Preserve all elements not explicitly requested to change. Do not redesign or regenerate the entire scene.",
     "BASE IMAGE PRESERVATION: preserve composition, camera angle, framing, subject identity and appearance, pose, environment unless requested, and product placement.",
     "PRODUCT IDENTITY: preserve the exact source product, geometry, color, branding, artwork, and materials. Product Identity Lock remains active. For bags, preserve bag type and silhouette, proportions, handle count/geometry, strap presence/placement, closure and flap, zipper and pockets, panel seams, hardware, logo/monogram, print, material, color, and base. Do not redesign, recolor, replace logos/artwork, or alter identity-critical details unless the instruction explicitly names a product change.",
     `ALLOWED CHANGES: ${intent.allowedChanges.join(", ")}.`,
     `PROTECTED ELEMENTS: ${intent.preservedElements.join("; ")}.`,
+    humanRealismDirection,
     `USER REQUEST: ${instruction}`,
-  ].join("\n\n");
+  ].filter(Boolean).join("\n\n");
 }
 
-export type EditIssueCode = "EDIT_REQUEST_NOT_APPLIED" | "EDIT_SCOPE_OVERREACH" | "EDIT_BASE_SCENE_DRIFT" | "EDIT_PRODUCT_IDENTITY_DRIFT" | "EDIT_SUBJECT_IDENTITY_DRIFT" | "EDIT_POSE_DRIFT" | "EDIT_COMPOSITION_DRIFT" | "EDIT_LIGHTING_OVERREACH" | "EDIT_BACKGROUND_OVERREACH";
-export type EditFidelityAssessment = { requestedChangeApplied: boolean; baseScenePreserved: boolean; productIdentityPreserved: boolean; subjectIdentityPreserved: boolean; posePreserved: boolean; compositionPreserved: boolean; unrelatedChanges: boolean };
+export type EditIssueCode = "EDIT_REQUEST_NOT_APPLIED" | "EDIT_SCOPE_OVERREACH" | "EDIT_BASE_SCENE_DRIFT" | "EDIT_PRODUCT_IDENTITY_DRIFT" | "EDIT_SUBJECT_IDENTITY_DRIFT" | "EDIT_POSE_DRIFT" | "EDIT_COMPOSITION_DRIFT" | "EDIT_LIGHTING_OVERREACH" | "EDIT_BACKGROUND_OVERREACH" | "EDIT_HUMAN_REALISM_ERROR";
+export type EditFidelityAssessment = { requestedChangeApplied: boolean; baseScenePreserved: boolean; productIdentityPreserved: boolean; subjectIdentityPreserved: boolean; posePreserved: boolean; compositionPreserved: boolean; unrelatedChanges: boolean; humanRealismPreserved?: boolean };
 
 export function validateEditFidelity(assessment: EditFidelityAssessment): { status: "pass" | "pass_with_warnings" | "fail"; issueCodes: EditIssueCode[] } {
   const issueCodes: EditIssueCode[] = [];
@@ -50,6 +51,7 @@ export function validateEditFidelity(assessment: EditFidelityAssessment): { stat
   if (!assessment.subjectIdentityPreserved) issueCodes.push("EDIT_SUBJECT_IDENTITY_DRIFT");
   if (!assessment.posePreserved) issueCodes.push("EDIT_POSE_DRIFT");
   if (!assessment.compositionPreserved) issueCodes.push("EDIT_COMPOSITION_DRIFT");
+  if (assessment.humanRealismPreserved === false) issueCodes.push("EDIT_HUMAN_REALISM_ERROR");
   return { status: issueCodes.length ? "fail" : "pass", issueCodes };
 }
 

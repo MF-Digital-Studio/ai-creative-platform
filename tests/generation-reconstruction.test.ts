@@ -5,6 +5,7 @@ import { resolveApparelArtworkCropEligibility, resolveHybridProjectionEligibilit
 import { resolveHumanRealismPolicy } from "../src/lib/human-realism/human-realism-policy";
 import { compileHumanRealismPrompt } from "../src/lib/human-realism/compile-human-realism-prompt";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
+import { awaitGenerationPipeline } from "../src/lib/generation/await-generation-pipeline";
 
 test("creation persists Sunburst and xhigh defaults with environment override", async () => {
   const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
@@ -12,17 +13,58 @@ test("creation persists Sunburst and xhigh defaults with environment override", 
   assert.match(source, /quality: "xhigh"/);
 });
 
-test("server action commits before durable enqueue and runner has atomic queued guard", async () => {
+test("server action awaits the canonical synchronous runner and runner has atomic queued guard", async () => {
   const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
   const dispatch = await readFile("src/lib/generation/dispatch-queued-generation.ts", "utf8");
+  const awaitPipeline = await readFile("src/lib/generation/await-generation-pipeline.ts", "utf8");
   assert.match(source, /\.insert\([\s\S]+dispatchQueuedGeneration\(generation\.id\)/);
-  assert.doesNotMatch(source, /dispatchQueuedGeneration\(generation\.id,[\s\S]{0,180}runQueuedImageGeneration/);
+  assert.match(dispatch, /await awaitGenerationPipeline\(generationId, runPipeline \?\? runQueuedImageGeneration\)/);
+  assert.match(awaitPipeline, /const result = await runner\(generationId\)/);
+  assert.match(source, /await dispatchQueuedGeneration\(generation\.id\)/);
+  assert.match(source, /safeGenerationEvent\("create", "insert_success"/);
+  assert.match(source, /safeGenerationEvent\("dispatch", "pipeline_entered"/);
   assert.match(source, /\.eq\("status", "queued"\)\s*\.select\("id"\)/);
-  assert.match(dispatch, /await enqueue\(generationId\)/);
-  assert.match(dispatch, /tasks\.trigger\([\s\S]*"image-generation-v1"[\s\S]*\{ generationId \}/);
-  assert.match(dispatch, /\[background-job\] enqueued/);
+  assert.match(source, /\.eq\("id", generationId\)[\s\S]*\.in\("status", \["queued", "processing"\]\)/);
+  assert.match(source, /type: "generation_completed"/);
+  assert.match(source, /type: "generation_failed"/);
+  assert.match(awaitPipeline, /result\.ok/);
+  assert.doesNotMatch(dispatch + awaitPipeline, /trigger\.dev|tasks\.trigger|setTimeout|void\s+runQueued/);
   assert.match(source, /safeGenerationEvent\("provider", "request_start"/);
   assert.match(source, /\.eq\("id", queuedGeneration\.id\)[\s\S]{0,120}\.eq\("status", "queued"\)/);
+});
+
+test("dispatch waits for the pipeline result before reporting completion", async () => {
+  let release!: (result: { ok: boolean }) => void;
+  let completed = false;
+  const blocker = new Promise<{ ok: boolean }>((resolve) => { release = resolve; });
+  const pending = awaitGenerationPipeline("generation-1", async () => {
+    const result = await blocker;
+    completed = true;
+    return result;
+  });
+  await Promise.resolve();
+  assert.equal(completed, false);
+  release({ ok: true });
+  assert.equal(await pending, true);
+  assert.equal(completed, true);
+});
+
+test("dispatch failure marks a still-queued record failed and notifies once", async () => {
+  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
+  assert.match(source, /error_message: "dispatch_failed"/);
+  assert.match(source, /\.eq\("id", generation\.id\)\.eq\("status", "queued"\)\.select\("id"\)\.maybeSingle\(\)/);
+  assert.match(source, /else if \(failedGeneration\)[\s\S]*type: "generation_failed"/);
+});
+
+test("Trigger.dev dependencies and configuration are removed", async () => {
+  const packageJson = JSON.parse(await readFile("package.json", "utf8")) as { dependencies: Record<string, string>; scripts: Record<string, string> };
+  assert.deepEqual(Object.keys(packageJson.dependencies).filter((name) => name.startsWith("@trigger.dev/")), []);
+  assert.deepEqual(Object.keys(packageJson.scripts).filter((name) => name.includes(":trigger")), []);
+  for (const path of ["trigger.config.ts", "trigger/image-generation.ts"]) {
+    await assert.rejects(readFile(path, "utf8"));
+  }
+  const env = await readFile(".env.example", "utf8");
+  assert.doesNotMatch(env, /trigger/i);
 });
 
 test("human realism prompt is included for visible model strategies", () => {
@@ -44,6 +86,45 @@ test("at most one automatic repair attempt is selected", () => {
   assert.equal(plan.shouldRetry, true);
   assert.equal(plan.shouldRetry ? 1 : 0, 1);
   assert.equal(plan.categories.length, 1);
+});
+
+test("quality-rejected final candidates fail before output upload and completion notification", async () => {
+  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
+  const rejection = source.indexOf('logDevelopmentGenerationEvent("quality_gate_rejected_terminal"');
+  const upload = source.indexOf('.upload(outputObjectPath');
+  const successNotification = source.indexOf('type: "generation_completed"');
+  assert.ok(rejection >= 0 && rejection < upload && upload < successNotification);
+  assert.match(source, /resolveGenerationTerminalDecision\(\{ validationStatus: selectedValidation\.status, qualityGatePassed, commerciallyUsable: selectedValidation\.commerciallyUsable \}\)/);
+  assert.match(source, /validationUnavailable: finalSelection\.validationStatus === "validation_unavailable"/);
+  assert.match(source, /throw new Error\("Generated candidate rejected by quality gate\."\)/);
+  assert.match(source, /type: "generation_failed"/);
+});
+
+test("unavailable validation is persisted as unverified and reaches the existing success notification path", async () => {
+  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
+  const page = await readFile("src/app/[locale]/dashboard/projects/[projectId]/page.tsx", "utf8");
+  const gallery = await readFile("src/components/projects/generation-gallery.tsx", "utf8");
+  const english = JSON.parse(await readFile("src/messages/en.json", "utf8")) as { Dashboard: { project: { outputs: { validationUnverified: string } } } };
+  const turkish = JSON.parse(await readFile("src/messages/tr.json", "utf8")) as { Dashboard: { project: { outputs: { validationUnverified: string } } } };
+  assert.match(source, /selectedValidation\.status === "validation_unavailable" \? null : finalSelection\.qualityGatePassed/);
+  assert.match(source, /if \(selectedValidation\.status === "validation_unavailable"\) fidelityStatus = "not_available"/);
+  assert.match(source, /\.upload\(outputObjectPath, finalImageData/);
+  assert.match(source, /status: "succeeded"/);
+  assert.match(source, /type: "generation_completed"/);
+  assert.match(source, /validationUnavailable: finalSelection\.validationStatus === "validation_unavailable"/);
+  assert.equal((source.match(/type: "generation_completed"/g) ?? []).length, 1);
+  assert.match(page, /validationUnverified: Boolean\(/);
+  assert.match(gallery, /item\.status === "succeeded" && item\.validationUnverified/);
+  assert.ok(english.Dashboard.project.outputs.validationUnverified);
+  assert.ok(turkish.Dashboard.project.outputs.validationUnverified);
+});
+
+test("successful galleries and favorites require succeeded status", async () => {
+  const dashboard = await readFile("src/lib/generations/get-dashboard-generations.ts", "utf8");
+  const favorites = await readFile("src/lib/generations/favorite-generation.ts", "utf8");
+  assert.match(dashboard, /row\.status === "succeeded" && row\.output_bucket_id/);
+  assert.match(favorites, /generation\.status === "succeeded"/);
+  assert.match(favorites, /item\.isFavorite && item\.status === "succeeded"/);
 });
 
 test("general dashboard actions and project actions do not import the generation graph", async () => {

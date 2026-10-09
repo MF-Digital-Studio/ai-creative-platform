@@ -9,12 +9,24 @@ import {
   isReferenceImageMimeType,
   MAX_PROJECT_REFERENCE_IMAGES,
 } from "@/lib/assets/reference-assets";
+import {
+  canAddProductImages,
+  isProductImageMimeType,
+  MAX_PRODUCT_IMAGE_FILE_SIZE,
+  MAX_PROJECT_PRODUCT_IMAGES,
+  nextProductAssetRole,
+  type ProductAssetRole,
+} from "@/lib/assets/product-asset-constraints";
+import { getProjectProductAssets } from "@/lib/assets/product-assets";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type RegisterProductAssetResult = {
-  status: "error" | "success";
+  status: "error" | "limit" | "success";
+  asset?: { id: string; objectPath: string; role: ProductAssetRole; sortOrder: number };
 };
+
+export type ProductAssetMutationResult = { status: "error" | "minimum" | "success" };
 
 export type RegisterReferenceAssetResult = {
   status: "error" | "limit" | "success";
@@ -29,6 +41,7 @@ export type RenameProjectState = { status: "idle" | "error" | "success" | "valid
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const supportedReferenceFilePattern = /^reference-[0-9a-f-]{36}\.(jpg|png|webp)$/i;
+const supportedProductFilePattern = /^[0-9a-f-]{36}\.(jpg|png|webp)$/i;
 
 export async function renameProject(locale: AppLocale, projectId: string, _previousState: RenameProjectState, formData: FormData): Promise<RenameProjectState> {
   if (!isSupportedLocale(locale) || !uuidPattern.test(projectId)) return { status: "error" };
@@ -77,6 +90,7 @@ export async function registerProductAsset(
     return { status: "error" };
   }
 
+  let registeredAsset: NonNullable<RegisterProductAssetResult["asset"]> | null = null;
   try {
     const supabase = await createClient();
     const { data: project, error: projectError } = await supabase
@@ -90,30 +104,119 @@ export async function registerProductAsset(
       return { status: "error" };
     }
 
-    const { data: asset, error: assetError } = await supabase.from("assets").insert({
+    if (!supportedProductFilePattern.test(objectPath.split("/")[2] ?? "")) return { status: "error" };
+
+    const existingAssets = await getProjectProductAssets(userId, projectId);
+    if (!canAddProductImages(existingAssets.length)) return { status: "limit" };
+
+    const admin = getSupabaseAdminClient();
+    const { data: uploadedImage, error: downloadError } = await admin.storage.from("product-assets").download(objectPath);
+    if (
+      downloadError ||
+      !uploadedImage ||
+      !isProductImageMimeType(uploadedImage.type) ||
+      uploadedImage.size > MAX_PRODUCT_IMAGE_FILE_SIZE
+    ) {
+      await admin.storage.from("product-assets").remove([objectPath]);
+      return { status: "error" };
+    }
+
+    const role = nextProductAssetRole(existingAssets.length);
+    const sortOrder = existingAssets.length;
+    const { data: asset, error: assetError } = await admin.from("assets").insert({
       user_id: userId,
       project_id: projectId,
       bucket_id: "product-assets",
       object_path: objectPath,
       asset_type: "product",
+      product_role: role,
+      sort_order: sortOrder,
     }).select("id").single();
 
     if (assetError || !asset) {
-      return { status: "error" };
+      await admin.storage.from("product-assets").remove([objectPath]);
+      return { status: existingAssets.length >= MAX_PROJECT_PRODUCT_IMAGES ? "limit" : "error" };
     }
 
-    // Best-effort analysis is awaited inside this Server Action.
-    const [{ analyzeProductAsset }, { triggerProductAnalysisAfterRegistration }] = await Promise.all([
-      import("@/lib/product-understanding/analyze-product-asset"),
-      import("@/lib/product-understanding/product-analysis-trigger"),
-    ]);
-    await triggerProductAnalysisAfterRegistration({ assetId: asset.id, projectId, userId }, analyzeProductAsset);
+    // The primary image owns the canonical ProductProfile. Supporting views are
+    // retained as identity evidence for generation and validation without a
+    // second full Product Understanding request.
+    if (role === "primary") {
+      const [{ analyzeProductAsset }, { triggerProductAnalysisAfterRegistration }] = await Promise.all([
+        import("@/lib/product-understanding/analyze-product-asset"),
+        import("@/lib/product-understanding/product-analysis-trigger"),
+      ]);
+      await triggerProductAnalysisAfterRegistration({ assetId: asset.id, projectId, userId }, analyzeProductAsset);
+    }
+    registeredAsset = { id: asset.id, objectPath, role, sortOrder };
   } catch {
     return { status: "error" };
   }
 
   revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
 
+  return registeredAsset ? { status: "success", asset: registeredAsset } : { status: "error" };
+}
+
+export async function deleteProductAsset(
+  locale: AppLocale,
+  projectId: unknown,
+  assetId: unknown,
+): Promise<ProductAssetMutationResult> {
+  if (!isSupportedLocale(locale) || typeof projectId !== "string" || typeof assetId !== "string" || !uuidPattern.test(assetId)) return { status: "error" };
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { status: "error" };
+  try {
+    const assets = await getProjectProductAssets(userId, projectId);
+    const target = assets.find((asset) => asset.id === assetId);
+    if (!target) return { status: "error" };
+    if (assets.length <= 1) return { status: "minimum" };
+    const supabase = await createClient();
+    const { data: removedPath, error } = await supabase.rpc("delete_project_product_asset", { p_asset_id: assetId });
+    if (error || removedPath !== target.object_path) return { status: "error" };
+    await getSupabaseAdminClient().storage.from("product-assets").remove([target.object_path]);
+  } catch { return { status: "error" }; }
+  revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
+  return { status: "success" };
+}
+
+export async function setPrimaryProductAsset(
+  locale: AppLocale,
+  projectId: unknown,
+  assetId: unknown,
+): Promise<ProductAssetMutationResult> {
+  if (!isSupportedLocale(locale) || typeof projectId !== "string" || typeof assetId !== "string" || !uuidPattern.test(assetId)) return { status: "error" };
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { status: "error" };
+  try {
+    const assets = await getProjectProductAssets(userId, projectId);
+    if (!assets.some((asset) => asset.id === assetId)) return { status: "error" };
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("set_project_product_primary", { p_asset_id: assetId });
+    if (error) return { status: "error" };
+  } catch { return { status: "error" }; }
+  revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
+  return { status: "success" };
+}
+
+export async function reorderProductAssets(
+  locale: AppLocale,
+  projectId: unknown,
+  assetIds: unknown,
+): Promise<ProductAssetMutationResult> {
+  if (!isSupportedLocale(locale) || typeof projectId !== "string" || !Array.isArray(assetIds) || assetIds.some((id) => typeof id !== "string" || !uuidPattern.test(id))) return { status: "error" };
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { status: "error" };
+  try {
+    const current = await getProjectProductAssets(userId, projectId);
+    if (current.length !== assetIds.length || new Set(assetIds).size !== current.length || assetIds.some((id) => !current.some((asset) => asset.id === id))) return { status: "error" };
+    const primaryId = current.find((asset) => asset.product_role === "primary")?.id;
+    if (assetIds[0] !== primaryId) return { status: "error" };
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("reorder_project_product_assets", { p_project_id: projectId, p_asset_ids: assetIds });
+    if (error) return { status: "error" };
+  } catch { return { status: "error" }; }
+  revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
   return { status: "success" };
 }
 

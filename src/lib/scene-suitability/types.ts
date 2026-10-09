@@ -1,6 +1,7 @@
 import type { GenerationStrategy } from "@/lib/generation/strategy/generation-strategy";
 import type { ProductProfile } from "@/lib/product-understanding/product-profile";
 import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
+import type { ReferenceStyleBrief } from "@/lib/generation/references/reference-style-brief";
 
 export const SCENE_SUITABILITY_VERSION = "scene-suitability-v1";
 
@@ -14,12 +15,14 @@ export const sceneFamilies = [
 ] as const;
 
 export type SceneFamily = (typeof sceneFamilies)[number];
-export type SceneSuitabilitySource = "explicit_user_intent" | "trusted_preset" | "product_profile" | "strategy_default" | "vertical_default";
+export type SceneSuitabilitySource = "explicit_user_intent" | "reference_authority" | "trusted_preset" | "product_profile" | "strategy_default" | "vertical_default";
 export type SceneSuitabilityConfidence = "high" | "medium" | "low";
 
 export type SceneSuitabilityPreset = {
   id: string;
   vertical?: SupportedVertical | "product" | null;
+  allowedSceneTypes?: readonly string[];
+  disallowedSceneTypes?: readonly string[];
 };
 
 export type SceneSuitabilityResolution = {
@@ -39,4 +42,8 @@ export type ResolveSceneSuitabilityInput = {
   vertical?: SupportedVertical | null;
   /** A preset-only generation may make its selected family authoritative over generic heuristics. */
   presetAuthority?: "strong" | "supporting";
+  reference?: ReferenceStyleBrief | null;
+  referenceAuthority?: boolean;
+  /** Product-only Apparel Studio presentations are binding and cannot inherit a reference scene. */
+  strictProductOnlyStudio?: boolean;
 };

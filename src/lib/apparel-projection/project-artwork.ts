@@ -55,7 +55,7 @@ export function planArtworkPlacement(anchors: Box, target: Box): Box | null {
   return box;
 }
 
-export async function projectApparelArtwork(input: { sourceImage: Buffer; artworkCrop: Buffer; artworkBox: Box; generatedImage: Buffer; side: "front" | "back"; generationId: string; targetSurfaceReady?: boolean; log: (event: string, fields: Record<string, string | number | boolean>) => void }): Promise<{ image: Buffer; metadata: ProjectionMetadata }> {
+export async function projectApparelArtwork(input: { sourceImage: Buffer; artworkCrop: Buffer; artworkBox: Box; generatedImage: Buffer; side: "front" | "back"; generationId: string; targetSurfaceReady?: boolean; onAnalysisCall?: () => void; log: (event: string, fields: Record<string, string | number | boolean>) => void }): Promise<{ image: Buffer; metadata: ProjectionMetadata }> {
   const metadata: ProjectionMetadata = { version: APPAREL_PROJECTION_VERSION, enabled: true, applied: false, fallbackReason: null, artworkExtractionMode: "unavailable", garmentSurfaceConfidence: 0, warpMode: "unavailable", finishingPassApplied: false, validationStatus: "not_applied", repairAttempted: false };
   try {
     if (!resolveTargetSurfaceReadiness({ targetLandmarksAvailable: input.targetSurfaceReady !== false, minimumConfidence: .75, confidence: input.targetSurfaceReady === false ? 0 : 1 }).ready) { metadata.fallbackReason = "target_surface_unavailable"; return { image: input.generatedImage, metadata }; }
@@ -64,11 +64,13 @@ export async function projectApparelArtwork(input: { sourceImage: Buffer; artwor
     const layer = await extractArtworkLayer(input.artworkCrop, input.artworkBox);
     metadata.artworkExtractionMode = layer?.extractionMode ?? "unavailable";
     if (!layer || layer.confidence < .6) { metadata.fallbackReason = "artwork_extraction_low_confidence"; return { image: input.generatedImage, metadata }; }
+    input.onAnalysisCall?.();
     const target = await detectGarmentSurface(input.generatedImage, input.side);
     metadata.garmentSurfaceConfidence = target?.confidence ?? 0;
     input.log("apparel_projection_resolved", { generationId: input.generationId, eligible: true, applied: false, fallbackReason: "awaiting_composite", artworkConfidence: layer.confidence, garmentConfidence: target?.confidence ?? 0 });
     const targetReadiness = resolveTargetSurfaceReadiness({ targetLandmarksAvailable: Boolean(target && resolveGarmentLandmarks(target.normalizedBoundingBox)), minimumConfidence: .75, confidence: target?.confidence ?? 0 });
     if (!targetReadiness.ready) { metadata.fallbackReason = targetReadiness.fallbackReason; input.log("apparel_projection_landmarks", { generationId: input.generationId, sourceLandmarksAvailable: false, targetLandmarksAvailable: false }); return { image: input.generatedImage, metadata }; }
+    input.onAnalysisCall?.();
     const source = await detectGarmentSurface(input.sourceImage, input.side);
     input.log("apparel_projection_landmarks", { generationId: input.generationId, sourceLandmarksAvailable: Boolean(source), targetLandmarksAvailable: true });
     if (!source || !resolveGarmentLandmarks(source.normalizedBoundingBox) || !target || !resolveGarmentLandmarks(target.normalizedBoundingBox)) { metadata.fallbackReason = "garment_surface_unavailable"; return { image: input.generatedImage, metadata }; }

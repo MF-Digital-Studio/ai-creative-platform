@@ -6,6 +6,8 @@ import { getImageModelCapabilities } from "../src/lib/generation/providers/image
 import { buildOpenAIImageEditParams } from "../src/lib/generation/providers/openai-image-request";
 import { orderGenerationImages } from "../src/lib/generation/image-roles";
 import { validateGenerationPolicy } from "../src/lib/generation/strategy/validate-generation-policy";
+import { buildImageGenerationPromptWithPolicy } from "../src/lib/generation/prompts/build-image-generation-prompt";
+import { getCreativePreset, getPresetFamily } from "../src/lib/creative-presets/creative-presets";
 import type { ImageGenerationQuality } from "../src/lib/generation/types";
 
 test("jewelry on body normalizes to jewelry on model and reference edit", () => {
@@ -24,6 +26,34 @@ test("pixel lock falls back only when its still-life mask is unavailable", () =>
 test("vertical-incompatible strategy is normalized before provider work", () => {
   const result = validateGenerationPolicy({ strategy: "fashion_on_model", sceneFamily: "jewelry_studio", preservationMode: "reference_edit", hasUsableMask: true, vertical: "jewelry" });
   assert.equal(result.strategy, "jewelry_still_life");
+});
+
+test("explicit preset vertical wins when ProductProfile is missing", () => {
+  const cases = [
+    { familyId: "footwear-scenic", presetId: "footwear-scenic", vertical: "footwear", strategy: "rigid_product" as const, footwear: true },
+    { familyId: "bags-studio", presetId: "bags-studio", vertical: "bags", strategy: "rigid_product" as const, footwear: false },
+    { familyId: "jewelry-studio", presetId: "jewelry-studio", vertical: "jewelry", strategy: "jewelry_still_life" as const, footwear: false },
+    { familyId: "apparel-street", presetId: "apparel-street", vertical: "apparel", strategy: "fashion_on_model" as const, footwear: false },
+  ];
+  for (const entry of cases) {
+    const family = getPresetFamily(entry.familyId)!;
+    const preset = getCreativePreset(entry.presetId)!;
+    const result = buildImageGenerationPromptWithPolicy("Commercial product photograph.", "pixel_lock", {
+      strategy: entry.strategy, useCase: preset.useCase, productProfile: null, presetFamilyId: family.id,
+      presetRules: { allowedSceneTypes: family.allowedSceneTypes, disallowedSceneTypes: family.disallowedSceneTypes, hardRules: family.hardRules, softRules: family.softRules, variantId: family.variants[0]?.id ?? null },
+    });
+    assert.equal(result.layers.vertical, entry.vertical);
+    assert.equal(result.layers.footwearV2Applied, entry.footwear);
+  }
+});
+
+test("Footwear Scenic stays rigid product-only aesthetic environment", () => {
+  const family = getPresetFamily("footwear-scenic")!;
+  assert.equal(family.generationStrategyHint, "rigid_product");
+  assert.deepEqual(family.allowedSceneTypes, ["human_free_editorial_environment"]);
+  assert.ok(family.disallowedSceneTypes.includes("people"));
+  assert.ok(family.disallowedSceneTypes.includes("hands"));
+  assert.ok(family.disallowedSceneTypes.includes("worn"));
 });
 
 test("provider error diagnostics include safe OpenAI fields only", () => {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
@@ -18,20 +18,28 @@ import {
   getHistoricalPresetMetadata,
   presetFamilies,
   resolvePresetVariant,
+  resolvePresetVariantWithHistory,
+  scorePresetVariantSemanticDistance,
   buildPresetVariantDirection,
   getPresetFamily,
+  getPresetVariationMetadata,
+  isProductOnlyPresentationMode,
+  isCompatiblePresetSystemVersion,
+  getPresetPresentationMode,
+  getPresetPresentationModes,
+  getPresetVariantsForPresentationMode,
   getRecommendedFamilyPresets,
   historicalUnsupportedPresetIds,
 } from "../src/lib/creative-presets/creative-presets";
 import { creativeBriefFields, type CreativeBrief } from "../src/lib/generation/prompts/creative-brief";
 import { getVerticalQualityProfile } from "../src/lib/generation/quality/vertical-quality-profiles";
+import { buildImageGenerationPromptWithPolicy } from "../src/lib/generation/prompts/build-image-generation-prompt";
 import { resolveGenerationStrategy } from "../src/lib/generation/strategy/generation-strategy";
 import {
   enhanceCreativeDirectionWithClient,
   type PromptEnhancementClient,
 } from "../src/lib/generation/prompts/prompt-enhancement-core";
 import { supportedVerticals } from "../src/lib/verticals/supported-verticals";
-import { buildImageGenerationPromptWithPolicy } from "../src/lib/generation/prompts/build-image-generation-prompt";
 
 const validBrief: CreativeBrief = {
   subject: "The supplied product remains the single premium campaign subject.",
@@ -140,7 +148,7 @@ test("active preset cards map one-to-one to distinct, sector-correct covers", ()
   );
 });
 
-test("public preset families match every vertical and keep eight internal variants each", () => {
+test("public preset families expose explicit scene contracts and varied internal variants", () => {
   const expected: Record<(typeof supportedVerticals)[number], number> = {
     apparel: 3, watches: 3, jewelry: 3, footwear: 3, cosmetics: 2, bags: 3,
   };
@@ -149,11 +157,51 @@ test("public preset families match every vertical and keep eight internal varian
     const families = presetFamilies.filter((family) => family.vertical === vertical);
     assert.equal(families.length, expected[vertical]);
     for (const family of families) {
-      assert.equal(family.variants.length, 8);
+      assert.ok(family.variants.length >= 8);
       assert.ok(family.variants.every((variant) => variant.familyId === family.id));
       assert.ok(family.variants.every((variant) => variant.environmentDirection && variant.lightingDirection && variant.compositionDirection));
+      assert.ok(family.variants.every((variant) => variant.environmentSubtype && variant.cameraDistance && variant.cameraAngle && variant.framing && variant.composition && variant.subjectPlacement && variant.interaction && variant.surface && variant.architecture && variant.propLanguage && variant.mood && variant.captureProfile));
+      assert.ok(family.allowedSceneTypes.length && family.hardRules.length && family.softRules.length);
+      assert.ok(family.environmentVariants.length >= 8);
+      assert.equal(new Set(family.variants.map(({ id }) => id)).size, family.variants.length);
     }
+    const studio = families.find(({ id }) => id.includes("studio"));
+    if (studio && !["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(studio.generationStrategyHint)) { assert.ok(studio.disallowedSceneTypes.includes("people")); assert.ok(studio.disallowedSceneTypes.includes("street")); }
   }
+});
+
+test("environment-heavy and human families expose 10-16 directions while bounded studio grammars remain meaningful", () => {
+  const expanded = new Set(["apparel-street", "apparel-studio", "apparel-scenic", "watches-on-wrist", "jewelry-on-model", "jewelry-lifestyle", "footwear-street", "footwear-scenic", "cosmetics-scenic", "bags-on-model", "bags-lifestyle"]);
+  for (const family of presetFamilies) {
+    assert.ok(family.variants.length >= 8, family.id);
+    if (expanded.has(family.id)) assert.ok(family.variants.length >= 10 && family.variants.length <= 16, family.id);
+    for (const variant of family.variants) assert.ok(new Set(family.variants.filter((candidate) => candidate.id !== variant.id).map((candidate) => scorePresetVariantSemanticDistance(variant, getPresetVariationMetadata(candidate)))).size > 1, `${family.id}/${variant.id}`);
+  }
+});
+
+test("studio, aesthetic environment, on-model, and street contracts stay distinct", () => {
+  const studio = getPresetFamily("bags-studio")!;
+  const aesthetic = getPresetFamily("bags-lifestyle")!;
+  const model = getPresetFamily("bags-on-model")!;
+  const street = getPresetFamily("apparel-street")!;
+  assert.ok(studio.allowedSceneTypes.includes("controlled_product_studio"));
+  assert.ok(studio.disallowedSceneTypes.includes("cafe"));
+  assert.ok(aesthetic.allowedSceneTypes.includes("human_free_editorial_environment"));
+  assert.ok(aesthetic.disallowedSceneTypes.includes("people"));
+  assert.ok(model.allowedSceneTypes.includes("human_interaction"));
+  assert.ok(street.allowedSceneTypes.includes("urban_street"));
+});
+
+test("preset family prompt survives reference inputs and retains family-specific scene grammar", () => {
+  const studio = getPresetFamily("bags-studio")!;
+  const prompt = buildImageGenerationPromptWithPolicy("Product studio image.", "reference_edit", {
+    strategy: "rigid_product", useCase: "bags", presetFamilyId: studio.id,
+    presetRules: { allowedSceneTypes: studio.allowedSceneTypes, disallowedSceneTypes: studio.disallowedSceneTypes, hardRules: studio.hardRules, softRules: studio.softRules, variantId: studio.variants[0]!.id },
+    generationImages: [{ role: "product_identity_source" }, { role: "scene_reference" }] as never,
+  }).prompt;
+  assert.match(prompt, /PRESET FAMILY INTENT \(bags-studio\)/);
+  assert.match(prompt, /no people, no models, no hands, no body contact/i);
+  assert.match(prompt, /keep this family as the dominant scene identity even when references are supplied/i);
 });
 
 test("variant selection is deterministic, valid, and avoids the most recent alternative", () => {
@@ -164,6 +212,47 @@ test("variant selection is deterministic, valid, and avoids the most recent alte
   assert.ok(family.variants.some((variant) => variant.id === next.id));
   assert.notEqual(next.id, first.id);
   assert.equal(resolvePresetVariant({ family, generationSeed: "generation-a" }).id, first.id);
+  const historySafe = resolvePresetVariantWithHistory(family, "generation-a", first.id);
+  assert.notEqual(historySafe.id, first.id);
+});
+
+test("Street recent-history selection avoids rainy-night dimensions and remains deterministic", () => {
+  const family = getPresetFamily("apparel-street")!;
+  const rainy = family.variants.find(({ id }) => id.endsWith("rainy-city"))!;
+  const history = [{ variantId: rainy.id, environment: rainy.environment, timeOfDay: rainy.timeOfDay, weather: rainy.weather, lighting: rainy.lighting, pose: rainy.pose, framing: rainy.framing, cameraAngle: rainy.cameraAngle, captureProfile: rainy.captureProfile }];
+  const next = resolvePresetVariantWithHistory(family, "run-after-rain", rainy.id, history);
+  assert.equal(next.familyId, "apparel-street");
+  assert.notEqual(next.id, rainy.id);
+  for (const key of ["timeOfDay", "weather", "lighting", "pose", "framing", "captureProfile"] as const) assert.notEqual(next[key], rainy[key], `${key} should vary after rainy night`);
+  assert.equal(resolvePresetVariantWithHistory(family, "run-after-rain", rainy.id, history).id, next.id);
+});
+
+test("Street variants define diverse camera, pose, scene, and capture metadata", () => {
+  const family = getPresetFamily("apparel-street")!;
+  assert.equal(family.variants.length, 13);
+  assert.ok(new Set(family.variants.map(({ captureProfile }) => captureProfile)).size >= 2);
+  assert.ok(new Set(family.variants.map(({ pose }) => pose)).size >= 8);
+  assert.ok(new Set(family.variants.map(({ framing }) => framing)).size >= 6);
+  assert.ok(new Set(family.variants.map(({ environment }) => environment)).size >= 10);
+  for (const variant of family.variants) assert.equal(variant.familyId, "apparel-street");
+  const preset = requiredPreset("apparel-street-style");
+  const variant = family.variants.find(({ id }) => id.endsWith("glass-facade"))!;
+  const directed = buildPresetVariantDirection(preset, variant);
+  assert.equal(directed.creativeDirection.capture?.profile, variant.captureProfile);
+  assert.equal(getPresetVariationMetadata(variant).captureProfile, variant.captureProfile);
+});
+
+test("scene locked references can bypass recent-history diversity and user direction remains explicit", () => {
+  const family = getPresetFamily("apparel-street")!;
+  const previous = family.variants[0]!;
+  const sameSceneHistory = [{ variantId: previous.id, environment: previous.environment, timeOfDay: previous.timeOfDay, weather: previous.weather, lighting: previous.lighting, pose: previous.pose, framing: previous.framing, cameraAngle: previous.cameraAngle, captureProfile: previous.captureProfile }];
+  const diverse = resolvePresetVariantWithHistory(family, "reference-scene-seed", previous.id, sameSceneHistory);
+  const referenceLocked = resolvePresetVariantWithHistory(family, "reference-scene-seed", previous.id, []);
+  assert.notEqual(diverse.id, previous.id);
+  assert.equal(referenceLocked.id, resolvePresetVariantWithHistory(family, "reference-scene-seed", previous.id).id);
+  const customized = buildCreativePresetDirection("Keep the same model and scene.", buildPresetVariantDirection(requiredPreset("apparel-street-style"), referenceLocked));
+  assert.match(customized, /Keep the same model and scene/i);
+  assert.match(customized, /apparel-street/);
 });
 
 test("Bag Studio variants, routing, prompt suppression, and metadata stay family compliant", () => {
@@ -177,10 +266,11 @@ test("Bag Studio variants, routing, prompt suppression, and metadata stay family
   const studioPreset = buildPresetVariantDirection(requiredPreset("bags-studio"), family.variants[0]!);
   assert.doesNotMatch(studioPreset.creativeDirection.pose, /crossbody|shoulder fit|hand-held/i);
   assert.match(studioPreset.creativeDirection.environment, /studio/i);
-  assert.deepEqual(createCreativePresetMetadata(studioPreset, family.variants[0]!.id), {
-    id: "bags-studio", title: "Studio", category: "bags", vertical: "bags", useCase: "bags",
-    version: "preset-system-v2", familyId: "bags-studio", variantId: family.variants[0]!.id,
-  });
+  const metadata = createCreativePresetMetadata(studioPreset, family.variants[0]!.id);
+  assert.ok(metadata);
+  assert.equal(metadata.version, "preset-system-v5");
+  assert.equal(metadata.familyId, "bags-studio");
+  assert.equal(metadata.variantId, family.variants[0]!.id);
 });
 
 test("bag family routing keeps Studio and Lifestyle product-only while On Model owns carry", () => {
@@ -246,14 +336,138 @@ test("bag families expose distinct compliant internal variants", () => {
   assert.ok(lifestyle.variants.every(({ environmentDirection }) => /no people|no person|no human|without people/i.test(environmentDirection)));
 });
 
-test("family and resolved variant metadata persist with the v2 version", () => {
+test("family contract and resolved structured variant metadata persist with the v5 version", () => {
   const preset = requiredPreset("bags-on-model");
   const variant = getPresetFamily(preset.id)?.variants[0];
   assert.ok(variant);
-  assert.deepEqual(createCreativePresetMetadata(preset, variant.id), {
-    id: "bags-on-model", title: "On model", category: "bags", vertical: "bags", useCase: "bags",
-    version: "preset-system-v2", familyId: "bags-on-model", variantId: variant.id,
-  });
+  const metadata = createCreativePresetMetadata(preset, variant.id);
+  assert.ok(metadata);
+  assert.equal(metadata.version, "preset-system-v5");
+  assert.equal(metadata.familyId, "bags-on-model");
+  assert.equal(metadata.variantId, variant.id);
+  assert.deepEqual(metadata.allowedSceneTypes, getPresetFamily("bags-on-model")!.allowedSceneTypes);
+});
+
+test("Preset V5 adds structured presentation metadata to every internal variant", () => {
+  assert.equal(isCompatiblePresetSystemVersion("preset-system-v4"), true);
+  assert.equal(isCompatiblePresetSystemVersion("preset-system-v5"), true);
+  for (const family of presetFamilies) {
+    for (const variant of family.variants) {
+      const metadata = getPresetVariationMetadata(variant);
+      for (const key of ["presentationMode", "productOrientation", "physicalSupport", "gravityBehavior", "humanPresence", "interactionMode"] as const) {
+        assert.ok(metadata[key], `${family.id}/${variant.id} lacks ${key}`);
+      }
+    }
+  }
+});
+
+test("presentation mode selector exposes only valid family-specific modes", () => {
+  const studio = getPresetFamily("apparel-studio")!;
+  const studioModes = getPresetPresentationModes(studio.id);
+  assert.deepEqual(studioModes.map(({ id }) => id), ["model_studio", "ghost_mannequin", "floating", "hanger", "flat_lay", "folded", "sculptural_stage", "fabric_motion", "detail", "catalogue_product"]);
+  assert.equal(getPresetPresentationModes("bags-studio").some(({ id }) => id === "shoulder_carry"), false);
+  assert.equal(getPresetPresentationMode(studio.id, "floating")?.variantPresentationModes.includes("floating_front"), true);
+  assert.equal(getPresetPresentationMode(studio.id, "not-a-mode"), null);
+});
+
+test("selected presentation mode binds variant resolution while null preserves automatic V5 behavior", () => {
+  const studio = getPresetFamily("apparel-studio")!;
+  const floating = getPresetVariantsForPresentationMode(studio, "floating");
+  assert.equal(floating.length, 2);
+  assert.ok(floating.every(({ presentationMode }) => ["floating_front", "floating_three_quarter"].includes(presentationMode ?? "")));
+  const first = resolvePresetVariantWithHistory({ ...studio, variants: floating }, "floating-first", null, []);
+  const second = resolvePresetVariantWithHistory({ ...studio, variants: floating }, "floating-second", first.id, [getPresetVariationMetadata(first)]);
+  assert.ok(floating.some(({ id }) => id === second.id));
+  assert.notEqual(second.id, first.id);
+  assert.equal(getPresetVariantsForPresentationMode(studio, null).length, studio.variants.length);
+});
+
+test("selected Ghost Mannequin and Floating remain product-only", () => {
+  const studio = getPresetFamily("apparel-studio")!;
+  const ghost = getPresetVariantsForPresentationMode(studio, "ghost_mannequin");
+  const floating = getPresetVariantsForPresentationMode(studio, "floating");
+  assert.ok(ghost.every(({ presentationMode, humanPresence }) => presentationMode === "ghost_mannequin" && humanPresence === "none"));
+  assert.ok(floating.every(({ presentationMode, humanPresence }) => isProductOnlyPresentationMode(presentationMode) && humanPresence === "none"));
+});
+
+test("presentation selector UI, form persistence, and localized labels are present", () => {
+  const root = process.cwd();
+  const rail = readFileSync(resolve(root, "src/components/dashboard/creative-preset-rail.tsx"), "utf8");
+  const composer = readFileSync(resolve(root, "src/components/dashboard/creative-composer.tsx"), "utf8");
+  assert.match(rail, /preset-presentation-selector/);
+  assert.match(rail, /getPresetPresentationModes/);
+  assert.match(composer, /presentation_mode/);
+  for (const locale of ["en", "tr"]) {
+    const messages = JSON.parse(readFileSync(resolve(root, `src/messages/${locale}.json`), "utf8")) as { Dashboard: { presets: { presentationHeading: string; presentationModes: Record<string, string> } } };
+    assert.ok(messages.Dashboard.presets.presentationHeading);
+    for (const family of presetFamilies) {
+      for (const mode of getPresetPresentationModes(family.id)) {
+        assert.ok(messages.Dashboard.presets.presentationModes[mode.id], `${locale} is missing ${mode.id}`);
+      }
+    }
+  }
+});
+
+test("Apparel Studio supports human and product-only presentation modes without phantom anatomy", () => {
+  const family = getPresetFamily("apparel-studio")!;
+  assert.equal(family.variants.length, 12);
+  assert.ok(family.variants.some(({ humanPresence }) => humanPresence !== "none"));
+  assert.ok(family.variants.some(({ humanPresence }) => humanPresence === "none"));
+  const ghost = family.variants.find(({ presentationMode }) => presentationMode === "ghost_mannequin")!;
+  const floating = family.variants.find(({ presentationMode }) => presentationMode === "floating_front")!;
+  assert.equal(ghost.humanPresence, "none");
+  assert.equal(floating.humanPresence, "none");
+  assert.equal(isProductOnlyPresentationMode(ghost.presentationMode), true);
+  const ghostDirection = buildPresetVariantDirection(requiredPreset("apparel-studio-style"), ghost);
+  const floatingDirection = buildPresetVariantDirection(requiredPreset("apparel-studio-style"), floating);
+  assert.match(ghostDirection.creativeDirection.negativeConstraints, /no person.*visible mannequin/i);
+  assert.match(floatingDirection.creativeDirection.realism, /phantom hands/i);
+});
+
+test("Fabric Motion is a binding human-free studio presentation in prompts", () => {
+  const family = getPresetFamily("apparel-studio")!;
+  const fabricMotion = family.variants.find(({ presentationMode }) => presentationMode === "fabric_motion")!;
+  const prompt = buildImageGenerationPromptWithPolicy("Night street fashion campaign", "reference_edit", {
+    presetFamilyId: family.id,
+    strictProductOnlyStudio: true,
+    presetRules: { allowedSceneTypes: family.allowedSceneTypes, disallowedSceneTypes: family.disallowedSceneTypes, hardRules: family.hardRules, softRules: family.softRules, variantId: fabricMotion.id, presentationMode: fabricMotion.presentationMode, humanPresence: fabricMotion.humanPresence },
+    referenceAuthority: true,
+  }).prompt;
+  assert.match(prompt, /BINDING PRODUCT-ONLY STUDIO PRESENTATION/i);
+  assert.match(prompt, /Never show a street.*outdoor.*on-model interaction/i);
+  assert.match(prompt, /Fabric Motion.*subtle suspended or wind-shaped fabric movement/i);
+});
+
+test("Apparel Studio presentation descriptions are distinct in Turkish and English", () => {
+  const modes = getPresetPresentationModes("apparel-studio");
+  for (const locale of ["tr", "en"] as const) {
+    const messages = JSON.parse(readFileSync(resolve(process.cwd(), `src/messages/${locale}.json`), "utf8")) as { Dashboard: { presets: { presentationModeDescriptions: { "apparel-studio": Record<string, string> } } } };
+    const descriptions = modes.map(({ id }) => messages.Dashboard.presets.presentationModeDescriptions["apparel-studio"][id]);
+    assert.ok(descriptions.every(Boolean), `${locale} must describe every Apparel Studio mode`);
+    assert.equal(new Set(descriptions).size, descriptions.length, `${locale} descriptions must be mode-specific`);
+  }
+});
+
+test("presentationMode participates in recent-history diversity", () => {
+  const family = getPresetFamily("apparel-studio")!;
+  const ghost = family.variants.find(({ presentationMode }) => presentationMode === "ghost_mannequin")!;
+  const next = resolvePresetVariantWithHistory(family, "after-ghost", ghost.id, [getPresetVariationMetadata(ghost)]);
+  assert.notEqual(next.presentationMode, "ghost_mannequin");
+});
+
+test("footwear and bag families expose materially different presentation modes", () => {
+  for (const family of presetFamilies.filter(({ vertical }) => vertical === "footwear" || vertical === "bags")) {
+    assert.ok(new Set(family.variants.map(({ presentationMode }) => presentationMode)).size >= 8, family.id);
+  }
+});
+
+test("explicit apparel direction and reference authority override internal product-only presentation", () => {
+  const family = getPresetFamily("apparel-studio")!;
+  const productOnly = family.variants.find(({ presentationMode }) => presentationMode === "ghost_mannequin")!;
+  assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "", explicitUserPrompt: "" }).strategy, "rigid_product");
+  assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "", explicitUserPrompt: "" }).effectivePreservationMode, "reference_edit");
+  assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "Show it worn by a model", explicitUserPrompt: "Show it worn by a model" }).strategy, "fashion_on_model");
+  assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, hasReference: true, userPrompt: "", explicitUserPrompt: "" }).strategy, "rigid_product");
 });
 
 test("resolved creative direction adapts jewelry and bag placement to subtype without changing family", () => {

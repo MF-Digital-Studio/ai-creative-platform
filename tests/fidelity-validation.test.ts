@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { mapStructuredValidationOutput, resolveQualityGate } from "../src/lib/fidelity-validation/resolve-quality-gate";
+import { mapStructuredValidationOutput, resolveQualityGate, suppressReferenceAuthorityPresetIssues } from "../src/lib/fidelity-validation/resolve-quality-gate";
 import type { FidelityValidationBrief, FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 import { renderValidationInstructions } from "../src/lib/fidelity-validation/build-validation-brief";
 
@@ -25,12 +25,43 @@ test("critical issue fails the quality gate", () => {
   assert.equal(resolveQualityGate([issue({ code: "different_product", severity: "critical", category: "product_identity" })]).status, "fail");
 });
 
-test("bag Studio scene mismatch is a meaningful failure and never identity repair", async () => {
-  const mismatch = resolveQualityGate([issue({ code: "bag_preset_scene_mismatch", category: "composition_visibility", severity: "minor", identityImpact: "none", confidence: 0.9 })]);
+test("bag Studio scene mismatch is a meaningful failure and gets scene-only repair eligibility", async () => {
+  const mismatch = resolveQualityGate([issue({ code: "bag_preset_scene_mismatch", category: "composition_visibility", severity: "critical", identityImpact: "none", confidence: 0.9 })]);
   assert.equal(mismatch.status, "fail");
   const { resolveRepairEligibility } = await import("../src/lib/generation/execution-policy/resolve-repair-eligibility");
   const eligibility = resolveRepairEligibility({ validation: mismatch, exactProduct: false, hybridProjectionApplied: false, maximumAttemptsRemaining: true });
-  assert.equal(eligibility.eligible, false);
+  assert.equal(eligibility.eligible, true);
+  assert.equal(eligibility.reason, "high_confidence_preset_scene_correction");
+});
+
+test("preset scene and interaction mismatches fail the quality gate while generic environments are major", () => {
+  for (const code of ["PRESET_SCENE_MISMATCH", "PRESET_INTERACTION_MISMATCH", "PRESET_PRESENTATION_MODE_MISMATCH", "PRODUCT_ONLY_MODE_HUMAN_LEAK", "PRODUCT_ONLY_MODE_ENVIRONMENT_LEAK"]) {
+    const result = resolveQualityGate([issue({ code, category: "composition_visibility", severity: "critical", identityImpact: "none", confidence: 0.92 })]);
+    assert.equal(result.status, "fail", code);
+  }
+  const generic = resolveQualityGate([issue({ code: "PRESET_ENVIRONMENT_TOO_GENERIC", category: "composition_visibility", severity: "major", identityImpact: "none", confidence: 0.9 })]);
+  assert.equal(generic.status, "fail");
+  const collapse = resolveQualityGate([issue({ code: "PRESET_VARIATION_COLLAPSE", category: "composition_visibility", severity: "major", identityImpact: "none", confidence: 0.9 })]);
+  assert.equal(collapse.status, "fail");
+});
+
+test("binding product-only studio validation explicitly rejects human and environment leakage", () => {
+  const brief: FidelityValidationBrief = {
+    vertical: "apparel", strategy: "rigid_product", sourceAuthority: "source", referencePreservation: true,
+    productProfile: null, sceneSuitability: null, composition: null, appliedRequirements: [], allowedTransformations: [], verticalChecks: [],
+    preset: { familyId: "apparel-studio", variantId: "fabric-motion", presentationMode: "fabric_motion", humanPresence: "none", interactionMode: "product_only", strictProductOnlyStudio: true },
+  };
+  const instructions = renderValidationInstructions(brief);
+  assert.match(instructions, /PRODUCT_ONLY_MODE_HUMAN_LEAK/);
+  assert.match(instructions, /PRODUCT_ONLY_MODE_ENVIRONMENT_LEAK/);
+});
+
+test("reference authority suppresses only preset scene and interaction mismatch findings", () => {
+  const presetIssue = issue({ code: "PRESET_SCENE_MISMATCH", category: "composition_visibility", severity: "critical", identityImpact: "none" });
+  const identityIssue = issue({ code: "PRODUCT_IDENTITY_DRIFT", category: "product_identity", severity: "critical", identityImpact: "critical" });
+  const filtered = suppressReferenceAuthorityPresetIssues([presetIssue, identityIssue], true);
+  assert.deepEqual(filtered.map(({ code }) => code), ["PRODUCT_IDENTITY_DRIFT"]);
+  assert.equal(resolveQualityGate(filtered).status, "fail");
 });
 
 test("bag validator enforces human-free Studio and Aesthetic Environment families", () => {

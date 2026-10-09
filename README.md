@@ -18,21 +18,7 @@ npm run lint
 npm run build
 ```
 
-## Background image jobs
-
-Image generation runs in Trigger.dev, independently of the Next.js/Vercel request. Create a Trigger.dev project, set `TRIGGER_PROJECT_REF` and `TRIGGER_SECRET_KEY`, and copy the app's existing server-only Supabase/OpenAI/provider variables into the matching Trigger.dev environment.
-
-Local development requires two terminals:
-
-```bash
-# Terminal A
-npm run dev
-
-# Terminal B (authenticate with Trigger.dev when first prompted)
-npm run dev:trigger
-```
-
-Deploy the worker separately with `npm run deploy:trigger` (or configure Trigger.dev's GitHub integration). Vercel continues to host the web frontend and Server Actions; Trigger.dev hosts the long-running generation task. A production worker is not active until the Trigger.dev project, secrets, and deployment are configured.
+Image generation runs synchronously in the request and uses the canonical generation pipeline. Durable background jobs are deferred.
 
 ## Project Structure
 

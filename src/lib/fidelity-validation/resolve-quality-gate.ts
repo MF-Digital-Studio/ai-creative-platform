@@ -2,9 +2,12 @@ import { fidelityValidationCategories, type FidelityIdentityImpact, type Fidelit
 import { FIDELITY_VALIDATION_VERSION } from "./validation-version";
 
 const validCategories = new Set<string>(fidelityValidationCategories);
-const criticalHumanCodes = new Set(["finger_count_error", "hand_anatomy_error", "finger_geometry_error", "severe_physical_failure", "bag_contact_implausible"]);
-const presetComplianceCodes = new Set(["bag_preset_scene_mismatch"]);
-const majorHumanCodes = new Set(["plastic_skin", "over_retouched_skin", "facial_realism_drift", "body_proportion_error", "hair_realism_drift", "human_product_contact_error", "body_interaction_failure", "nail_anatomy_error", "pose_implausible"]);
+const footwearAnatomyCodes = new Set(["foot_anatomy_error", "visible_toe_count_error", "footwear_fit_mismatch"]);
+const criticalHumanCodes = new Set(["human_anatomy_error", "visible_finger_count_error", "finger_count_error", "hand_anatomy_error", "finger_geometry_error", "severe_physical_failure", "bag_contact_implausible", ...footwearAnatomyCodes]);
+const presetComplianceCodes = new Set(["bag_preset_scene_mismatch", "preset_scene_mismatch", "preset_interaction_mismatch", "preset_presentation_mode_mismatch", "product_only_mode_human_leak", "product_only_mode_environment_leak"]);
+const majorPresetCodes = new Set(["preset_environment_too_generic", "preset_variation_collapse"]);
+const referenceOverriddenPresetCodes = new Set(["preset_scene_mismatch", "preset_interaction_mismatch", "preset_environment_too_generic", "bag_preset_scene_mismatch"]);
+const majorHumanCodes = new Set(["plastic_skin_appearance", "unrealistic_human_texture", "face_realism_error", "body_product_interaction_error", "plastic_skin", "over_retouched_skin", "facial_realism_drift", "body_proportion_error", "hair_realism_drift", "human_product_contact_error", "body_interaction_failure", "nail_anatomy_error", "pose_implausible"]);
 const severeStructuralCodes = new Set(["severe_physical_failure", "malformed_product", "structural_duplication", "duplicate_product", "product_duplication"]);
 const jewelryCriticalCodes = new Set(["jewelry_product_substitution", "jewelry_center_stone_shape_drift", "jewelry_center_stone_count_drift", "jewelry_prong_count_drift", "jewelry_setting_geometry_drift", "jewelry_halo_structure_drift", "jewelry_side_stone_drift", "jewelry_band_geometry_drift", "jewelry_metal_color_drift", "jewelry_reference_product_contamination"]);
 const bagCriticalCodes = new Set(["bag_product_substitution", "bag_silhouette_drift", "bag_handle_count_drift", "bag_strap_drift", "bag_closure_drift", "bag_flap_geometry_drift", "bag_hardware_drift", "bag_logo_monogram_drift", "bag_color_drift", "bag_pocket_layout_drift"]);
@@ -15,7 +18,7 @@ const placementVariationCodes = new Set(["apparel_artwork_placement_drift", "app
 const codeCause: Record<string, FidelityLikelyCause> = {
   apparel_artwork_text_drift: "typography_change", apparel_text_drift: "typography_change", text_distortion: "typography_change", typography_distortion: "typography_change", wording_changed: "typography_change", text_unreadable: "typography_change",
   apparel_artwork_placement_drift: "perspective", apparel_artwork_scale_drift: "fabric_deformation", apparel_scale_drift: "fabric_deformation", artwork_position_shift: "perspective", logo_position_shift: "perspective", print_position_shift: "perspective",
-  color_material_drift: "lighting", lighting_color_variation: "lighting", metal_color_changed: "source_identity_drift", chain_fall_variation: "body_interaction", human_product_contact_error: "body_interaction", body_interaction_failure: "body_interaction",
+  color_material_drift: "lighting", lighting_color_variation: "lighting", metal_color_changed: "source_identity_drift", chain_fall_variation: "body_interaction", body_product_interaction_error: "body_interaction", human_product_contact_error: "body_interaction", body_interaction_failure: "body_interaction",
   package_geometry_changed: "geometry_change", geometry_drift: "geometry_change", footwear_silhouette_changed: "geometry_change", footwear_panel_structure_changed: "geometry_change", changed_dial_layout: "geometry_change", watch_dial_structure_changed: "geometry_change", pendant_geometry_changed: "geometry_change",
 };
 
@@ -35,7 +38,9 @@ function defaultImpact(code: string, category: FidelityValidationIssue["category
 
 function confidenceAdjustedSeverity(issue: Pick<FidelityValidationIssue, "code" | "category" | "severity" | "confidence" | "identityImpact">): FidelityIssueSeverity {
   const code = issue.code.toLowerCase();
+  if (footwearAnatomyCodes.has(code)) return "critical";
   if (presetComplianceCodes.has(code)) return "critical";
+  if (majorPresetCodes.has(code)) return "major";
   if (bagMinorCodes.has(code)) return "minor";
   const confidence = issue.confidence ?? 0.9;
   if (issue.category === "reference_match" && /supporting.*(style|lighting)|style.*missed|lighting.*missed/.test(code)) return "minor";
@@ -73,12 +78,14 @@ export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityV
   }
   const checks = fidelityValidationCategories.map((category) => checksByCategory.get(category) ?? { category, passed: true, finding: "No material issue reported.", issueCodes: [] });
   const criticalIdentity = normalized.some((issue) => issue.identityImpact === "critical" && issue.severity === "critical");
-  const criticalHuman = normalized.some((issue) => issue.category === "human_realism" && issue.severity === "critical" && criticalHumanCodes.has(issue.code.toLowerCase()));
+  const footwearAnatomyFailure = normalized.some((issue) => footwearAnatomyCodes.has(issue.code.toLowerCase()));
+  const criticalHuman = normalized.some((issue) => issue.category === "human_realism" && issue.severity === "critical" && (criticalHumanCodes.has(issue.code.toLowerCase()) || issue.code.toLowerCase() === "body_proportion_error"));
   const severeStructure = normalized.some((issue) => severeStructuralCodes.has(issue.code.toLowerCase()) && issue.severity !== "minor");
   const majorIdentityCount = normalized.filter((issue) => issue.identityImpact === "major" && issue.severity === "major").length;
   const majorHumanCount = normalized.filter((issue) => issue.category === "human_realism" && issue.severity === "major").length;
   const presetComplianceFailure = normalized.some((issue) => presetComplianceCodes.has(issue.code.toLowerCase()) && issue.severity !== "minor" && issue.confidence >= 0.75);
-  const status = criticalIdentity || criticalHuman || severeStructure || presetComplianceFailure || majorIdentityCount >= 2 || majorHumanCount >= 2
+  const majorPresetFailure = normalized.some((issue) => majorPresetCodes.has(issue.code.toLowerCase()) && issue.severity === "major" && issue.confidence >= 0.75);
+  const status = footwearAnatomyFailure || criticalIdentity || criticalHuman || severeStructure || presetComplianceFailure || majorPresetFailure || majorIdentityCount >= 2 || majorHumanCount >= 2
     ? "fail"
     : normalized.length > 0 ? "pass_with_warnings" : "pass";
   const severity = normalized.some((issue) => issue.severity === "critical") ? "critical" : normalized.some((issue) => issue.severity === "major") ? "major" : normalized.length ? "minor" : null;
@@ -89,6 +96,11 @@ export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityV
     summary: status === "pass" ? "Product identity and commercial usability checks passed." : status === "pass_with_warnings" ? "The output is commercially usable with non-blocking fidelity warnings." : "The output failed a material identity, human usability, or structural quality check.",
     version: FIDELITY_VALIDATION_VERSION,
   };
+}
+
+export function suppressReferenceAuthorityPresetIssues(issues: FidelityValidationIssue[], referenceAuthority: boolean): FidelityValidationIssue[] {
+  if (!referenceAuthority) return issues;
+  return issues.filter((issue) => !referenceOverriddenPresetCodes.has(issue.code.toLowerCase()));
 }
 
 export function mapStructuredValidationOutput(value: unknown): FidelityValidationIssue[] {

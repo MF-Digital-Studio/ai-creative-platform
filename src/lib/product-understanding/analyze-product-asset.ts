@@ -29,12 +29,26 @@ type AnalysisAsset = {
   bucketId: string;
   objectPath: string;
   productProfile: unknown;
+  productAnalysisStatus?: unknown;
+};
+
+type ProductAnalysisStatus = {
+  status: "valid" | "unsupported" | "failed_transient";
+  assetId: string;
+  objectPath: string;
+  analyzerVersion: string;
+  schemaVersion: number;
+  model: string;
+  attemptedAt: string;
+  inferredCategory?: string | null;
+  retryAfter?: string;
 };
 
 type ProductUnderstandingRepository = {
   findOwnedProductAsset(userId: string, assetId: string): Promise<AnalysisAsset | null>;
   downloadAsset(asset: AnalysisAsset): Promise<{ data: Buffer; mimeType: string } | null>;
   saveProfile(userId: string, assetId: string, profile: ProductProfile): Promise<boolean>;
+  saveAnalysisStatus?(userId: string, assetId: string, status: ProductAnalysisStatus): Promise<boolean>;
 };
 
 export type ProductAnalysisClient = {
@@ -66,6 +80,14 @@ function isUnsupportedResponse(value: unknown): value is { status: "unsupported"
   return Boolean(
     value && typeof value === "object" && "status" in value && (value as { status?: unknown }).status === "unsupported",
   );
+}
+
+function currentAnalysisStatus(asset: AnalysisAsset): ProductAnalysisStatus | null {
+  const value = asset.productAnalysisStatus;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const status = value as Partial<ProductAnalysisStatus>;
+  if (status.assetId !== asset.id || status.objectPath !== asset.objectPath || status.analyzerVersion !== PRODUCT_PROFILE_ANALYSIS_VERSION || status.schemaVersion !== PRODUCT_PROFILE_SCHEMA_VERSION || status.model !== getProductUnderstandingModel()) return null;
+  return status.status === "valid" || status.status === "unsupported" || status.status === "failed_transient" ? status as ProductAnalysisStatus : null;
 }
 
 function logAnalysis(event: string, details: Record<string, string | number | boolean | null>) {
@@ -104,6 +126,23 @@ export async function analyzeProductAssetWithDependencies(
   if (!options.force && isCurrentProfile(asset.productProfile)) {
     return { status: "supported", profile: asset.productProfile, reused: true };
   }
+  const cachedStatus = currentAnalysisStatus(asset);
+  if (!options.force && cachedStatus?.status === "unsupported") {
+    return { status: "unsupported", inferredCategory: cachedStatus.inferredCategory ?? null, reason: "unsupported_product" };
+  }
+  if (!options.force && cachedStatus?.status === "failed_transient" && cachedStatus.retryAfter && Date.parse(cachedStatus.retryAfter) > Date.now()) {
+    return { status: "failed", reason: "analysis_failed" };
+  }
+
+  const saveStatus = async (status: ProductAnalysisStatus["status"], inferredCategory?: string | null) => {
+    const attemptedAt = new Date();
+    await dependencies.repository.saveAnalysisStatus?.(options.userId, asset.id, {
+      status, assetId: asset.id, objectPath: asset.objectPath, analyzerVersion: PRODUCT_PROFILE_ANALYSIS_VERSION,
+      schemaVersion: PRODUCT_PROFILE_SCHEMA_VERSION, model: getProductUnderstandingModel(), attemptedAt: attemptedAt.toISOString(),
+      ...(inferredCategory === undefined ? {} : { inferredCategory }),
+      ...(status === "failed_transient" ? { retryAfter: new Date(attemptedAt.getTime() + 6 * 60 * 60 * 1000).toISOString() } : {}),
+    });
+  };
 
   const downloaded = await dependencies.repository.downloadAsset(asset);
   if (!downloaded) return { status: "failed", reason: "asset_unavailable" };
@@ -111,11 +150,13 @@ export async function analyzeProductAssetWithDependencies(
   if (!prepared) return { status: "failed", reason: "asset_unavailable" };
 
   let response: unknown;
-  let responseDiagnostics: { responseCategory: string; topLevelKeys: string; outputTextPresent: boolean; outputArrayPresent: boolean; choicesArrayPresent: boolean; contentArrayPresent: boolean; parsedJsonPresent: boolean; profileFieldPresent: boolean };
+  let responseDiagnostics: { responseCategory: string; topLevelKeys: string; outputTextPresent: boolean; outputArrayPresent: boolean; choicesArrayPresent: boolean; contentArrayPresent: boolean; parsedJsonPresent: boolean; profileFieldPresent: boolean; validatedOutputKind: string; validatedOutputStatus: string | null; validatedOutputVertical: string | null; validatedProfilePresent: boolean };
   try {
     logAnalysis("provider_request_start", { assetId: asset.id, model: getProductUnderstandingModel(), imageMimeType: prepared.mimeType, imageBytes: prepared.data.length });
     response = await dependencies.client.analyze({ assetId: asset.id, image: prepared });
     const record = response && typeof response === "object" && !Array.isArray(response) ? response as Record<string, unknown> : null;
+    const validatedOutput = record && "output" in record ? record.output : null;
+    const validatedRecord = validatedOutput && typeof validatedOutput === "object" && !Array.isArray(validatedOutput) ? validatedOutput as Record<string, unknown> : null;
     responseDiagnostics = {
       responseCategory: response && typeof response === "object" ? Array.isArray(response) ? "array" : "object" : response === null ? "null" : typeof response,
       topLevelKeys: record ? Object.keys(record).join(",").slice(0, 300) : "",
@@ -125,6 +166,10 @@ export async function analyzeProductAssetWithDependencies(
       contentArrayPresent: Boolean(record && Array.isArray(record.content)),
       parsedJsonPresent: Boolean(record && "parsed" in record),
       profileFieldPresent: Boolean(record && "profile" in record),
+      validatedOutputKind: validatedOutput === null ? "null" : Array.isArray(validatedOutput) ? "array" : typeof validatedOutput,
+      validatedOutputStatus: typeof validatedRecord?.status === "string" ? validatedRecord.status : null,
+      validatedOutputVertical: typeof validatedRecord?.vertical === "string" ? validatedRecord.vertical : null,
+      validatedProfilePresent: isProductProfile(validatedOutput),
     };
   } catch (error) {
     const diagnostic = getOpenAIDiagnostic(error);
@@ -138,6 +183,7 @@ export async function analyzeProductAssetWithDependencies(
       model: getProductUnderstandingModel(),
       analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION,
     });
+    await saveStatus("failed_transient");
     return { status: "failed", reason: "analysis_failed" };
   }
   logAnalysis("provider_response_received", { assetId: asset.id, ...responseDiagnostics });
@@ -148,6 +194,7 @@ export async function analyzeProductAssetWithDependencies(
       inferredCategory: response.inferredCategory,
       analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION,
     });
+    await saveStatus("unsupported", response.inferredCategory);
     return { status: "unsupported", inferredCategory: response.inferredCategory, reason: "unsupported_product" };
   }
 
@@ -177,7 +224,9 @@ export async function analyzeProductAssetWithDependencies(
     response = { output: profile, errorPaths: [] } satisfies ProductAnalysisOutputValidation;
   }
   if ("status" in envelope && envelope.status === "unsupported") {
-    return { status: "unsupported", inferredCategory: envelope.output && "status" in envelope.output ? envelope.output.inferredCategory : null, reason: "unsupported_product" };
+    const inferredCategory = envelope.output && "status" in envelope.output ? envelope.output.inferredCategory : null;
+    await saveStatus("unsupported", inferredCategory);
+    return { status: "unsupported", inferredCategory, reason: "unsupported_product" };
   }
   const normalizedEnvelope = response as ProductAnalysisOutputValidation;
   if (!normalizedEnvelope.output) {
@@ -194,6 +243,7 @@ export async function analyzeProductAssetWithDependencies(
   if ("status" in normalizedEnvelope.output) {
     const inferredCategory = normalizedEnvelope.output.inferredCategory;
     logAnalysis("unsupported", { assetId: asset.id, inferredCategory, analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION });
+    await saveStatus("unsupported", inferredCategory);
     return { status: "unsupported", inferredCategory, reason: "unsupported_product" };
   }
   const finalCandidate = normalizedEnvelope.output;
@@ -217,7 +267,7 @@ export async function analyzeProductAssetWithDependencies(
       analyzedAt: new Date().toISOString(),
     },
   };
-  logAnalysis("profile_validated", {
+  logAnalysis("validated", {
     assetId: asset.id,
     vertical: profile.vertical,
     subcategory: profile.subcategory,
@@ -226,7 +276,8 @@ export async function analyzeProductAssetWithDependencies(
     logAnalysis("failed", { assetId: asset.id, reason: "persistence_failed" });
     return { status: "failed", reason: "persistence_failed" };
   }
-  logAnalysis("profile_persisted", { assetId: asset.id });
+  await saveStatus("valid");
+  logAnalysis("persisted", { assetId: asset.id });
 
   logAnalysis("analyzed", {
     assetId: asset.id,
@@ -250,7 +301,7 @@ export class SupabaseProductUnderstandingRepository implements ProductUnderstand
     const admin = getSupabaseAdminClient();
     const { data, error } = await admin
       .from("assets")
-      .select("id, bucket_id, object_path, product_profile")
+      .select("id, bucket_id, object_path, product_profile, product_analysis_status")
       .eq("id", assetId)
       .eq("user_id", userId)
       .eq("asset_type", "product")
@@ -261,6 +312,7 @@ export class SupabaseProductUnderstandingRepository implements ProductUnderstand
       bucketId: data.bucket_id,
       objectPath: data.object_path,
       productProfile: data.product_profile,
+      productAnalysisStatus: data.product_analysis_status,
     };
   }
 
@@ -291,6 +343,12 @@ export class SupabaseProductUnderstandingRepository implements ProductUnderstand
         message: diagnostic.safeMessage,
       });
     }
+    return !error && Boolean(data);
+  }
+
+  async saveAnalysisStatus(userId: string, assetId: string, status: ProductAnalysisStatus) {
+    const admin = getSupabaseAdminClient();
+    const { data, error } = await admin.from("assets").update({ product_analysis_status: status }).eq("id", assetId).eq("user_id", userId).eq("asset_type", "product").select("id").maybeSingle();
     return !error && Boolean(data);
   }
 }

@@ -170,9 +170,24 @@ export function resolveGenerationStrategy(input: {
   referenceInteraction?: TrustedReferenceInteraction | null;
   presetFamilyId?: string | null;
   hasReference?: boolean;
+  presentationMode?: string | null;
+  presentationHumanPresence?: "none" | "partial" | "full" | null;
+  explicitUserPrompt?: string;
   userPrompt: string;
 }): GenerationStrategyResolution {
   const context = resolveImageGenerationContext(input.userPrompt, input.preset?.useCase);
+
+  if (input.presetFamilyId === "apparel-studio") {
+    const explicitPrompt = input.explicitUserPrompt ?? input.userPrompt;
+    const explicitlyProductOnly = /\b(?:ghost mannequin|mannequin ghost|floating garment|product[- ]only|flat lay|hanger|folded garment|no (?:model|person|human)|without (?:a )?(?:model|person|human))\b/i.test(explicitPrompt);
+    const explicitlyOnModel = /\b(?:on model|worn by|wearing|person|woman|man|model)\b/i.test(explicitPrompt);
+    if (explicitlyProductOnly) return { ...resolution("rigid_product", "prompt_intent", context.visualIntent), effectivePreservationMode: "reference_edit" };
+    if (explicitlyOnModel) return resolution("fashion_on_model", "prompt_intent", context.visualIntent);
+    if (input.presentationHumanPresence === "none") return { ...resolution("rigid_product", "preset_strategy_hint", context.visualIntent), effectivePreservationMode: "reference_edit" };
+    return resolution("fashion_on_model", "preset_strategy_hint", context.visualIntent);
+  }
+
+  if (input.presetFamilyId && !input.presetFamilyId.startsWith("bags-")) return resolution(input.preset?.generationStrategyHint ?? "rigid_product", "preset_strategy_hint", context.visualIntent);
 
   if (input.presetFamilyId?.startsWith("bags-") && !input.hasReference) {
     const explicitBagCarry = /\b(?:handheld|hand held|carry|carrying|shoulder|crossbody|cross-body|under-arm|under arm|on model|worn|wearing|person|woman|man|model)\b/i.test(input.userPrompt);

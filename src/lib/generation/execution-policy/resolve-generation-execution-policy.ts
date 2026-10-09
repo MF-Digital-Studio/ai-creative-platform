@@ -36,7 +36,10 @@ export function resolveGenerationExecutionPolicy(input: {
   if (profile?.vertical === "apparel" && !onModelApparel && !artworkText && !input.exactProduct) reasons.push("plain_apparel");
   if (!complex && profile && ["cosmetics", "product", "home_goods"].includes(profile.vertical)) reasons.push("simple_still_life");
   if (!reasons.length && profile) reasons.push("detailed_product");
-  const promptEnhancement = input.hasCustomNote || input.ambiguousNote || input.presetConfidence !== "high" || input.hasReference;
+  // A validated reference brief is already structured prompt material. With a
+  // high-confidence preset and no custom/ambiguous note, another LLM rewrite
+  // is redundant and can only add drift.
+  const promptEnhancement = input.hasCustomNote || input.ambiguousNote || input.presetConfidence !== "high";
   return {
     version: GENERATION_EXECUTION_POLICY_VERSION,
     quality: complex ? "xhigh" : "high",

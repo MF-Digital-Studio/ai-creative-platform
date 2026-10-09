@@ -49,7 +49,7 @@ const projectFields = `
   id, title, status, created_at, updated_at,
   latest_generation:generations(generation_type, status, created_at),
   successful_generation:generations(generation_type, status, output_bucket_id, output_object_path, created_at),
-  product_asset:assets(bucket_id, object_path, product_profile, created_at)
+  product_asset:assets(bucket_id, object_path, product_profile, product_role, sort_order, created_at)
 `;
 
 async function signProjectPreviews(rows: ProjectRow[]): Promise<Project[]> {
@@ -88,7 +88,8 @@ function buildProjectQuery(supabase: Awaited<ReturnType<typeof createClient>>, u
     .order("created_at", { referencedTable: "successful_generation", ascending: false })
     .limit(1, { referencedTable: "successful_generation" })
     .eq("product_asset.asset_type", "product")
-    .order("created_at", { referencedTable: "product_asset", ascending: false })
+    .eq("product_asset.product_role", "primary")
+    .order("sort_order", { referencedTable: "product_asset", ascending: true })
     .limit(1, { referencedTable: "product_asset" });
 }
 

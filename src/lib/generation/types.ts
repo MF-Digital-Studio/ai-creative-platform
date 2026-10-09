@@ -21,6 +21,7 @@ export type ImageGenerationSourceAsset = {
 
 export type GenerationImageRole =
   | "product_identity_source"
+  | "product_identity_supporting"
   | "generated_attempt"
   | "apparel_artwork_identity_source"
   | "reference_base_scene"

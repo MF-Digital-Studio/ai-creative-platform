@@ -3,20 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "pretest": "tsx --test tests/generation-cost-optimization.test.ts",
     "dev": "next dev",
-    "dev:trigger": "trigger dev",
-    "deploy:trigger": "trigger deploy",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/aspect-ratio.test.ts tests/fidelity.test.ts tests/fidelity-validation.test.ts tests/auto-repair.test.ts tests/two-stage-placement.test.ts tests/creative-presets.test.ts tests/reference-images.test.ts tests/reference-match.test.ts tests/reference-product-replacement.test.ts tests/apparel-identity-lock.test.ts tests/product-identity-lock.test.ts tests/product-understanding.test.ts tests/product-understanding-analyzer.test.ts tests/product-understanding-trigger.test.ts tests/generation-product-profile-routing.test.ts tests/generation-policy.test.ts tests/generation-execution-policy.test.ts tests/apparel-projection.test.ts tests/product-profile-prompt.test.ts tests/scene-suitability.test.ts tests/composition-intelligence.test.ts tests/creative-direction-compliance.test.ts tests/persisted-auth-cookie.test.ts tests/project-delete-ui.test.ts tests/project-image-viewer.test.ts tests/dashboard-sidebar-layout.test.ts tests/image-edit.test.ts tests/bags.test.ts tests/password-change.test.ts tests/notifications.test.ts tests/generation-queue.test.ts tests/generation-reconstruction.test.ts tests/generation-favorites.test.ts tests/session-management.test.ts"
+    "test": "tsx --test tests/footwear-anatomy.test.ts tests/human-realism.test.ts tests/multi-view-product-input.test.ts tests/aspect-ratio.test.ts tests/fidelity.test.ts tests/fidelity-validation.test.ts tests/auto-repair.test.ts tests/two-stage-placement.test.ts tests/creative-presets.test.ts tests/reference-images.test.ts tests/reference-match.test.ts tests/reference-product-replacement.test.ts tests/apparel-identity-lock.test.ts tests/product-identity-lock.test.ts tests/product-understanding.test.ts tests/product-understanding-analyzer.test.ts tests/product-understanding-trigger.test.ts tests/generation-product-profile-routing.test.ts tests/generation-policy.test.ts tests/generation-execution-policy.test.ts tests/apparel-projection.test.ts tests/product-profile-prompt.test.ts tests/scene-suitability.test.ts tests/composition-intelligence.test.ts tests/creative-direction-compliance.test.ts tests/persisted-auth-cookie.test.ts tests/project-delete-ui.test.ts tests/project-image-viewer.test.ts tests/dashboard-sidebar-layout.test.ts tests/image-edit.test.ts tests/bags.test.ts tests/password-change.test.ts tests/notifications.test.ts tests/generation-reconstruction.test.ts tests/generation-favorites.test.ts tests/session-management.test.ts"
   },
   "dependencies": {
     "@fal-ai/client": "^1.10.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
-    "@trigger.dev/build": "^4.5.4",
-    "@trigger.dev/sdk": "^4.5.4",
     "clsx": "^2.1.1",
     "next": "16.2.12",
     "next-intl": "^4.13.4",

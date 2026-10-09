@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { getRecommendedFamilyPresets } from "@/lib/creative-presets/creative-presets";
+import { getPresetPresentationModes, getRecommendedFamilyPresets } from "@/lib/creative-presets/creative-presets";
 import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import type { AppLocale } from "@/i18n/routing";
 import { cn } from "@/lib/cn";
@@ -25,12 +25,14 @@ const presetCategoryConfig = [
 }[];
 
 export const DASHBOARD_PRESET_EVENT = "creative-ai:select-preset";
+export type DashboardPresetSelection = { presetId: string | null; presentationMode: string | null };
 const COLLAPSED_PRESET_COUNT = 6;
 
 export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical | null }) {
   const t = useTranslations("Dashboard.presets");
   const locale = useLocale() as AppLocale;
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [selectedPresentationMode, setSelectedPresentationMode] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [categoryState, setCategory] = useState<{ vertical: SupportedVertical | null | undefined; value: PresetCategoryFilterValue }>({ vertical, value: vertical ?? "all" });
   const category = categoryState.vertical === vertical ? categoryState.value : vertical ?? "all";
@@ -56,7 +58,15 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
   function selectPreset(id: string) {
     const nextPresetId = selectedPresetId === id ? null : id;
     setSelectedPresetId(nextPresetId);
-    window.dispatchEvent(new CustomEvent(DASHBOARD_PRESET_EVENT, { detail: nextPresetId }));
+    setSelectedPresentationMode(null);
+    window.dispatchEvent(new CustomEvent<DashboardPresetSelection>(DASHBOARD_PRESET_EVENT, { detail: { presetId: nextPresetId, presentationMode: null } }));
+  }
+
+  function selectPresentationMode(mode: string | null) {
+    if (!selectedPresetId) return;
+    const nextMode = selectedPresentationMode === mode ? null : mode;
+    setSelectedPresentationMode(nextMode);
+    window.dispatchEvent(new CustomEvent<DashboardPresetSelection>(DASHBOARD_PRESET_EVENT, { detail: { presetId: selectedPresetId, presentationMode: nextMode } }));
   }
 
   return (
@@ -112,6 +122,20 @@ export function CreativePresetRail({ vertical }: { vertical?: SupportedVertical 
           </button>
         ))}
       </div>
+      {selectedPreset ? <section className="preset-presentation-selector" aria-labelledby="preset-presentation-heading">
+        <div className="preset-presentation-heading">
+          <div><h3 id="preset-presentation-heading">{t("presentationHeading")}</h3><p>{t("presentationDescription")}</p></div>
+        <span>{t("presentationFor", { title: selectedPreset.localizedTitle[locale] })}</span>
+        </div>
+        <div className="preset-presentation-options" role="radiogroup" aria-label={t("presentationHeading")}>
+          <button type="button" role="radio" aria-checked={selectedPresentationMode === null} className={cn("preset-presentation-option", selectedPresentationMode === null && "is-selected")} onClick={() => selectPresentationMode(null)}>
+            <span aria-hidden="true">✦</span><span><strong>{t("presentationAutomatic")}</strong><small>{t("presentationAutomaticDescription")}</small></span>
+          </button>
+          {getPresetPresentationModes(selectedPreset.id).map((mode) => <button key={mode.id} type="button" role="radio" aria-checked={selectedPresentationMode === mode.id} className={cn("preset-presentation-option", selectedPresentationMode === mode.id && "is-selected")} onClick={() => selectPresentationMode(mode.id)}>
+            <span aria-hidden="true">◈</span><span><strong>{t(`presentationModes.${mode.id}`)}</strong><small>{t.has(`presentationModeDescriptions.${selectedPreset.id}.${mode.id}`) ? t(`presentationModeDescriptions.${selectedPreset.id}.${mode.id}`) : `${t(`presentationModes.${mode.id}`)} — ${selectedPreset.localizedDescription[locale]}`}</small></span>
+          </button>)}
+        </div>
+      </section> : null}
       {category === "all" && (allPresets.length > COLLAPSED_PRESET_COUNT || expanded) ? <div className="dashboard-preset-actions">
         <button
           className="dashboard-preset-toggle"

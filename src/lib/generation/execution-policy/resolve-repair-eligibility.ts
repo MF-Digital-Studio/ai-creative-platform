@@ -1,11 +1,12 @@
 import type { FidelityValidationResult } from "@/lib/fidelity-validation/types";
 
 const nonRepairableCodes = new Set(["minor_cosmetic_imperfection", "background_variation", "composition_preference"]);
-const presetComplianceCodes = new Set(["bag_preset_scene_mismatch"]);
+const presetSceneRepairCodes = new Set(["bag_preset_scene_mismatch", "preset_scene_mismatch", "preset_interaction_mismatch"]);
 const artworkOnlyCodes = new Set(["apparel_artwork_identity_drift", "apparel_artwork_text_drift", "apparel_artwork_structure_drift", "apparel_artwork_placement_drift", "apparel_artwork_scale_drift", "apparel_artwork_color_drift", "apparel_artwork_drift", "apparel_text_drift", "apparel_scale_drift"]);
-const severeGlobalRepairCodes = new Set(["different_product", "identity_changed", "product_identity_drift", "garment_type_changed", "apparel_garment_type_drift", "apparel_silhouette_drift", "structural_drift", "geometry_drift", "critical_component_missing", "human_product_contact_error", "body_interaction_failure", "hand_anatomy_error", "finger_count_error", "finger_geometry_error", "body_proportion_error", "pose_implausible"]);
+const footwearAnatomyCodes = ["foot_anatomy_error", "visible_toe_count_error", "footwear_fit_mismatch"] as const;
+const severeGlobalRepairCodes = new Set(["different_product", "identity_changed", "product_identity_drift", "garment_type_changed", "apparel_garment_type_drift", "apparel_silhouette_drift", "structural_drift", "geometry_drift", "critical_component_missing", "body_product_interaction_error", "human_product_contact_error", "body_interaction_failure", "human_anatomy_error", "hand_anatomy_error", "visible_finger_count_error", "finger_count_error", "finger_geometry_error", "body_proportion_error", "pose_implausible", ...footwearAnatomyCodes]);
 const jewelryIdentityRepairCodes = new Set(["jewelry_product_substitution", "jewelry_center_stone_shape_drift", "jewelry_center_stone_count_drift", "jewelry_prong_count_drift", "jewelry_setting_geometry_drift", "jewelry_halo_structure_drift", "jewelry_side_stone_drift", "jewelry_band_geometry_drift", "jewelry_metal_color_drift", "jewelry_reference_product_contamination"]);
-const severeAnatomyRepairCodes = new Set(["hand_anatomy_error", "finger_count_error", "finger_geometry_error", "body_proportion_error", "pose_implausible"]);
+const severeAnatomyRepairCodes = new Set(["human_anatomy_error", "hand_anatomy_error", "visible_finger_count_error", "finger_count_error", "finger_geometry_error", "body_proportion_error", "pose_implausible", ...footwearAnatomyCodes]);
 const fixableCodes = new Set([
   "product_identity_drift", "identity_changed", "different_product", "wrong_artwork", "missing_artwork", "wrong_logo", "text_unreadable", "wording_changed", "garment_type_changed", "garment_color_changed", "apparel_garment_type_drift", "apparel_silhouette_drift", "critical_component_missing", "body_proportion_error", "pose_implausible", "geometry_drift", "structural_drift", ...jewelryIdentityRepairCodes,
   "human_product_contact_error", "body_interaction_failure", "floating_ring", "hand_anatomy_error",
@@ -13,6 +14,7 @@ const fixableCodes = new Set([
   "apparel_artwork_structure_drift", "apparel_artwork_placement_drift", "apparel_artwork_drift",
   "stone_layout_changed", "setting_changed", "band_geometry_changed", "pendant_geometry_changed", "metal_color_changed", "watch_dial_structure_changed", "bezel_geometry_changed",
   "footwear_panel_structure_changed", "footwear_silhouette_changed", "package_geometry_changed", "color_material_drift", "branding_corrupted",
+  ...footwearAnatomyCodes,
   "minor_cosmetic_imperfection", "background_variation", "composition_preference",
 ]);
 
@@ -30,7 +32,11 @@ export function resolveRepairEligibility(input: {
   if (input.validation.status !== "fail") return { eligible: false, repairExpectedValue: 0, reason: "validation_does_not_reject_candidate" };
   if (!input.maximumAttemptsRemaining) return { eligible: false, repairExpectedValue: 0, reason: "repair_limit_reached" };
   const codes = issues.map(({ code }) => code.toLowerCase());
-  if (codes.some((code) => presetComplianceCodes.has(code))) return { eligible: false, repairExpectedValue: 0, reason: "preset_scene_mismatch_requires_no_identity_repair" };
+  const presetSceneIssues = issues.filter((issue) => presetSceneRepairCodes.has(issue.code.toLowerCase()));
+  if (presetSceneIssues.length && presetSceneIssues.length === issues.length && presetSceneIssues.every((issue) => issue.severity === "critical" && (issue.confidence ?? 0.9) >= 0.8)) {
+    return { eligible: true, repairExpectedValue: 65, reason: "high_confidence_preset_scene_correction" };
+  }
+  if (presetSceneIssues.length) return { eligible: false, repairExpectedValue: 0, reason: "preset_scene_issue_mixed_or_low_confidence" };
   const jewelryIdentityOnly = issues.length > 0 && codes.every((code) => jewelryIdentityRepairCodes.has(code));
   if (jewelryIdentityOnly && issues.some((issue) => issue.severity === "critical" && (issue.confidence ?? 0.9) >= 0.75)) return { eligible: true, repairExpectedValue: 80, reason: "critical_jewelry_identity_drift_targeted_repair" };
   const artworkOnly = codes.length > 0 && codes.every((code) => artworkOnlyCodes.has(code));

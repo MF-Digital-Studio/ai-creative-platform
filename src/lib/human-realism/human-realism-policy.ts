@@ -7,6 +7,7 @@ export function resolveHumanRealismPolicy(context: HumanRealismContext): HumanRe
   if (context.strategy === "jewelry_on_model" || context.strategy === "watch_on_wrist" || context.strategy === "bags_on_model" || context.handsVisible) {
     areas.add("hands"); areas.add("nails");
   }
+  if (context.strategy === "footwear_on_model" || context.feetVisible) areas.add("feet");
   if (context.strategy === "fashion_on_model" || context.faceVisible || context.vertical === "cosmetics") {
     areas.add("face"); areas.add("hair");
   }

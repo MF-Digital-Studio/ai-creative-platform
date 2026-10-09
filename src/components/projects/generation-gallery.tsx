@@ -22,6 +22,7 @@ export type GenerationGalleryItem = {
   cost: string | null;
   direction: string;
   isFavorite: boolean;
+  validationUnverified: boolean;
 };
 
 type GalleryMessages = {
@@ -35,6 +36,7 @@ type GalleryMessages = {
   selectOutput: string;
   details: string;
   status: string;
+  validationUnverified: string;
   format: string;
   type: string;
   advancedDetails: string;
@@ -85,6 +87,7 @@ function OutputDetails({ item, messages }: { item: GenerationGalleryItem; messag
   return <section className="project-inspector-details" aria-labelledby="project-output-details-heading">
     <h3 id="project-output-details-heading">{messages.details}</h3>
     <dl className="project-output-summary"><div><dt>{messages.format}</dt><dd>{item.aspectRatio ?? "—"}</dd></div><div><dt>{messages.created}</dt><dd><time dateTime={item.createdDateTime}>{item.createdAt}</time></dd></div><div><dt>{messages.type}</dt><dd>{item.typeLabel}</dd></div><div><dt>{messages.status}</dt><dd>{item.statusLabel}</dd></div></dl>
+    {item.status === "succeeded" && item.validationUnverified ? <p role="status">{messages.validationUnverified}</p> : null}
     <details className="project-output-disclosure">
       <summary>{messages.advancedDetails}</summary>
       <dl><div><dt>{messages.provider}</dt><dd>{item.provider}</dd></div><div><dt>{messages.model}</dt><dd>{item.model}</dd></div>{item.cost ? <div><dt>{messages.cost}</dt><dd>{item.cost}</dd></div> : null}</dl>

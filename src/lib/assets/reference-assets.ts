@@ -15,9 +15,10 @@ export type ProjectReferenceAsset = {
   bucket_id: string;
   object_path: string;
   created_at: string;
+  reference_analysis_cache: unknown;
 };
 
-const assetFields = "id, bucket_id, object_path, created_at";
+const assetFields = "id, bucket_id, object_path, created_at, reference_analysis_cache";
 
 export async function getProjectReferenceAssets(
   userId: string,

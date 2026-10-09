@@ -5,7 +5,7 @@ function section(label: string, values: string[]) { return values.length ? `${la
 export function compileProductIdentityLock(manifest: ProductIdentityManifest): string {
   return [
     "SOURCE PRODUCT IDENTITY — EXACT DESIGN AUTHORITY",
-    "The uploaded product image is the authoritative identity source. Use the exact same visible product design, not a plausible similar product. Preserve visible component counts, relative proportions, colors, material behavior, branding regions, and identity-critical structures.",
+    "All supplied product images are identity evidence for the same single physical product. The primary image governs main silhouette, color, form, proportions, and composition; supporting views add authority for rear/side geometry, material, hardware, straps/handles, pattern, branding placement, and construction. Use the exact same visible product design, not a plausible similar product. Never treat the views as separate products, blend different SKUs, or generate multiple products.",
     ...(manifest.vertical === "bags" ? ["BAG PRODUCT IDENTITY LOCK: Preserve the source bag silhouette and body proportions, handle count and geometry, strap count and placement, flap/opening and closure geometry, zipper and pocket layout, panel seams and stitching, hardware positions and color, logo/monogram, print, material, color blocking, and base shape. Never add or remove a handle, strap, zipper, pocket, closure, or hardware; never substitute a bag design. The source image remains authoritative over all references and profile inferences."] : []),
     section("Immutable attributes", manifest.immutableAttributes),
     section("Geometry anchors", manifest.geometryAnchors),
