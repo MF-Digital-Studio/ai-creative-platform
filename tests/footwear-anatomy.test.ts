@@ -63,7 +63,7 @@ test("anatomy repair is single-purpose and preserves shoe identity and scene", (
   const plan = resolveRepairPlan(validation([finding("VISIBLE_TOE_COUNT_ERROR", "Four visible toes")]));
   const prompt = compileRepairInstructions("ORIGINAL SHOE AND SCENE", plan);
   assert.equal(plan.shouldRetry, true);
-  assert.deepEqual(plan.categories, ["human_anatomy_repair"]);
+  assert.deepEqual(plan.categories, ["foot_anatomy_repair"]);
   assert.match(prompt, /shoe identity, straps, heel shape, outfit, pose, lighting, background, framing, and scene type unchanged/i);
   assert.match(prompt, /Repair only visible foot anatomy, toe count, toe spacing, and toe alignment/i);
 });

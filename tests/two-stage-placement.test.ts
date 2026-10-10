@@ -49,7 +49,7 @@ test("production generation calls the final provider directly with source-first 
   assert.match(generationAction, /usesReferenceReplacement \? \{ operation: "reference_product_replacement"/);
 });
 
-test("watch remains xhigh, uses watch-specific execution reasons, and keeps Human Realism V1", () => {
+test("watch remains xhigh, uses watch-specific execution reasons, and keeps canonical Human Realism", () => {
   const profile = watchProfile();
   const policy = resolveGenerationExecutionPolicy({ productProfile: profile, hasReference: false, referenceReplacement: false, exactProduct: false, artworkLocalized: false, artworkComplexity: "none", presetConfidence: "high", hasCustomNote: false, ambiguousNote: false, strategy: "watch_on_wrist" });
   assert.equal(policy.quality, "xhigh");

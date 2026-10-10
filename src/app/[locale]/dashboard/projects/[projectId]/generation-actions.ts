@@ -107,6 +107,8 @@ import { GENERATION_EXECUTION_POLICY_VERSION } from "@/lib/generation/execution-
 import { createGenerationPerformanceRecorder } from "@/lib/generation/performance";
 import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
 import { createNotification } from "@/lib/notifications/create-notification";
+import { compileApparelFitPreservationPrompt } from "@/lib/apparel-fit-preservation/compile-apparel-fit-prompt";
+import { APPAREL_FIT_PRESERVATION_VERSION } from "@/lib/apparel-fit-preservation/apparel-fit-version";
 
 export type RegisterProductAssetResult = {
   status: "error" | "success";
@@ -151,14 +153,14 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
   const { data: editProductRows } = await supabase.from("assets").select("id,bucket_id,object_path").eq("project_id", projectId).eq("user_id", userId).eq("asset_type", "product").in("id", editProductIds);
   const orderedEditProducts = editProductIds.map((id) => editProductRows?.find((row) => row.id === id)).filter((row): row is NonNullable<typeof editProductRows>[number] => Boolean(row && row.bucket_id === "product-assets" && hasValidObjectPath(userId, projectId, row.object_path)));
   const intent = parseImageEditIntent(instruction.trim());
-    const baseHumanMetadata = base.provider_metadata?.humanRealism;
-    const baseStrategyMetadata = base.provider_metadata?.strategy;
-    const baseStrategy = baseStrategyMetadata && typeof baseStrategyMetadata === "object" && "selected" in baseStrategyMetadata && typeof baseStrategyMetadata.selected === "string" ? baseStrategyMetadata.selected : "reference_edit";
-    const humanRealismExpected = Boolean(baseHumanMetadata && typeof baseHumanMetadata === "object" && "applied" in baseHumanMetadata && baseHumanMetadata.applied === true) || ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(baseStrategy);
-    const editHumanRealismPolicy = resolveHumanRealismPolicy({ strategy: "reference_edit", vertical: null, visibleHuman: humanRealismExpected });
-    const editHumanRealismDirection = compileHumanRealismPrompt(editHumanRealismPolicy, null);
+  const baseHumanMetadata = base.provider_metadata?.humanRealism;
+  const baseStrategyMetadata = base.provider_metadata?.strategy;
+  const baseStrategy = baseStrategyMetadata && typeof baseStrategyMetadata === "object" && "selected" in baseStrategyMetadata && typeof baseStrategyMetadata.selected === "string" ? baseStrategyMetadata.selected : "reference_edit";
+  const humanRealismExpected = Boolean(baseHumanMetadata && typeof baseHumanMetadata === "object" && (("expected" in baseHumanMetadata && baseHumanMetadata.expected === true) || ("applied" in baseHumanMetadata && baseHumanMetadata.applied === true))) || ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(baseStrategy);
+  const editHumanRealismPolicy = resolveHumanRealismPolicy({ strategy: "reference_edit", vertical: null, visibleHuman: humanRealismExpected, referenceHumanPresent: humanRealismExpected });
+  const editHumanRealismDirection = compileHumanRealismPrompt(editHumanRealismPolicy, null);
   const admin = getSupabaseAdminClient();
-  const { data: edit, error } = await admin.from("generations").insert({ project_id: projectId, input_asset_id: asset.id, generation_type: "image", status: "processing", provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspect_ratio: base.aspect_ratio ?? "1:1", preservation_mode: "reference_edit", fidelity_status: "not_checked", creative_direction_snapshot: instruction.trim(), provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "pending", repairAttempted: false, editVersion: 1 } } }).select("id").single();
+  const { data: edit, error } = await admin.from("generations").insert({ project_id: projectId, input_asset_id: asset.id, generation_type: "image", status: "processing", provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspect_ratio: base.aspect_ratio ?? "1:1", preservation_mode: "reference_edit", fidelity_status: "not_checked", creative_direction_snapshot: instruction.trim(), provider_metadata: { operation: "image_edit", humanRealism: { version: HUMAN_REALISM_VERSION, expected: humanRealismExpected, applied: editHumanRealismPolicy.applied, focusAreas: editHumanRealismPolicy.focusAreas }, edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "pending", repairAttempted: false, editVersion: 1 } } }).select("id").single();
   if (error || !edit) return { ok: false, error: "Edit record could not be created.", code: "creationFailed" };
   const now = new Date();
   const { data: marked } = await admin.from("generations").update({ status: "processing", processing_started_at: now.toISOString() }).eq("id", edit.id).select("id").maybeSingle();
@@ -189,7 +191,8 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
     const upload = await admin.storage.from(generatedAssetsBucket).upload(objectPath, result.imageData, { contentType: "image/png", upsert: false });
     if (upload.error) throw new Error("Unable to store edited image.");
     const processingCompletedAt = new Date();
-    const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : validation.status === "validation_unavailable" ? "not_available" : "not_checked", provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, costTelemetry: createCostTelemetry({ productUnderstandingCalls: 0, referenceAnalysisCalls: 0, imageGenerationCalls: imageGenerationCalls - (repairAttempted ? 1 : 0), validationCalls, repairGenerationCalls: repairAttempted ? 1 : 0, inputProductImageCount: productInputs.length, inputReferenceCount: 0, repairAttempted, finalOutcome: validation.status === "validation_unavailable" ? "unverified" : "succeeded", validationOutcome: validation.status, providerUsage: result.usage }), provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
+    const editHumanRealismIssue = validation.status !== "validation_unavailable" && validation.issueCodes.includes("EDIT_HUMAN_REALISM_ERROR");
+    const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : validation.status === "validation_unavailable" ? "not_available" : "not_checked", provider_metadata: { operation: "image_edit", humanRealism: { version: HUMAN_REALISM_VERSION, expected: humanRealismExpected, applied: editHumanRealismPolicy.applied, focusAreas: editHumanRealismPolicy.focusAreas, issues: editHumanRealismIssue ? [{ issueCode: "EDIT_HUMAN_REALISM_ERROR", confidence: 1, severity: "major", region: "edited_human_region", repairable: true, commercialImpact: "high" }] : [], hardFailure: false, repairEligible: editHumanRealismIssue, repairTriggered: repairAttempted && editHumanRealismIssue, repairCategory: repairAttempted && editHumanRealismIssue ? "body_interaction_repair" : null }, edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, costTelemetry: createCostTelemetry({ productUnderstandingCalls: 0, referenceAnalysisCalls: 0, imageGenerationCalls: imageGenerationCalls - (repairAttempted ? 1 : 0), validationCalls, repairGenerationCalls: repairAttempted ? 1 : 0, inputProductImageCount: productInputs.length, inputReferenceCount: 0, repairAttempted, finalOutcome: validation.status === "validation_unavailable" ? "unverified" : "succeeded", validationOutcome: validation.status, providerUsage: result.usage }), provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
     if (saveError) throw new Error("Unable to save edited image record.");
     await createNotification({ userId, type: "image_edit_completed", projectId, projectName: project.title, generationId: edit.id });
     revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
@@ -1102,6 +1105,16 @@ export async function runQueuedImageGeneration(
     const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman: finalPrompt.layers.humanRealismApplied });
     const humanRealismDirection = compileHumanRealismPrompt(humanRealismPolicy, productProfile?.vertical ?? finalPrompt.layers.vertical);
     if (humanRealismDirection && !activePrompt.includes(humanRealismDirection)) activePrompt = `${activePrompt}\n\n${humanRealismDirection}`;
+    const apparelFitPolicy = { active: finalPrompt.layers.apparelFitPreservationActive, profile: finalPrompt.layers.apparelFitProfile };
+    const apparelFitDirection = compileApparelFitPreservationPrompt(apparelFitPolicy, usableReferenceImages.length > 0);
+    if (apparelFitDirection && !activePrompt.includes(apparelFitDirection)) activePrompt = `${activePrompt}\n\n${apparelFitDirection}`;
+    logDevelopmentGenerationEvent("apparel_fit_profile_resolved", {
+      generationId: queuedGeneration.id,
+      version: APPAREL_FIT_PRESERVATION_VERSION,
+      active: apparelFitPolicy.active,
+      authoritySource: apparelFitPolicy.profile?.authoritySource ?? null,
+      summary: apparelFitPolicy.profile ? JSON.stringify({ garmentCategory: apparelFitPolicy.profile.garmentCategory, silhouette: apparelFitPolicy.profile.silhouette, fitType: apparelFitPolicy.profile.fitType, bodyLength: apparelFitPolicy.profile.bodyLength, materialClass: apparelFitPolicy.profile.materialClass, drapeBehavior: apparelFitPolicy.profile.drapeBehavior, sourceViewCount: apparelFitPolicy.profile.sourceViewCount }) : null,
+    });
     let hybridProjectionMetadata: Record<string, unknown> | null = null;
 
     if (usesReferenceReplacement) {
@@ -1194,6 +1207,8 @@ export async function runQueuedImageGeneration(
       productProfile,
       vertical: productProfile?.vertical ?? (strategyCategory === "product" ? "product" : strategyCategory),
       strategy: finalPolicy.strategy,
+      humanRealism: humanRealismPolicy,
+      apparelFit: apparelFitPolicy,
       sceneSuitability,
       composition,
       creativeCompliance,
@@ -1239,6 +1254,7 @@ export async function runQueuedImageGeneration(
       minorIssueCount: originalValidationIssueCounts.minor,
       identityCriticalIssueCount: originalIdentityIssueCounts.critical,
       identityMajorIssueCount: originalIdentityIssueCounts.major,
+      apparelFitIssues: fidelityValidation.issues.filter(({ category }) => category === "apparel_fit").map(({ code }) => code),
     });
     if (fidelityValidation.status === "validation_unavailable") {
       logDevelopmentGenerationEvent("fidelity_validation_unavailable", {
@@ -1284,6 +1300,8 @@ export async function runQueuedImageGeneration(
       repairEligiblePresetIssues: repairEligibility.eligible ? repairPlan.issueCodes.filter((code) => code.toLowerCase().startsWith("preset_") || code.toLowerCase() === "bag_preset_scene_mismatch") : [],
       categories: repairPlan.categories,
       repairExpectedValue: repairEligibility.repairExpectedValue,
+      apparelFitActive: apparelFitPolicy.active,
+      apparelFitIssues: fidelityValidation.issues.filter(({ category }) => category === "apparel_fit").map(({ code }) => code),
       reason: repairEligibility.reason,
       quality: executionPolicy.repairQuality,
     });
@@ -1344,6 +1362,8 @@ export async function runQueuedImageGeneration(
           productProfile,
           vertical: productProfile?.vertical ?? (strategyCategory === "product" ? "product" : strategyCategory),
           strategy: finalPolicy.strategy,
+          humanRealism: humanRealismPolicy,
+          apparelFit: apparelFitPolicy,
           sceneSuitability,
           composition,
           creativeCompliance,
@@ -1443,6 +1463,8 @@ export async function runQueuedImageGeneration(
       terminalDecision,
       commerciallyUsable: selectedValidation.commerciallyUsable,
       finalValidationStatus: selectedValidation.status,
+      apparelFitActive: apparelFitPolicy.active,
+      apparelFitIssues: selectedValidation.issues.filter(({ category }) => category === "apparel_fit").map(({ code }) => code),
     });
     if (!finalQualityAccepted) {
       logDevelopmentGenerationEvent("quality_gate_rejected_terminal", {
@@ -1450,6 +1472,7 @@ export async function runQueuedImageGeneration(
         qualityGatePassed,
         commerciallyUsable: selectedValidation.commerciallyUsable,
         finalValidationStatus: selectedValidation.status,
+        apparelFitIssues: selectedValidation.issues.filter(({ category }) => category === "apparel_fit").map(({ code }) => code),
         issueCodes: selectedValidation.issues.map(({ code }) => code).slice(0, 20),
       });
       throw new Error("Generated candidate rejected by quality gate.");
@@ -1474,8 +1497,14 @@ export async function runQueuedImageGeneration(
     const processingCompletedAt = new Date();
     const humanRealismMetadata: HumanRealismMetadata = {
       version: HUMAN_REALISM_VERSION,
+      expected: humanRealismPolicy.expected,
       applied: humanRealismPolicy.applied,
       focusAreas: humanRealismPolicy.focusAreas,
+      issues: selectedValidation.issues.filter(({ category }) => category === "human_realism").map((issue) => ({ issueCode: issue.issueCode ?? issue.code, confidence: issue.confidence ?? 0.9, severity: issue.severity, region: issue.region ?? "unspecified", repairable: issue.repairable ?? false, commercialImpact: issue.commercialImpact ?? "none" })),
+      hardFailure: selectedValidation.issues.some((issue) => issue.category === "human_realism" && issue.severity === "critical" && (issue.confidence ?? 0.9) >= 0.75),
+      repairEligible: repairPlan.shouldRetry && repairPlan.categories.some((category) => category.endsWith("_repair")),
+      repairTriggered: selectedAttempt.attempt === 1,
+      repairCategory: selectedAttempt.attempt === 1 ? repairPlan.categories.find((category) => category.endsWith("_repair")) ?? null : null,
       validationResult: selectedValidation.status,
       repairType: selectedAttempt.attempt === 1 ? repairPlan.categories.join(",") || "repair" : null,
     };
@@ -1508,6 +1537,11 @@ export async function runQueuedImageGeneration(
           qualityRejected: finalSelection.validationStatus === "validation_unavailable" ? false : qualityGatePassed === false,
           validationUnavailable: finalSelection.validationStatus === "validation_unavailable",
           humanRealism: humanRealismMetadata,
+          apparelFitProfileVersion: APPAREL_FIT_PRESERVATION_VERSION,
+          apparelFitPreservationActive: apparelFitPolicy.active,
+          apparelFitAuthoritySource: apparelFitPolicy.profile?.authoritySource ?? null,
+          apparelFitIssues: selectedValidation.issues.filter(({ category }) => category === "apparel_fit").map((issue) => ({ issueCode: issue.issueCode ?? issue.code, confidence: issue.confidence ?? 0.9, severity: issue.severity, region: issue.region ?? "garment", repairable: issue.repairable ?? false, commercialImpact: issue.commercialImpact ?? "none" })),
+          apparelFitRepairAttempted: selectedAttempt.attempt === 1 && repairPlan.categories.some((category) => category.startsWith("apparel_")),
           ...(apparelArtwork ? { apparelArtwork: { version: "apparel-artwork-identity-source-v2", detected: true, side: apparelArtwork.side, identitySource: apparelArtwork.identitySource } } : apparelIdentityManifest ? { apparelArtwork: { version: "apparel-artwork-identity-source-v2", detected: false, side: apparelIdentityManifest.artworkSide, identitySource: null } } : {}),
           ...(hybridEligible ? { apparelProjection: hybridProjectionMetadata ?? { enabled: true, applied: false, fallbackReason: "projection_unavailable", version: "hybrid-apparel-projection-v1", artworkExtractionMode: "unavailable", garmentSurfaceConfidence: 0, warpMode: "unavailable", validationStatus: "not_applied" } } : {}),
           ...(apparelIdentityManifest ? { apparel_identity: {

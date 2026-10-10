@@ -51,8 +51,14 @@ export type ApparelArtworkIdentitySource = {
 
 export type HumanRealismMetadata = {
   version: string;
+  expected: boolean;
   applied: boolean;
   focusAreas: string[];
+  issues: Array<{ issueCode: string; confidence: number; severity: string; region: string; repairable: boolean; commercialImpact: string }>;
+  hardFailure: boolean;
+  repairEligible: boolean;
+  repairTriggered: boolean;
+  repairCategory: string | null;
   validationResult: "pass" | "pass_with_warnings" | "fail" | "validation_unavailable" | null;
   repairType: string | null;
 };

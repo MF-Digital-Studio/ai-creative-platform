@@ -5,6 +5,27 @@ import type { RepairCategory, RepairPlan } from "./types";
 type RepairMapping = { category: RepairCategory; instructions: string[] };
 
 const mappings: Record<string, RepairMapping> = {
+  apparel_silhouette_mismatch: { category: "apparel_fit_repair", instructions: ["Correct only the source garment silhouette and fit category; restore exact body width, shoulder drop and volume without changing the model."] },
+  apparel_fit_mismatch: { category: "apparel_fit_repair", instructions: ["Restore the source fit exactly—boxy, slim, straight, oversized, cropped, relaxed or fitted as shown—without fashionizing it."] },
+  apparel_proportion_mismatch: { category: "apparel_fit_repair", instructions: ["Restore source garment proportions, body width, shoulder width, sleeve volume and relative lengths only."] },
+  apparel_length_mismatch: { category: "apparel_fit_repair", instructions: ["Correct only body, crop, sleeve or trouser-leg endpoint to match the source garment."] },
+  apparel_structure_mismatch: { category: "apparel_structure_repair", instructions: ["Restore only the source shoulder, sleeve cut, hem, rib, cuff, waistband, collar, seam and panel construction."] },
+  apparel_pocket_placement_error: { category: "apparel_structure_repair", instructions: ["Restore source pocket count, position, size, shape and angle without changing the model or pose."] },
+  apparel_closure_structure_error: { category: "apparel_structure_repair", instructions: ["Restore source zipper, puller, button or placket position and construction only."] },
+  apparel_material_behavior_mismatch: { category: "apparel_material_repair", instructions: ["Restore only the source material class, surface finish, sheen, stiffness, wrinkle and texture behavior."] },
+  apparel_drape_mismatch: { category: "apparel_material_repair", instructions: ["Restore source drape and fall while allowing only gravity- and pose-consistent folds."] },
+  apparel_product_body_interaction_error: { category: "apparel_interaction_repair", instructions: ["Correct only garment/body contact, pressure, openings, occlusion and clipping while retaining source fit and structure."] },
+  human_face_anatomy_error: { category: "face_realism_repair", instructions: ["Correct only the concrete facial anatomy defect; preserve person identity, expression intent, product, outfit, pose, camera, framing, environment, lighting, and composition."] },
+  human_face_uncanny: { category: "face_realism_repair", instructions: ["Correct only the uncanny facial region into believable photographed anatomy and texture; do not beautify, symmetrize, or change identity."] },
+  human_expression_unnatural: { category: "face_realism_repair", instructions: ["Correct only the validated unnatural expression while preserving identity and pose."] },
+  human_eye_realism_error: { category: "face_realism_repair", instructions: ["Correct only the malformed or artificial eye region while preserving person identity and all unaffected features."] },
+  human_skin_plastic: { category: "skin_realism_repair", instructions: ["Restore natural photographic microtexture, tonal variation and highlights only in the affected skin region; preserve identity and do not add exaggerated blemishes."] },
+  human_skin_overretouched: { category: "skin_realism_repair", instructions: ["Remove only excessive beauty smoothing in the affected region and restore restrained commercial skin texture."] },
+  human_texture_unrealistic: { category: "skin_realism_repair", instructions: ["Restore believable photographic human texture only in the affected region."] },
+  human_hair_synthetic: { category: "hair_realism_repair", instructions: ["Correct only synthetic hairline, roots, strand breakup, density, gravity or clumping; preserve hairstyle and identity."] },
+  human_hand_anatomy_error: { category: "hand_anatomy_repair", instructions: ["Correct only the validated visible hand anatomy, joints, thumb, fingers, nails, grip or clipping. Respect natural occlusion and preserve product contact intent."] },
+  human_limb_anatomy_error: { category: "limb_anatomy_repair", instructions: ["Correct only the affected limb continuity or major joint with the smallest local pose adjustment necessary."] },
+  human_posture_unnatural: { category: "limb_anatomy_repair", instructions: ["Correct only the validated posture, balance or weight-distribution defect; retain pose intent."] },
   preset_scene_mismatch: { category: "composition_repair", instructions: ["PRESET SCENE CORRECTION ONLY: Recreate the current candidate within the selected preset family and allowed scene types. Correct the environment and scene identity only; preserve the exact source product, product scale, identity details, and any reference-authorized elements. Do not perform product identity repair."] },
   preset_interaction_mismatch: { category: "composition_repair", instructions: ["PRESET INTERACTION CORRECTION ONLY: Correct only the visible human/product interaction to match the selected preset family. Preserve the exact source product and all identity details; do not invoke product identity repair."] },
   bag_preset_scene_mismatch: { category: "composition_repair", instructions: ["BAG STUDIO COMPLIANCE: Recreate this as a product-only studio still life. Remove the model, hands, carry pose, body contact, fashion portrait, and lifestyle setting; retain the exact source bag identity." ] },
@@ -19,13 +40,13 @@ const mappings: Record<string, RepairMapping> = {
   bag_logo_monogram_drift: { category: "identity_reinforcement", instructions: ["BAG ONLY REPAIR: Restore the exact source logo/monogram design, pattern, and placement; preserve the existing scene unchanged."] },
   bag_reference_product_contamination: { category: "identity_reinforcement", instructions: ["BAG ONLY REPAIR: Remove all design cues copied from the reference bag and restore the exact uploaded source bag; preserve pose, framing, model, environment, and lighting."] },
   bag_contact_implausible: { category: "body_interaction_repair", instructions: ["Correct only the bag contact: natural hand grip or shoulder/crossbody placement, realistic weight, gravity, and strap tension. Remove floating straps or finger/torso intersections while preserving bag identity and scene."] },
-  hand_anatomy_error: { category: "human_anatomy_repair", instructions: ["Correct only visible hand anatomy: five fingers per hand, natural joints, plausible proportions and realistic nail placement. Preserve the product, identity and scene."] },
+  hand_anatomy_error: { category: "hand_anatomy_repair", instructions: ["Correct only visible hand anatomy: five fingers per fully visible hand, natural joints, plausible proportions and realistic nail placement. Respect occlusion and preserve the product, identity and scene."] },
   human_anatomy_error: { category: "human_anatomy_repair", instructions: ["Repair only the affected anatomical region and limb continuity. Preserve the person identity, product, pose intent, camera, environment, lighting, and composition."] },
-  visible_finger_count_error: { category: "human_anatomy_repair", instructions: ["Restore exactly five fingers on the affected visible hand, including the correctly placed thumb. Change no other region."] },
+  visible_finger_count_error: { category: "hand_anatomy_repair", instructions: ["Restore exactly five fingers on the affected fully visible hand, including the correctly placed thumb. Change no other region."] },
   finger_count_error: { category: "human_anatomy_repair", instructions: ["Restore exactly five fingers per visible hand, including the correctly placed thumb. Preserve the product and composition."] },
   finger_geometry_error: { category: "human_anatomy_repair", instructions: ["Correct finger lengths, joints and separation without changing product identity or pose intent."] },
-  foot_anatomy_error: { category: "human_anatomy_repair", instructions: ["Correct only the visible foot anatomy. Preserve the exact shoe identity, straps, heel shape, outfit, pose, lighting, background, and scene type."] },
-  visible_toe_count_error: { category: "human_anatomy_repair", instructions: ["Restore exactly five anatomically correct toes on each visible foot with natural spacing. Do not change the sandal or composition."] },
+  foot_anatomy_error: { category: "foot_anatomy_repair", instructions: ["Correct only the visible foot anatomy. Preserve the exact shoe identity, straps, heel shape, outfit, pose, lighting, background, and scene type."] },
+  visible_toe_count_error: { category: "foot_anatomy_repair", instructions: ["Restore five anatomically correct toes only where the complete foot is clearly visible, with natural spacing. Do not change the footwear or composition."] },
   footwear_fit_mismatch: { category: "body_interaction_repair", instructions: ["Correct only toe and foot alignment with the sandal straps, sole, and footbed. Preserve shoe geometry and every other scene element."] },
   nail_anatomy_error: { category: "human_anatomy_repair", instructions: ["Align natural nails with each finger; retain requested polish color and the source product."] },
   plastic_skin: { category: "skin_texture_repair", instructions: ["Reduce beauty retouching; restore subtle pores, natural skin texture and tonal variation without exaggerating imperfections. Preserve facial identity, product and composition."] },
@@ -34,7 +55,7 @@ const mappings: Record<string, RepairMapping> = {
   over_retouched_skin: { category: "skin_texture_repair", instructions: ["Restore restrained editorial skin texture and realistic highlights; preserve face, product and scene."] },
   facial_realism_drift: { category: "facial_realism_repair", instructions: ["Correct only uncanny facial surfaces, eyes, expression and asymmetry while preserving facial identity, product and framing."] },
   face_realism_error: { category: "facial_realism_repair", instructions: ["Correct only the affected facial realism defect while preserving face identity, expression, product, pose, camera, environment, lighting, and composition."] },
-  body_proportion_error: { category: "body_anatomy_repair", instructions: ["Restore natural body proportions and joint locations without changing product identity, styling or scene."] },
+  body_proportion_error: { category: "limb_anatomy_repair", instructions: ["Restore natural body proportions and joint locations without changing product identity, styling or scene."] },
   pose_implausible: { category: "body_anatomy_repair", instructions: ["Correct posture, balance and weight distribution while preserving the product and intended pose."] },
   hair_realism_drift: { category: "hair_realism_repair", instructions: ["Restore natural hairline, varied strands and lighting interaction without changing identity or product."] },
   human_product_contact_error: { category: "body_interaction_repair", instructions: ["Correct only product-to-body fit, occlusion, pressure and contact shadows; preserve the exact source product."] },
@@ -125,7 +146,11 @@ function mappingsFor(issues: FidelityValidationIssue[]): RepairMapping[] {
 }
 
 export function resolveRepairPlan(validation: FidelityValidationResult): RepairPlan {
-  const mapped = mappingsFor(validation.issues);
+  const humanIssues = validation.issues.filter((issue) => issue.category === "human_realism");
+  const hasBlockingNonHumanIssue = validation.issues.some((issue) => issue.category !== "human_realism" && issue.severity === "critical" && (issue.confidence ?? 0.9) >= 0.75);
+  const eligibleHumanCodes = new Set(humanIssues.filter((issue) => (issue.confidence ?? 0.9) >= 0.75 && issue.repairable !== false).map((issue) => issue.code.toLowerCase()));
+  const repairCandidates = validation.issues.filter((issue) => issue.category !== "human_realism" || (!hasBlockingNonHumanIssue && eligibleHumanCodes.has(issue.code.toLowerCase())));
+  const mapped = mappingsFor(repairCandidates);
   const shouldRetry = validation.status === "fail" && validation.retryRecommended && mapped.length > 0;
   return {
     shouldRetry,

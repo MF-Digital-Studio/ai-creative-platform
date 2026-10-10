@@ -23,9 +23,9 @@ test("product-only apparel receives no human fragment while human apparel does",
 
 for (const [strategy, vertical, expected] of [
   ["fashion_on_model", "apparel", "Garment follows"],
-  ["jewelry_on_model", "jewelry", "Exactly five fingers"],
+  ["jewelry_on_model", "jewelry", "five fingers"],
   ["watch_on_wrist", "watches", "Strap wraps"],
-  ["footwear_on_model", "footwear", "weight-bearing sole"],
+  ["footwear_on_model", "footwear", "weight-bearing compression"],
 ] as const) {
   test(`${vertical} has relevant human rules`, () => {
     const policy = resolveHumanRealismPolicy({ strategy, vertical });
@@ -36,8 +36,8 @@ for (const [strategy, vertical, expected] of [
 test("cosmetics face context gets restrained skin and face rules", () => {
   const policy = resolveHumanRealismPolicy({ strategy: "rigid_product", vertical: "cosmetics", visibleHuman: true, faceVisible: true });
   const prompt = compileHumanRealismPrompt(policy, "cosmetics");
-  assert.match(prompt, /FACE AND HAIR/);
-  assert.match(prompt, /do not exaggerate pores/);
+  assert.match(prompt, /FACE:.*HAIR:/);
+  assert.match(prompt, /Natural microtexture/);
 });
 
 function finding(code: string, severity: "minor" | "major" | "critical") {
@@ -61,7 +61,7 @@ test("normalized malformed hands and feet hard fail while plastic skin remains a
   assert.equal(proportions.status, "fail");
   const skin = resolveQualityGate(mapStructuredValidationOutput({ findings: [{ ...finding("PLASTIC_SKIN_APPEARANCE", "minor"), confidence: 0.95 }] }));
   assert.equal(skin.issues[0]?.severity, "major");
-  assert.equal(skin.status, "pass_with_warnings");
+  assert.equal(skin.status, "fail");
 });
 
 test("natural subtle facial asymmetry is not a validation failure", () => {
@@ -71,7 +71,7 @@ test("natural subtle facial asymmetry is not a validation failure", () => {
 test("skin and anatomy failures select targeted repairs preserving product identity", () => {
   const issues = mapStructuredValidationOutput({ findings: [finding("PLASTIC_SKIN", "major"), finding("BODY_PROPORTION_ERROR", "major")] });
   const plan = resolveRepairPlan(resolveQualityGate(issues));
-  assert.deepEqual(plan.categories, ["skin_texture_repair", "body_anatomy_repair"]);
+  assert.deepEqual(plan.categories, ["skin_texture_repair", "limb_anatomy_repair"]);
   const prompt = compileRepairInstructions("SOURCE PRODUCT IDENTITY LOCK", plan);
   assert.match(prompt, /SOURCE PRODUCT IDENTITY LOCK/);
   assert.match(prompt, /Preserve facial identity, product and composition/);
@@ -82,14 +82,14 @@ test("targeted normalized human repair preserves identity and composition", () =
   const plan = resolveRepairPlan(resolveQualityGate(issues));
   assert.equal(plan.shouldRetry, true);
   const prompt = compileRepairInstructions("SOURCE PRODUCT IDENTITY LOCK", plan);
-  assert.match(prompt, /Edit only the affected anatomical/i);
+  assert.match(prompt, /Modify ONLY the affected human realism region/i);
   assert.match(prompt, /Reference 1 person identity/i);
-  assert.match(prompt, /camera, environment, lighting, framing, and composition/i);
+  assert.match(prompt, /camera, framing, environment, lighting, and composition/i);
 });
 
 test("human metadata contains only version, application, focus, status and retry", () => {
   const policy = resolveHumanRealismPolicy({ strategy: "watch_on_wrist", vertical: "watches" });
-  const metadata = { version: "human-realism-v1", applied: policy.applied, focusAreas: policy.focusAreas, validationStatus: "pass", repairAttempted: false };
+  const metadata = { version: "human-realism-v2", applied: policy.applied, focusAreas: policy.focusAreas, validationStatus: "pass", repairAttempted: false };
   assert.deepEqual(Object.keys(metadata), ["version", "applied", "focusAreas", "validationStatus", "repairAttempted"]);
 });
 
@@ -105,7 +105,7 @@ test("Human Realism reuses the shared fidelity validation brief without a separa
     humanRealism,
   });
   const instructions = renderValidationInstructions(brief);
-  assert.match(instructions, /HUMAN_ANATOMY_ERROR/);
-  assert.match(instructions, /PLASTIC_SKIN_APPEARANCE/);
+  assert.match(instructions, /HUMAN_LIMB_ANATOMY_ERROR/);
+  assert.match(instructions, /HUMAN_SKIN_PLASTIC/);
   assert.equal(brief.humanRealism, humanRealism);
 });

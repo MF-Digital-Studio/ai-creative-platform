@@ -7,16 +7,18 @@ import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import type { ReferenceMatchResolution } from "@/lib/generation/references/resolve-reference-match";
 import type { ProductIdentityManifest } from "@/lib/product-identity/types";
 import type { HumanRealismPolicy } from "@/lib/human-realism/types";
+import type { ApparelFitProfile } from "@/lib/apparel-fit-preservation/types";
 
 export const fidelityValidationCategories = [
   "product_identity", "geometry", "color_material", "branding_text", "body_interaction",
-  "composition_visibility", "creative_requirement", "realism", "human_realism", "duplication", "structural_integrity", "reference_match",
+  "composition_visibility", "creative_requirement", "realism", "human_realism", "apparel_fit", "duplication", "structural_integrity", "reference_match",
 ] as const;
 export type FidelityValidationCategory = (typeof fidelityValidationCategories)[number];
 export type FidelityIssueSeverity = "critical" | "major" | "minor";
 export type FidelityValidationStatus = "pass" | "pass_with_warnings" | "fail" | "validation_unavailable";
 export type FidelityIdentityImpact = "none" | "minor" | "major" | "critical";
 export type FidelityLikelyCause = "source_identity_drift" | "perspective" | "fabric_deformation" | "lighting" | "body_interaction" | "typography_change" | "geometry_change" | "unknown";
+export type FidelityCommercialImpact = "none" | "low" | "medium" | "high";
 
 export type FidelityValidationIssue = {
   code: string;
@@ -26,6 +28,9 @@ export type FidelityValidationIssue = {
   confidence?: number;
   identityImpact?: FidelityIdentityImpact;
   likelyCause?: FidelityLikelyCause;
+  region?: string;
+  repairable?: boolean;
+  commercialImpact?: FidelityCommercialImpact;
   finding: string;
   expected: string;
   sourceAuthoritative: boolean;
@@ -53,6 +58,7 @@ export type FidelityValidationBrief = {
   vertical: SupportedVertical | "product";
   strategy: GenerationStrategy;
   humanRealism?: HumanRealismPolicy;
+  apparelFit?: { active: boolean; profile: ApparelFitProfile | null };
   footwearAnatomyRequired?: boolean;
   sourceAuthority: string;
   productImageCount?: number;
@@ -91,6 +97,7 @@ export type FidelityValidationInput = {
   vertical: SupportedVertical | "product";
   strategy: GenerationStrategy;
   humanRealism?: HumanRealismPolicy;
+  apparelFit?: { active: boolean; profile: ApparelFitProfile | null };
   sceneSuitability: SceneSuitabilityResolution | null;
   composition: CompositionProfile | null;
   creativeCompliance: CreativeComplianceResolution | null;

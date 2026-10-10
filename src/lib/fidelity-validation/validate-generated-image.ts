@@ -19,7 +19,7 @@ const validationSchema = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["code", "category", "severity", "confidence", "identityImpact", "likelyCause", "finding", "expected"],
+        required: ["code", "category", "severity", "confidence", "identityImpact", "likelyCause", "region", "repairable", "commercialImpact", "finding", "expected"],
         properties: {
           code: { type: "string" },
           category: { type: "string", enum: fidelityValidationCategories },
@@ -27,6 +27,9 @@ const validationSchema = {
           confidence: { type: "number", minimum: 0, maximum: 1 },
           identityImpact: { type: "string", enum: ["none", "minor", "major", "critical"] },
           likelyCause: { type: "string", enum: ["source_identity_drift", "perspective", "fabric_deformation", "lighting", "body_interaction", "typography_change", "geometry_change", "unknown"] },
+          region: { type: "string" },
+          repairable: { type: "boolean" },
+          commercialImpact: { type: "string", enum: ["none", "low", "medium", "high"] },
           finding: { type: "string" },
           expected: { type: "string" },
         },
@@ -79,6 +82,7 @@ export async function validateGeneratedImage(input: FidelityValidationInput, cli
   const brief = buildValidationBrief({ ...input, productImageCount: 1 + (input.supportingProducts?.length ?? 0), referencePreservation: input.referenceAuthority === true || Boolean(input.referenceBaseScene || input.referenceMatch), apparelArtworkIdentity: input.apparelArtworkIdentity ? { available: true, containsText: input.apparelArtworkIdentity.containsText, side: input.apparelArtworkIdentity.side, confidence: input.apparelArtworkIdentity.confidence } : null });
   const normalize = (value: unknown) => suppressReferenceAuthorityPresetIssues(mapStructuredValidationOutput(value).filter((issue) => {
     if (!brief.humanRealism?.applied && issue.category === "human_realism") return false;
+    if (!brief.apparelFit?.active && issue.category === "apparel_fit") return false;
     return true;
   }), brief.presetOverrideReason === "reference_authority" && !brief.preset?.strictProductOnlyStudio);
   if (input.exactProductApparel && input.apparelArtworkIdentity) {

@@ -32,6 +32,9 @@ import { compileHumanRealismPrompt } from "@/lib/human-realism/compile-human-rea
 import type { HumanFocusArea } from "@/lib/human-realism/types";
 import { compileApparelArtworkLock } from "@/lib/product-identity/apparel-identity-manifest";
 import { footwearAnatomyPrompt, resolveFootwearAnatomyPolicy } from "@/lib/footwear/footwear-anatomy-policy";
+import { resolveApparelFitPreservation } from "@/lib/apparel-fit-preservation/resolve-apparel-fit-profile";
+import { compileApparelFitPreservationPrompt } from "@/lib/apparel-fit-preservation/compile-apparel-fit-prompt";
+import type { ApparelFitProfile } from "@/lib/apparel-fit-preservation/types";
 
 const productPreservationInstructions = [
   "The supplied product is the exact commercial product being advertised.",
@@ -83,6 +86,8 @@ const footwearOnModelInstructions = [
 ].join("\n");
 
 export type FinalPromptLayers = {
+  apparelFitPreservationActive: boolean;
+  apparelFitProfile: ApparelFitProfile | null;
   humanRealismApplied: boolean;
   humanRealismFocusAreas: HumanFocusArea[];
   category: GenerationVisualCategory;
@@ -110,6 +115,7 @@ export type ImageGenerationPromptOptions = {
   visibleHuman?: boolean;
   faceVisible?: boolean;
   handsVisible?: boolean;
+  feetVisible?: boolean;
   fashionOnModel?: boolean;
   strategy?: GenerationStrategy;
   useCase?: string | null;
@@ -162,8 +168,23 @@ export function buildImageGenerationPromptWithPolicy(
     productProfile: isProductProfile(options.productProfile) ? options.productProfile : null,
     creativeDirection,
   });
-  const humanRealism = resolveHumanRealismPolicy({ strategy, vertical, visibleHuman: options.visibleHuman, faceVisible: options.faceVisible, handsVisible: options.handsVisible });
+  const humanRealism = resolveHumanRealismPolicy({
+    strategy, vertical, visibleHuman: options.visibleHuman, faceVisible: options.faceVisible,
+    handsVisible: options.handsVisible, feetVisible: options.feetVisible,
+    presentationMode: options.presetRules?.presentationMode,
+    presetHumanPresence: options.presetRules?.humanPresence,
+    referenceHumanPresent: options.referenceAuthority && options.visibleHuman,
+  });
   const humanRealismDirection = compileHumanRealismPrompt(humanRealism, vertical);
+  const productSourceCount = options.generationImages?.filter(({ role }) => role === "product_identity_source" || role === "product_identity_supporting").length ?? 1;
+  const apparelFit = resolveApparelFitPreservation({
+    profile: options.productProfile,
+    strategy,
+    humanExpected: humanRealism.expected,
+    productOnly: options.strictProductOnlyStudio === true || options.presetRules?.humanPresence === "none",
+    sourceViewCount: productSourceCount,
+  });
+  const apparelFitDirection = compileApparelFitPreservationPrompt(apparelFit, options.referenceAuthority === true);
   const verticalQuality = vertical ? getVerticalQualityProfile(vertical) : null;
   const globalRealismPolicy = context.visualIntent === "photographic"
     ? globalPhotorealismPolicy
@@ -266,6 +287,7 @@ export function buildImageGenerationPromptWithPolicy(
     footwearAnatomy.applies ? footwearAnatomyPrompt : "",
     bagFamilyCompliance,
     presetFamilyDirection,
+    apparelFitDirection,
     humanRealismDirection,
     sceneDirection ? `Scene suitability (product-compatible scene structure; product identity remains higher priority):\n${sceneDirection}` : "",
     strictProductOnlyStudioDirection,
@@ -287,6 +309,8 @@ export function buildImageGenerationPromptWithPolicy(
   return {
     prompt,
     layers: {
+      apparelFitPreservationActive: apparelFit.active,
+      apparelFitProfile: apparelFit.profile,
       humanRealismApplied: humanRealism.applied,
       humanRealismFocusAreas: humanRealism.focusAreas,
       category,

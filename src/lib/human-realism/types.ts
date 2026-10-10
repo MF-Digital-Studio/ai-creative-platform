@@ -9,5 +9,9 @@ export type HumanRealismContext = {
   faceVisible?: boolean;
   handsVisible?: boolean;
   feetVisible?: boolean;
+  presentationMode?: string | null;
+  presetHumanPresence?: "none" | "partial" | "full" | null;
+  referenceHumanPresent?: boolean;
+  interactionMode?: string | null;
 };
-export type HumanRealismPolicy = { applied: boolean; focusAreas: HumanFocusArea[] };
+export type HumanRealismPolicy = { version: "human-realism-v2"; expected: boolean; applied: boolean; focusAreas: HumanFocusArea[] };
