@@ -2,6 +2,13 @@ import type { CreativeBrief } from "@/lib/generation/prompts/creative-brief";
 import { getFashionCaptureProfile, type FashionCaptureProfileId } from "@/lib/generation/prompts/fashion-capture-profiles";
 import type { GenerationStrategy } from "@/lib/generation/strategy/generation-strategy";
 import { supportedVerticals, type SupportedVertical } from "@/lib/verticals/supported-verticals";
+import {
+  describePresentationModeContract,
+  getPresentationModeContract,
+  getPresentationModeContractForVariant,
+  getPresentationModeContracts,
+  type PresentationModeContract,
+} from "./presentation-mode-contracts";
 
 export const creativePresetCategories = supportedVerticals;
 export type CreativePresetCategory = SupportedVertical;
@@ -37,6 +44,7 @@ export type PresetHumanPresence = "none" | "partial" | "full";
 export type PresetPresentationMode = {
   id: string;
   variantPresentationModes: readonly string[];
+  contract: PresentationModeContract;
 };
 export type PresetVariant = {
   id: string;
@@ -518,84 +526,21 @@ const familyVariantSupplements: Partial<Record<string, readonly PresetVariant[]>
   "jewelry-lifestyle": variants("jewelry-lifestyle", [["mirror-plane", "Human-free editorial environment with one clean mirror plane.", "Low sculptural macro angle with a single controlled reflection.", "Narrow directional highlight."], ["plaster-gallery", "Human-free plaster gallery ledge with subtle texture.", "Off-center jewelry hero with architectural negative space.", "Diffuse skylight."]]),
   "footwear-street": variants("footwear-street", [["metro-platform", "Urban metro platform with recognizable transit geometry.", "Low moving frame with credible planted foot and sharp footwear.", "Mixed practical transit light."], ["storefront-night", "Dry night storefront street with restrained practical light.", "Ground-level paused stride with both shoes readable.", "Compact direct flash balanced with storefront ambience."]]),
   "footwear-scenic": variants("footwear-scenic", [["gallery-courtyard", "Human-free contemporary gallery courtyard.", "Sculptural product placement against clean architectural depth.", "Open-shade daylight."], ["hotel-interior", "Human-free premium hotel interior with stone and wood restraint.", "Close three-quarter footwear hero on a stable architectural surface.", "Warm window and practical light mix."]]),
+  "footwear-studio": variants("footwear-studio", [["macro-detail", "Controlled footwear studio with no environmental context.", "Tight macro frame on source material, sole, stitching, or panel construction.", "Raking detail-preserving studio light."]]),
+  "cosmetics-studio": variants("cosmetics-studio", [["shadow-play", "Controlled beauty studio with a clean neutral backdrop.", "Package-forward composition shaped by deliberate graphic shadows.", "Directional studio light producing crisp designed shadow geometry."]]),
   "cosmetics-scenic": variants("cosmetics-scenic", [["glasshouse", "Human-free glasshouse ledge with soft condensation beyond the product.", "Package-forward frame with clear label and layered natural depth.", "Diffused humid daylight."], ["mineral-shelf", "Human-free mineral plaster shelf with one tonal material accent.", "Asymmetric close hero with ample label clearance.", "Raking afternoon light."]]),
   "bags-on-model": variants("bags-on-model", [["hotel-arrival", "Adult model arriving through a refined hotel entrance with source-compatible carry.", "Candid three-quarter movement with the complete bag clear of the body.", "Soft entrance daylight."], ["gallery-walk", "Adult model walking through minimal gallery architecture with natural bag interaction.", "Wide architectural fashion frame while the bag remains sharp and dominant.", "Diffuse skylight."]]),
   "bags-lifestyle": variants("bags-lifestyle", [["gallery-plinth", "Product-only gallery plinth setting with no people or hands.", "Sculptural three-quarter bag view with complete handles and base visible.", "Directional gallery light."], ["hotel-console", "Product-only premium hotel console setting without people or branded props.", "Natural supported placement with restrained interior depth.", "Warm practical and window-light balance."]]),
 };
 
-const structuredDimensionCycles = {
-  cameraDistance: ["macro", "close", "medium", "wide", "telephoto", "close", "medium", "wide"],
-  cameraAngle: ["eye-level", "low angle", "three-quarter", "overhead", "side angle", "high angle", "front-on", "ground-level"],
-  framing: ["tight detail", "close hero", "three-quarter", "environmental wide", "off-center negative space", "centered symmetry", "diagonal composition", "full silhouette"],
-  subjectPlacement: ["centered", "lower third", "left third", "right third", "foreground anchored", "asymmetric center", "diagonal anchor", "center with negative space"],
-  timeOfDay: ["day", "morning", "afternoon", "golden hour", "evening", "day", "blue hour", "midday"],
-  weather: ["controlled", "clear", "overcast", "dry", "controlled", "clear", "dry", "controlled"],
-} as const;
-
-const humanPresentations = [
-  "adult woman with short natural curls and understated styling", "adult man with close-cropped hair and relaxed styling", "adult androgynous model with shoulder-length dark hair", "mature adult woman with a natural updo and refined styling", "adult man with wavy medium-length hair and minimal styling", "adult woman with a short graphic haircut and confident posture", "mature adult man with natural gray hair and quiet styling", "adult androgynous model with tied-back textured hair",
-] as const;
-
-const captureProfilesByVertical: Record<SupportedVertical, readonly CreativeCaptureProfileId[]> = {
-  apparel: ["natural_editorial_daylight", "soft_studio_fashion", "editorial_flash", "urban_night_flash"], jewelry: ["macro_luxury", "sculptural_editorial", "clean_commercial", "natural_lifestyle"], watches: ["clean_commercial", "architectural_campaign", "macro_luxury", "natural_lifestyle"], cosmetics: ["clinical_beauty", "glossy_beauty", "clean_commercial", "sculptural_editorial"], footwear: ["architectural_campaign", "documentary_motion", "clean_commercial", "natural_lifestyle"], bags: ["natural_lifestyle", "architectural_campaign", "clean_commercial", "sculptural_editorial"],
-};
-
-const presentationModesByFamily: Record<string, readonly string[]> = {
-  "apparel-studio": ["model_studio", "ghost_mannequin", "floating_front", "floating_three_quarter", "suspended_garment", "hanger_editorial", "flat_lay", "sculptural_product_stage", "macro_detail", "catalogue_product_only", "folded_composition", "fabric_motion"],
-  "apparel-street": ["walking", "curb", "crosswalk", "metro_stairs", "storefront", "concrete_district", "low_angle_street", "movement_detail", "seated_urban_moment", "night_editorial"],
-  "apparel-scenic": ["model_landscape", "architectural_model", "walking_location", "seated_location", "environmental_portrait"],
-  "footwear-studio": ["isolated_hero", "floating_product", "pedestal", "reflective_floor", "sculptural_blocks", "pair_composition", "single_shoe_three_quarter", "top_down", "side_profile_campaign", "macro_material_detail"],
-  "footwear-scenic": ["architectural_stone", "gallery", "terrace", "courtyard", "luxury_interior", "coast", "modern_exterior", "stairs", "hotel_setting", "minimal_landscape"],
-  "footwear-street": ["walking", "curb", "crosswalk", "metro_stairs", "storefront", "concrete_district", "low_angle_street", "movement_detail", "seated_urban_moment", "night_editorial"],
-  "bags-studio": ["front_hero", "three_quarter_hero", "suspended_bag", "pedestal", "stacked_blocks", "reflective_floor", "top_down", "hardware_macro"],
-  "bags-lifestyle": ["cafe", "terrace", "gallery", "hotel", "architecture", "window_light", "travel_setting", "shelf_styling", "stone_surface", "editorial_still_life"],
-  "bags-on-model": ["shoulder_carry", "hand_carry", "crossbody", "seated", "walking", "full_body", "waist_crop", "side_angle", "movement", "urban_editorial"],
-  "jewelry-studio": ["macro", "suspended", "pedestal", "reflection", "textile", "stone", "shadow", "clean_packshot"],
-  "jewelry-lifestyle": ["stone", "textile", "reflection", "vanity", "architecture", "shadow", "editorial_still_life", "botanical"],
-  "jewelry-on-model": ["on_hand", "on_neck", "on_ear", "on_wrist", "beauty_macro", "profile", "movement", "editorial_closeup"],
-  "watches-on-wrist": ["wrist", "cuff", "desk_interaction", "travel", "architectural", "outdoor", "evening", "editorial_closeup"],
-  "watches-product-composition": ["product_hero", "side_profile", "crown_macro", "desk", "travel", "architectural", "reflection", "soft_support"],
-  "watches-editorial-studio": ["product_hero", "side_profile", "crown_macro", "pedestal", "reflection", "architectural", "shadow", "editorial_studio"],
-  "cosmetics-studio": ["packshot", "floating", "liquid_interaction", "acrylic", "reflection", "monochrome", "clinical", "glossy_editorial"],
-  "cosmetics-scenic": ["botanical", "stone", "water_interaction", "window_light", "shelf_styling", "travel_setting", "clinical_lifestyle", "glossy_editorial"],
-};
-
-const productOnlyApparelModes = new Set(["ghost_mannequin", "floating_front", "floating_three_quarter", "suspended_garment", "hanger_editorial", "flat_lay", "folded_composition", "sculptural_product_stage", "fabric_motion", "macro_detail", "catalogue_product_only"]);
+const productOnlyApparelModes = new Set(["ghost_mannequin", "floating", "hanger", "flat_lay", "folded", "sculptural_stage", "fabric_motion", "detail", "catalogue_product"]);
 
 export function isProductOnlyPresentationMode(mode: string | null | undefined): boolean {
   return Boolean(mode && productOnlyApparelModes.has(mode));
 }
 
-const presentationModeGroups: Partial<Record<string, readonly PresetPresentationMode[]>> = {
-  "apparel-studio": [
-    { id: "model_studio", variantPresentationModes: ["model_studio"] }, { id: "ghost_mannequin", variantPresentationModes: ["ghost_mannequin"] },
-    { id: "floating", variantPresentationModes: ["floating_front", "floating_three_quarter"] }, { id: "hanger", variantPresentationModes: ["hanger_editorial"] },
-    { id: "flat_lay", variantPresentationModes: ["flat_lay"] }, { id: "folded", variantPresentationModes: ["folded_composition"] },
-    { id: "sculptural_stage", variantPresentationModes: ["sculptural_product_stage"] }, { id: "fabric_motion", variantPresentationModes: ["fabric_motion"] },
-    { id: "detail", variantPresentationModes: ["macro_detail"] }, { id: "catalogue_product", variantPresentationModes: ["catalogue_product_only"] },
-  ],
-  "footwear-studio": ["isolated_hero", "floating_product", "pedestal", "reflective_floor", "sculptural_blocks", "pair_composition", "top_down", "side_profile_campaign", "macro_material_detail"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "footwear-street": ["walking", "crosswalk", "concrete_district", "metro_stairs", "seated_urban_moment", "movement_detail", "low_angle_street"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "footwear-scenic": ["architectural_stone", "terrace", "gallery", "courtyard", "hotel_setting", "minimal_landscape"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "bags-studio": ["front_hero", "three_quarter_hero", "suspended_bag", "pedestal", "top_down", "reflective_floor", "hardware_macro"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "bags-on-model": ["shoulder_carry", "hand_carry", "crossbody", "walking", "seated", "full_body", "waist_crop", "urban_editorial"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "bags-lifestyle": ["cafe", "terrace", "gallery", "hotel", "architecture", "window_light", "travel_setting", "editorial_still_life"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "jewelry-studio": ["macro", "pedestal", "reflection", "stone", "textile", "shadow", "clean_packshot"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "jewelry-on-model": ["on_neck", "on_ear", "on_hand", "on_wrist", "beauty_macro", "editorial_closeup"].map((id) => ({ id, variantPresentationModes: [id] })),
-  "jewelry-lifestyle": [{ id: "stone", variantPresentationModes: ["stone"] }, { id: "textile", variantPresentationModes: ["textile"] }, { id: "mirror", variantPresentationModes: ["reflection"] }, { id: "gallery", variantPresentationModes: ["architecture"] }, { id: "reflective_surface", variantPresentationModes: ["reflection"] }, { id: "editorial_still_life", variantPresentationModes: ["editorial_still_life"] }],
-  "watches-on-wrist": [{ id: "wrist_hero", variantPresentationModes: ["wrist"] }, { id: "executive", variantPresentationModes: ["cuff"] }, { id: "travel", variantPresentationModes: ["travel"] }, { id: "outdoor", variantPresentationModes: ["outdoor"] }, { id: "architecture", variantPresentationModes: ["architectural"] }, { id: "lifestyle_closeup", variantPresentationModes: ["editorial_closeup"] }],
-  "watches-product-composition": [{ id: "desk", variantPresentationModes: ["desk"] }, { id: "stone", variantPresentationModes: ["side_profile"] }, { id: "leather", variantPresentationModes: ["crown_macro"] }, { id: "metal", variantPresentationModes: ["travel"] }, { id: "fabric", variantPresentationModes: ["soft_support"] }, { id: "box_composition", variantPresentationModes: ["product_hero"] }, { id: "macro_detail", variantPresentationModes: ["crown_macro"] }],
-  "watches-editorial-studio": [{ id: "dark_studio", variantPresentationModes: ["product_hero"] }, { id: "gradient", variantPresentationModes: ["reflection"] }, { id: "metallic", variantPresentationModes: ["architectural"] }, { id: "spotlight", variantPresentationModes: ["crown_macro"] }, { id: "reflection", variantPresentationModes: ["reflection"] }, { id: "catalogue", variantPresentationModes: ["editorial_studio"] }],
-  "cosmetics-studio": [{ id: "packshot", variantPresentationModes: ["packshot"] }, { id: "floating", variantPresentationModes: ["floating"] }, { id: "acrylic", variantPresentationModes: ["acrylic"] }, { id: "reflection", variantPresentationModes: ["reflection"] }, { id: "monochrome", variantPresentationModes: ["monochrome"] }, { id: "clinical", variantPresentationModes: ["clinical"] }, { id: "glossy", variantPresentationModes: ["glossy_editorial"] }, { id: "shadow_play", variantPresentationModes: ["glossy_editorial"] }],
-  "cosmetics-scenic": [{ id: "water", variantPresentationModes: ["water_interaction"] }, { id: "stone", variantPresentationModes: ["stone"] }, { id: "botanical", variantPresentationModes: ["botanical"] }, { id: "glasshouse", variantPresentationModes: ["glasshouse"] }, { id: "architecture", variantPresentationModes: ["shelf_styling"] }, { id: "material_study", variantPresentationModes: ["clinical_lifestyle"] }, { id: "natural_light", variantPresentationModes: ["window_light"] }],
-};
-
 export function getPresetPresentationModes(familyId: unknown): readonly PresetPresentationMode[] {
-  const family = getPresetFamily(familyId);
-  if (!family) return [];
-  const configured = presentationModeGroups[family.id] ?? [];
-  const valid = configured.filter(({ variantPresentationModes }) => family.variants.some((variant) => variant.presentationMode && variantPresentationModes.includes(variant.presentationMode)));
-  return valid.length ? valid : [...new Set(family.variants.map(({ presentationMode }) => presentationMode).filter((mode): mode is string => Boolean(mode)))].map((id) => ({ id, variantPresentationModes: [id] }));
+  return getPresentationModeContracts(familyId).map((contract) => ({ id: contract.id, variantPresentationModes: [contract.id], contract }));
 }
 
 export function getPresetPresentationMode(familyId: unknown, modeId: unknown): PresetPresentationMode | null {
@@ -603,8 +548,8 @@ export function getPresetPresentationMode(familyId: unknown, modeId: unknown): P
 }
 
 export function getPresetVariantsForPresentationMode(family: PresetFamily, modeId: string | null | undefined): readonly PresetVariant[] {
-  const mode = getPresetPresentationMode(family.id, modeId);
-  return mode ? family.variants.filter((variant) => variant.presentationMode && mode.variantPresentationModes.includes(variant.presentationMode)) : family.variants;
+  const contract = getPresentationModeContract(family.id, modeId);
+  return contract ? family.variants.filter((variant) => contract.variantIds.includes(variant.id)) : family.variants;
 }
 
 function isHumanFamily(family: Pick<FamilySeed, "generationStrategyHint">): boolean {
@@ -612,38 +557,25 @@ function isHumanFamily(family: Pick<FamilySeed, "generationStrategyHint">): bool
 }
 
 function structureVariant(family: FamilySeed, variant: PresetVariant, index: number): PresetVariant {
-  const cycle = <T,>(values: readonly T[], offset = 0) => values[(index + offset) % values.length]!;
-  const studio = /studio/.test(family.id);
-  const human = isHumanFamily(family);
-  const environment = variant.environment ?? variant.environmentDirection.replace(/[.;]$/g, "");
-  const presentationModes = presentationModesByFamily[family.id] ?? [human ? "on_model" : "product_hero"];
-  const presentationMode = variant.presentationMode ?? cycle(presentationModes);
-  const humanPresence: PresetHumanPresence = variant.humanPresence ?? (isProductOnlyPresentationMode(presentationMode) ? "none" : human ? presentationMode.includes("macro") || presentationMode.includes("wrist") || presentationMode.includes("hand") ? "partial" : "full" : "none");
-  const floating = /floating|suspended|fabric_motion/.test(presentationMode);
-  const flat = /flat_lay|top_down|folded/.test(presentationMode);
+  void index;
+  const contract = getPresentationModeContractForVariant(family.id, variant.id);
+  if (!contract) throw new Error(`Preset variant ${variant.id} has no explicit presentation mode contract.`);
   return {
     ...variant,
-    environment,
+    environment: variant.environment ?? variant.environmentDirection.replace(/[.;]$/g, ""),
     environmentSubtype: variant.environmentSubtype ?? variant.id.slice(`${family.id}-`.length),
-    timeOfDay: variant.timeOfDay ?? (studio ? "controlled" : cycle(structuredDimensionCycles.timeOfDay)),
-    weather: variant.weather ?? (studio ? "controlled" : cycle(structuredDimensionCycles.weather, 2)),
-    lighting: variant.lighting ?? variant.lightingDirection.replace(/[.;]$/g, ""),
-    cameraDistance: variant.cameraDistance ?? cycle(structuredDimensionCycles.cameraDistance), cameraAngle: variant.cameraAngle ?? cycle(structuredDimensionCycles.cameraAngle, 1), framing: variant.framing ?? cycle(structuredDimensionCycles.framing, 2), composition: variant.composition ?? variant.compositionDirection, subjectPlacement: variant.subjectPlacement ?? cycle(structuredDimensionCycles.subjectPlacement, 3),
-    pose: variant.pose ?? variant.poseDirection ?? (human ? cycle(["relaxed stance", "natural stride", "seated interaction", "editorial stillness", "candid turn", "grounded step", "profile stance", "subtle lean"]) : "stable product placement"),
-    movement: variant.movement ?? (human ? cycle(["still moment", "walking", "subtle turn", "seated pause", "reaching naturally", "mid-step", "weight shift", "candid movement"]) : "still life"),
-    interaction: variant.interaction ?? (human ? family.vertical === "watches" ? "natural wrist fit" : family.vertical === "jewelry" ? "subtype-appropriate body contact" : family.vertical === "bags" ? "source-compatible natural carry" : family.vertical === "footwear" ? "credible foot contact and weight" : "garment worn naturally" : "product-only supported placement"),
-    surface: variant.surface ?? (studio ? cycle(["seamless sweep", "matte tabletop", "tonal pedestal", "reflective acrylic", "textured paper", "stone plinth", "gloss floor", "fabric support"]) : cycle(["stone", "concrete", "wood", "glass", "textile", "pavement", "metal", "natural ground"])),
-    architecture: variant.architecture ?? variant.urbanArchitecture ?? (studio ? "controlled studio set" : environment),
-    propLanguage: variant.propLanguage ?? (studio ? cycle(["none", "single pedestal", "geometric block", "mirror plane", "single translucent panel", "shadow-only", "tonal support", "one material sample"]) : cycle(["none", "restrained functional objects", "one contextual object", "architectural elements only", "natural material accents", "no decorative clutter", "single tactile accent", "environmental details only"])),
-    mood: variant.mood ?? cycle(["quiet luxury", "graphic precision", "tactile warmth", "confident editorial", "clean modernity", "intimate refinement", "architectural calm", "raw premium realism"]),
-    stylingNotes: variant.stylingNotes ?? (human ? "Vary age presentation, hair, wardrobe styling, posture, and camera relationship; do not preserve a face unless continuity is explicit." : "Keep styling product-led and props subordinate to identity-critical details."),
-    modelPresentation: variant.modelPresentation ?? (human ? cycle(humanPresentations) : undefined), captureProfile: variant.captureProfile ?? cycle(captureProfilesByVertical[family.vertical]),
-    presentationMode,
-    productOrientation: variant.productOrientation ?? (flat ? "top_down" : /side_profile|profile/.test(presentationMode) ? "side_profile" : /front|packshot|catalogue/.test(presentationMode) ? "front" : "three_quarter"),
-    physicalSupport: variant.physicalSupport ?? (floating ? "suspended_without_visible_body" : flat ? "studio_surface" : humanPresence === "none" ? cycle(["surface", "pedestal", "sculptural_block", "reflective_floor"]) : "anatomically_plausible_body_contact"),
-    gravityBehavior: variant.gravityBehavior ?? (floating ? "natural_suspension_and_fabric_weight" : humanPresence === "none" ? "grounded_with_realistic_weight" : "natural_body_load_and_contact"),
-    humanPresence,
-    interactionMode: variant.interactionMode ?? (humanPresence === "none" ? "product_only" : variant.interaction ?? "natural_product_body_interaction"),
+    timeOfDay: variant.timeOfDay ?? (/studio/.test(family.id) ? "controlled" : "day"), weather: variant.weather ?? (/studio/.test(family.id) ? "controlled" : "dry"),
+    lighting: variant.lighting ?? contract.lighting, cameraDistance: contract.cameraDistance, cameraAngle: contract.cameraAngle, framing: contract.framing,
+    composition: variant.composition ?? variant.compositionDirection, subjectPlacement: contract.subjectPlacement,
+    pose: variant.pose ?? variant.poseDirection ?? contract.interactionMode, movement: variant.movement ?? (contract.humanPresence === "none" ? "still_life" : "natural_editorial_movement"),
+    interaction: contract.interactionMode, surface: contract.surface,
+    architecture: variant.architecture ?? variant.urbanArchitecture ?? contract.environmentGrammar,
+    propLanguage: contract.propLanguage, mood: variant.mood ?? "product_led_editorial",
+    stylingNotes: variant.stylingNotes ?? (contract.humanPresence === "none" ? "Keep styling product-led and props subordinate." : "Keep the product/body interaction anatomically plausible."),
+    modelPresentation: variant.modelPresentation, captureProfile: variant.captureProfile ?? contract.captureProfile as CreativeCaptureProfileId,
+    presentationMode: contract.id, productOrientation: contract.productOrientation, physicalSupport: contract.physicalSupport,
+    gravityBehavior: contract.gravityBehavior, humanPresence: contract.humanPresence, interactionMode: contract.interactionMode,
+    styleDirection: `${variant.styleDirection ?? ""} ${describePresentationModeContract(contract)}`.trim(),
   };
 }
 

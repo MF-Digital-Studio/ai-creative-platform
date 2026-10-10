@@ -27,6 +27,7 @@ import { compileProductIdentityLock } from "@/lib/product-identity/compile-produ
 import { buildProductIdentityManifest } from "@/lib/product-identity/build-product-identity-manifest";
 import type { ProductIdentityManifest } from "@/lib/product-identity/types";
 import type { ApparelIdentityManifest } from "@/lib/product-identity/apparel-identity-manifest";
+import type { PresentationContractField, PresentationModeContract } from "@/lib/creative-presets/presentation-mode-contracts";
 import { resolveHumanRealismPolicy } from "@/lib/human-realism/human-realism-policy";
 import { compileHumanRealismPrompt } from "@/lib/human-realism/compile-human-realism-prompt";
 import type { HumanFocusArea } from "@/lib/human-realism/types";
@@ -130,7 +131,7 @@ export type ImageGenerationPromptOptions = {
   generationImages?: readonly GenerationImageInput[];
   aspectRatio?: GenerationAspectRatio;
   presetFamilyId?: string | null;
-  presetRules?: { allowedSceneTypes: readonly string[]; disallowedSceneTypes: readonly string[]; hardRules: readonly string[]; softRules: readonly string[]; variantId: string | null; presentationMode?: string | null; humanPresence?: "none" | "partial" | "full" | null } | null;
+  presetRules?: { allowedSceneTypes: readonly string[]; disallowedSceneTypes: readonly string[]; hardRules: readonly string[]; softRules: readonly string[]; variantId: string | null; presentationMode?: string | null; humanPresence?: "none" | "partial" | "full" | null; modeContract?: PresentationModeContract | null; referenceOverriddenFields?: readonly PresentationContractField[]; presetPreservedFields?: readonly PresentationContractField[] } | null;
   referenceAuthority?: boolean;
   strictProductOnlyStudio?: boolean;
 };
@@ -208,9 +209,10 @@ export function buildImageGenerationPromptWithPolicy(
     ? "BINDING PRODUCT-ONLY STUDIO PRESENTATION: Render only a human-free, controlled Apparel Studio product scene. The garment is the sole subject: no model, person, skin, hands, feet, face, body part, mannequin hardware, or phantom limb. Use only a seamless or deliberately controlled neutral studio backdrop and studio lighting. Never show a street, sidewalk, city, outdoor setting, cafe, terrace, exterior, architecture, lifestyle interior, or on-model interaction. References may inform material, lighting, or styling only; they cannot replace this studio/product-only scene. For Fabric Motion, allow only subtle suspended or wind-shaped fabric movement inside this controlled studio setup."
     : "";
   const presetFamilyDirection = options.presetRules && options.referenceAuthority && !options.strictProductOnlyStudio ? [
-    `PRESET SUPPORTING DIRECTION (${options.presetFamilyId ?? "selected"}): Reference 1 has higher authority for scene, environment, composition, pose, camera, framing, crop, interaction, and subject placement. Do not use preset allow/disallow rules or composition variants to replace those reference dimensions.`,
-    `Use the preset only for category-appropriate rendering, commercial polish, vertical presentation conventions, subtle lighting treatment, and fields that Reference 1 does not specify. Soft guidance: ${options.presetRules.softRules.join(" ")}`,
-    `Selected variant ${options.presetRules.variantId ?? "unspecified"} is supporting aesthetic context only. Source product identity remains above both reference and preset.`,
+    `FIELD-LEVEL REFERENCE MERGE (${options.presetFamilyId ?? "selected"}): Reference 1 overrides only these visibly specified compatible fields: ${(options.presetRules.referenceOverriddenFields ?? []).join(", ") || "none"}.`,
+    `The selected presentation mode remains authoritative for: ${(options.presetRules.presetPreservedFields ?? []).join(", ") || "all unspecified fields"}. Never let a reference violate required support, gravity, human presence, interaction, product count, target detail, or forbidden behavior.`,
+    options.presetRules.modeContract ? `BINDING MODE CONTRACT: ${JSON.stringify(options.presetRules.modeContract)}` : "",
+    `Selected variant ${options.presetRules.variantId ?? "unspecified"}. Source product identity remains above both reference and preset.`,
   ].join("\n") : options.presetRules ? [
     `PRESET FAMILY INTENT (${options.presetFamilyId ?? "selected"}): keep this family as the dominant scene identity even when references are supplied.`,
     `Allowed scene grammar: ${options.presetRules.allowedSceneTypes.join(", ")}.`,
@@ -221,6 +223,7 @@ export function buildImageGenerationPromptWithPolicy(
     options.presetRules.humanPresence === "none" ? "PRODUCT-ONLY PRESENTATION: no person, skin, hands, feet, phantom body parts, or visible mannequin hardware. Shape and support the product with physically believable gravity." : "",
     options.presetRules.disallowedSceneTypes.includes("people") ? "Negative instructions: no people, no models, no hands, no body contact, no wearing or carrying." : "",
     options.presetRules.allowedSceneTypes.includes("urban_street") ? "Street requirement: show recognizable urban street environment details such as sidewalk, facade, storefront, crosswalk, alley, or urban architecture." : "",
+    options.presetRules.modeContract ? `BINDING MODE CONTRACT: ${JSON.stringify(options.presetRules.modeContract)}` : "",
   ].filter(Boolean).join("\n") : "";
   const compositionDirection = compileCompositionDirection(options.composition ?? null);
   const complianceDirection = compileCreativeComplianceDirection(options.creativeCompliance ?? null);

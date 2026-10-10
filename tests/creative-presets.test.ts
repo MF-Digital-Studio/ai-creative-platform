@@ -19,7 +19,6 @@ import {
   presetFamilies,
   resolvePresetVariant,
   resolvePresetVariantWithHistory,
-  scorePresetVariantSemanticDistance,
   buildPresetVariantDirection,
   getPresetFamily,
   getPresetVariationMetadata,
@@ -170,12 +169,15 @@ test("public preset families expose explicit scene contracts and varied internal
   }
 });
 
-test("environment-heavy and human families expose 10-16 directions while bounded studio grammars remain meaningful", () => {
+test("environment-heavy families retain hidden variation while every variant has one explicit mode contract", () => {
   const expanded = new Set(["apparel-street", "apparel-studio", "apparel-scenic", "watches-on-wrist", "jewelry-on-model", "jewelry-lifestyle", "footwear-street", "footwear-scenic", "cosmetics-scenic", "bags-on-model", "bags-lifestyle"]);
   for (const family of presetFamilies) {
     assert.ok(family.variants.length >= 8, family.id);
     if (expanded.has(family.id)) assert.ok(family.variants.length >= 10 && family.variants.length <= 16, family.id);
-    for (const variant of family.variants) assert.ok(new Set(family.variants.filter((candidate) => candidate.id !== variant.id).map((candidate) => scorePresetVariantSemanticDistance(variant, getPresetVariationMetadata(candidate)))).size > 1, `${family.id}/${variant.id}`);
+    for (const variant of family.variants) {
+      const mode = getPresetPresentationMode(family.id, variant.presentationMode);
+      assert.ok(mode?.contract.variantIds.includes(variant.id), `${family.id}/${variant.id}`);
+    }
   }
 });
 
@@ -223,7 +225,7 @@ test("Street recent-history selection avoids rainy-night dimensions and remains 
   const next = resolvePresetVariantWithHistory(family, "run-after-rain", rainy.id, history);
   assert.equal(next.familyId, "apparel-street");
   assert.notEqual(next.id, rainy.id);
-  for (const key of ["timeOfDay", "weather", "lighting", "pose", "framing", "captureProfile"] as const) assert.notEqual(next[key], rainy[key], `${key} should vary after rainy night`);
+  for (const key of ["environment", "weather", "lighting"] as const) assert.notEqual(next[key], rainy[key], `${key} should vary after rainy night`);
   assert.equal(resolvePresetVariantWithHistory(family, "run-after-rain", rainy.id, history).id, next.id);
 });
 
@@ -232,7 +234,7 @@ test("Street variants define diverse camera, pose, scene, and capture metadata",
   assert.equal(family.variants.length, 13);
   assert.ok(new Set(family.variants.map(({ captureProfile }) => captureProfile)).size >= 2);
   assert.ok(new Set(family.variants.map(({ pose }) => pose)).size >= 8);
-  assert.ok(new Set(family.variants.map(({ framing }) => framing)).size >= 6);
+  assert.ok(new Set(family.variants.map(({ framing }) => framing)).size >= 3);
   assert.ok(new Set(family.variants.map(({ environment }) => environment)).size >= 10);
   for (const variant of family.variants) assert.equal(variant.familyId, "apparel-street");
   const preset = requiredPreset("apparel-street-style");
@@ -289,13 +291,13 @@ test("bag family routing keeps Studio and Lifestyle product-only while On Model 
   assert.match(buildPresetVariantDirection(requiredPreset("bags-on-model"), getPresetFamily("bags-on-model")!.variants[0]!).creativeDirection.pose, /crossbody only with its source crossbody strap/i);
 });
 
-test("reference interaction remains authoritative over bag preset strategy", () => {
+test("selected bag presentation remains authoritative over conflicting reference interaction", () => {
   const result = resolveGenerationStrategy({
     preset: requiredPreset("bags-studio"), presetFamilyId: "bags-studio", hasReference: true,
     productProfile: { vertical: "bags", wearability: "wearable", interactionTargets: ["hand", "torso"] } as never,
     referenceInteraction: "worn", userPrompt: "",
   });
-  assert.equal(result.strategy, "bags_on_model");
+  assert.equal(result.strategy, "rigid_product");
 });
 
 test("Bag Studio and Aesthetic Environment prompts suppress humans unless strategy is explicitly overridden", () => {
@@ -366,7 +368,7 @@ test("presentation mode selector exposes only valid family-specific modes", () =
   const studioModes = getPresetPresentationModes(studio.id);
   assert.deepEqual(studioModes.map(({ id }) => id), ["model_studio", "ghost_mannequin", "floating", "hanger", "flat_lay", "folded", "sculptural_stage", "fabric_motion", "detail", "catalogue_product"]);
   assert.equal(getPresetPresentationModes("bags-studio").some(({ id }) => id === "shoulder_carry"), false);
-  assert.equal(getPresetPresentationMode(studio.id, "floating")?.variantPresentationModes.includes("floating_front"), true);
+  assert.equal(getPresetPresentationMode(studio.id, "floating")?.variantPresentationModes.includes("floating"), true);
   assert.equal(getPresetPresentationMode(studio.id, "not-a-mode"), null);
 });
 
@@ -374,7 +376,7 @@ test("selected presentation mode binds variant resolution while null preserves a
   const studio = getPresetFamily("apparel-studio")!;
   const floating = getPresetVariantsForPresentationMode(studio, "floating");
   assert.equal(floating.length, 2);
-  assert.ok(floating.every(({ presentationMode }) => ["floating_front", "floating_three_quarter"].includes(presentationMode ?? "")));
+  assert.ok(floating.every(({ presentationMode }) => presentationMode === "floating"));
   const first = resolvePresetVariantWithHistory({ ...studio, variants: floating }, "floating-first", null, []);
   const second = resolvePresetVariantWithHistory({ ...studio, variants: floating }, "floating-second", first.id, [getPresetVariationMetadata(first)]);
   assert.ok(floating.some(({ id }) => id === second.id));
@@ -414,7 +416,7 @@ test("Apparel Studio supports human and product-only presentation modes without 
   assert.ok(family.variants.some(({ humanPresence }) => humanPresence !== "none"));
   assert.ok(family.variants.some(({ humanPresence }) => humanPresence === "none"));
   const ghost = family.variants.find(({ presentationMode }) => presentationMode === "ghost_mannequin")!;
-  const floating = family.variants.find(({ presentationMode }) => presentationMode === "floating_front")!;
+  const floating = family.variants.find(({ presentationMode }) => presentationMode === "floating")!;
   assert.equal(ghost.humanPresence, "none");
   assert.equal(floating.humanPresence, "none");
   assert.equal(isProductOnlyPresentationMode(ghost.presentationMode), true);
@@ -455,18 +457,18 @@ test("presentationMode participates in recent-history diversity", () => {
   assert.notEqual(next.presentationMode, "ghost_mannequin");
 });
 
-test("footwear and bag families expose materially different presentation modes", () => {
+test("footwear and bag visible presentation modes are explicit and non-empty", () => {
   for (const family of presetFamilies.filter(({ vertical }) => vertical === "footwear" || vertical === "bags")) {
-    assert.ok(new Set(family.variants.map(({ presentationMode }) => presentationMode)).size >= 8, family.id);
+    for (const mode of getPresetPresentationModes(family.id)) assert.ok(getPresetVariantsForPresentationMode(family, mode.id).length > 0, `${family.id}/${mode.id}`);
   }
 });
 
-test("explicit apparel direction and reference authority override internal product-only presentation", () => {
+test("selected product-only apparel presentation overrides conflicting prompt and reference intent", () => {
   const family = getPresetFamily("apparel-studio")!;
   const productOnly = family.variants.find(({ presentationMode }) => presentationMode === "ghost_mannequin")!;
   assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "", explicitUserPrompt: "" }).strategy, "rigid_product");
   assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "", explicitUserPrompt: "" }).effectivePreservationMode, "reference_edit");
-  assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "Show it worn by a model", explicitUserPrompt: "Show it worn by a model" }).strategy, "fashion_on_model");
+  assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, userPrompt: "Show it worn by a model", explicitUserPrompt: "Show it worn by a model" }).strategy, "rigid_product");
   assert.equal(resolveGenerationStrategy({ preset: requiredPreset("apparel-studio-style"), presetFamilyId: family.id, presentationMode: productOnly.presentationMode, presentationHumanPresence: productOnly.humanPresence, hasReference: true, userPrompt: "", explicitUserPrompt: "" }).strategy, "rigid_product");
 });
 

@@ -181,24 +181,21 @@ export function resolveGenerationStrategy(input: {
     const explicitPrompt = input.explicitUserPrompt ?? input.userPrompt;
     const explicitlyProductOnly = /\b(?:ghost mannequin|mannequin ghost|floating garment|product[- ]only|flat lay|hanger|folded garment|no (?:model|person|human)|without (?:a )?(?:model|person|human))\b/i.test(explicitPrompt);
     const explicitlyOnModel = /\b(?:on model|worn by|wearing|person|woman|man|model)\b/i.test(explicitPrompt);
+    if (input.presentationHumanPresence === "none") return { ...resolution("rigid_product", "preset_strategy_hint", context.visualIntent), effectivePreservationMode: "reference_edit" };
+    if (input.presentationHumanPresence === "full") return resolution("fashion_on_model", "preset_strategy_hint", context.visualIntent);
     if (explicitlyProductOnly) return { ...resolution("rigid_product", "prompt_intent", context.visualIntent), effectivePreservationMode: "reference_edit" };
     if (explicitlyOnModel) return resolution("fashion_on_model", "prompt_intent", context.visualIntent);
-    if (input.presentationHumanPresence === "none") return { ...resolution("rigid_product", "preset_strategy_hint", context.visualIntent), effectivePreservationMode: "reference_edit" };
     return resolution("fashion_on_model", "preset_strategy_hint", context.visualIntent);
   }
 
   if (input.presetFamilyId && !input.presetFamilyId.startsWith("bags-")) return resolution(input.preset?.generationStrategyHint ?? "rigid_product", "preset_strategy_hint", context.visualIntent);
 
-  if (input.presetFamilyId?.startsWith("bags-") && !input.hasReference) {
+  if (input.presetFamilyId?.startsWith("bags-")) {
+    if (input.presentationHumanPresence === "none") return resolution("rigid_product", "preset_strategy_hint", context.visualIntent);
+    if (input.presentationHumanPresence === "full") return resolution("bags_on_model", "preset_strategy_hint", context.visualIntent);
     const explicitBagCarry = /\b(?:handheld|hand held|carry|carrying|shoulder|crossbody|cross-body|under-arm|under arm|on model|worn|wearing|person|woman|man|model)\b/i.test(input.userPrompt);
     if (explicitBagCarry) return resolution("bags_on_model", "prompt_intent", context.visualIntent);
-    if (input.presetFamilyId === "bags-on-model") return resolution("bags_on_model", "preset_strategy_hint", context.visualIntent);
-    return resolution("rigid_product", "preset_strategy_hint", context.visualIntent);
-  }
-
-  if (input.presetFamilyId?.startsWith("bags-") && input.hasReference) {
-    const referenceRequestsCarry = input.referenceInteraction === "held" || input.referenceInteraction === "worn";
-    if (referenceRequestsCarry) return resolution("bags_on_model", "product_profile", context.visualIntent);
+    return resolution(input.preset?.generationStrategyHint ?? "rigid_product", "preset_strategy_hint", context.visualIntent);
   }
 
   if (isProductProfile(input.productProfile)) {

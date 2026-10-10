@@ -8,6 +8,7 @@ import type { ReferenceMatchResolution } from "@/lib/generation/references/resol
 import type { ProductIdentityManifest } from "@/lib/product-identity/types";
 import type { HumanRealismPolicy } from "@/lib/human-realism/types";
 import type { ApparelFitProfile } from "@/lib/apparel-fit-preservation/types";
+import type { PresentationContractField, PresentationModeContract } from "@/lib/creative-presets/presentation-mode-contracts";
 
 export const fidelityValidationCategories = [
   "product_identity", "geometry", "color_material", "branding_text", "body_interaction",
@@ -81,6 +82,9 @@ export type FidelityValidationBrief = {
     humanPresence?: "none" | "partial" | "full" | null;
     interactionMode?: string | null;
     strictProductOnlyStudio?: boolean;
+    modeContract?: PresentationModeContract | null;
+    referenceOverriddenFields?: readonly PresentationContractField[];
+    presetPreservedFields?: readonly PresentationContractField[];
   } | null;
   variationHistory?: { recentVariantIds: readonly string[]; repeatedSceneCount: number } | null;
 };

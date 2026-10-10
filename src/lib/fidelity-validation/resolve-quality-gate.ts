@@ -4,7 +4,12 @@ import { FIDELITY_VALIDATION_VERSION } from "./validation-version";
 const validCategories = new Set<string>(fidelityValidationCategories);
 const footwearAnatomyCodes = new Set(["foot_anatomy_error", "visible_toe_count_error", "footwear_fit_mismatch"]);
 const criticalHumanCodes = new Set(["human_anatomy_error", "human_hand_anatomy_error", "visible_finger_count_error", "finger_count_error", "hand_anatomy_error", "finger_geometry_error", "human_face_anatomy_error", "human_eye_realism_error", "human_limb_anatomy_error", "body_proportion_error", "severe_physical_failure", "bag_contact_implausible", "body_product_interaction_error", ...footwearAnatomyCodes]);
-const presetComplianceCodes = new Set(["bag_preset_scene_mismatch", "preset_scene_mismatch", "preset_interaction_mismatch", "preset_presentation_mode_mismatch", "product_only_mode_human_leak", "product_only_mode_environment_leak"]);
+const presetComplianceCodes = new Set([
+  "bag_preset_scene_mismatch", "preset_scene_mismatch", "preset_interaction_mismatch", "preset_presentation_mode_mismatch", "product_only_mode_human_leak", "product_only_mode_environment_leak",
+  "preset_macro_framing_mismatch", "preset_floating_support_mismatch", "preset_top_down_camera_mismatch", "preset_front_orientation_mismatch",
+  "preset_pair_composition_mismatch", "preset_pedestal_support_mismatch", "ghost_mannequin_phantom_body_artifact", "preset_reflection_mismatch",
+  "preset_clinical_scene_mismatch", "preset_botanical_scene_mismatch", "preset_liquid_interaction_mismatch", "bag_carry_mode_mismatch", "jewelry_body_target_mismatch",
+]);
 const majorPresetCodes = new Set(["preset_environment_too_generic", "preset_variation_collapse"]);
 const referenceOverriddenPresetCodes = new Set(["preset_scene_mismatch", "preset_interaction_mismatch", "preset_environment_too_generic", "bag_preset_scene_mismatch"]);
 const majorHumanCodes = new Set(["human_skin_plastic", "human_skin_overretouched", "human_texture_unrealistic", "human_face_uncanny", "human_expression_unnatural", "human_hair_synthetic", "human_posture_unnatural", "plastic_skin_appearance", "unrealistic_human_texture", "face_realism_error", "plastic_skin", "over_retouched_skin", "facial_realism_drift", "hair_realism_drift", "human_product_contact_error", "body_interaction_failure", "nail_anatomy_error", "pose_implausible"]);
@@ -111,9 +116,15 @@ export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityV
   };
 }
 
-export function suppressReferenceAuthorityPresetIssues(issues: FidelityValidationIssue[], referenceAuthority: boolean): FidelityValidationIssue[] {
+export function suppressReferenceAuthorityPresetIssues(issues: FidelityValidationIssue[], referenceAuthority: boolean, overriddenFields: readonly string[] = []): FidelityValidationIssue[] {
   if (!referenceAuthority) return issues;
-  return issues.filter((issue) => !referenceOverriddenPresetCodes.has(issue.code.toLowerCase()));
+  if (!overriddenFields.length) return issues;
+  return issues.filter((issue) => {
+    const code = issue.code.toLowerCase();
+    if (code === "preset_scene_mismatch" || code === "preset_environment_too_generic" || code === "bag_preset_scene_mismatch") return !overriddenFields.includes("environment");
+    if (code === "preset_interaction_mismatch") return !overriddenFields.includes("interactionMode");
+    return !referenceOverriddenPresetCodes.has(code);
+  });
 }
 
 export function mapStructuredValidationOutput(value: unknown): FidelityValidationIssue[] {

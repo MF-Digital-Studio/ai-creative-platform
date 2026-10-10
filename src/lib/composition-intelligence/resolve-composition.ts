@@ -31,6 +31,37 @@ export function resolveComposition(input: ResolveCompositionInput): CompositionP
   const canUseMacro = family.endsWith("macro_still_life") || family.endsWith("macro_detail") || family.endsWith("_detail") || family === "jewelry_studio" || family === "watch_studio" || family === "cosmetics_studio" || family === "footwear_studio";
   const source = macro && canUseMacro ? "explicit_user_intent" : referenceClose && canUseMacro ? "reference_style" : input.presetId ? "preset_hint" : input.sceneFamily ? "scene_template" : "safe_fallback";
   const profile: CompositionProfile = { ...template, source, version: COMPOSITION_INTELLIGENCE_VERSION };
+  const contract = input.presentationModeContract;
+  if (contract) {
+    const contractProfile: CompositionProfile = {
+      ...profile,
+      framing: normalizeFraming(contract.framing),
+      subjectScale: contract.subjectScale,
+      cameraDistance: normalizeDistance(contract.cameraDistance),
+      preferredAngle: normalizeAngle(contract.cameraAngle),
+      subjectPlacement: contract.subjectPlacement,
+      productOrientation: contract.productOrientation,
+      physicalSupport: contract.physicalSupport,
+      compositionStyle: contract.id,
+      productCount: contract.productCount,
+      targetDetail: contract.targetDetail,
+      negativeCompositionRules: [...profile.negativeCompositionRules, ...contract.forbidden],
+      source: "preset_hint",
+    };
+    if (input.referenceAuthority && input.referenceStyle && !input.strictProductOnlyStudio) {
+      const shot = getReferenceShotProfile(input.referenceStyle);
+      const protectedFields = new Set(contract.referenceProtectedFields);
+      return {
+        ...contractProfile,
+        ...(!protectedFields.has("framing") && shot.framing ? { framing: normalizeFraming(shot.framing) } : {}),
+        ...(!protectedFields.has("cameraDistance") && shot.cameraDistance && shot.cameraDistance !== "unknown" ? { cameraDistance: normalizeDistance(shot.cameraDistance) } : {}),
+        ...(!protectedFields.has("cameraAngle") && shot.cameraAngle && shot.cameraAngle !== "unknown" ? { preferredAngle: normalizeAngle(shot.cameraAngle) } : {}),
+        ...(!protectedFields.has("framing") && shot.productScale ? { subjectScale: shot.productScale } : {}),
+        source: "reference_authority",
+      };
+    }
+    return contractProfile;
+  }
   if (input.referenceAuthority && input.referenceStyle && !input.strictProductOnlyStudio) {
     const shot = getReferenceShotProfile(input.referenceStyle);
     const referenceProfile: CompositionProfile = {
@@ -51,4 +82,20 @@ export function resolveComposition(input: ResolveCompositionInput): CompositionP
   // Wide/full-body wording is intentionally ignored for small product families.
   if (unsafeWide && (family.startsWith("jewelry_") || family === "watch_on_wrist")) return profile;
   return profile;
+}
+
+function normalizeFraming(value: string): CompositionProfile["framing"] {
+  if (value === "macro" || value === "close_up" || value === "medium_close" || value === "medium" || value === "full_product" || value === "environmental") return value;
+  if (value === "full_body" || value === "waist_crop") return "medium";
+  return "full_product";
+}
+
+function normalizeDistance(value: string): CompositionProfile["cameraDistance"] {
+  return value === "macro" ? "macro" : value === "medium" || value === "wide" ? "medium" : "close";
+}
+
+function normalizeAngle(value: string): CompositionProfile["preferredAngle"] {
+  if (value === "low" || value === "three_quarter" || value === "product_level" || value === "eye_level") return value;
+  if (value === "overhead" || value === "top_down" || value === "high") return "elevated";
+  return "eye_level";
 }

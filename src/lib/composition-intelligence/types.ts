@@ -2,6 +2,7 @@ import type { GenerationStrategy } from "@/lib/generation/strategy/generation-st
 import type { ReferenceStyleBrief } from "@/lib/generation/references/reference-style-brief";
 import type { ProductProfile } from "@/lib/product-understanding/product-profile";
 import type { SceneFamily } from "@/lib/scene-suitability/types";
+import type { PresentationModeContract } from "@/lib/creative-presets/presentation-mode-contracts";
 
 export const COMPOSITION_INTELLIGENCE_VERSION = "composition-intelligence-v1";
 
@@ -20,6 +21,12 @@ export type CompositionProfile = {
   cameraDistance: CompositionCameraDistance;
   preferredAngle: CompositionPreferredAngle;
   depthOfField: CompositionDepthOfField;
+  subjectPlacement?: string;
+  productOrientation?: string;
+  physicalSupport?: string;
+  compositionStyle?: string;
+  productCount?: string;
+  targetDetail?: string | null;
   negativeCompositionRules: readonly string[];
   source: CompositionSource;
   version: typeof COMPOSITION_INTELLIGENCE_VERSION;
@@ -35,4 +42,5 @@ export type ResolveCompositionInput = {
   referenceAuthority?: boolean;
   /** Keep product-only Apparel Studio composition independent of reference scene framing. */
   strictProductOnlyStudio?: boolean;
+  presentationModeContract?: PresentationModeContract | null;
 };

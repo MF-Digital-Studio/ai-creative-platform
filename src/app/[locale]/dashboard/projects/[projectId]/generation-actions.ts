@@ -33,6 +33,7 @@ import {
   getPresetVariantsForPresentationMode,
   isProductOnlyPresentationMode,
 } from "@/lib/creative-presets/creative-presets";
+import { getPresentationModeContract } from "@/lib/creative-presets/presentation-mode-contracts";
 import {
   getProjectReferenceAssets,
   isReferenceImageMimeType,
@@ -605,16 +606,10 @@ export async function runQueuedImageGeneration(
       selectedPresentationMode = metadataPreset && typeof metadataPreset === "object" && "selectedPresentationMode" in metadataPreset
         ? getPresetPresentationMode(presetFamily.id, metadataPreset.selectedPresentationMode)?.id ?? null
         : null;
-      const selectedPresentationVariants = selectedPresentationMode
-        ? getPresetVariantsForPresentationMode(presetFamily, selectedPresentationMode)
-        : [];
-      const selectedStrictProductOnlyStudio = presetFamily.id === "apparel-studio"
-        && selectedPresentationVariants.length > 0
-        && selectedPresentationVariants.every(({ presentationMode }) => isProductOnlyPresentationMode(presentationMode));
       const explicitContinuity = /same\s+(?:model|person|scene|location)|keep\s+(?:the\s+)?same|preserve\s+(?:the\s+)?scene/i.test(userDirection);
       const continuityVariant = explicitContinuity || sceneLockedReference ? presetFamily.variants.find(({ id }) => id === previousVariantId) : null;
-      presentationModeOverrideReason = selectedPresentationMode && sceneLockedReference && !selectedStrictProductOnlyStudio ? "reference_authority" : null;
-      const eligibleVariants = selectedPresentationMode && !presentationModeOverrideReason
+      presentationModeOverrideReason = null;
+      const eligibleVariants = selectedPresentationMode
         ? getPresetVariantsForPresentationMode(presetFamily, selectedPresentationMode)
         : presetFamily.variants;
       const variantFamily = eligibleVariants.length === presetFamily.variants.length ? presetFamily : { ...presetFamily, variants: eligibleVariants };
@@ -737,6 +732,28 @@ export async function runQueuedImageGeneration(
     const referenceInteraction = referenceAnalysis.styleBrief
       ? getReferenceShotProfile(referenceAnalysis.styleBrief).interaction
       : null;
+    const presentationModeContract = getPresentationModeContract(presetFamily?.id, resolvedPresetVariant?.presentationMode);
+    const referenceShot = referenceAnalysis.styleBrief ? getReferenceShotProfile(referenceAnalysis.styleBrief) : null;
+    const referenceSpecifiedFields = referenceShot ? [
+      referenceShot.background || referenceShot.environment ? "environment" : null,
+      referenceShot.cameraDistance && referenceShot.cameraDistance !== "unknown" ? "cameraDistance" : null,
+      referenceShot.cameraAngle && referenceShot.cameraAngle !== "unknown" ? "cameraAngle" : null,
+      referenceShot.framing ? "framing" : null,
+      referenceShot.subjectPlacement && referenceShot.subjectPlacement !== "unknown" ? "subjectPlacement" : null,
+      referenceShot.interaction && referenceShot.interaction !== "unknown" ? "interactionMode" : null,
+      referenceShot.lighting && referenceShot.lighting !== "unknown" ? "lighting" : null,
+      referenceShot.surfaces ? "surface" : null,
+      referenceShot.props ? "propLanguage" : null,
+    ].filter((field): field is import("@/lib/creative-presets/presentation-mode-contracts").PresentationContractField => field !== null) : [];
+    const referenceOverriddenFields = referenceSpecifiedFields.filter((field) => !presentationModeContract?.referenceProtectedFields.includes(field));
+    const contractFields: import("@/lib/creative-presets/presentation-mode-contracts").PresentationContractField[] = [
+      "sceneType", "environment", "cameraDistance", "cameraAngle", "framing", "subjectScale", "subjectPlacement",
+      "productOrientation", "physicalSupport", "gravityBehavior", "humanPresence", "interactionMode", "surface",
+      "propLanguage", "lighting", "captureProfile", "productCount", "targetDetail",
+    ];
+    const presetPreservedFields = presentationModeContract
+      ? contractFields.filter((field) => !referenceOverriddenFields.includes(field))
+      : [];
     const strictProductOnlyStudio = presetFamily?.id === "apparel-studio"
       && isProductOnlyPresentationMode(resolvedPresetVariant?.presentationMode);
     const strategyResolution = resolveGenerationStrategy({
@@ -766,6 +783,7 @@ export async function runQueuedImageGeneration(
       reference: referenceAnalysis.styleBrief,
       referenceAuthority: usableReferenceImages.length > 0,
       strictProductOnlyStudio,
+      presentationModeContract,
     });
     const strategyPolicy = validateGenerationPolicy({
       strategy: strategyResolution.strategy,
@@ -786,6 +804,7 @@ export async function runQueuedImageGeneration(
       presetId: preset?.id,
       referenceAuthority: usableReferenceImages.length > 0,
       strictProductOnlyStudio,
+      presentationModeContract,
     });
     const customNote = Boolean(metadataUserPrompt && metadataUserPrompt !== fallbackCreativeDirection);
     const strongPreset = Boolean(preset?.creativeDirection && composition?.source !== "safe_fallback");
@@ -1037,7 +1056,7 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null } : null, referenceAuthority: usableReferenceImages.length > 0, strictProductOnlyStudio, visibleHuman: !strictProductOnlyStudio && !/\b(?:no|without)\s+(?:visible\s+)?(?:person|people|human|model|body|skin|hands?)\b/i.test(metadataUserPrompt) && (["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(strategy) || /\b(?:person|woman|man|model|hand|arm|leg|foot|feet|face|wrist|neck|ear|body)\b/i.test(metadataUserPrompt) || ["held", "worn", "near_face"].includes(referenceInteraction ?? "")) },
+      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null, referenceAuthority: usableReferenceImages.length > 0, strictProductOnlyStudio, visibleHuman: !strictProductOnlyStudio && !/\b(?:no|without)\s+(?:visible\s+)?(?:person|people|human|model|body|skin|hands?)\b/i.test(metadataUserPrompt) && (["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(strategy) || /\b(?:person|woman|man|model|hand|arm|leg|foot|feet|face|wrist|neck|ear|body)\b/i.test(metadataUserPrompt) || ["held", "worn", "near_face"].includes(referenceInteraction ?? "")) },
     );
     if (presetFamily) {
       console.info("[preset] validator_context", { generationId, selectedPresetId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedVariantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, overrideReason: usableReferenceImages.length > 0 ? "reference_authority" : strategyResolution.reason !== "preset_strategy_hint" ? strategyResolution.reason : null, variationSource: "generation_seed" });
@@ -1050,6 +1069,8 @@ export async function runQueuedImageGeneration(
       sceneAuthoritySource: sceneSuitability?.source === "reference_authority" ? "reference_1" : sceneSuitability?.source === "trusted_preset" ? "preset" : sceneSuitability?.source ?? null,
       compositionAuthoritySource: composition?.source === "reference_authority" ? "reference_1" : composition?.source === "preset_hint" || composition?.source === "scene_template" ? "preset" : composition?.source ?? null,
       presetOverrideReason: usableReferenceImages.length > 0 ? "reference_authority" : null,
+      referenceOverriddenFields,
+      presetPreservedFields,
       referenceReplacementMode: usesReferenceReplacement ? "reference_product_replacement" : null,
       referenceVertical: productProfile?.vertical ?? qualityUseCase,
       resolvedSceneFamily: sceneSuitability?.selectedSceneFamily ?? null,
@@ -1216,7 +1237,7 @@ export async function runQueuedImageGeneration(
       referenceAuthority: usableReferenceImages.length > 0,
       referenceMatch,
       identityManifest,
-      preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio } : null,
+      preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null,
       variationHistory,
       ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
       exactProductApparel: apparelFidelityMode.exactProductApparel,
@@ -1371,7 +1392,7 @@ export async function runQueuedImageGeneration(
           referenceAuthority: usableReferenceImages.length > 0,
           referenceMatch,
           identityManifest,
-          preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio } : null,
+          preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null,
           ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
           exactProductApparel: apparelFidelityMode.exactProductApparel,
         }));
@@ -1527,7 +1548,7 @@ export async function runQueuedImageGeneration(
         fidelity_score: fidelityScore,
       provider_metadata: {
           ...(selectedProviderResult.providerMetadata ?? {}),
-          ...(presetFamily ? { preset: { ...(createCreativePresetMetadata(getCreativePreset(presetId), resolvedVariantId) ?? {}), version: PRESET_SYSTEM_VERSION, familyId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: resolvedPresetVariant?.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? presentationModeOverrideReason ? "reference_authority" : "user" : "automatic", presentationModeOverrideReason, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, ...(presetFamily.variants.find(({ id }) => id === resolvedVariantId) ? getPresetVariationMetadata(presetFamily.variants.find(({ id }) => id === resolvedVariantId)!) : {}) } } : {}),
+          ...(presetFamily ? { preset: { ...(createCreativePresetMetadata(getCreativePreset(presetId), resolvedVariantId) ?? {}), version: PRESET_SYSTEM_VERSION, familyId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: resolvedPresetVariant?.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? "user" : "automatic", presentationModeOverrideReason, referenceOverriddenFields, presetPreservedFields, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, ...(presetFamily.variants.find(({ id }) => id === resolvedVariantId) ? getPresetVariationMetadata(presetFamily.variants.find(({ id }) => id === resolvedVariantId)!) : {}) } } : {}),
           outputFormat: { requestedAspectRatio: aspectRatio, providerWidth: outputCanvas.width, providerHeight: outputCanvas.height, version: "output-format-v1" },
           execution: { version: GENERATION_EXECUTION_POLICY_VERSION, imageGenerationCalls: executionCounts.imageGenerationCalls, visionValidationCalls: executionCounts.visionValidationCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, productAnalysisCalls: executionCounts.productAnalysisCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, repairCalls: executionCounts.repairCalls, repairSuppressed: !repairPlan.shouldRetry && fidelityValidation.status === "fail", repairSuppressionReason: !repairPlan.shouldRetry && fidelityValidation.status === "fail" ? repairEligibility.reason : null, avoidedImageGenerationCalls: !repairPlan.shouldRetry && fidelityValidation.status === "fail" ? 1 : 0, totalDurationMs: stageDurations.total, stages: stageDurations, quality: executionPolicy.quality, difficulty: executionPolicy.difficulty, reasons: executionPolicy.reasons, repairQuality: repairPlan.shouldRetry ? executionPolicy.repairQuality : null, repairExpectedValue: repairEligibility.repairExpectedValue },
           costTelemetry: createCostTelemetry({ productUnderstandingCalls: executionCounts.productAnalysisCalls, referenceAnalysisCalls: executionCounts.referenceAnalysisCalls, imageGenerationCalls: executionCounts.imageGenerationCalls - executionCounts.repairCalls, validationCalls: executionCounts.visionValidationCalls, repairGenerationCalls: executionCounts.repairCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, segmentationCalls: executionCounts.segmentationCalls, projectionAnalysisCalls: executionCounts.projectionAnalysisCalls, inputProductImageCount: usableProductImages.length, inputReferenceCount: usableReferenceImages.length, repairAttempted: repairAttempt !== null, finalOutcome: fidelityValidation.status === "validation_unavailable" ? "unverified" : "succeeded", validationOutcome: selectedAttempt.validation.status, providerUsage: selectedProviderResult.usage }),
@@ -1622,7 +1643,7 @@ export async function runQueuedImageGeneration(
             succeeded: promptEnhancement.succeeded,
             user_prompt: promptEnhancement.userPrompt,
           },
-          ...(preset ? { preset: { ...createCreativePresetMetadata(preset, resolvedVariantId), ...(presetFamily ? { selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: resolvedPresetVariant?.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? presentationModeOverrideReason ? "reference_authority" : "user" : "automatic", presentationModeOverrideReason, resolvedSceneFamily: sceneSuitability?.selectedSceneFamily ?? null, sceneAuthoritySource: sceneSuitability?.source ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, presentationModeCategory: strictProductOnlyStudio ? "product_only" : resolvedPresetVariant?.humanPresence === "full" ? "on_model" : "lifestyle", referenceSceneSuppressedByPresentationMode: strictProductOnlyStudio && usableReferenceImages.length > 0, variationSource: "generation_seed", variationHistory } : {}) } } : {}),
+          ...(preset ? { preset: { ...createCreativePresetMetadata(preset, resolvedVariantId), ...(presetFamily ? { selectedPresetFamily: presetFamily.id, selectedPresentationMode, resolvedPresentationMode: resolvedPresetVariant?.presentationMode ?? null, presentationModeSource: selectedPresentationMode ? "user" : "automatic", presentationModeOverrideReason, referenceOverriddenFields, presetPreservedFields, resolvedSceneFamily: sceneSuitability?.selectedSceneFamily ?? null, sceneAuthoritySource: sceneSuitability?.source ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, presentationModeCategory: strictProductOnlyStudio ? "product_only" : resolvedPresetVariant?.humanPresence === "full" ? "on_model" : "lifestyle", referenceSceneSuppressedByPresentationMode: strictProductOnlyStudio && usableReferenceImages.length > 0, variationSource: "generation_seed", variationHistory } : {}) } } : {}),
           strategy: {
             effective_preservation_mode: effectivePreservationMode,
             reason: strategyResolution.reason,
@@ -1672,6 +1693,8 @@ export async function runQueuedImageGeneration(
               supportingReferenceIds: requestedReferenceAssetIds.slice(1),
               primaryAuthority: ["scene", "composition", "pose", "camera", "framing"],
               supportingAuthority: ["lighting", "mood", "color", "styling", "atmosphere"],
+              referenceOverriddenFields,
+              presetPreservedFields,
             },
             analysis: {
               enabled: requestedReferenceAssetIds.length > 0,

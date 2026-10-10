@@ -1,0 +1,3934 @@
+{
+  "version": "preset-live-qa-v1",
+  "generatedFrom": "src/lib/creative-presets/presentation-mode-contracts.ts",
+  "providerCallsPerformed": false,
+  "entries": [
+    {
+      "family": "apparel-street",
+      "mode": "walking",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Studio or location without recognizable urban context."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Recognizable city street or boulevard.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_walking",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "curb",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "City sidewalk and curb.",
+        "cameraDistance": "medium",
+        "cameraAngle": "low",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_at_curb",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "crosswalk",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Recognizable street crossing or crosswalk.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_crossing",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "metro_stairs",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Metro entrance or transit stairs.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_on_stairs",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "storefront",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Visible storefront and pedestrian street.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_storefront",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "concrete_district",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Concrete or stone urban architecture.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "three_quarter",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "natural_product_body_interaction",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "low_angle_street",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Recognizable street-level city context.",
+        "cameraDistance": "medium",
+        "cameraAngle": "low",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "natural_product_body_interaction",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "movement_detail",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Recognizable city street.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_motion_detail",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "seated_urban_moment",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Urban architecture with a credible seat or ledge.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_seated",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-street",
+      "mode": "night_editorial",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Recognizable night city street.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "natural_product_body_interaction",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "model_studio",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_human_studio"
+        ],
+        "environmentGrammar": "Controlled seamless fashion studio.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_in_studio",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "ghost_mannequin",
+      "expectedVisualBehavior": [
+        "Garment holds a believable worn volume without any visible or implied body artifact."
+      ],
+      "forbiddenBehavior": [
+        "Skin, limbs, torso silhouette, mannequin hardware, or phantom anatomy."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "GHOST_MANNEQUIN_PHANTOM_BODY_ARTIFACT",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Clean e-commerce studio with invisible internal shaping.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "front",
+        "physicalSupport": "invisible_garment_shaping",
+        "gravityBehavior": "worn_shape_without_body",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "floating",
+      "expectedVisualBehavior": [
+        "The product is visibly unsupported or suspended with no resting contact."
+      ],
+      "forbiddenBehavior": [
+        "Table, pedestal, floor, or visible support contact."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FLOATING_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled apparel studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "unsupported_suspension",
+        "gravityBehavior": "believable_suspended_gravity",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "hanger",
+      "expectedVisualBehavior": [
+        "A visible hanger supports the garment with natural drape."
+      ],
+      "forbiddenBehavior": [
+        "Pedestal, folded placement, or invisible mannequin."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_hanger",
+        "gravityBehavior": "natural_hanger_drape",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "flat_lay",
+      "expectedVisualBehavior": [
+        "Camera is overhead or near-overhead."
+      ],
+      "forbiddenBehavior": [
+        "Eye-level, low-angle, or ground-level camera."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_TOP_DOWN_CAMERA_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "overhead",
+        "framing": "full_product",
+        "productOrientation": "top_down",
+        "physicalSupport": "flat_surface",
+        "gravityBehavior": "flat_natural_fabric_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "folded",
+      "expectedVisualBehavior": [
+        "Camera is overhead or near-overhead."
+      ],
+      "forbiddenBehavior": [
+        "Eye-level, low-angle, or ground-level camera."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_TOP_DOWN_CAMERA_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "overhead",
+        "framing": "full_product",
+        "productOrientation": "folded",
+        "physicalSupport": "flat_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "folded_product_construction"
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "sculptural_stage",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled sculptural studio set.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_pedestal",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "fabric_motion",
+      "expectedVisualBehavior": [
+        "Human-free suspended garment with subtle believable fabric movement."
+      ],
+      "forbiddenBehavior": [
+        "Visible body, extreme wind distortion, or resting support."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FLOATING_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "unsupported_suspension",
+        "gravityBehavior": "believable_suspended_gravity",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "fabric_motion"
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "detail",
+      "expectedVisualBehavior": [
+        "A product detail fills a significant part of the frame."
+      ],
+      "forbiddenBehavior": [
+        "Environmental wide, full-body, or distant hero framing."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_MACRO_FRAMING_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "macro",
+        "cameraAngle": "product_level",
+        "framing": "macro",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "stitching_texture_or_construction"
+      }
+    },
+    {
+      "family": "apparel-studio",
+      "mode": "catalogue_product",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FRONT_ORIENTATION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Neutral catalogue studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "front_on",
+        "framing": "full_product",
+        "productOrientation": "front",
+        "physicalSupport": "invisible_or_flat_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-scenic",
+      "mode": "model_landscape",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Open natural landscape with visible depth.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_in_landscape",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-scenic",
+      "mode": "architectural_model",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Refined outdoor architecture, terrace, or courtyard.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_in_architecture",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-scenic",
+      "mode": "walking_location",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Natural outdoor location.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_walking",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-scenic",
+      "mode": "seated_location",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Natural location with credible seating support.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_seated",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "apparel-scenic",
+      "mode": "environmental_portrait",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "apparel",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Refined natural environment.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "environmental",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "garment_worn_portrait",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-on-model",
+      "mode": "on_neck",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "JEWELRY_BODY_TARGET_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "jewelry_on_neck",
+        "productCount": "source_defined",
+        "targetDetail": "necklace_or_pendant"
+      }
+    },
+    {
+      "family": "jewelry-on-model",
+      "mode": "on_ear",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "JEWELRY_BODY_TARGET_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "macro",
+        "cameraAngle": "eye_level",
+        "framing": "macro",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "jewelry_on_ear",
+        "productCount": "source_defined",
+        "targetDetail": "earring_attachment"
+      }
+    },
+    {
+      "family": "jewelry-on-model",
+      "mode": "on_hand",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "JEWELRY_BODY_TARGET_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "macro",
+        "cameraAngle": "eye_level",
+        "framing": "macro",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "jewelry_on_hand",
+        "productCount": "source_defined",
+        "targetDetail": "ring_or_hand_jewelry"
+      }
+    },
+    {
+      "family": "jewelry-on-model",
+      "mode": "on_wrist",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "JEWELRY_BODY_TARGET_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "jewelry_on_wrist",
+        "productCount": "source_defined",
+        "targetDetail": "bracelet_contact"
+      }
+    },
+    {
+      "family": "jewelry-on-model",
+      "mode": "beauty_macro",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Wide or full-body portrait."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_MACRO_FRAMING_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "macro",
+        "cameraAngle": "product_level",
+        "framing": "macro",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "jewelry_beauty_macro",
+        "productCount": "source_defined",
+        "targetDetail": "jewelry_and_skin_contact"
+      }
+    },
+    {
+      "family": "jewelry-on-model",
+      "mode": "editorial_closeup",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Wide environmental or full-body framing."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "jewelry_editorial_closeup",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-lifestyle",
+      "mode": "stone",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Tactile natural stone surface.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-lifestyle",
+      "mode": "textile",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Tasteful textile still life.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "soft_textile_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-lifestyle",
+      "mode": "mirror",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free mirror-plane still life.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-lifestyle",
+      "mode": "gallery",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free gallery ledge or architectural surface.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-lifestyle",
+      "mode": "reflective_surface",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled reflective glass surface.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-lifestyle",
+      "mode": "editorial_still_life",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Styled human-free editorial still life.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "macro",
+      "expectedVisualBehavior": [
+        "A product detail fills a significant part of the frame."
+      ],
+      "forbiddenBehavior": [
+        "Environmental wide, full-body, or distant hero framing."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_MACRO_FRAMING_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "macro",
+        "cameraAngle": "product_level",
+        "framing": "macro",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "jewelry_craftsmanship"
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "pedestal",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PEDESTAL_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_pedestal",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "reflection",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "stone",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "stone_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "textile",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "soft_textile_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "shadow",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "shadow_composition"
+      }
+    },
+    {
+      "family": "jewelry-studio",
+      "mode": "clean_packshot",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "jewelry",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Clean luxury studio backdrop.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-on-wrist",
+      "mode": "wrist_hero",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "watch_on_wrist",
+        "productCount": "source_defined",
+        "targetDetail": "dial_and_wrist_fit"
+      }
+    },
+    {
+      "family": "watches-on-wrist",
+      "mode": "executive",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Restrained executive context.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "watch_with_tailored_cuff",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-on-wrist",
+      "mode": "travel",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Refined travel context.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "watch_on_wrist_travel",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-on-wrist",
+      "mode": "outdoor",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Outdoor daylight context.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "watch_on_wrist_outdoor",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-on-wrist",
+      "mode": "architecture",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Clean architectural context.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "watch_on_wrist_architecture",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-on-wrist",
+      "mode": "lifestyle_closeup",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "close_up",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "watch_lifestyle_closeup",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "desk",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Sparse premium desk arrangement.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "stone",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_pedestal",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "leather",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "leather_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "metal",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "metal_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "fabric",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "soft_textile_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "box_composition",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "box_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-product-composition",
+      "mode": "macro_detail",
+      "expectedVisualBehavior": [
+        "A product detail fills a significant part of the frame."
+      ],
+      "forbiddenBehavior": [
+        "Environmental wide, full-body, or distant hero framing."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_MACRO_FRAMING_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "macro",
+        "cameraAngle": "product_level",
+        "framing": "macro",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "crown_case_or_dial_detail"
+      }
+    },
+    {
+      "family": "watches-editorial-studio",
+      "mode": "dark_studio",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled low-key watch studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-editorial-studio",
+      "mode": "gradient",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled gradient studio backdrop.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-editorial-studio",
+      "mode": "metallic",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled metallic studio set.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-editorial-studio",
+      "mode": "spotlight",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Minimal dark studio with one spotlight.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-editorial-studio",
+      "mode": "reflection",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "watches-editorial-studio",
+      "mode": "catalogue",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "watches",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "High-end catalogue studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "front_on",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "walking",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Recognizable city street.",
+        "cameraDistance": "close",
+        "cameraAngle": "low",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_walking",
+        "productCount": "source_defined",
+        "targetDetail": "footwear_and_ground_contact"
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "crosswalk",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Recognizable crosswalk.",
+        "cameraDistance": "close",
+        "cameraAngle": "low",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_crossing",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "concrete_district",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Concrete urban district.",
+        "cameraDistance": "close",
+        "cameraAngle": "low",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_urban_stance",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "metro_stairs",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Metro platform or transit stairs.",
+        "cameraDistance": "close",
+        "cameraAngle": "low",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_on_stairs",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "seated_urban_moment",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Urban seating context.",
+        "cameraDistance": "close",
+        "cameraAngle": "low",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_seated",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "movement_detail",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Recognizable urban pavement.",
+        "cameraDistance": "macro",
+        "cameraAngle": "low",
+        "framing": "macro",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_motion_detail",
+        "productCount": "source_defined",
+        "targetDetail": "sole_flex_and_movement"
+      }
+    },
+    {
+      "family": "footwear-street",
+      "mode": "low_angle_street",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "Recognizable city street.",
+        "cameraDistance": "close",
+        "cameraAngle": "low",
+        "framing": "medium_close",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "footwear_urban_stance",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "isolated_hero",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "complete_footwear_silhouette"
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "floating_product",
+      "expectedVisualBehavior": [
+        "The product is visibly unsupported or suspended with no resting contact."
+      ],
+      "forbiddenBehavior": [
+        "Table, pedestal, floor, or visible support contact."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FLOATING_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "unsupported_suspension",
+        "gravityBehavior": "believable_suspended_gravity",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "pedestal",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PEDESTAL_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_pedestal",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "reflective_floor",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "sculptural_blocks",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_sculptural_blocks",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "pair_composition",
+      "expectedVisualBehavior": [
+        "Show a coherent footwear pair when the source product semantics permit it."
+      ],
+      "forbiddenBehavior": [
+        "Single-item-only hero when a pair is expected."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PAIR_COMPOSITION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_pair",
+        "productCount": "pair",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "top_down",
+      "expectedVisualBehavior": [
+        "Camera is overhead or near-overhead."
+      ],
+      "forbiddenBehavior": [
+        "Eye-level, low-angle, or ground-level camera."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_TOP_DOWN_CAMERA_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "overhead",
+        "framing": "full_product",
+        "productOrientation": "top_down",
+        "physicalSupport": "flat_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "side_profile_campaign",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "side",
+        "framing": "full_product",
+        "productOrientation": "side_profile",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-studio",
+      "mode": "macro_material_detail",
+      "expectedVisualBehavior": [
+        "A product detail fills a significant part of the frame."
+      ],
+      "forbiddenBehavior": [
+        "Environmental wide, full-body, or distant hero framing."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_MACRO_FRAMING_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "macro",
+        "cameraAngle": "product_level",
+        "framing": "macro",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "upper_sole_or_material_detail"
+      }
+    },
+    {
+      "family": "footwear-scenic",
+      "mode": "architectural_stone",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Outdoor architecture and tactile stone.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-scenic",
+      "mode": "terrace",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Refined outdoor terrace.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-scenic",
+      "mode": "gallery",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free contemporary gallery setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-scenic",
+      "mode": "courtyard",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free courtyard or stone steps.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-scenic",
+      "mode": "hotel_setting",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Refined human-free hotel or travel interior.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "footwear-scenic",
+      "mode": "minimal_landscape",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "footwear",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Minimal natural landscape with stable product contact.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "packshot",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FRONT_ORIENTATION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "front_on",
+        "framing": "full_product",
+        "productOrientation": "front",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "package_and_label"
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "floating",
+      "expectedVisualBehavior": [
+        "The product is visibly unsupported or suspended with no resting contact."
+      ],
+      "forbiddenBehavior": [
+        "Table, pedestal, floor, or visible support contact."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FLOATING_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "unsupported_suspension",
+        "gravityBehavior": "believable_suspended_gravity",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "liquid_interaction",
+      "expectedVisualBehavior": [
+        "A controlled, physically plausible liquid interaction is materially visible."
+      ],
+      "forbiddenBehavior": [
+        "Dry generic packshot with no liquid interaction."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_LIQUID_INTERACTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "liquid_contact_or_splash",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "liquid_product_interaction"
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "acrylic",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "acrylic_support",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "reflection",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "monochrome",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Tonal monochrome beauty studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "clinical",
+      "expectedVisualBehavior": [
+        "Clinical cleanliness and precise controlled light are visually clear."
+      ],
+      "forbiddenBehavior": [
+        "Botanical, rustic, or decorative lifestyle scene."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_CLINICAL_SCENE_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Clean clinical beauty studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "glossy",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Glossy editorial beauty studio.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-studio",
+      "mode": "shadow_play",
+      "expectedVisualBehavior": [
+        "Deliberate graphic shadows are materially visible."
+      ],
+      "forbiddenBehavior": [
+        "Flat reflection-only studio."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "graphic_shadow_composition"
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "water",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_LIQUID_INTERACTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled water or wet-surface setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "water_interaction"
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "stone",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Tactile stone or mineral-plaster setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "botanical",
+      "expectedVisualBehavior": [
+        "Recognizable botanical context is materially present."
+      ],
+      "forbiddenBehavior": [
+        "Plain stone or generic decor without botanical context."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_BOTANICAL_SCENE_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Materially visible restrained botanical setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "glasshouse",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free glasshouse ledge with layered natural depth.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "architecture",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Refined architectural shelf or vanity.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "material_study",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Controlled material-led scenic study.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "cosmetics-scenic",
+      "mode": "natural_light",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "cosmetics",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Simple setting shaped by visible natural window light.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "shoulder_carry",
+      "expectedVisualBehavior": [
+        "Source-compatible strap rests naturally on the shoulder."
+      ],
+      "forbiddenBehavior": [
+        "Crossbody or hand-only carry."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "BAG_CARRY_MODE_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "shoulder_and_source_strap",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_shoulder_carry",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "hand_carry",
+      "expectedVisualBehavior": [
+        "A natural hand grip uses the source handle or clutch body."
+      ],
+      "forbiddenBehavior": [
+        "Shoulder-only or crossbody carry."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "BAG_CARRY_MODE_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "natural_hand_grip",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_hand_carry",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "crossbody",
+      "expectedVisualBehavior": [
+        "The source-compatible strap crosses the torso and supports the bag at a plausible position."
+      ],
+      "forbiddenBehavior": [
+        "Shoulder-only, handheld-only, or invented strap."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "BAG_CARRY_MODE_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "crossbody_strap_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_crossbody_carry",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "walking",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "three_quarter",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_source_compatible_carry_walking",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "seated",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "three_quarter",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_source_compatible_carry_seated",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "full_body",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Tight detail or waist crop."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "full_body",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_source_compatible_carry",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "waist_crop",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Full-body or tight-detail framing."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "human_interaction",
+          "editorial_lifestyle"
+        ],
+        "environmentGrammar": "A product-led editorial environment appropriate to the selected family.",
+        "cameraDistance": "close",
+        "cameraAngle": "eye_level",
+        "framing": "waist_crop",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_source_compatible_carry",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-on-model",
+      "mode": "urban_editorial",
+      "expectedVisualBehavior": [
+        "A visible person or body region meaningfully interacts with the product."
+      ],
+      "forbiddenBehavior": [
+        "Product-only still life."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": true,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "urban_street",
+          "human_interaction"
+        ],
+        "environmentGrammar": "Recognizable refined urban architecture.",
+        "cameraDistance": "medium",
+        "cameraAngle": "eye_level",
+        "framing": "medium",
+        "productOrientation": "natural",
+        "physicalSupport": "anatomically_plausible_body_contact",
+        "gravityBehavior": "natural_body_load_and_contact",
+        "interactionMode": "bag_source_compatible_carry",
+        "productCount": "source_defined",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "front_hero",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FRONT_ORIENTATION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "front_on",
+        "framing": "full_product",
+        "productOrientation": "front",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "complete_bag_front"
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "three_quarter_hero",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "suspended_bag",
+      "expectedVisualBehavior": [
+        "The product is visibly unsupported or suspended with no resting contact."
+      ],
+      "forbiddenBehavior": [
+        "Table, pedestal, floor, or visible support contact."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_FLOATING_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "unsupported_suspension",
+        "gravityBehavior": "believable_suspended_gravity",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "complete_suspended_bag"
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "pedestal",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PEDESTAL_SUPPORT_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_pedestal",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "top_down",
+      "expectedVisualBehavior": [
+        "Camera is overhead or near-overhead."
+      ],
+      "forbiddenBehavior": [
+        "Eye-level, low-angle, or ground-level camera."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_TOP_DOWN_CAMERA_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "overhead",
+        "framing": "full_product",
+        "productOrientation": "top_down",
+        "physicalSupport": "flat_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "reflective_floor",
+      "expectedVisualBehavior": [
+        "A visible controlled reflection supports the product."
+      ],
+      "forbiddenBehavior": [
+        "No reflection or reflections that obscure product identity."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_REFLECTION_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "reflective_surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-studio",
+      "mode": "hardware_macro",
+      "expectedVisualBehavior": [
+        "Hardware or closure detail is visually dominant in a tight macro frame."
+      ],
+      "forbiddenBehavior": [
+        "Wide full-bag hero without a dominant hardware detail."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_MACRO_FRAMING_MISMATCH",
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "A human-free controlled product environment.",
+        "cameraDistance": "macro",
+        "cameraAngle": "product_level",
+        "framing": "macro",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": "bag_hardware_or_closure"
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "cafe",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free cafe tabletop setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "terrace",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free refined terrace.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "gallery",
+      "expectedVisualBehavior": [
+        "A visible block, plinth, or pedestal physically supports the product."
+      ],
+      "forbiddenBehavior": [
+        "Unsupported floating."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free gallery setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "visible_pedestal",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "hotel",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free refined hotel interior.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "architecture",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free architectural environment.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "window_light",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free interior near a window.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "travel_setting",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free refined travel setting.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    },
+    {
+      "family": "bags-lifestyle",
+      "mode": "editorial_still_life",
+      "expectedVisualBehavior": [
+        "The product is the clear commercial hero."
+      ],
+      "forbiddenBehavior": [
+        "People, hands, wearing, or carrying."
+      ],
+      "suggestedSourceProductCategory": "bags",
+      "humanExpected": false,
+      "referenceShouldBeTested": true,
+      "criticalValidatorChecks": [
+        "PRESET_PRESENTATION_MODE_MISMATCH"
+      ],
+      "contract": {
+        "sceneTypes": [
+          "controlled_product_studio"
+        ],
+        "environmentGrammar": "Human-free editorial still life.",
+        "cameraDistance": "close",
+        "cameraAngle": "three_quarter",
+        "framing": "full_product",
+        "productOrientation": "three_quarter",
+        "physicalSupport": "surface",
+        "gravityBehavior": "grounded_with_realistic_weight",
+        "interactionMode": "product_only",
+        "productCount": "single",
+        "targetDetail": null
+      }
+    }
+  ]
+}

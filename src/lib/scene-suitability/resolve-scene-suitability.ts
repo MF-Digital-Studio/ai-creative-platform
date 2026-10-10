@@ -25,7 +25,7 @@ const presetFamilies: Readonly<Record<string, SceneFamily>> = {
   "jewelry-on-model": "jewelry_on_body", "jewelry-lifestyle": "jewelry_aesthetic_surface", "jewelry-studio": "jewelry_studio",
   "watches-on-wrist": "watch_on_wrist", "watches-product-composition": "watch_lifestyle_surface", "watches-editorial-studio": "watch_studio",
   "footwear-street": "footwear_street", "footwear-studio": "footwear_studio", "footwear-scenic": "footwear_aesthetic_location",
-  "cosmetics-scenic": "cosmetics_lifestyle",
+  "cosmetics-studio": "cosmetics_studio", "cosmetics-scenic": "cosmetics_lifestyle",
   "bags-on-model": "bags_handheld", "bags-studio": "bags_studio", "bags-lifestyle": "bags_furniture",
   "apparel-street-style": "apparel_street", "apparel-scenic-editorial": "apparel_location_editorial", "apparel-studio-style": "apparel_studio",
   "jewelry-on-body": "jewelry_on_body", "jewelry-scenic": "jewelry_aesthetic_surface",
@@ -43,6 +43,17 @@ const sceneTypesByFamily: Readonly<Record<SceneFamily, readonly string[]>> = {
   footwear_on_foot: ["human_interaction", "editorial_lifestyle"], footwear_studio: ["controlled_product_studio"], footwear_street: ["urban_street", "human_interaction", "editorial_lifestyle"], footwear_aesthetic_location: ["human_free_editorial_environment"], footwear_detail: ["controlled_product_studio"],
   bags_handheld: ["human_interaction", "editorial_lifestyle"], bags_shoulder_carry: ["human_interaction", "editorial_lifestyle"], bags_crossbody: ["human_interaction", "editorial_lifestyle"], bags_under_arm: ["human_interaction", "editorial_lifestyle"], bags_tabletop: ["human_free_editorial_environment"], bags_furniture: ["human_free_editorial_environment"], bags_luxury_still_life: ["controlled_product_studio"], bags_street_editorial: ["urban_street", "human_interaction", "editorial_lifestyle"], bags_travel_lifestyle: ["human_free_editorial_environment"], bags_studio: ["controlled_product_studio"],
 };
+
+function bindingSceneFamily(familyId: string, modeId: string): SceneFamily | undefined {
+  if (familyId === "bags-on-model") {
+    if (modeId === "crossbody") return "bags_crossbody";
+    if (modeId === "shoulder_carry") return "bags_shoulder_carry";
+    if (modeId === "hand_carry") return "bags_handheld";
+    if (modeId === "urban_editorial") return "bags_street_editorial";
+  }
+  if (familyId === "bags-lifestyle" && modeId === "travel_setting") return "bags_travel_lifestyle";
+  return presetFamilies[familyId];
+}
 
 function sceneTypeAllowed(family: SceneFamily, allowed: readonly string[] | undefined, disallowed: readonly string[] | undefined): boolean {
   const types = sceneTypesByFamily[family];
@@ -161,6 +172,21 @@ function referenceFamily(vertical: SupportedVertical, input: ResolveSceneSuitabi
 export function resolveSceneSuitability(input: ResolveSceneSuitabilityInput): SceneSuitabilityResolution | null {
   const vertical = verticalFrom(input);
   if (!vertical) return null;
+  const modeContract = input.presentationModeContract;
+  if (modeContract) {
+    const selectedSceneFamily = bindingSceneFamily(modeContract.familyId, modeContract.id);
+    if (selectedSceneFamily) {
+      const suitableSceneFamilies = [selectedSceneFamily];
+      return {
+        selectedSceneFamily,
+        suitableSceneFamilies,
+        avoidedSceneFamilies: sceneFamiliesByVertical[vertical].filter((family) => family !== selectedSceneFamily),
+        reason: `binding presentation mode ${modeContract.id} constrains scene grammar to ${modeContract.sceneTypes.join(", ")}`,
+        confidence: "high",
+        source: "trusted_preset",
+      };
+    }
+  }
   if (input.strictProductOnlyStudio && vertical === "apparel") {
     const selectedSceneFamily: SceneFamily = "apparel_studio";
     return {

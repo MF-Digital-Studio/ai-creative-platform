@@ -2,6 +2,7 @@ import type { GenerationStrategy } from "@/lib/generation/strategy/generation-st
 import type { ProductProfile } from "@/lib/product-understanding/product-profile";
 import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import type { ReferenceStyleBrief } from "@/lib/generation/references/reference-style-brief";
+import type { PresentationModeContract } from "@/lib/creative-presets/presentation-mode-contracts";
 
 export const SCENE_SUITABILITY_VERSION = "scene-suitability-v1";
 
@@ -46,4 +47,5 @@ export type ResolveSceneSuitabilityInput = {
   referenceAuthority?: boolean;
   /** Product-only Apparel Studio presentations are binding and cannot inherit a reference scene. */
   strictProductOnlyStudio?: boolean;
+  presentationModeContract?: PresentationModeContract | null;
 };

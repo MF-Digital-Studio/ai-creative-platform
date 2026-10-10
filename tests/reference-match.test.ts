@@ -60,14 +60,15 @@ test("reference match validation issues map to the existing one-repair plan", ()
   assert.equal(plan.shouldRetry, false);
 });
 
-test("reference authority demotes conflicting preset scene rules to supporting aesthetics", () => {
+test("reference authority merges only explicitly specified fields", () => {
   const matched = resolveReferenceMatch({ productProfile: product("jewelry"), sceneFamily: "jewelry_on_body", reference: shot, mode: "match" });
   const prompt = buildImageGenerationPrompt("editorial campaign", "reference_edit", {
     productProfile: product("jewelry"), referenceMatch: matched, referenceAuthority: true, presetFamilyId: "jewelry-studio",
-    presetRules: { allowedSceneTypes: ["controlled_product_studio"], disallowedSceneTypes: ["people"], hardRules: ["No people"], softRules: ["Polished highlights"], variantId: "clean" },
+    presetRules: { allowedSceneTypes: ["controlled_product_studio"], disallowedSceneTypes: ["people"], hardRules: ["No people"], softRules: ["Polished highlights"], variantId: "clean", referenceOverriddenFields: ["cameraAngle", "framing"], presetPreservedFields: ["humanPresence", "interactionMode"] },
   });
-  assert.match(prompt, /Reference 1 has higher authority for scene, environment, composition, pose, camera, framing/i);
-  assert.match(prompt, /Polished highlights/);
+  assert.match(prompt, /FIELD-LEVEL REFERENCE MERGE/i);
+  assert.match(prompt, /cameraAngle, framing/i);
+  assert.match(prompt, /humanPresence, interactionMode/i);
   assert.doesNotMatch(prompt, /Negative instructions: no people/i);
   assert.doesNotMatch(prompt, /Hard rules: No people/i);
 });

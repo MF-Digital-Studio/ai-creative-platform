@@ -84,7 +84,7 @@ export async function validateGeneratedImage(input: FidelityValidationInput, cli
     if (!brief.humanRealism?.applied && issue.category === "human_realism") return false;
     if (!brief.apparelFit?.active && issue.category === "apparel_fit") return false;
     return true;
-  }), brief.presetOverrideReason === "reference_authority" && !brief.preset?.strictProductOnlyStudio);
+  }), brief.presetOverrideReason === "reference_authority" && !brief.preset?.strictProductOnlyStudio, brief.preset?.referenceOverriddenFields ?? []);
   if (input.exactProductApparel && input.apparelArtworkIdentity) {
     const result = await client.validate(input, brief);
     const raw = normalize(result);

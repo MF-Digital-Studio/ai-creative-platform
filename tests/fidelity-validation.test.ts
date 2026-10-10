@@ -56,10 +56,10 @@ test("binding product-only studio validation explicitly rejects human and enviro
   assert.match(instructions, /PRODUCT_ONLY_MODE_ENVIRONMENT_LEAK/);
 });
 
-test("reference authority suppresses only preset scene and interaction mismatch findings", () => {
+test("reference authority suppresses only preset fields explicitly overridden by the reference", () => {
   const presetIssue = issue({ code: "PRESET_SCENE_MISMATCH", category: "composition_visibility", severity: "critical", identityImpact: "none" });
   const identityIssue = issue({ code: "PRODUCT_IDENTITY_DRIFT", category: "product_identity", severity: "critical", identityImpact: "critical" });
-  const filtered = suppressReferenceAuthorityPresetIssues([presetIssue, identityIssue], true);
+  const filtered = suppressReferenceAuthorityPresetIssues([presetIssue, identityIssue], true, ["environment"]);
   assert.deepEqual(filtered.map(({ code }) => code), ["PRODUCT_IDENTITY_DRIFT"]);
   assert.equal(resolveQualityGate(filtered).status, "fail");
 });
