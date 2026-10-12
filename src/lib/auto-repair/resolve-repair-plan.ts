@@ -162,14 +162,22 @@ function mappingsFor(issues: FidelityValidationIssue[]): RepairMapping[] {
 export function resolveRepairPlan(validation: FidelityValidationResult): RepairPlan {
   const humanIssues = validation.issues.filter((issue) => issue.category === "human_realism");
   const hasBlockingNonHumanIssue = validation.issues.some((issue) => issue.category !== "human_realism" && issue.severity === "critical" && (issue.confidence ?? 0.9) >= 0.75);
+  const hasUnrecoverableIdentityIssue = validation.issues.some((issue) =>
+    issue.category === "product_identity" && issue.code.toLowerCase().startsWith("apparel_artwork_") &&
+    ((issue.confidence ?? 0.9) < 0.9 || issue.repairable !== true),
+  );
   const eligibleHumanCodes = new Set(humanIssues.filter((issue) => (issue.confidence ?? 0.9) >= 0.75 && issue.repairable !== false).map((issue) => issue.code.toLowerCase()));
-  const repairCandidates = validation.issues.filter((issue) => issue.category !== "human_realism" || (!hasBlockingNonHumanIssue && eligibleHumanCodes.has(issue.code.toLowerCase())));
+  const repairCandidates = validation.issues.filter((issue) => {
+    if (issue.code.toLowerCase().startsWith("apparel_artwork_") && ((issue.confidence ?? 0.9) < 0.9 || issue.repairable !== true)) return false;
+    return issue.category !== "human_realism" || (!hasBlockingNonHumanIssue && !hasUnrecoverableIdentityIssue && eligibleHumanCodes.has(issue.code.toLowerCase()));
+  });
   const mapped = mappingsFor(repairCandidates);
-  const shouldRetry = validation.status === "fail" && validation.retryRecommended && mapped.length > 0;
+  const shouldRetry = validation.status === "fail" && validation.retryRecommended && mapped.length > 0 && !hasUnrecoverableIdentityIssue;
   return {
     shouldRetry,
     categories: shouldRetry ? mapped.map(({ category }) => category) : [],
-    issueCodes: shouldRetry ? validation.issues.map(({ code }) => code) : [],
+    issueCodes: validation.issues.map(({ code }) => code),
+    repairableIssueCodes: repairCandidates.filter((issue) => mappings[issue.code.toLowerCase()]).map(({ code }) => code),
     repairInstructions: shouldRetry ? mapped.flatMap(({ instructions }) => instructions) : [],
     preserveExistingLayers: true,
     version: AUTO_REPAIR_VERSION,

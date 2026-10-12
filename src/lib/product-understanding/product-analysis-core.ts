@@ -20,7 +20,7 @@ export type ProductAnalysisRepository = {
 
 export type ProductAnalysisResult =
   | { status: "supported"; profile: ProductProfile; reused: boolean }
-  | { status: "unsupported"; inferredCategory: string | null; reason: "unsupported_product" }
+  | { status: "unsupported"; inferredCategory: string | null; unsupportedReason: string; reason: "unsupported_product" }
   | { status: "failed"; reason: "asset_not_found" | "analysis_failed" | "response_shape_mismatch" | "schema_validation_failed" | "id_mismatch" | "persistence_failed" };
 
 function isCurrentProfile(value: unknown): value is ProductProfile {
@@ -52,7 +52,7 @@ export async function persistProductAnalysisResult(input: {
   if (raw && typeof raw === "object" && "output" in raw) {
     validation = raw as ProductAnalysisOutputValidation;
   } else if (raw && typeof raw === "object" && "status" in raw && raw.status === "unsupported") {
-    validation = { output: { status: "unsupported", inferredCategory: "inferredCategory" in raw && typeof raw.inferredCategory === "string" ? raw.inferredCategory : null }, errorPaths: [] };
+    validation = { output: { status: "unsupported", inferredCategory: "inferredCategory" in raw && typeof raw.inferredCategory === "string" ? raw.inferredCategory : null, unsupportedReason: "Provider classified the image as unsupported." }, errorPaths: [] };
   } else if (raw && typeof raw === "object" && "profile" in raw) {
     validation = { output: (raw as { profile: unknown }).profile as ProductProfile, errorPaths: [] };
   } else {
@@ -60,7 +60,7 @@ export async function persistProductAnalysisResult(input: {
   }
   if (!validation.output) return { status: "failed", reason: "schema_validation_failed" };
   if ("status" in validation.output) {
-    return { status: "unsupported", inferredCategory: validation.output.inferredCategory, reason: "unsupported_product" };
+    return { status: "unsupported", inferredCategory: validation.output.inferredCategory, unsupportedReason: validation.output.unsupportedReason || "No supported product category was detected.", reason: "unsupported_product" };
   }
   const candidate = validation.output;
   if (!isCurrentProfile(candidate) || candidate.productId !== asset.id) {

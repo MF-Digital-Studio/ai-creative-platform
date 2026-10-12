@@ -72,7 +72,7 @@ for (const vertical of ["jewelry", "watches", "apparel", "cosmetics", "footwear"
 
 test("unsupported products never write a fake profile", async () => {
   const { repository, response } = await run({ status: "unsupported", inferredCategory: "beverage", profile: null });
-  assert.deepEqual(response, { status: "unsupported", inferredCategory: "beverage", reason: "unsupported_product" });
+  assert.deepEqual(response, { status: "unsupported", inferredCategory: "beverage", unsupportedReason: "Provider classified the image as unsupported.", reason: "unsupported_product" });
   assert.equal(repository.saveCount, 0);
 });
 
@@ -90,13 +90,13 @@ test("validated output wrapper is unwrapped, mapped profile persists, and unsupp
     assetId, userId, model: "fake-vision", repository: new FakeRepository(),
     response: { output: { status: "unsupported", inferredCategory: "beverage" }, errorPaths: [] },
   });
-  assert.deepEqual(unsupported, { status: "unsupported", inferredCategory: "beverage", reason: "unsupported_product" });
+  assert.deepEqual(unsupported, { status: "unsupported", inferredCategory: "beverage", unsupportedReason: "No supported product category was detected.", reason: "unsupported_product" });
 });
 
 test("upload analyzer consumes the validated output wrapper and records validation/persistence", async () => {
   const source = await readFile("src/lib/product-understanding/analyze-product-asset.ts", "utf8");
-  assert.match(source, /const normalizedEnvelope = response as ProductAnalysisOutputValidation/);
-  assert.match(source, /const finalCandidate = normalizedEnvelope\.output/);
+  assert.match(source, /let normalizedEnvelope = response as ProductAnalysisOutputValidation/);
+  assert.match(source, /const candidate = normalizedEnvelope\.output/);
   assert.match(source, /validatedOutputVertical/);
   assert.match(source, /validatedProfilePresent: isProductProfile\(validatedOutput\)/);
   assert.match(source, /logAnalysis\("validated"/);
@@ -176,8 +176,9 @@ function assertStrictSchemaObjects(schema: unknown) {
   }
 }
 
-test("flat model-facing schema uses only required object fields under strict mode", () => {
+test("classification-first schema uses strict required object fields for each status", () => {
   assertStrictSchemaObjects(productAnalysisModelOutputSchema);
+  assert.equal(productAnalysisModelOutputSchema.type, "object");
   assert.equal("anyOf" in productAnalysisModelOutputSchema, false);
   assert.equal("oneOf" in productAnalysisModelOutputSchema, false);
 });
@@ -222,8 +223,7 @@ test("current Responses API output_text flat JSON maps and associates the asset 
 
 test("malformed JSON and schema mismatch produce safe diagnostic paths", () => {
   const validation = validateProductAnalysisModelOutput({ status: "supported", vertical: "bags" }, { assetId, model: "test", analyzedAt: "now" });
-  assert.ok(validation.errorPaths.includes("$.bags"));
-  assert.ok(validation.errorPaths.includes("$.wearability"));
+  assert.ok(validation.errorPaths.includes("$.profile"));
   assert.throws(() => JSON.parse("{\"status\":"));
 });
 

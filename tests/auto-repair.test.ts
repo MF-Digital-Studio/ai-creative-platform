@@ -4,7 +4,7 @@ import test from "node:test";
 import { compileRepairInstructions } from "../src/lib/auto-repair/compile-repair-instructions";
 import { MAX_AUTO_REPAIR_ATTEMPTS } from "../src/lib/auto-repair/repair-version";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
-import { resolveFinalCandidateSelection, resolveGenerationTerminalDecision, selectFinalAttempt } from "../src/lib/auto-repair/select-final-attempt";
+import { mapGenerationTerminalDecisionToStatus, resolveFinalCandidateSelection, resolveGenerationTerminalDecision, selectFinalAttempt } from "../src/lib/auto-repair/select-final-attempt";
 import { resolveRepairEligibility } from "../src/lib/generation/execution-policy/resolve-repair-eligibility";
 import type { GenerationAttempt } from "../src/lib/auto-repair/types";
 import type { FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
@@ -126,6 +126,10 @@ test("final candidate selection records pass and chooses objectively less severe
   assert.equal(resolveGenerationTerminalDecision({ validationStatus: unavailable.validationStatus, qualityGatePassed: unavailable.qualityGatePassed, commerciallyUsable: null }), "succeeded_unverified");
   assert.equal(resolveGenerationTerminalDecision({ validationStatus: "fail", qualityGatePassed: false, commerciallyUsable: false }), "rejected");
   assert.equal(resolveGenerationTerminalDecision({ validationStatus: "pass", qualityGatePassed: true, commerciallyUsable: true }), "succeeded");
+  assert.equal(mapGenerationTerminalDecisionToStatus("succeeded_unverified"), "succeeded");
+  assert.equal(mapGenerationTerminalDecisionToStatus("succeeded"), "succeeded");
+  assert.equal(mapGenerationTerminalDecisionToStatus("rejected"), "failed");
+  assert.equal(resolveGenerationTerminalDecision({ validationStatus: "pass", qualityGatePassed: null, commerciallyUsable: null }), "succeeded");
 });
 
 test("at most one automatic repair is permitted", () => {
@@ -152,4 +156,22 @@ test("scene-only preset mismatch never enters product identity repair", () => {
   const plan = resolveRepairPlan(validation("fail", [sceneIssue]));
   assert.equal(eligibility.reason, "high_confidence_preset_scene_correction");
   assert.ok(!plan.categories.includes("identity_reinforcement"));
+});
+
+test("high-confidence unnatural posture is exposed for local limb repair", () => {
+  const posture = { ...issue("human_posture_unnatural"), category: "human_realism" as const, identityImpact: "none" as const, repairable: true };
+  assert.equal(resolveRepairEligibility({ validation: validation("fail", [posture]), exactProduct: true, hybridProjectionApplied: false, maximumAttemptsRemaining: true }).eligible, true);
+  const plan = resolveRepairPlan(validation("fail", [posture]));
+  assert.equal(plan.shouldRetry, true);
+  assert.deepEqual(plan.categories, ["limb_anatomy_repair"]);
+  assert.deepEqual(plan.issueCodes, ["human_posture_unnatural"]);
+});
+
+test("critical apparel artwork identity failure blocks a posture-only repair", () => {
+  const posture = { ...issue("human_posture_unnatural"), category: "human_realism" as const, identityImpact: "none" as const, repairable: true };
+  const artwork = { ...issue("apparel_artwork_identity_drift", "critical"), category: "product_identity" as const, identityImpact: "critical" as const, repairable: false };
+  const plan = resolveRepairPlan(validation("fail", [posture, artwork]));
+  assert.equal(plan.shouldRetry, false);
+  assert.deepEqual(plan.categories, []);
+  assert.deepEqual(plan.issueCodes, ["human_posture_unnatural", "apparel_artwork_identity_drift"]);
 });

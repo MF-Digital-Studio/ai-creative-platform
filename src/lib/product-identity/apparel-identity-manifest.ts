@@ -9,7 +9,7 @@ export type ApparelIdentityManifest = {
   collarOrNeckline: string | null;
   fitCategory: string | null;
   dominantGarmentColor: string | null;
-  artworkPresent: boolean;
+  artworkPresent: boolean | null;
   artworkSide: "front" | "back" | "unknown";
   artworkBoundingRegion: NormalizedArtworkRegion | null;
   artworkScaleRelativeToGarment: string | null;
@@ -43,7 +43,9 @@ export function resolveApparelArtworkRegion(input: {
     collarOrNeckline: details.hoodOrCollar,
     fitCategory: details.constructionDetails.find((item) => /fit|oversized|slim|relaxed/i.test(item)) ?? null,
     dominantGarmentColor: details.primaryColor ?? input.profile.dominantColors[0] ?? null,
-    artworkPresent: regions.length > 0 || input.profile.visibleBranding.hasArtwork || input.profile.visibleBranding.hasLogo,
+    artworkPresent: regions.length > 0 || input.profile.visibleBranding.hasArtwork === true || input.profile.visibleBranding.hasLogo === true
+      ? true
+      : input.profile.visibleBranding.hasArtwork === false && input.profile.visibleBranding.hasLogo === false ? false : null,
     artworkSide: side,
     artworkBoundingRegion: input.artworkRegion ?? (position ? { ...position, confidence: "profile_estimate" } : null),
     artworkScaleRelativeToGarment: /large|oversized|full/i.test(locationText) ? "large" : regions.length ? "preserve source relative scale" : null,

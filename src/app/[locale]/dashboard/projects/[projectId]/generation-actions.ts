@@ -93,10 +93,11 @@ import { CREATIVE_DIRECTION_COMPLIANCE_VERSION } from "@/lib/creative-direction-
 import { validateGeneratedImageBestEffort } from "@/lib/fidelity-validation/validate-generated-image";
 import { compileRepairInstructions } from "@/lib/auto-repair/compile-repair-instructions";
 import { resolveRepairPlan } from "@/lib/auto-repair/resolve-repair-plan";
-import { resolveFinalCandidateSelection, resolveGenerationTerminalDecision } from "@/lib/auto-repair/select-final-attempt";
+import { mapGenerationTerminalDecisionToStatus, resolveFinalCandidateSelection, resolveGenerationTerminalDecision } from "@/lib/auto-repair/select-final-attempt";
 import { AUTO_REPAIR_VERSION } from "@/lib/auto-repair/repair-version";
 import type { GenerationAttempt, RepairMetadata } from "@/lib/auto-repair/types";
 import { dispatchQueuedGeneration } from "@/lib/generation/dispatch-queued-generation";
+import { logGenerationInsertFailure, resolveCreativeDirectionSnapshot, resolveGenerationInsertResult, serializeGenerationMetadata } from "@/lib/generation/generation-create-boundary";
 import { resolveHumanRealismPolicy } from "@/lib/human-realism/human-realism-policy";
 import { HUMAN_REALISM_VERSION } from "@/lib/human-realism/human-realism-version";
 import { compileHumanRealismPrompt } from "@/lib/human-realism/compile-human-realism-prompt";
@@ -274,6 +275,21 @@ function safeGenerationEvent(scope: "create" | "queue" | "dispatch" | "provider"
   console.info(`[generation-${scope}] ${event}`, fields);
 }
 
+function getSafeGenerationErrorDetails(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return { name: "UnknownError", message: "Unknown generation error", code: null, details: null, hint: null };
+  }
+
+  const value = error as Record<string, unknown>;
+  return {
+    name: typeof value.name === "string" ? value.name : "GenerationError",
+    message: typeof value.message === "string" ? value.message.slice(0, 500) : "Unknown generation error",
+    code: typeof value.code === "string" ? value.code : null,
+    details: typeof value.details === "string" ? value.details.slice(0, 500) : null,
+    hint: typeof value.hint === "string" ? value.hint.slice(0, 500) : null,
+  };
+}
+
 function resolveAspectRatio(value: unknown): AspectRatio {
   return value === "4:5" || value === "3:4" || value === "16:9" || value === "9:16" || value === "4:3" || value === "21:9"
     ? value
@@ -290,6 +306,7 @@ export async function createQueuedImageGeneration(
   _previousState: CreateQueuedImageGenerationResult | null,
   formData?: FormData,
 ): Promise<CreateQueuedImageGenerationResult> {
+  let createPhase: "before_insert" | "inserting" | "inserted" = "before_insert";
   safeGenerationEvent("create", "entered");
   const enhancementEnabled = formData ? formData.get("enhance_with_ai") === "on" : true;
   const rawAspectRatio = formData?.get("aspect_ratio") ?? DEFAULT_GENERATION_ASPECT_RATIO;
@@ -326,7 +343,11 @@ export async function createQueuedImageGeneration(
     const presetFamily = preset ? getPresetFamily(preset.id) : null;
     const selectedPresentationMode = getPresetPresentationMode(presetFamily?.id, formData?.get("presentation_mode"))?.id ?? null;
     const creativeDirection = buildCreativePresetDirection(userCreativeDirection, preset);
-    if (!creativeDirection || Array.from(userCreativeDirection).length > 4000) {
+    const creativeDirectionSnapshot = resolveCreativeDirectionSnapshot(
+      creativeDirection,
+      userCreativeDirection || `Preset: ${preset?.title ?? "selected"}`,
+    );
+    if (!creativeDirectionSnapshot) {
       return { ok: false, message: "missingCreativeDirection" };
     }
     safeGenerationEvent("create", "inputs_validated");
@@ -348,8 +369,50 @@ export async function createQueuedImageGeneration(
 
     const references = await getProjectReferenceAssets(userId, project.id);
     const admin = getSupabaseAdminClient();
+    const providerMetadata = serializeGenerationMetadata({
+      outputFormat: { requestedAspectRatio: aspectRatio, version: "output-format-v1" },
+      prompt_enhancement: {
+        enabled: enhancementEnabled,
+        enhanced_prompt: null,
+        succeeded: false,
+        user_prompt: userCreativeDirection,
+      },
+      ...(preset ? { preset: { ...createCreativePresetMetadata(preset), ...(presetFamily ? { variantSeed: crypto.randomUUID(), variationSource: "generation_seed", selectedPresetFamily: presetFamily.id, selectedPresentationMode, presentationModeSource: selectedPresentationMode ? "user" : "automatic" } : {}) } } : {}),
+      strategy: {
+        effective_preservation_mode: strategyResolution.effectivePreservationMode,
+        reason: strategyResolution.reason,
+        selected: strategyResolution.strategy,
+      },
+      references: {
+        mode: "inspired" satisfies ReferenceMode,
+        requested_count: references.length,
+        usable_count: 0,
+        asset_ids: references.map((reference) => reference.id),
+        referenceGuidance: {
+          version: "reference-priority-v1",
+          primaryReferenceId: references[0]?.id ?? null,
+          supportingReferenceIds: references.slice(1).map((reference) => reference.id),
+          primaryAuthority: ["scene", "composition", "pose", "camera", "framing"],
+          supportingAuthority: ["lighting", "mood", "color", "styling", "atmosphere"],
+        },
+        analysis: {
+          enabled: references.length > 0,
+          succeeded: false,
+          model: references.length > 0 ? getReferenceAnalysisModel() : null,
+          version: REFERENCE_ANALYSIS_VERSION,
+        },
+      },
+      product_images: {
+        version: "multi-view-product-input-v1",
+        asset_ids: productAssets.map(({ id }) => id),
+        primary_asset_id: asset.id,
+        supporting_asset_ids: productAssets.slice(1).map(({ id }) => id),
+        same_physical_product: true,
+      },
+    });
+    createPhase = "inserting";
     safeGenerationEvent("create", "insert_start");
-    const { data: generation, error: generationError } = await admin
+    const insertResult = await admin
       .from("generations")
       .insert({
         project_id: project.id,
@@ -365,59 +428,27 @@ export async function createQueuedImageGeneration(
           strategyResolution.effectivePreservationMode === "reference_edit"
             ? "not_available"
             : "not_checked",
-        creative_direction_snapshot: creativeDirection,
-        provider_metadata: {
-          outputFormat: { requestedAspectRatio: aspectRatio, version: "output-format-v1" },
-          prompt_enhancement: {
-            enabled: enhancementEnabled,
-            enhanced_prompt: null,
-            succeeded: false,
-            user_prompt: userCreativeDirection,
-          },
-          ...(preset ? { preset: { ...createCreativePresetMetadata(preset), ...(presetFamily ? { variantSeed: crypto.randomUUID(), variationSource: "generation_seed", selectedPresetFamily: presetFamily.id, selectedPresentationMode, presentationModeSource: selectedPresentationMode ? "user" : "automatic" } : {}) } } : {}),
-          strategy: {
-            effective_preservation_mode: strategyResolution.effectivePreservationMode,
-            reason: strategyResolution.reason,
-            selected: strategyResolution.strategy,
-          },
-          references: {
-            mode: "inspired" satisfies ReferenceMode,
-            requested_count: references.length,
-            usable_count: 0,
-            asset_ids: references.map((reference) => reference.id),
-            referenceGuidance: {
-              version: "reference-priority-v1",
-              primaryReferenceId: references[0]?.id ?? null,
-              supportingReferenceIds: references.slice(1).map((reference) => reference.id),
-              primaryAuthority: ["scene", "composition", "pose", "camera", "framing"],
-              supportingAuthority: ["lighting", "mood", "color", "styling", "atmosphere"],
-            },
-            analysis: {
-              enabled: references.length > 0,
-              succeeded: false,
-              model: references.length > 0 ? getReferenceAnalysisModel() : null,
-              version: REFERENCE_ANALYSIS_VERSION,
-            },
-          },
-          product_images: {
-            version: "multi-view-product-input-v1",
-            asset_ids: productAssets.map(({ id }) => id),
-            primary_asset_id: asset.id,
-            supporting_asset_ids: productAssets.slice(1).map(({ id }) => id),
-            same_physical_product: true,
-          },
-        },
+        creative_direction_snapshot: creativeDirectionSnapshot,
+        provider_metadata: providerMetadata,
       })
       .select("id")
       .single();
-
-    if (generationError || !generation) {
+    const resolvedInsert = resolveGenerationInsertResult(insertResult);
+    if (!resolvedInsert.ok) {
       return { ok: false, message: "creationFailed" };
     }
+    const generation = resolvedInsert.generation;
+    createPhase = "inserted";
 
     safeGenerationEvent("create", "insert_success", { generationId: generation.id });
     safeGenerationEvent("queue", "created", { generationId: generation.id });
-    const dispatchSucceeded = await dispatchQueuedGeneration(generation.id);
+    let dispatchSucceeded = false;
+    try {
+      dispatchSucceeded = await dispatchQueuedGeneration(generation.id);
+    } catch (error) {
+      const safeError = error instanceof Error ? error.message.slice(0, 500) : "unknown dispatch error";
+      safeGenerationEvent("dispatch", "failed", { generationId: generation.id, error: safeError });
+    }
     if (!dispatchSucceeded) {
       const completedAt = new Date();
       const { data: failedGeneration, error: dispatchFailureError } = await admin.from("generations").update({ status: "failed", error_message: "dispatch_failed", processing_completed_at: completedAt.toISOString() })
@@ -434,7 +465,9 @@ export async function createQueuedImageGeneration(
     revalidatePath(`/${locale}/dashboard/projects/${project.id}`, "page");
 
     return { ok: true, generationId: generation.id };
-  } catch {
+  } catch (error) {
+    if (createPhase === "inserting") logGenerationInsertFailure(error);
+    else console.error("[generation-create] action_failed", { phase: createPhase, message: error instanceof Error ? error.message.slice(0, 500) : "unknown creation error" });
     return { ok: false, message: "creationFailed" };
   }
 }
@@ -463,6 +496,10 @@ export async function runQueuedImageGeneration(
   const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, referenceAnalysisCalls: 0, artworkAnalysisCalls: 0, segmentationCalls: 0, projectionAnalysisCalls: 0, repairCalls: 0 };
   safeGenerationEvent("queue", "processor_entered", { generationId });
   let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null } | null = null;
+  let outputStored = false;
+  let terminalSuccessPersisted = false;
+  let postStorageStep = "storage";
+  let postStorageError: unknown = null;
 
   try {
     const supabase = admin;
@@ -1134,6 +1171,7 @@ export async function runQueuedImageGeneration(
       version: APPAREL_FIT_PRESERVATION_VERSION,
       active: apparelFitPolicy.active,
       authoritySource: apparelFitPolicy.profile?.authoritySource ?? null,
+      profileCompleteness: apparelFitPolicy.profile ? `${Object.values(apparelFitPolicy.profile).filter((value) => value !== null && value !== "" && (!Array.isArray(value) || value.length > 0)).length}/ ${Object.keys(apparelFitPolicy.profile).length} known fields` : "unavailable",
       summary: apparelFitPolicy.profile ? JSON.stringify({ garmentCategory: apparelFitPolicy.profile.garmentCategory, silhouette: apparelFitPolicy.profile.silhouette, fitType: apparelFitPolicy.profile.fitType, bodyLength: apparelFitPolicy.profile.bodyLength, materialClass: apparelFitPolicy.profile.materialClass, drapeBehavior: apparelFitPolicy.profile.drapeBehavior, sourceViewCount: apparelFitPolicy.profile.sourceViewCount }) : null,
     });
     let hybridProjectionMetadata: Record<string, unknown> | null = null;
@@ -1306,7 +1344,13 @@ export async function runQueuedImageGeneration(
     const projectionReady = hybridProjectionMetadata?.applied === true;
     const repairEligibility = resolveRepairEligibility({ validation: fidelityValidation, exactProduct: apparelFidelityMode.exactProductApparel, hybridProjectionApplied: hybridProjectionMetadata?.applied === true, hybridProjectionEnabled: hybridEligible, hybridProjectionReady: projectionReady, maximumAttemptsRemaining: true });
     const mappedRepairPlan = resolveRepairPlan(fidelityValidation);
-    const repairPlan = repairEligibility.eligible ? mappedRepairPlan : { ...mappedRepairPlan, shouldRetry: false, categories: [], issueCodes: [], repairInstructions: [] };
+    logDevelopmentGenerationEvent("repair_input_normalized", {
+      issueCodes: fidelityValidation.issues.map(({ code }) => code),
+      severities: fidelityValidation.issues.map(({ severity }) => severity),
+      confidences: fidelityValidation.issues.map(({ confidence }) => String(confidence ?? 0.9)),
+      repairableIssueCodes: mappedRepairPlan.repairableIssueCodes,
+    });
+    const repairPlan = repairEligibility.eligible ? mappedRepairPlan : { ...mappedRepairPlan, shouldRetry: false, categories: [], repairInstructions: [] };
     const jewelryReferenceRepair = productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 && repairPlan.shouldRetry && repairPlan.issueCodes.every((code) => code.toLowerCase().startsWith("jewelry_"));
     if (productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 && fidelityValidation.status !== "validation_unavailable") {
       const criticalIssueCount = fidelityValidation.issues.filter(({ category, severity }) => category === "product_identity" && severity === "critical").length;
@@ -1514,6 +1558,7 @@ export async function runQueuedImageGeneration(
     if (uploadError) {
       throw new Error("Unable to upload the generated image.");
     }
+    outputStored = true;
 
     const processingCompletedAt = new Date();
     const humanRealismMetadata: HumanRealismMetadata = {
@@ -1529,11 +1574,13 @@ export async function runQueuedImageGeneration(
       validationResult: selectedValidation.status,
       repairType: selectedAttempt.attempt === 1 ? repairPlan.categories.join(",") || "repair" : null,
     };
+    postStorageStep = "persist_terminal_state";
+    console.info("[generation-post-storage] step_start", { generationId, step: postStorageStep });
     const stageDurations = performance.finish();
     const { data: completedGeneration, error: completionError } = await admin
       .from("generations")
       .update({
-        status: "succeeded",
+        status: mapGenerationTerminalDecisionToStatus(terminalDecision),
         output_bucket_id: generatedAssetsBucket,
         output_object_path: outputObjectPath,
         output_mime_type:
@@ -1542,7 +1589,6 @@ export async function runQueuedImageGeneration(
           typeof selectedProviderResult.providerMetadata?.requestId === "string"
             ? selectedProviderResult.providerMetadata.requestId
             : null,
-        creative_direction_snapshot: fallbackCreativeDirection,
         preservation_mode: effectivePreservationMode,
         fidelity_status: fidelityStatus,
         fidelity_score: fidelityScore,
@@ -1557,6 +1603,8 @@ export async function runQueuedImageGeneration(
           qualityGatePassed,
           qualityRejected: finalSelection.validationStatus === "validation_unavailable" ? false : qualityGatePassed === false,
           validationUnavailable: finalSelection.validationStatus === "validation_unavailable",
+          validationStatus: selectedValidation.status,
+          verificationStatus: terminalDecision === "succeeded_unverified" ? "unverified" : "verified",
           humanRealism: humanRealismMetadata,
           apparelFitProfileVersion: APPAREL_FIT_PRESERVATION_VERSION,
           apparelFitPreservationActive: apparelFitPolicy.active,
@@ -1728,11 +1776,30 @@ export async function runQueuedImageGeneration(
       .select("id")
       .maybeSingle();
     if (completionError || !completedGeneration) {
-      throw new Error("Unable to save the generated image.");
+      postStorageError = completionError ?? new Error("Terminal generation update did not match a processing row.");
+      console.error("[generation] terminal_persistence_failed", {
+        generationId,
+        outputStored,
+        ...getSafeGenerationErrorDetails(postStorageError),
+      });
+      throw postStorageError;
     }
+    terminalSuccessPersisted = true;
+    console.info("[generation-post-storage] step_success", { generationId, step: postStorageStep });
     safeGenerationEvent("queue", "status_transition", { generationId, status: "succeeded" });
-    await createNotification({ userId, type: "generation_completed", projectId: project.id, projectName: project.title, generationId: queuedGeneration.id });
 
+    postStorageStep = "create_notification";
+    console.info("[generation-post-storage] step_start", { generationId, step: postStorageStep });
+    try {
+      const notificationCreated = await createNotification({ userId, type: "generation_completed", projectId: project.id, projectName: project.title, generationId: queuedGeneration.id });
+      if (!notificationCreated) console.warn("[generation-post-storage] step_warning", { generationId, step: postStorageStep, reason: "notification_not_created" });
+      else console.info("[generation-post-storage] step_success", { generationId, step: postStorageStep });
+    } catch (error) {
+      console.warn("[generation-post-storage] step_warning", { generationId, step: postStorageStep, ...getSafeGenerationErrorDetails(error) });
+    }
+
+    postStorageStep = "emit_success_events";
+    console.info("[generation-post-storage] step_start", { generationId, step: postStorageStep });
     logDevelopmentGenerationEvent("succeeded", {
       effectivePreservationMode,
       fidelityStatus,
@@ -1740,9 +1807,30 @@ export async function runQueuedImageGeneration(
       requestedPreservationMode,
     });
     safeGenerationEvent("queue", "processor_exit", { generationId, status: "succeeded" });
+    console.info("[generation-post-storage] step_success", { generationId, step: postStorageStep });
 
     return { ok: true };
   } catch (error) {
+    if (terminalSuccessPersisted) {
+      console.warn("[generation] post_storage_exception", {
+        generationId,
+        outputStored,
+        terminalSuccessPersisted,
+        step: postStorageStep,
+        ...getSafeGenerationErrorDetails(error),
+      });
+      safeGenerationEvent("queue", "processor_exit", { generationId, status: "succeeded" });
+      return { ok: true };
+    }
+    if (outputStored || postStorageError) {
+      console.error("[generation] post_storage_exception", {
+        generationId,
+        outputStored,
+        terminalSuccessPersisted,
+        step: postStorageStep,
+        ...getSafeGenerationErrorDetails(postStorageError ?? error),
+      });
+    }
     if (providerDiagnosticContext) {
       safeGenerationEvent("queue", "provider_error", { generationId, provider: providerDiagnosticContext.provider, model: providerDiagnosticContext.model });
       console.error("[generation] provider_error", getSafeProviderErrorDiagnostics(error, {

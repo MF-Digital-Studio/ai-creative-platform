@@ -35,7 +35,19 @@ export function resolveApparelFitProfile(profile: unknown, sourceViewCount = 1):
     rigidityLevel: profile.rigidity,
     textureCharacter: find([...materials, ...construction], /texture|grain|knit|denim|leather|nylon|satin|cotton|rib/i),
     sourceViewCount: Math.max(1, sourceViewCount),
-    authoritySource: sourceViewCount > 1 ? "source_product_multiview" : "source_product_image",
+    authoritySource: "product_profile",
+    confidence: "high",
+  };
+}
+
+function sourceFallbackProfile(sourceViewCount: number): ApparelFitProfile {
+  return {
+    version: APPAREL_FIT_PRESERVATION_VERSION,
+    garmentCategory: null, silhouette: null, fitType: null, bodyLength: null, sleeveLength: null,
+    sleeveVolume: null, shoulderShape: null, hemStructure: null, cuffStructure: null, collarStructure: null,
+    closureType: null, pocketCount: null, pocketPlacement: [], panelStructure: [], materialClass: null,
+    materialFinish: null, drapeBehavior: null, rigidityLevel: null, textureCharacter: null,
+    sourceViewCount: Math.max(1, sourceViewCount), authoritySource: "source_product_fallback", confidence: "limited",
   };
 }
 
@@ -44,8 +56,14 @@ export function resolveApparelFitPreservation(input: {
   strategy: GenerationStrategy;
   humanExpected: boolean;
   productOnly: boolean;
+  vertical?: string | null;
+  sourceProductExists?: boolean;
+  presentationMode?: string | null;
   sourceViewCount?: number;
 }): ApparelFitPreservationPolicy {
-  const profile = resolveApparelFitProfile(input.profile, input.sourceViewCount);
-  return { profile, active: Boolean(profile && input.strategy === "fashion_on_model" && input.humanExpected && !input.productOnly) };
+  const validProfile = resolveApparelFitProfile(input.profile, input.sourceViewCount);
+  const profile = validProfile ?? (input.vertical === "apparel" && input.sourceProductExists ? sourceFallbackProfile(input.sourceViewCount ?? 1) : null);
+  const onModel = input.strategy === "fashion_on_model" || input.presentationMode === "model_studio" || input.presentationMode === "seated_urban_moment";
+  const active = input.vertical === "apparel" && input.sourceProductExists === true && input.humanExpected && onModel && !input.productOnly;
+  return { profile, active };
 }

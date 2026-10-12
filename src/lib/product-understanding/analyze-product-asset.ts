@@ -11,9 +11,11 @@ import {
   createProductAnalysisInput,
   productAnalysisModelOutputSchema,
   getProductAnalysisOutputErrorPaths,
+  normalizeProductVertical,
   validateProductAnalysisModelOutput,
   type ProductAnalysisOutputValidation,
 } from "./product-analysis-model-output";
+import { decideProductAnalysisCache, isCurrentProductAnalysisCacheStatus, type ProductAnalysisCacheStatus } from "./product-analysis-cache";
 
 import {
   isProductProfile,
@@ -32,16 +34,9 @@ type AnalysisAsset = {
   productAnalysisStatus?: unknown;
 };
 
-type ProductAnalysisStatus = {
-  status: "valid" | "unsupported" | "failed_transient";
-  assetId: string;
-  objectPath: string;
-  analyzerVersion: string;
-  schemaVersion: number;
-  model: string;
+type ProductAnalysisStatus = ProductAnalysisCacheStatus & {
   attemptedAt: string;
   inferredCategory?: string | null;
-  retryAfter?: string;
 };
 
 type ProductUnderstandingRepository = {
@@ -59,7 +54,7 @@ export type ProductAnalysisFailureReason = "asset_not_found" | "asset_unavailabl
 
 export type ProductAnalysisResult =
   | { status: "supported"; profile: ProductProfile; reused: boolean }
-  | { status: "unsupported"; inferredCategory: string | null; reason: "unsupported_product" }
+  | { status: "unsupported"; inferredCategory: string | null; unsupportedReason: string; reason: "unsupported_product" }
   | { status: "failed"; reason: ProductAnalysisFailureReason };
 
 export type AnalyzeProductAssetOptions = {
@@ -67,6 +62,17 @@ export type AnalyzeProductAssetOptions = {
   force?: boolean;
   userId: string;
 };
+
+function normalizeUnsupportedClassification(input: { rawCategory: string | null; reason: string | null; assetId: string }): ProductAnalysisOutputValidation {
+  const validation = validateProductAnalysisModelOutput({
+    status: "unsupported", vertical: null, rawCategory: input.rawCategory ?? "", subcategory: null,
+    unsupportedReason: input.reason ?? "", profile: null,
+  }, { assetId: input.assetId, model: getProductUnderstandingModel(), analyzedAt: new Date().toISOString() });
+  if (validation.output && !("status" in validation.output)) {
+    logAnalysis("unsupported_recovered", { assetId: input.assetId, rawCategory: input.rawCategory, resolvedVertical: validation.output.vertical, reason: "Supported category evidence overrides contradictory unsupported status." });
+  }
+  return validation;
+}
 
 const analysisImageMaximum = 2048;
 
@@ -80,14 +86,6 @@ function isUnsupportedResponse(value: unknown): value is { status: "unsupported"
   return Boolean(
     value && typeof value === "object" && "status" in value && (value as { status?: unknown }).status === "unsupported",
   );
-}
-
-function currentAnalysisStatus(asset: AnalysisAsset): ProductAnalysisStatus | null {
-  const value = asset.productAnalysisStatus;
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const status = value as Partial<ProductAnalysisStatus>;
-  if (status.assetId !== asset.id || status.objectPath !== asset.objectPath || status.analyzerVersion !== PRODUCT_PROFILE_ANALYSIS_VERSION || status.schemaVersion !== PRODUCT_PROFILE_SCHEMA_VERSION || status.model !== getProductUnderstandingModel()) return null;
-  return status.status === "valid" || status.status === "unsupported" || status.status === "failed_transient" ? status as ProductAnalysisStatus : null;
 }
 
 function logAnalysis(event: string, details: Record<string, string | number | boolean | null>) {
@@ -123,16 +121,29 @@ export async function analyzeProductAssetWithDependencies(
   const asset = await dependencies.repository.findOwnedProductAsset(options.userId, options.assetId);
   if (!asset) return { status: "failed", reason: "asset_not_found" };
 
-  if (!options.force && isCurrentProfile(asset.productProfile)) {
+  const priorStatus = asset.productAnalysisStatus && typeof asset.productAnalysisStatus === "object" ? asset.productAnalysisStatus as Partial<ProductAnalysisStatus> : null;
+  const priorVersion = isCurrentProfile(asset.productProfile) ? asset.productProfile.analysisVersion : priorStatus?.analyzerVersion ?? null;
+  const previousState = isCurrentProfile(asset.productProfile) ? "supported" : priorStatus?.status ?? "uncached";
+  if (options.force) logAnalysis("forced_reanalysis", { assetId: asset.id, previousState, previousVersion: priorVersion, newVersion: PRODUCT_PROFILE_ANALYSIS_VERSION });
+
+  const cacheDecision = decideProductAnalysisCache({
+    force: Boolean(options.force), currentProfile: isCurrentProfile(asset.productProfile), status: asset.productAnalysisStatus,
+    identity: { assetId: asset.id, objectPath: asset.objectPath, model: getProductUnderstandingModel() },
+  });
+  if (cacheDecision === "reuse_supported" && isCurrentProfile(asset.productProfile)) {
+    logAnalysis("cache_decision", { assetId: asset.id, decision: "hit", state: "supported", version: PRODUCT_PROFILE_ANALYSIS_VERSION });
     return { status: "supported", profile: asset.productProfile, reused: true };
   }
-  const cachedStatus = currentAnalysisStatus(asset);
-  if (!options.force && cachedStatus?.status === "unsupported") {
-    return { status: "unsupported", inferredCategory: cachedStatus.inferredCategory ?? null, reason: "unsupported_product" };
+  if (cacheDecision === "reuse_unsupported" && isCurrentProductAnalysisCacheStatus(asset.productAnalysisStatus, { assetId: asset.id, objectPath: asset.objectPath, analyzerVersion: PRODUCT_PROFILE_ANALYSIS_VERSION, schemaVersion: PRODUCT_PROFILE_SCHEMA_VERSION, model: getProductUnderstandingModel() })) {
+    const cachedStatus = asset.productAnalysisStatus as ProductAnalysisStatus;
+    logAnalysis("cache_decision", { assetId: asset.id, decision: "hit", state: "unsupported", version: PRODUCT_PROFILE_ANALYSIS_VERSION });
+    return { status: "unsupported", inferredCategory: cachedStatus.inferredCategory ?? null, unsupportedReason: "Previously classified as unsupported.", reason: "unsupported_product" };
   }
-  if (!options.force && cachedStatus?.status === "failed_transient" && cachedStatus.retryAfter && Date.parse(cachedStatus.retryAfter) > Date.now()) {
+  if (cacheDecision === "respect_retry_window") {
+    logAnalysis("cache_decision", { assetId: asset.id, decision: "hit", state: "failed_transient", version: PRODUCT_PROFILE_ANALYSIS_VERSION });
     return { status: "failed", reason: "analysis_failed" };
   }
+  logAnalysis("cache_decision", { assetId: asset.id, decision: options.force ? "forced_miss" : "miss", state: previousState, version: PRODUCT_PROFILE_ANALYSIS_VERSION });
 
   const saveStatus = async (status: ProductAnalysisStatus["status"], inferredCategory?: string | null) => {
     const attemptedAt = new Date();
@@ -157,6 +168,11 @@ export async function analyzeProductAssetWithDependencies(
     const record = response && typeof response === "object" && !Array.isArray(response) ? response as Record<string, unknown> : null;
     const validatedOutput = record && "output" in record ? record.output : null;
     const validatedRecord = validatedOutput && typeof validatedOutput === "object" && !Array.isArray(validatedOutput) ? validatedOutput as Record<string, unknown> : null;
+    const rawRecord = validatedRecord ?? record;
+    const providerSummary = record?.providerSummary && typeof record.providerSummary === "object" ? record.providerSummary as Record<string, unknown> : null;
+    const rawVertical = typeof providerSummary?.rawVertical === "string" ? providerSummary.rawVertical : typeof rawRecord?.vertical === "string" ? rawRecord.vertical : null;
+    const rawCategory = typeof providerSummary?.rawCategory === "string" ? providerSummary.rawCategory : typeof rawRecord?.rawCategory === "string" ? rawRecord.rawCategory : typeof rawRecord?.inferredCategory === "string" ? rawRecord.inferredCategory : null;
+    const normalizedVertical = normalizeProductVertical(rawVertical, rawCategory, providerSummary?.rawSubcategory ?? rawRecord?.subcategory);
     responseDiagnostics = {
       responseCategory: response && typeof response === "object" ? Array.isArray(response) ? "array" : "object" : response === null ? "null" : typeof response,
       topLevelKeys: record ? Object.keys(record).join(",").slice(0, 300) : "",
@@ -171,6 +187,19 @@ export async function analyzeProductAssetWithDependencies(
       validatedOutputVertical: typeof validatedRecord?.vertical === "string" ? validatedRecord.vertical : null,
       validatedProfilePresent: isProductProfile(validatedOutput),
     };
+    logAnalysis("provider_structured_output", {
+      assetId: asset.id,
+      status: typeof providerSummary?.status === "string" ? providerSummary.status : typeof rawRecord?.status === "string" ? rawRecord.status : null,
+      rawVertical, rawCategory,
+      rawSubcategory: typeof providerSummary?.rawSubcategory === "string" ? providerSummary.rawSubcategory : typeof rawRecord?.subcategory === "string" ? rawRecord.subcategory : null,
+      hasProfile: typeof providerSummary?.hasProfile === "boolean" ? providerSummary.hasProfile : Boolean(rawRecord && rawRecord.profile && typeof rawRecord.profile === "object"),
+      confidence: typeof providerSummary?.confidence === "number" ? providerSummary.confidence : rawRecord?.profile && typeof rawRecord.profile === "object" && "confidence" in rawRecord.profile ? Number((rawRecord.profile as { confidence?: unknown }).confidence) || null : null,
+      schemaErrorPaths: record && Array.isArray(record.errorPaths) ? record.errorPaths.filter((path): path is string => typeof path === "string").slice(0, 12).join(",") : "",
+      normalizationResult: normalizedVertical,
+    });
+    if (providerSummary?.status === "unsupported" && normalizedVertical && isProductProfile(validatedOutput)) {
+      logAnalysis("unsupported_recovered", { assetId: asset.id, rawCategory, resolvedVertical: normalizedVertical, reason: "Supported category evidence overrides contradictory unsupported status." });
+    }
   } catch (error) {
     const diagnostic = getOpenAIDiagnostic(error);
     logAnalysis("openai_error", {
@@ -189,13 +218,7 @@ export async function analyzeProductAssetWithDependencies(
   logAnalysis("provider_response_received", { assetId: asset.id, ...responseDiagnostics });
 
   if (isUnsupportedResponse(response)) {
-    logAnalysis("unsupported", {
-      assetId: asset.id,
-      inferredCategory: response.inferredCategory,
-      analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION,
-    });
-    await saveStatus("unsupported", response.inferredCategory);
-    return { status: "unsupported", inferredCategory: response.inferredCategory, reason: "unsupported_product" };
+    response = normalizeUnsupportedClassification({ rawCategory: response.inferredCategory, reason: "Provider classified the image as unsupported.", assetId: asset.id });
   }
 
   if (!response || typeof response !== "object" || Array.isArray(response)) {
@@ -206,6 +229,14 @@ export async function analyzeProductAssetWithDependencies(
       profileFieldPresent: false,
     });
     return { status: "failed", reason: response === null || response === undefined ? "provider_empty_response" : "response_shape_mismatch" };
+  }
+
+  const directEnvelope = response as Record<string, unknown>;
+  if (directEnvelope.status === "unsupported") {
+    const nestedOutput = directEnvelope.output && typeof directEnvelope.output === "object" ? directEnvelope.output as Record<string, unknown> : null;
+    const rawCategory = typeof directEnvelope.inferredCategory === "string" ? directEnvelope.inferredCategory : typeof nestedOutput?.inferredCategory === "string" ? nestedOutput.inferredCategory : typeof directEnvelope.rawCategory === "string" ? directEnvelope.rawCategory : null;
+    const reason = typeof directEnvelope.unsupportedReason === "string" ? directEnvelope.unsupportedReason : typeof nestedOutput?.unsupportedReason === "string" ? nestedOutput.unsupportedReason : null;
+    response = normalizeUnsupportedClassification({ rawCategory, reason, assetId: asset.id });
   }
 
   const envelope = response as ProductAnalysisOutputValidation;
@@ -223,12 +254,7 @@ export async function analyzeProductAssetWithDependencies(
     }
     response = { output: profile, errorPaths: [] } satisfies ProductAnalysisOutputValidation;
   }
-  if ("status" in envelope && envelope.status === "unsupported") {
-    const inferredCategory = envelope.output && "status" in envelope.output ? envelope.output.inferredCategory : null;
-    await saveStatus("unsupported", inferredCategory);
-    return { status: "unsupported", inferredCategory, reason: "unsupported_product" };
-  }
-  const normalizedEnvelope = response as ProductAnalysisOutputValidation;
+  let normalizedEnvelope = response as ProductAnalysisOutputValidation;
   if (!normalizedEnvelope.output) {
     const paths = normalizedEnvelope.errorPaths;
     if (paths.includes("$.json")) {
@@ -242,11 +268,27 @@ export async function analyzeProductAssetWithDependencies(
   }
   if ("status" in normalizedEnvelope.output) {
     const inferredCategory = normalizedEnvelope.output.inferredCategory;
-    logAnalysis("unsupported", { assetId: asset.id, inferredCategory, analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION });
-    await saveStatus("unsupported", inferredCategory);
-    return { status: "unsupported", inferredCategory, reason: "unsupported_product" };
+    const canonical = normalizeUnsupportedClassification({ rawCategory: inferredCategory, reason: normalizedEnvelope.output.unsupportedReason, assetId: asset.id });
+    if (!canonical.output) {
+      logAnalysis("failed", { assetId: asset.id, reason: "schema_validation_failed", schemaErrorPaths: canonical.errorPaths.slice(0, 12).join(",") });
+      return { status: "failed", reason: "schema_validation_failed" };
+    }
+    if (!("status" in canonical.output)) {
+      normalizedEnvelope = canonical;
+    } else {
+      logAnalysis("unsupported", { assetId: asset.id, inferredCategory, analysisVersion: PRODUCT_PROFILE_ANALYSIS_VERSION });
+      await saveStatus("unsupported", inferredCategory);
+      return { status: "unsupported", inferredCategory, unsupportedReason: canonical.output.unsupportedReason, reason: "unsupported_product" };
+    }
   }
-  const finalCandidate = normalizedEnvelope.output;
+  const candidate = normalizedEnvelope.output;
+  if (!candidate || "status" in candidate) {
+    logAnalysis("failed", { assetId: asset.id, reason: "schema_validation_failed", schemaErrorPaths: "$.profile" });
+    return { status: "failed", reason: "schema_validation_failed" };
+  }
+  const finalCandidate: ProductProfile = candidate;
+  logAnalysis("classification_normalized", { assetId: asset.id, vertical: finalCandidate.vertical, resolvedVertical: finalCandidate.vertical, subcategory: finalCandidate.subcategory, status: "supported" });
+  logAnalysis("profile_validation_result", { assetId: asset.id, valid: isCurrentProfile(finalCandidate), profilePresent: true, validatedProfilePresent: true, confidence: finalCandidate.confidence.overall });
   if (!isCurrentProfile(finalCandidate)) {
     const errorPaths = getProductAnalysisOutputErrorPaths(finalCandidate);
     logAnalysis("failed", { assetId: asset.id, reason: "schema_validation_failed", schemaErrorPaths: errorPaths.slice(0, 12).join(",") });
@@ -398,14 +440,11 @@ export const legacyProductProfileSchema = {
 } as const;
 
 const analyzerInstructions = [
-  "Analyze the supplied image as a product-understanding task.",
-  "The product image is authoritative. Describe only visible, reasonably supported evidence; never invent hidden attributes.",
-  "Do not assume brand, material composition, gemstone chemistry, exact color names, product function, or unreadable text. Prefer cautious visual descriptions such as silver-colored metal or blue center stone.",
-  "Classify apparel, jewelry, watches, cosmetics, footwear, or bags. Handbags, shoulder bags, crossbody bags, totes, clutches, backpacks, mini bags, bucket bags, structured bags, and satchels use vertical bags. If the product does not clearly fit one, return status unsupported with no profile.",
-  "For bags, preserve visible source evidence for bag type, silhouette and proportions, body structure, handles and attachment points, strap presence and placement, closure/flap/opening, zipper, pocket layout, seams/panels, stitch and edge treatment, hardware position/color, logo/monogram, material/texture, color blocking, pattern, base/feet, chain strap, charms, and asymmetric details. Do not invent hidden features; the source image is authoritative.",
-  "For supported products, produce the complete flat analysis object defined by the response schema. Fill every required key; use null only where the schema permits it and for non-applicable vertical blocks. Keep identity-critical attributes concise and visual.",
-  "Branding regions are semantic locations, not required OCR. Never fabricate exact words.",
-  "Derive conservative transformations and scene tags. The profile is an interpretation, never a replacement for the source image.",
+  "Analyze the supplied image as a product-understanding task. Follow two stages in order.",
+  "STEP 1 — CLASSIFY: choose exactly one supported vertical whenever the visible product reasonably matches apparel (garments worn on the body), jewelry (rings, necklaces, earrings, bracelets, pendants, chains), watches (wristwatches/timepieces), cosmetics (beauty packaging/products), footwear (shoes, sneakers, boots, sandals, heels), or bags (handbags, backpacks, shoulder/crossbody bags, totes, clutches). Classification should be conservative but decisive, not require perfect certainty.",
+  "Return unsupported only if the image is unusable, visibility prevents safe classification, or the product clearly falls outside all six verticals. Never downgrade a supported product because its subcategory, branding, material, fit, or construction detail is unknown, or because only one view is supplied. Unsupported requires a concise reason and attempted rawCategory evidence.",
+  "STEP 2 — PROFILE: after choosing a vertical, fill the partial-safe profile from visible evidence. Unknown details are null or empty. At minimum provide confidence, visibleProductCount, identitySummary, and sourceObservations. Optional material, silhouette, closure, and interactionRules may be null/empty.",
+  "The source image is authoritative. Do not invent hidden attributes, brand, material composition, gemstone chemistry, exact color names, product function, or unreadable text. Use cautious visual wording such as silver-colored metal.",
 ].join("\n");
 
 export function getProductUnderstandingModel() {

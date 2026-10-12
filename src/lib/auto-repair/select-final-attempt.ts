@@ -67,6 +67,11 @@ export function resolveFinalCandidateSelection(original: GenerationAttempt, repa
 }
 
 export type GenerationTerminalDecision = "succeeded" | "succeeded_unverified" | "rejected";
+export type PersistedGenerationTerminalStatus = "succeeded" | "failed";
+
+export function mapGenerationTerminalDecisionToStatus(decision: GenerationTerminalDecision): PersistedGenerationTerminalStatus {
+  return decision === "rejected" ? "failed" : "succeeded";
+}
 
 export function resolveGenerationTerminalDecision(input: {
   validationStatus: GenerationAttempt["validation"]["status"];

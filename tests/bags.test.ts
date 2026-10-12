@@ -59,7 +59,7 @@ test("handbag, tote, shoulder bag, and backpack are classified as bags", () => {
     assert.equal(result && "vertical" in result ? result.vertical : null, "bags", subtype);
     assert.equal(result && "subcategory" in result ? result.subcategory : null, subtype);
   }
-  assert.ok((productAnalysisModelOutputSchema.properties.vertical.enum as readonly unknown[]).includes("bags"));
+  assert.ok(productAnalysisModelOutputSchema.properties.vertical.enum.includes("bags"));
 });
 
 test("bag identity manifest and Product Identity Lock preserve construction and branding", () => {

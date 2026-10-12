@@ -20,6 +20,7 @@ export type RepairPlan = {
   shouldRetry: boolean;
   categories: RepairCategory[];
   issueCodes: string[];
+  repairableIssueCodes: string[];
   repairInstructions: string[];
   preserveExistingLayers: true;
   version: "auto-repair-v1";

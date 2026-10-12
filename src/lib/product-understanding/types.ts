@@ -3,7 +3,7 @@ import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 import type { ProductRegion, ProductVerticalAttributes } from "./vertical-attributes";
 
 export type ProductWearability = "wearable" | "non_wearable" | "context_dependent";
-export type ProductRigidity = "rigid" | "semi_rigid" | "deformable";
+export type ProductRigidity = "rigid" | "semi_rigid" | "deformable" | "unknown";
 export type ProductInteractionTarget =
   | "finger"
   | "wrist"
@@ -40,9 +40,9 @@ export type IdentityCriticalAttribute = {
 };
 
 export type VisibleBranding = {
-  hasLogo: boolean;
-  hasReadableText: boolean;
-  hasArtwork: boolean;
+  hasLogo: boolean | null;
+  hasReadableText: boolean | null;
+  hasArtwork: boolean | null;
   logoRegions: ProductRegion[];
   textRegions: ProductRegion[];
   artworkRegions: ProductRegion[];
@@ -89,6 +89,11 @@ type ProductProfileBase = {
   };
   confidence: ProductProfileConfidence;
   source: ProductProfileSource;
+  /** Stable visual evidence retained by V3; optional for historical profile compatibility. */
+  visibleProductCount?: number;
+  identitySummary?: string[];
+  sourceObservations?: string[];
+  interactionRules?: string[];
 };
 
 export type ProductProfile = ProductProfileBase & {

@@ -6,7 +6,7 @@ export { PRODUCT_PROFILE_ANALYSIS_VERSION, PRODUCT_PROFILE_SCHEMA_VERSION } from
 export type { ProductProfile } from "./types";
 
 const wearabilityValues = new Set(["wearable", "non_wearable", "context_dependent"]);
-const rigidityValues = new Set(["rigid", "semi_rigid", "deformable"]);
+const rigidityValues = new Set(["rigid", "semi_rigid", "deformable", "unknown"]);
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -49,6 +49,10 @@ export function isProductProfile(value: unknown): value is ProductProfile {
     isObject(value.source) &&
     typeof value.source.model === "string" &&
     typeof value.source.analysisVersion === "string" &&
-    typeof value.source.analyzedAt === "string"
+    typeof value.source.analyzedAt === "string" &&
+    (value.visibleProductCount === undefined || Number.isInteger(value.visibleProductCount) && Number(value.visibleProductCount) > 0) &&
+    (value.identitySummary === undefined || isStringArray(value.identitySummary)) &&
+    (value.sourceObservations === undefined || isStringArray(value.sourceObservations)) &&
+    (value.interactionRules === undefined || isStringArray(value.interactionRules))
   );
 }

@@ -24,7 +24,7 @@ export type JewelryAttributes = {
   stoneLayout: string | null;
   settingStyle: string | null;
   bandOrChainStructure: string | null;
-  bodyPlacementTarget: "finger" | "wrist" | "neck" | "ear" | "other" | "none";
+  bodyPlacementTarget: "finger" | "wrist" | "neck" | "ear" | "other" | "none" | "unknown";
 };
 
 export type WatchAttributes = {
@@ -32,7 +32,7 @@ export type WatchAttributes = {
   caseMaterialOrColor: string | null;
   dialColor: string | null;
   bezel: string | null;
-  crownSide: "left" | "right" | "other" | "not_visible";
+  crownSide: "left" | "right" | "other" | "not_visible" | "unknown";
   pushers: string | null;
   braceletOrStrap: string | null;
   indicesOrMarkers: string | null;
@@ -44,10 +44,10 @@ export type WatchAttributes = {
 export type CosmeticsAttributes = {
   packageType: string;
   packageGeometry: string | null;
-  containerForm: "bottle" | "jar" | "tube" | "compact" | "other";
-  closureOrDispenser: "cap" | "pump" | "dropper" | "spray" | "other" | "none";
-  materialOpacity: "transparent" | "translucent" | "opaque" | "mixed";
-  liquidVisibility: "visible" | "not_visible" | "not_applicable";
+  containerForm: "bottle" | "jar" | "tube" | "compact" | "other" | "unknown";
+  closureOrDispenser: "cap" | "pump" | "dropper" | "spray" | "other" | "none" | "unknown";
+  materialOpacity: "transparent" | "translucent" | "opaque" | "mixed" | "unknown";
+  liquidVisibility: "visible" | "not_visible" | "not_applicable" | "unknown";
   labelRegions: ProductRegion[];
   logoRegions: ProductRegion[];
 };

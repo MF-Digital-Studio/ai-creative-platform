@@ -19,15 +19,39 @@ function issue(code: string, severity: "minor" | "major" | "critical" = "major")
   return resolveQualityGate(mapStructuredValidationOutput({ findings: [{ code, category: "apparel_fit", severity, confidence: .95, identityImpact: "major", likelyCause: "geometry_change", region: "garment", repairable: true, commercialImpact: "high", finding: code, expected: "source garment" }] }));
 }
 
-test("oversized leather jacket remains oversized on model", () => { const policy = resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false, sourceViewCount: 3 }); const prompt = compileApparelFitPreservationPrompt(policy, false); assert.match(prompt, /oversized boxy fit/); assert.match(prompt, /never turn oversized\/boxy\/relaxed into fitted/); assert.equal(policy.profile?.authoritySource, "source_product_multiview"); });
-test("pocket placement is preserved", () => assert.match(compileApparelFitPreservationPrompt(resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false }), false), /two angled waist welt pockets/));
-test("ribbed hem and cuff are preserved", () => { const p = resolveApparelFitProfile(profile)!; assert.match(p.hemStructure, /ribbed hem/); assert.match(p.cuffStructure, /ribbed cuff/); });
-test("zipper and placket structure are preserved", () => assert.match(resolveApparelFitProfile(profile)!.closureType, /zipper.*puller/));
-test("cropped and non-cropped length authority remains explicit", () => { const p = compileApparelFitPreservationPrompt(resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false }), false); assert.match(p, /bodyLength=/); assert.match(p, /crop\/waist endpoint/); assert.match(p, /trouser leg length/); });
+test("oversized leather jacket remains oversized on model", () => { const policy = resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", sourceProductExists: true, sourceViewCount: 3 }); const prompt = compileApparelFitPreservationPrompt(policy, false); assert.match(prompt, /oversized boxy fit/); assert.match(prompt, /never turn oversized\/boxy\/relaxed into fitted/); assert.equal(policy.profile?.authoritySource, "product_profile"); });
+test("pocket placement is preserved", () => assert.match(compileApparelFitPreservationPrompt(resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", sourceProductExists: true }), false), /two angled waist welt pockets/));
+test("ribbed hem and cuff are preserved", () => { const p = resolveApparelFitProfile(profile)!; assert.match(p.hemStructure!, /ribbed hem/); assert.match(p.cuffStructure!, /ribbed cuff/); });
+test("zipper and placket structure are preserved", () => assert.match(resolveApparelFitProfile(profile)!.closureType!, /zipper.*puller/));
+test("cropped and non-cropped length authority remains explicit", () => { const p = compileApparelFitPreservationPrompt(resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", sourceProductExists: true }), false); assert.match(p, /bodyLength=/); assert.match(p, /crop\/waist endpoint/); assert.match(p, /trouser leg length/); });
 test("material behavior mismatch is detected as rejecting major", () => { const r = issue("APPAREL_MATERIAL_BEHAVIOR_MISMATCH", "minor"); assert.equal(r.issues[0]?.severity, "major"); assert.equal(r.status, "fail"); });
 test("drape mismatch is detected as rejecting major", () => assert.equal(issue("APPAREL_DRAPE_MISMATCH", "major").status, "fail"));
 test("high-confidence fit mismatch fails quality gate", () => { const r = issue("APPAREL_FIT_MISMATCH", "minor"); assert.equal(r.issues[0]?.severity, "critical"); assert.equal(r.status, "fail"); });
 test("apparel fit issues are eligible for targeted repair", () => assert.deepEqual(resolveRepairPlan(issue("APPAREL_FIT_MISMATCH", "critical")).categories, ["apparel_fit_repair"]));
 test("repair preserves identity and scene and only fixes garment fit", () => { const p = compileRepairInstructions("base", resolveRepairPlan(issue("APPAREL_STRUCTURE_MISMATCH", "critical"))); assert.match(p, /Preserve model identity/); assert.match(p, /Preserve scene, camera, environment, lighting and composition/); assert.match(p, /Only correct the validated garment/); });
-test("reference authority cannot override source garment fit", () => assert.match(compileApparelFitPreservationPrompt(resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false }), true), /must not transfer the reference garment fit/));
-test("product-only modes do not trigger human apparel-fit logic", () => { const policy = resolveApparelFitPreservation({ profile, strategy: "rigid_product", humanExpected: false, productOnly: true }); assert.equal(policy.active, false); assert.equal(compileApparelFitPreservationPrompt(policy, true), ""); assert.ok(policy.profile); });
+test("reference authority cannot override source garment fit", () => assert.match(compileApparelFitPreservationPrompt(resolveApparelFitPreservation({ profile, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", sourceProductExists: true }), true), /must not transfer the reference garment fit/));
+test("product-only modes do not trigger human apparel-fit logic", () => { const policy = resolveApparelFitPreservation({ profile, strategy: "rigid_product", humanExpected: false, productOnly: true, vertical: "apparel", sourceProductExists: true }); assert.equal(policy.active, false); assert.equal(compileApparelFitPreservationPrompt(policy, true), ""); assert.ok(policy.profile); });
+
+test("apparel street and studio model modes activate without ProductProfile", () => {
+  for (const presentationMode of [undefined, "model_studio"]) assert.equal(resolveApparelFitPreservation({ profile: null, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", presentationMode, sourceProductExists: true }).active, true);
+});
+test("apparel product-only modes remain inactive", () => {
+  for (const presentationMode of ["floating", "ghost_mannequin", "flat_lay", "hanger", "folded", "catalogue_product_only", "sculptural_product_only", "fabric_motion_product_only"]) assert.equal(resolveApparelFitPreservation({ profile: null, strategy: "rigid_product", humanExpected: false, productOnly: true, vertical: "apparel", presentationMode, sourceProductExists: true }).active, false);
+});
+test("apparel on-model fit requires an existing source product image", () => assert.equal(resolveApparelFitPreservation({ profile: null, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", sourceProductExists: false }).active, false));
+test("missing ProductProfile uses limited sparse source fallback", () => {
+  const policy = resolveApparelFitPreservation({ profile: null, strategy: "fashion_on_model", humanExpected: true, productOnly: false, vertical: "apparel", sourceProductExists: true });
+  assert.equal(policy.profile?.authoritySource, "source_product_fallback"); assert.equal(policy.profile?.confidence, "limited");
+  assert.equal(policy.profile?.fitType, null); assert.equal(policy.profile?.materialClass, null); assert.equal(policy.profile?.pocketCount, null); assert.equal(policy.profile?.closureType, null);
+  assert.match(compileApparelFitPreservationPrompt(policy, false), /Same garment from source image/);
+});
+
+test("quality gate and repair planner share canonical validation codes", () => {
+  const normalized = mapStructuredValidationOutput({ findings: [
+    { code: "HUMAN_POSTURE_UNNATURAL", category: "human_realism", severity: "major", confidence: .95, identityImpact: "none", likelyCause: "body_interaction", region: "body", repairable: true, commercialImpact: "high", finding: "posture", expected: "natural" },
+    { code: "APPAREL_ARTWORK_IDENTITY_DRIFT", category: "product_identity", severity: "major", confidence: .95, identityImpact: "major", likelyCause: "typography_change", region: "print", repairable: true, commercialImpact: "high", finding: "print", expected: "source" },
+  ] });
+  const validated = resolveQualityGate(normalized); const plan = resolveRepairPlan(validated);
+  assert.deepEqual(plan.issueCodes, validated.issues.map(({ code }) => code));
+  assert.ok(plan.repairableIssueCodes.includes("human_posture_unnatural")); assert.ok(plan.repairableIssueCodes.includes("apparel_artwork_identity_drift"));
+});

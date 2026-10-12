@@ -89,8 +89,8 @@ test("repair instructions prioritize artwork and placement before scene issues",
     version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "drift", checks: [], severity: "critical",
     issues: [
       { code: "reference_background_missed", category: "reference_match", severity: "major", finding: "background", expected: "reference", sourceAuthoritative: false },
-      { code: "apparel_artwork_placement_drift", category: "product_identity", severity: "major", finding: "moved", expected: "source", sourceAuthoritative: true },
-      { code: "apparel_artwork_drift", category: "product_identity", severity: "critical", finding: "changed", expected: "source", sourceAuthoritative: true },
+      { code: "apparel_artwork_placement_drift", category: "product_identity", severity: "major", confidence: 0.96, repairable: true, finding: "moved", expected: "source", sourceAuthoritative: true },
+      { code: "apparel_artwork_drift", category: "product_identity", severity: "critical", confidence: 0.96, repairable: true, finding: "changed", expected: "source", sourceAuthoritative: true },
     ],
   } as FidelityValidationResult;
   const plan = resolveRepairPlan(validation);
@@ -147,7 +147,7 @@ test("confident artwork identity and text issue codes stay critical; small place
 });
 
 test("apparel artwork repair instructions preserve the identity source", () => {
-  const validation = { version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "drift", checks: [], severity: "critical", issues: [{ code: "APPAREL_ARTWORK_TEXT_DRIFT", category: "product_identity", severity: "critical", finding: "text", expected: "source", sourceAuthoritative: true }] } as FidelityValidationResult;
+  const validation = { version: "test", status: "fail", retryRecommended: true, commerciallyUsable: false, summary: "drift", checks: [], severity: "critical", issues: [{ code: "APPAREL_ARTWORK_TEXT_DRIFT", category: "product_identity", severity: "critical", confidence: 0.96, repairable: true, finding: "text", expected: "source", sourceAuthoritative: true }] } as FidelityValidationResult;
   const plan = resolveRepairPlan(validation);
   assert.match(plan.repairInstructions[0] ?? "", /apparel_artwork_identity_source/);
   assert.match(compileRepairInstructions("base", plan), /remains available as exact print authority/);

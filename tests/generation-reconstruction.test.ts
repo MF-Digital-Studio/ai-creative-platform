@@ -112,11 +112,50 @@ test("unavailable validation is persisted as unverified and reaches the existing
   assert.match(source, /status: "succeeded"/);
   assert.match(source, /type: "generation_completed"/);
   assert.match(source, /validationUnavailable: finalSelection\.validationStatus === "validation_unavailable"/);
+  assert.match(source, /validationStatus: selectedValidation\.status,[\s\S]*verificationStatus: terminalDecision === "succeeded_unverified" \? "unverified" : "verified"/);
+  assert.match(source, /status: mapGenerationTerminalDecisionToStatus\(terminalDecision\)/);
+  assert.match(source, /let terminalSuccessPersisted = false/);
+  assert.match(source, /terminalSuccessPersisted = true;[\s\S]*type: "generation_completed"/);
+  assert.match(source, /if \(terminalSuccessPersisted\) \{[\s\S]*return \{ ok: true \};/);
+  assert.match(source, /\.upload\(outputObjectPath, finalImageData/);
+  assert.match(source, /if \(selectedValidation\.status === "validation_unavailable"\) fidelityStatus = "not_available"/);
+  assert.match(source, /type: "generation_failed"/);
+  assert.doesNotMatch(source.slice(source.indexOf("if (terminalSuccessPersisted)"), source.indexOf("if (providerDiagnosticContext)", source.indexOf("if (terminalSuccessPersisted)"))), /type: "generation_failed"/);
+  assert.match(source, /finalQualityAccepted = terminalDecision !== "rejected"/);
+  assert.match(source, /type: "generation_completed"/);
+  assert.match(source, /type: "generation_failed"/);
+  assert.match(source, /safeGenerationEvent\("queue", "processor_exit", \{ generationId, status: "succeeded" \}\)/);
+  assert.match(source, /return \{ ok: true \}/);
   assert.equal((source.match(/type: "generation_completed"/g) ?? []).length, 1);
   assert.match(page, /validationUnverified: Boolean\(/);
   assert.match(gallery, /item\.status === "succeeded" && item\.validationUnverified/);
   assert.ok(english.Dashboard.project.outputs.validationUnverified);
   assert.ok(turkish.Dashboard.project.outputs.validationUnverified);
+});
+
+test("post-storage persistence exposes its exact failure and committed success is authoritative", async () => {
+  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
+  assert.match(source, /let outputStored = false/);
+  assert.match(source, /let terminalSuccessPersisted = false/);
+  assert.match(source, /postStorageStep = "persist_terminal_state"[\s\S]*step_start/);
+  assert.match(source, /terminal_persistence_failed/);
+  assert.match(source, /function getSafeGenerationErrorDetails[\s\S]*code:[\s\S]*details:[\s\S]*hint:/);
+  assert.match(source, /terminalSuccessPersisted = true;[\s\S]*step_success/);
+  assert.match(source, /postStorageStep = "create_notification"[\s\S]*step_start/);
+  assert.match(source, /notification_not_created/);
+  assert.match(source, /if \(terminalSuccessPersisted\) \{[\s\S]*post_storage_exception[\s\S]*status: "succeeded"[\s\S]*return \{ ok: true \}/);
+  const failedTransition = source.indexOf('safeGenerationEvent("queue", "processor_exit", { generationId, status: "failed" })');
+  const committedSuccessGuard = source.indexOf("if (terminalSuccessPersisted)");
+  assert.ok(committedSuccessGuard >= 0 && failedTransition > committedSuccessGuard);
+});
+
+test("terminal persistence retains the compact input snapshot and never rewrites it with the compiled provider prompt", async () => {
+  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
+  const terminalUpdate = source.slice(source.indexOf('postStorageStep = "persist_terminal_state"'), source.indexOf(".eq(\"id\", queuedGeneration.id)", source.indexOf('postStorageStep = "persist_terminal_state"')));
+  assert.doesNotMatch(terminalUpdate, /creative_direction_snapshot/);
+  assert.match(source, /resolveCreativeDirectionSnapshot\([\s\S]*userCreativeDirection \|\| `Preset: \$\{preset\?\.title/);
+  assert.match(source, /creative_direction_snapshot: creativeDirectionSnapshot/);
+  assert.match(source, /creative_direction_snapshot: instruction\.trim\(\)/);
 });
 
 test("successful galleries and favorites require succeeded status", async () => {

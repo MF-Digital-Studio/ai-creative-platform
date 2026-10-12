@@ -177,12 +177,15 @@ export function buildImageGenerationPromptWithPolicy(
     referenceHumanPresent: options.referenceAuthority && options.visibleHuman,
   });
   const humanRealismDirection = compileHumanRealismPrompt(humanRealism, vertical);
-  const productSourceCount = options.generationImages?.filter(({ role }) => role === "product_identity_source" || role === "product_identity_supporting").length ?? 1;
+  const productSourceCount = options.generationImages?.filter(({ role }) => role === "product_identity_source" || role === "product_identity_supporting").length ?? 0;
   const apparelFit = resolveApparelFitPreservation({
     profile: options.productProfile,
     strategy,
     humanExpected: humanRealism.expected,
     productOnly: options.strictProductOnlyStudio === true || options.presetRules?.humanPresence === "none",
+    vertical,
+    sourceProductExists: productSourceCount > 0,
+    presentationMode: options.presetRules?.presentationMode,
     sourceViewCount: productSourceCount,
   });
   const apparelFitDirection = compileApparelFitPreservationPrompt(apparelFit, options.referenceAuthority === true);
