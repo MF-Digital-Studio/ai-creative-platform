@@ -13,6 +13,7 @@ import { orderReferenceReplacementImages } from "../src/lib/generation/image-rol
 import { normalizeProductVertical } from "../src/lib/product-understanding/product-analysis-model-output";
 import { resolveReferenceGenerationPath } from "../src/lib/generation/references/reference-product-replacement";
 import { resolveGenerationStrategy } from "../src/lib/generation/strategy/generation-strategy";
+import { mergeProviderFailureMetadata } from "../src/lib/generation/providers/merge-provider-failure-metadata";
 
 test("standard dress categories remain apparel and never require an intimates route", () => {
   for (const category of ["dress", "fitted dress", "mini dress", "evening dress", "bodycon dress"]) {
@@ -66,6 +67,13 @@ test("moderation failures remain terminal and do not add a generation retry", as
   assert.match(source, /providerModerationBlocked \? "provider_moderation_blocked"/);
   assert.match(source, /retryable: providerModerationBlocked \? false : retryable/);
   assert.doesNotMatch(source.slice(providerFailure), /provider_repair/);
+});
+
+test("provider failure diagnostics preserve direct-reference metadata", () => {
+  const existing = { references: { mode: "match", requested_count: 1, primaryReferenceId: "reference" } };
+  const merged = mergeProviderFailureMetadata(existing, { category: "generation_failed", code: null, status: null, providerDecision: "provider_error", klayClassification: "unsupported", providerFalsePositiveCandidate: false });
+  assert.deepEqual(merged.references, existing.references);
+  assert.deepEqual(merged.providerFailure, { category: "generation_failed", code: null, status: null, providerDecision: "provider_error", klayClassification: "unsupported", providerFalsePositiveCandidate: false });
 });
 
 test("actual intimates wording is not rewritten by the commercial normalizer", () => {

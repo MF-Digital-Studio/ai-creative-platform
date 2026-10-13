@@ -49,7 +49,6 @@ import {
 import { readReferenceAnalysisCache } from "@/lib/generation/references/reference-analysis-cache";
 import { createCostTelemetry } from "@/lib/generation/cost-telemetry";
 import { resolveReferenceMatch } from "@/lib/generation/references/resolve-reference-match";
-import { resolveReferenceGenerationPath } from "@/lib/generation/references/reference-product-replacement";
 import { getReferenceShotProfile, REFERENCE_MATCH_VERSION, type ReferenceMode } from "@/lib/generation/references/reference-shot-profile";
 import { buildReferenceReplacementPrompt, orderGenerationImages, orderReferenceReplacementImages, orderImageEditImages } from "@/lib/generation/image-roles";
 import { buildImageEditPrompt, parseImageEditIntent } from "@/lib/image-edit/edit-intent";
@@ -71,6 +70,7 @@ import {
 } from "@/lib/generation/strategy/generation-strategy";
 import { validateGenerationPolicy } from "@/lib/generation/strategy/validate-generation-policy";
 import { getSafeProviderErrorDiagnostics } from "@/lib/generation/providers/provider-error-diagnostics";
+import { mergeProviderFailureMetadata } from "@/lib/generation/providers/merge-provider-failure-metadata";
 import { getImageModelCapabilities } from "@/lib/generation/providers/image-model-capabilities";
 import { FalBirefnetProvider } from "@/lib/generation/segmentation/providers/fal-birefnet-provider";
 import type {
@@ -165,7 +165,8 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
   const editHumanRealismPolicy = resolveHumanRealismPolicy({ strategy: "reference_edit", vertical: null, visibleHuman: humanRealismExpected, referenceHumanPresent: humanRealismExpected });
   const editHumanRealismDirection = compileHumanRealismPrompt(editHumanRealismPolicy, null);
   const admin = getSupabaseAdminClient();
-  const { data: edit, error } = await admin.from("generations").insert({ project_id: projectId, input_asset_id: asset.id, generation_type: "image", status: "processing", provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspect_ratio: base.aspect_ratio ?? "1:1", preservation_mode: "reference_edit", fidelity_status: "not_checked", creative_direction_snapshot: instruction.trim(), provider_metadata: { operation: "image_edit", humanRealism: { version: HUMAN_REALISM_VERSION, expected: humanRealismExpected, applied: editHumanRealismPolicy.applied, focusAreas: editHumanRealismPolicy.focusAreas }, edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "pending", repairAttempted: false, editVersion: 1 } } }).select("id").single();
+  const editInitialMetadata = { operation: "image_edit", humanRealism: { version: HUMAN_REALISM_VERSION, expected: humanRealismExpected, applied: editHumanRealismPolicy.applied, focusAreas: editHumanRealismPolicy.focusAreas }, edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "pending", repairAttempted: false, editVersion: 1 } };
+  const { data: edit, error } = await admin.from("generations").insert({ project_id: projectId, input_asset_id: asset.id, generation_type: "image", status: "processing", provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", quality: intent.allowedChanges.length === 1 && intent.allowedChanges[0] === "background" ? "high" : "xhigh", aspect_ratio: base.aspect_ratio ?? "1:1", preservation_mode: "reference_edit", fidelity_status: "not_checked", creative_direction_snapshot: instruction.trim(), provider_metadata: editInitialMetadata }).select("id").single();
   if (error || !edit) return { ok: false, error: "Edit record could not be created.", code: "creationFailed" };
   const now = new Date();
   const { data: marked } = await admin.from("generations").update({ status: "processing", processing_started_at: now.toISOString() }).eq("id", edit.id).select("id").maybeSingle();
@@ -202,9 +203,10 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
     await createNotification({ userId, type: "image_edit_completed", projectId, projectName: project.title, generationId: edit.id });
     revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
     return { ok: true, generationId: edit.id, status: "succeeded" };
-  } catch {
+  } catch (error) {
     const completedAt = new Date();
-    await admin.from("generations").update({ status: "failed", error_message: generationFailureCode, processing_completed_at: completedAt.toISOString(), processing_duration_ms: completedAt.getTime() - now.getTime(), provider_metadata: { operation: "image_edit", edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: "fail", repairAttempted: false, editVersion: 1 } } }).eq("id", edit.id).eq("status", "processing");
+    const diagnostics = getSafeProviderErrorDiagnostics(error, { generationId: edit.id, provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", imageCount: orderedEditProducts.length + 1, preservationMode: "reference_edit", strategy: "reference_edit", sceneFamily: null });
+    await admin.from("generations").update({ status: "failed", error_message: generationFailureCode, processing_completed_at: completedAt.toISOString(), processing_duration_ms: completedAt.getTime() - now.getTime(), provider_metadata: mergeProviderFailureMetadata(editInitialMetadata, { category: "generation_failed", code: diagnostics.code, status: diagnostics.status, providerDecision: "provider_error", klayClassification: null, providerFalsePositiveCandidate: false }) }).eq("id", edit.id).eq("status", "processing");
     await createNotification({ userId, type: "image_edit_failed", projectId, projectName: project.title, generationId: edit.id });
     return { ok: false, error: "Edit could not be completed.", code: "creationFailed" };
   }
@@ -503,6 +505,8 @@ export async function runQueuedImageGeneration(
   let terminalSuccessPersisted = false;
   let postStorageStep = "storage";
   let postStorageError: unknown = null;
+  let persistedProviderMetadata: Record<string, unknown> | null = null;
+  let terminalFailureReason: string | null = null;
 
   try {
     const supabase = admin;
@@ -536,6 +540,7 @@ export async function runQueuedImageGeneration(
     ) {
       return { ok: false, message: "notQueued" };
     }
+    persistedProviderMetadata = queuedGeneration.provider_metadata;
 
     const { data: asset, error: assetError } = await supabase
       .from("assets")
@@ -663,7 +668,11 @@ export async function runQueuedImageGeneration(
     }
     const metadataEnhancement = queuedGeneration.provider_metadata?.prompt_enhancement;
     const metadataReferences = queuedGeneration.provider_metadata?.references;
-    const referenceMode: ReferenceMode = metadataReferences && typeof metadataReferences === "object" && "mode" in metadataReferences && metadataReferences.mode === "match" ? "match" : "inspired";
+    const referenceMatchMode: ReferenceMode = metadataReferences && typeof metadataReferences === "object" && "mode" in metadataReferences && metadataReferences.mode === "match" ? "match" : "inspired";
+    if (metadataReferences && typeof metadataReferences === "object" && "referenceMode" in metadataReferences && metadataReferences.referenceMode === "composition") {
+      terminalFailureReason = "unsupported_legacy_composition_reference_mode";
+      throw new Error("unsupported_legacy_composition_reference_mode");
+    }
     const requestedReferenceAssetIds = metadataReferences && typeof metadataReferences === "object" && "asset_ids" in metadataReferences && Array.isArray(metadataReferences.asset_ids)
       ? metadataReferences.asset_ids.filter((id): id is string => typeof id === "string").slice(0, MAX_PROJECT_REFERENCE_IMAGES)
       : [];
@@ -854,7 +863,7 @@ export async function runQueuedImageGeneration(
     const strongPreset = Boolean(preset?.creativeDirection && composition?.source !== "safe_fallback");
     const artworkAreaRatio = apparelIdentityManifest?.artworkBoundingRegion ? apparelIdentityManifest.artworkBoundingRegion.width * apparelIdentityManifest.artworkBoundingRegion.height : 0;
     const artworkComplexity = !apparelIdentityManifest?.artworkPresent ? "none" : apparelIdentityManifest.artworkCategory === "text" || apparelIdentityManifest.artworkCategory === "mixed" || artworkAreaRatio >= .08 ? "complex_artwork" : "simple_logo";
-    const executionPolicy = resolveGenerationExecutionPolicy({ productProfile, hasReference: usableReferenceImages.length > 0, referenceReplacement: usableReferenceImages.length > 0 && referenceMode === "match", exactProduct: apparelFidelityMode.exactProductApparel, artworkLocalized: Boolean(apparelArtwork), artworkComplexity, strategy, presetConfidence: strongPreset ? "high" : "low", hasCustomNote: customNote, ambiguousNote: customNote && !composition });
+    const executionPolicy = resolveGenerationExecutionPolicy({ productProfile, hasReference: usableReferenceImages.length > 0, referenceReplacement: usableReferenceImages.length > 0 && referenceMatchMode === "match", exactProduct: apparelFidelityMode.exactProductApparel, artworkLocalized: Boolean(apparelArtwork), artworkComplexity, strategy, presetConfidence: strongPreset ? "high" : "low", hasCustomNote: customNote, ambiguousNote: customNote && !composition });
     console.info("[generation] execution_policy_resolved", { generationId, quality: executionPolicy.quality, difficulty: executionPolicy.difficulty, reasons: executionPolicy.reasons, promptEnhancement: executionPolicy.promptEnhancement, validationRequired: executionPolicy.validationRequired, repairEligible: executionPolicy.repairEligible });
     const creativeCompliance = resolveCreativeCompliance({
       userPrompt: metadataUserPrompt || fallbackCreativeDirection,
@@ -867,14 +876,9 @@ export async function runQueuedImageGeneration(
       composition,
       creativeCompliance,
       reference: referenceAnalysis.styleBrief,
-      mode: referenceMode,
+      mode: referenceMatchMode,
     });
-    const referenceGenerationPath = resolveReferenceGenerationPath({
-      compatibleReferenceCount: strictProductOnlyStudio ? 0 : usableReferenceImages.length,
-      referenceCompatible: referenceMatch?.compatible ?? true,
-      fallbackStrategy: strategy,
-    });
-    const usesReferenceReplacement = referenceGenerationPath.strategy === "reference_product_replacement";
+    const usesReferenceReplacement = usableReferenceImages.length > 0;
     logDevelopmentGenerationEvent("reference_replacement_resolved", {
       generationId: queuedGeneration.id,
       enabled: usesReferenceReplacement,
@@ -1082,7 +1086,7 @@ export async function runQueuedImageGeneration(
         mimeType,
       })),
     ];
-    const generationImages = usesReferenceReplacement
+    const generationImages = usableReferenceImages.length > 0
       ? orderReferenceReplacementImages({
         id: usableReferenceImages[0].asset.id,
         bucketId: usableReferenceImages[0].asset.bucket_id,
@@ -1760,7 +1764,7 @@ export async function runQueuedImageGeneration(
             same_physical_product: true,
           },
           references: {
-            mode: referenceMode,
+            mode: referenceMatchMode,
             requested_count: requestedReferenceAssetIds.length,
             usable_count: referenceAnalysis.usableCount,
             asset_ids: requestedReferenceAssetIds,
@@ -1871,10 +1875,20 @@ export async function runQueuedImageGeneration(
     const completedAt = new Date();
     const providerModerationBlocked = providerDiagnosticContext !== null && isProviderModerationBlocked(error);
     const failureCategory = providerModerationBlocked ? "provider_moderation_blocked" : "generation_failed";
+    const failureDiagnostics = providerDiagnosticContext
+      ? getSafeProviderErrorDiagnostics(error, { generationId, ...providerDiagnosticContext })
+      : null;
     const { data: failedGeneration, error: failurePersistenceError } = await admin.from("generations").update({
       status: "failed",
-      error_message: failureCategory,
-      ...(providerDiagnosticContext ? { provider_metadata: { failureCategory, klayClassification: providerDiagnosticContext.klayClassification, providerDecision: providerModerationBlocked ? "moderation_blocked" : "provider_error", providerFalsePositiveCandidate: providerModerationBlocked && providerDiagnosticContext.klayClassification === "adult_editorial_fashion" } } : {}),
+      error_message: terminalFailureReason ?? failureCategory,
+      ...(providerDiagnosticContext ? { provider_metadata: mergeProviderFailureMetadata(persistedProviderMetadata, {
+        category: failureCategory,
+        code: failureDiagnostics?.code ?? null,
+        status: failureDiagnostics?.status ?? null,
+        providerDecision: providerModerationBlocked ? "moderation_blocked" : "provider_error",
+        klayClassification: providerDiagnosticContext.klayClassification,
+        providerFalsePositiveCandidate: providerModerationBlocked && providerDiagnosticContext.klayClassification === "adult_editorial_fashion",
+      }) } : {}),
       processing_completed_at: completedAt.toISOString(),
       ...(processingStartedAt ? { processing_duration_ms: completedAt.getTime() - processingStartedAt.getTime() } : {}),
     }).eq("id", generationId).in("status", ["queued", "processing"]).select("id, project_id").maybeSingle();
