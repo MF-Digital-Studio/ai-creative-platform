@@ -7,6 +7,15 @@
     "notFound": {"title": "Bu sayfa bulunamadı", "description": "Aradığınız sayfa taşınmış, silinmiş veya hiç var olmamış olabilir.", "dashboard": "Ana sayfaya dön", "projects": "Projeleri görüntüle"},
     "error": {"title": "Bir şeyler ters gitti", "description": "İsteğinizi tamamlayamadık. Tekrar deneyebilirsiniz.", "retry": "Tekrar dene", "dashboard": "Ana sayfaya dön"}
   },
+  "GenerationTimeline": {
+    "stages": {
+      "0": { "title": "Ürün hazırlanıyor", "description": "Ürün görselleri ve temel detaylar hazırlanıyor." },
+      "1": { "title": "Yaratıcı yön kuruluyor", "description": "Preset, yönlendirme ve referans bilgileri bir araya getiriliyor." },
+      "2": { "title": "Görsel oluşturuluyor", "description": "Sahne, ışık ve kompozisyon oluşturuluyor." },
+      "3": { "title": "Kalite kontrolü", "description": "Ürün kimliği ve görsel tutarlılığı kontrol ediliyor." },
+      "4": { "title": "Son dokunuşlar", "description": "Sonuç hazırlanıyor ve kaydediliyor." }
+    }
+  },
   "Navigation": {
     "home": "Ana Sayfa",
     "howItWorks": "Nasıl çalışır",
@@ -706,6 +715,7 @@
       },
       "projectNameLabel": "Proje adı",
       "projectNamePlaceholder": "İsteğe bağlı",
+      "flow": { "progressLabel": "Oluşturma adımları", "navProduct": "Ürün", "navFormat": "Format", "navDirection": "Yön", "navReference": "Referans", "navDetails": "Detaylar", "nameTitle": "Bu çalışmaya bir isim ver", "namePlaceholder": "FW26 Deri Ceket Kampanyası", "nameRequired": "Devam etmek için çalışmanıza bir isim verin.", "productTitle": "Ürününü ekle", "productDescription": "İlk görsel ana ürün görselidir. Ek görseller aynı ürünün farklı açıları olmalıdır.", "primaryView": "ANA GÖRSEL", "supportingView": "DİĞER AÇI", "directionTitle": "Nasıl bir görsel oluşturalım?", "presetPath": "Preset ile başla", "customPath": "Kendi yönümü oluştur", "referenceTitle": "Bir görünüm referansın var mı?", "referenceDescription": "Pozu, kompozisyonu, ışığı ve sahne hissini referans alır.", "detailsTitle": "Son bir dokunuş?", "reviewTitle": "Yaratıcı özet", "viewCount": "{count} ürün görseli", "referenceCount": "{count} referans", "noReference": "referans yok", "back": "Geri", "continue": "Devam et", "skip": "Atla", "generate": "Görseli üret", "generatingTitle": "Kampanyan hazırlanıyor", "generatingProduct": "Ürün detayları korunuyor", "generatingScene": "Sahne kuruluyor", "generatingComposition": "Kompozisyon dengeleniyor", "generatingRender": "Görsel işleniyor", "generatingCheck": "Son kontroller yapılıyor", "chips": { "cinematic": "Daha sinematik", "minimal": "Minimal tut", "product": "Ürünü öne çıkar", "hardLight": "Daha sert ışık", "night": "Gece çekimi", "editorial": "Editoryal" }, "tryAgain": "Tekrar dene" },
       "steps": {
         "product": { "title": "Ürün görseli", "description": "Ürününüzü net ve mümkün olduğunca yüksek kaliteli bir görselle yükleyin." },
         "format": { "title": "Format", "description": "İçeriğinizin kullanılacağı yere uygun görsel oranını seçin." },

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,11 +10,11 @@ import { ThemeProviderBoundary } from "@/components/theme/theme-provider-boundar
 
 import "../globals.css";
 
-const poppins = Poppins({
+const nunito = Nunito({
   variable: "--font-sans",
   display: "swap",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   preload: true,
 });
 
@@ -74,7 +74,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} data-theme="light" suppressHydrationWarning>
       <head><ThemeInitScript /></head>
-      <body className={poppins.variable}>
+      <body className={nunito.variable}>
         <ThemeProviderBoundary><NextIntlClientProvider>{children}</NextIntlClientProvider></ThemeProviderBoundary>
       </body>
     </html>

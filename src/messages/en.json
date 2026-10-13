@@ -7,6 +7,15 @@
     "notFound": {"title": "Page not found", "description": "The page you're looking for may have moved, been deleted, or never existed.", "dashboard": "Back to dashboard", "projects": "View projects"},
     "error": {"title": "Something went wrong", "description": "We couldn't complete your request. Please try again.", "retry": "Try again", "dashboard": "Back to dashboard"}
   },
+  "GenerationTimeline": {
+    "stages": {
+      "0": { "title": "Preparing product", "description": "Product images and essential details are being prepared." },
+      "1": { "title": "Setting creative direction", "description": "Preset, direction and reference information are being brought together." },
+      "2": { "title": "Creating image", "description": "The scene, lighting and composition are being created." },
+      "3": { "title": "Quality check", "description": "Product identity and visual consistency are being checked." },
+      "4": { "title": "Final touches", "description": "Your result is being prepared and saved." }
+    }
+  },
   "Navigation": {
     "home": "Home",
     "howItWorks": "How It Works",
@@ -706,6 +715,7 @@
       },
       "projectNameLabel": "Project name",
       "projectNamePlaceholder": "Optional",
+      "flow": { "progressLabel": "Creation steps", "navProduct": "Product", "navFormat": "Format", "navDirection": "Direction", "navReference": "Reference", "navDetails": "Details", "nameTitle": "Give this work a name", "namePlaceholder": "FW26 Leather Jacket Campaign", "nameRequired": "Give your work a name to continue.", "productTitle": "Add your product", "productDescription": "The first image is the main product image. Additional images should show the same product from other angles.", "primaryView": "MAIN IMAGE", "supportingView": "OTHER ANGLE", "directionTitle": "What should we create?", "presetPath": "Start with a preset", "customPath": "Create my own direction", "referenceTitle": "Do you have a visual reference?", "referenceDescription": "It takes the pose, composition, light and scene feeling as reference.", "detailsTitle": "One final touch?", "reviewTitle": "Creative brief", "viewCount": "{count} product views", "referenceCount": "{count} references", "noReference": "no reference", "back": "Back", "continue": "Continue", "skip": "Skip", "generate": "Generate image", "generatingTitle": "Your campaign is being prepared", "generatingProduct": "Preserving product details", "generatingScene": "Building the scene", "generatingComposition": "Balancing composition", "generatingRender": "Rendering the visual", "generatingCheck": "Running final checks", "chips": { "cinematic": "More cinematic", "minimal": "Keep it minimal", "product": "Feature the product", "hardLight": "Harder light", "night": "Night shoot", "editorial": "Editorial" }, "tryAgain": "Try again" },
       "steps": {
         "product": { "title": "Product image", "description": "Upload a clear, high-quality image of your product." },
         "format": { "title": "Format", "description": "Choose an image ratio suited to where your content will be used." },

@@ -1,489 +1,55 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- local object URLs are preview-only and cannot use the image optimizer. */
 
-import { type ChangeEvent, type DragEvent, useEffect, useId, useRef, useState } from "react";
+import { type ChangeEvent, type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-
 import { createWorkspaceProject } from "@/app/[locale]/dashboard/actions";
-import { DASHBOARD_PRESET_EVENT, type DashboardPresetSelection } from "@/components/dashboard/creative-preset-rail";
-import {
-  registerProductAsset,
-  registerReferenceAsset,
-  updateCreativeDirection,
-} from "@/app/[locale]/dashboard/projects/[projectId]/actions";
+import { registerProductAsset, registerReferenceAsset, updateCreativeDirection } from "@/app/[locale]/dashboard/projects/[projectId]/actions";
 import { createQueuedImageGeneration } from "@/app/[locale]/dashboard/projects/[projectId]/generation-actions";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
-import { GenerationProgressModal } from "@/components/projects/generation-progress-modal";
-import { GenerationStatusIndicator, type GenerationState } from "@/components/projects/generation-status-indicator";
-import {
-  isSupportedProductImageType,
-  MAX_PRODUCT_IMAGE_FILE_SIZE,
-  productImageExtensions,
-} from "@/components/projects/product-image-upload";
+import { AspectRatioPreview } from "@/components/projects/aspect-ratio-preview";
+import { isSupportedProductImageType, MAX_PRODUCT_IMAGE_FILE_SIZE, productImageExtensions } from "@/components/projects/product-image-upload";
 import { Button } from "@/components/ui/button";
-import { AspectRatioPicker } from "@/components/projects/aspect-ratio-picker";
-import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
+import { MAX_PROJECT_PRODUCT_IMAGES } from "@/lib/assets/product-asset-constraints";
+import { getCreativePreset, getPresetFamily, getPresetPresentationModes, getRecommendedFamilyPresets } from "@/lib/creative-presets/creative-presets";
+import { DEFAULT_GENERATION_ASPECT_RATIO, GENERATION_ASPECT_RATIOS } from "@/lib/generation/aspect-ratios";
 import type { GenerationAspectRatio } from "@/lib/generation/types";
+import { createClient } from "@/lib/supabase/client";
+import { supportedVerticals, type SupportedVertical } from "@/lib/verticals/supported-verticals";
 import { useRouter } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
-import { canCreateImageWithPreset } from "@/lib/creative-presets/creative-preset-context";
-import { getCreativePreset, getPresetFamily } from "@/lib/creative-presets/creative-presets";
-import { createClient } from "@/lib/supabase/client";
-import { MAX_PROJECT_PRODUCT_IMAGES } from "@/lib/assets/product-asset-constraints";
 
-type CreativeComposerProps = {
-  locale: AppLocale;
-  userId: string | null;
-};
+type FilePreview = { file: File; previewUrl: string };
+type FlowStep = "type" | "name" | "product" | "format" | "direction" | "reference" | "details" | "review" | "generating" | "failed";
+const steps: readonly FlowStep[] = ["type", "name", "product", "format", "direction", "reference", "details", "review"];
 
-export function CreativeComposer({ locale, userId }: CreativeComposerProps) {
-  const t = useTranslations("Dashboard.composer");
-  const presetT = useTranslations("Dashboard.presets");
-  const router = useRouter();
-  const descriptionId = useId();
-  const promptId = useId();
-  const projectNameId = useId();
-  const statusId = useId();
-  const disabledHintId = useId();
-  const productErrorId = useId();
-  const referenceErrorId = useId();
-  const productInputRef = useRef<HTMLInputElement>(null);
-  const referenceInputRef = useRef<HTMLInputElement>(null);
-  const promptRef = useRef<HTMLTextAreaElement>(null);
-  const composerRef = useRef<HTMLElement>(null);
-  const submissionLockRef = useRef(false);
-  const [prompt, setPrompt] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
-  const [productError, setProductError] = useState("");
-  const [referenceError, setReferenceError] = useState("");
-  const [isProductDragging, setIsProductDragging] = useState(false);
-  const [isReferenceDragging, setIsReferenceDragging] = useState(false);
-  const [productFiles, setProductFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
-  const productFilesRef = useRef(productFiles);
-  const [referenceFiles, setReferenceFiles] = useState<Array<{ file: File; previewUrl: string }>>([]);
-  const referenceFilesRef = useRef(referenceFiles);
-  const [generationState, setGenerationState] = useState<"idle" | "pending">("idle");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [statusState, setStatusState] = useState<GenerationState>("idle");
-  const [additionalOpen, setAdditionalOpen] = useState(false);
-  const isCreating = generationState === "pending";
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
-  const [selectedPresentationMode, setSelectedPresentationMode] = useState<string | null>(null);
-  const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO);
-  const selectedPreset = getCreativePreset(selectedPresetId);
-
-  useEffect(() => {
-    function handlePreset(event: Event) {
-      if (!(event instanceof CustomEvent)) {
-        return;
-      }
-
-      const selection = event.detail as DashboardPresetSelection | null;
-      if (!selection || selection.presetId === null) {
-        setSelectedPresetId(null);
-        setSelectedPresentationMode(null);
-        setStatusMessage("");
-        return;
-      }
-
-      const preset = getCreativePreset(selection.presetId);
-      if (!preset) return;
-
-      setSelectedPresetId(preset.id);
-      setSelectedPresentationMode(selection.presentationMode);
-      setStatusMessage("");
-      setAdditionalOpen(true);
-      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      window.requestAnimationFrame(() => promptRef.current?.focus({ preventScroll: true }));
-    }
-
-    window.addEventListener(DASHBOARD_PRESET_EVENT, handlePreset);
-    return () => window.removeEventListener(DASHBOARD_PRESET_EVENT, handlePreset);
-  }, []);
-
-  useEffect(() => { productFilesRef.current = productFiles; }, [productFiles]);
-  useEffect(() => () => { productFilesRef.current.forEach((product) => URL.revokeObjectURL(product.previewUrl)); }, []);
-
-  useEffect(() => {
-    referenceFilesRef.current = referenceFiles;
-  }, [referenceFiles]);
-
-  useEffect(() => () => {
-    referenceFilesRef.current.forEach((reference) => URL.revokeObjectURL(reference.previewUrl));
-  }, []);
-
-  function selectProducts(files: File[]) {
-    const available = MAX_PROJECT_PRODUCT_IMAGES - productFilesRef.current.length;
-    if (files.length > available) { setProductError(t("productLimit")); return; }
-    if (files.some((file) => !isSupportedProductImageType(file.type))) { setProductError(t("invalidProductType")); return; }
-    if (files.some((file) => file.size > MAX_PRODUCT_IMAGE_FILE_SIZE)) { setProductError(t("productTooLarge")); return; }
-    setProductFiles((current) => [...current, ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }))]);
-    setProductError(""); setStatusMessage("");
-  }
-
-  function handleProductChange(event: ChangeEvent<HTMLInputElement>) {
-    selectProducts(Array.from(event.target.files ?? []));
-    event.target.value = "";
-  }
-
-  function handleProductDrop(event: DragEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    setIsProductDragging(false);
-    selectProducts(Array.from(event.dataTransfer.files));
-  }
-
-  function removeProduct(index: number) {
-    setProductFiles((current) => { const target = current[index]; if (target) URL.revokeObjectURL(target.previewUrl); return current.filter((_, itemIndex) => itemIndex !== index); });
-    setProductError(""); setStatusMessage("");
-  }
-
-  function makeProductPrimary(index: number) {
-    if (index === 0) return;
-    setProductFiles((current) => { const selected = current[index]; return selected ? [selected, ...current.filter((_, itemIndex) => itemIndex !== index)] : current; });
-  }
-
-  function moveProduct(index: number, direction: -1 | 1) {
-    const nextIndex = index + direction;
-    if (index < 1 || nextIndex < 1 || nextIndex >= productFiles.length) return;
-    setProductFiles((current) => { const next = [...current]; [next[index], next[nextIndex]] = [next[nextIndex]!, next[index]!]; return next; });
-  }
-
-  function selectReferences(files: File[]) {
-    setReferenceError("");
-    const availableSlots = 3 - referenceFilesRef.current.length;
-    const accepted = files.slice(0, availableSlots).filter((file) => {
-      if (!isSupportedProductImageType(file.type)) {
-        setReferenceError(t("invalidProductType"));
-        return false;
-      }
-      if (file.size > MAX_PRODUCT_IMAGE_FILE_SIZE) {
-        setReferenceError(t("productTooLarge"));
-        return false;
-      }
-      return true;
-    });
-    if (!accepted.length) {
-      if (availableSlots < files.length) setReferenceError(t("referenceLimit"));
-      return;
-    }
-    setReferenceFiles((current) => [
-      ...current,
-      ...accepted.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
-    ]);
-    setReferenceError(availableSlots < files.length ? t("referenceLimit") : "");
-  }
-
-  function removeReference(index: number) {
-    setReferenceFiles((current) => {
-      const reference = current[index];
-      if (reference) URL.revokeObjectURL(reference.previewUrl);
-      return current.filter((_, currentIndex) => currentIndex !== index);
-    });
-    setReferenceError("");
-  }
-
-  async function startImageCreation() {
-    const creativeDirection = prompt.trim();
-    if (
-      !userId ||
-      !productFiles.length ||
-      (!creativeDirection && !selectedPreset) ||
-      isCreating ||
-      productFiles.some(({ file }) => !isSupportedProductImageType(file.type)) ||
-      submissionLockRef.current
-    ) {
-      return;
-    }
-
-    submissionLockRef.current = true;
-    setGenerationState("pending");
-    setStatusState("processing"); setModalOpen(true);
-    setProductError("");
-    setReferenceError("");
-    setStatusMessage(t("creating"));
-
-    let activePhase: "setup" | "productUpload" | "productAnalysis" | "referenceUpload" | "generation" = "setup";
-
-    try {
-      const project = await createWorkspaceProject(locale, projectName.trim());
-      if (!project.ok) {
-        throw new Error("Unable to create a project.");
-      }
-
-      const supabase = createClient();
-      activePhase = "productUpload";
-      setStatusMessage(t("productUploading"));
-      for (const { file } of productFiles) {
-        const extension = productImageExtensions[file.type as keyof typeof productImageExtensions];
-        const objectPath = `${userId}/${project.projectId}/${crypto.randomUUID()}.${extension}`;
-        const { error: uploadError } = await supabase.storage.from("product-assets").upload(objectPath, file, { contentType: file.type, upsert: false });
-        if (uploadError) throw uploadError;
-        activePhase = "productAnalysis";
-        setStatusMessage(t("productAnalyzing"));
-        const registration = await registerProductAsset(locale, project.projectId, objectPath);
-        if (registration.status !== "success") throw new Error("Unable to register the product asset.");
-      }
-
-      for (const reference of referenceFiles) {
-        activePhase = "referenceUpload";
-        setStatusMessage(t("referenceUploading"));
-        if (!isSupportedProductImageType(reference.file.type)) {
-          throw new Error("Invalid reference image type.");
-        }
-        const referenceExtension = productImageExtensions[reference.file.type];
-        const referencePath = `${userId}/${project.projectId}/reference-${crypto.randomUUID()}.${referenceExtension}`;
-        const { error: referenceUploadError } = await supabase.storage
-          .from("product-assets")
-          .upload(referencePath, reference.file, { contentType: reference.file.type, upsert: false });
-        if (referenceUploadError) throw referenceUploadError;
-
-        const referenceRegistration = await registerReferenceAsset(locale, project.projectId, referencePath);
-        if (referenceRegistration.status !== "success") {
-          throw new Error("Unable to register the reference asset.");
-        }
-      }
-
-      const directionFormData = new FormData();
-      directionFormData.set("creative_direction", creativeDirection);
-      const direction = await updateCreativeDirection(
-        locale,
-        project.projectId,
-        { status: "idle" },
-        directionFormData,
-      );
-      if (direction.status !== "success") {
-        throw new Error("Unable to save the creative direction.");
-      }
-
-      activePhase = "generation";
-      setStatusMessage(t("creating"));
-      const generationFormData = new FormData();
-      generationFormData.set("enhance_with_ai", "on");
-      generationFormData.set("aspect_ratio", aspectRatio);
-      if (selectedPreset) {
-        generationFormData.set("preset_id", selectedPreset.id);
-      }
-      if (selectedPresentationMode) generationFormData.set("presentation_mode", selectedPresentationMode);
-      const generation = await createQueuedImageGeneration(
-        locale,
-        project.projectId,
-        null,
-        generationFormData,
-      );
-      if (!generation.ok) {
-        throw new Error("Unable to queue the image generation.");
-      }
-      setStatusState("succeeded"); setModalOpen(false);
-      window.setTimeout(() => setStatusState((current) => current === "succeeded" ? "idle" : current), 7000);
-      router.push(`/dashboard/projects/${project.projectId}`, { locale });
-    } catch {
-      if (activePhase === "productUpload" || activePhase === "productAnalysis") setProductError(t("productUploadFailed"));
-      else if (activePhase === "referenceUpload") setReferenceError(t("referenceUploadFailed"));
-      else setStatusMessage(t("creationError"));
-      setGenerationState("idle");
-      setStatusState("failed");
-      submissionLockRef.current = false;
-    }
-  }
-
-  const canStartImageCreation = canCreateImageWithPreset(productFiles.length > 0, prompt, selectedPreset) && Boolean(userId) && !isCreating;
-  const disabledReason = !userId ? t("signInRequired") : !productFiles.length ? t("productRequired") : !prompt.trim() && !selectedPreset ? t("directionRequired") : "";
-
-  return (
-    <>
-    <section
-      ref={composerRef}
-      id="composer"
-      className="dashboard-composer-section"
-      aria-labelledby="dashboard-composer-heading"
-    >
-      <div className="dashboard-composer-heading">
-        <h1 id="dashboard-composer-heading">{t("heading")}</h1>
-        <p id={descriptionId}>{t("description")}</p>
-      </div>
-
-      <div className="creative-output-picker" role="radiogroup" aria-label={t("outputType.label")}>
-        <button type="button" className="creative-output-option is-selected" role="radio" aria-checked="true">
-          <span className="creative-output-icon"><DashboardIcon name="image" /></span>
-          <span className="creative-output-copy"><strong>{t("outputType.image.title")}</strong><small>{t("outputType.image.description")}</small></span>
-          <span className="creative-output-check" aria-hidden="true">✓</span>
-        </button>
-        <button type="button" className="creative-output-option is-locked" role="radio" aria-checked="false" disabled aria-describedby="creative-video-availability">
-          <span className="creative-output-icon"><DashboardIcon name="video" /></span>
-          <span className="creative-output-copy"><strong>{t("outputType.video.title")}</strong><small>{t("outputType.video.description")}</small></span>
-          <span className="creative-output-lock" id="creative-video-availability"><DashboardIcon name="lock" />{t("outputType.video.badge")}</span>
-        </button>
-      </div>
-
-      <form
-        className="creative-composer"
-        aria-describedby={descriptionId}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void startImageCreation();
-        }}
-      >
-        <div className="creative-composer-body">
-          <section className="creative-workspace-step creative-product-step" aria-labelledby="creative-product-step-title">
-            <header className="creative-step-heading">
-              <span className="creative-step-number" aria-hidden="true">01</span>
-              <span><h2 id="creative-product-step-title">{t("steps.product.title")}</h2><p>{t("steps.product.description")}</p></span>
-            </header>
-            <div className="creative-product-field">
-              <div className="creative-upload-content">
-              {productFiles.length ? (
-                <div className="project-product-grid creative-product-grid" aria-live="polite">
-                  {productFiles.map((product, index) => <article className="project-product-card" key={product.previewUrl}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={product.previewUrl} alt={t("productPreviewAlt", { index: index + 1 })} />
-                    <span className="project-product-role">{index === 0 ? t("primaryProduct") : t("supportingProduct")}</span>
-                    <div className="project-product-actions">
-                      {index > 0 ? <button type="button" onClick={() => makeProductPrimary(index)} disabled={isCreating}>{t("setPrimaryProduct")}</button> : null}
-                      {index > 1 ? <button type="button" aria-label={t("moveProductEarlier", { index: index + 1 })} onClick={() => moveProduct(index, -1)} disabled={isCreating}>↑</button> : null}
-                      {index > 0 && index < productFiles.length - 1 ? <button type="button" aria-label={t("moveProductLater", { index: index + 1 })} onClick={() => moveProduct(index, 1)} disabled={isCreating}>↓</button> : null}
-                      <button type="button" aria-label={t("removeProductView", { index: index + 1 })} onClick={() => removeProduct(index)} disabled={isCreating}>×</button>
-                    </div>
-                  </article>)}
-                  {productFiles.length < MAX_PROJECT_PRODUCT_IMAGES ? <button type="button" className="project-product-add" onClick={() => productInputRef.current?.click()} disabled={isCreating}><DashboardIcon name="plus" /><strong>{t("addProductView")}</strong></button> : null}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className={`creative-product-upload${isProductDragging ? " is-dragging" : ""}`}
-                  aria-describedby={`${statusId} ${productError ? productErrorId : ""}`.trim()}
-                  onClick={() => productInputRef.current?.click()}
-                  onDragOver={(event) => { event.preventDefault(); setIsProductDragging(true); }}
-                  onDragLeave={() => setIsProductDragging(false)}
-                  onDrop={handleProductDrop}
-                  disabled={isCreating}
-                >
-                  <span className="creative-product-upload-icon"><DashboardIcon name="plus" /></span>
-                  <strong>{t("dropzone.title")}</strong>
-                  <span className="creative-dropzone-secondary">{t("dropzone.secondary")}</span>
-                  <span className="creative-dropzone-action">{t("dropzone.action")}</span>
-                  <small>{t("dropzone.formats")}</small>
-                </button>
-              )}
-              </div>
-              <div className="creative-panel-footer">
-                {productError ? <p id={productErrorId} className="creative-field-error" role="alert">{productError}</p> : <p>{productFiles.length ? t("productCount", { count: productFiles.length }) : t("productMultiViewHelper")}</p>}
-              </div>
-            </div>
-          </section>
-
-          <input
-            ref={productInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            aria-label={t("addProduct")}
-            multiple
-            disabled={isCreating || productFiles.length >= MAX_PROJECT_PRODUCT_IMAGES}
-            onChange={handleProductChange}
-          />
-          <input
-            ref={referenceInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            multiple
-            aria-label={t("addReference")}
-            disabled={referenceFiles.length >= 3 || isCreating}
-            onChange={(event) => {
-              selectReferences(Array.from(event.target.files ?? []));
-              event.target.value = "";
-            }}
-          />
-          <section className="creative-workspace-step creative-format-step" aria-labelledby="creative-format-step-title">
-            <header className="creative-step-heading">
-              <span className="creative-step-number" aria-hidden="true">02</span>
-              <span><h2 id="creative-format-step-title">{t("steps.format.title")}</h2><p>{t("steps.format.description")}</p></span>
-            </header>
-            <AspectRatioPicker value={aspectRatio} onChange={setAspectRatio} disabled={isCreating} messages={{
-              label: t("aspectRatio.label"), helper: t("aspectRatio.helper"),
-              names: { widescreen: t("aspectRatio.names.widescreen"), vertical: t("aspectRatio.names.vertical"), square: t("aspectRatio.names.square"), classic: t("aspectRatio.names.classic"), tall: t("aspectRatio.names.tall"), cinemascope: t("aspectRatio.names.cinemascope") },
-              descriptions: { widescreenUse: t("aspectRatio.descriptions.widescreenUse"), verticalUse: t("aspectRatio.descriptions.verticalUse"), squareUse: t("aspectRatio.descriptions.squareUse"), classicUse: t("aspectRatio.descriptions.classicUse"), tallUse: t("aspectRatio.descriptions.tallUse"), cinemascopeUse: t("aspectRatio.descriptions.cinemascopeUse") },
-            }} />
-          </section>
-
-          <section className="creative-workspace-step creative-project-step" aria-labelledby="creative-project-step-title">
-            <header className="creative-step-heading">
-              <span className="creative-step-number" aria-hidden="true">03</span>
-              <span><h2 id="creative-project-step-title">{t("steps.project.title")}</h2><p>{t("steps.project.description")}</p></span>
-            </header>
-            <div className="creative-project-name-field creative-prompt-field">
-              <label htmlFor={projectNameId} className="sr-only">{t("projectNameLabel")}</label>
-              <input id={projectNameId} value={projectName} maxLength={120} placeholder={t("projectNamePlaceholder")} className="creative-project-name-input" onChange={(event) => setProjectName(event.target.value)} />
-            </div>
-          </section>
-
-          <section className="creative-workspace-step creative-additional-step" aria-labelledby="creative-additional-step-title">
-            <button
-              type="button"
-              className="creative-additional-trigger"
-              aria-expanded={additionalOpen}
-              aria-controls="creative-optional-controls"
-              onClick={() => setAdditionalOpen((current) => !current)}
-            >
-              <span className="creative-step-number" aria-hidden="true">04</span>
-              <span><span id="creative-additional-step-title" className="creative-step-title">{t("steps.additional.title")}</span><span className="creative-step-description">{t("steps.additional.description")}</span></span>
-              <DashboardIcon name="chevron" className="creative-additional-chevron" />
-            </button>
-            <div id="creative-optional-controls" className="creative-optional-controls" hidden={!additionalOpen}>
-              <div className="creative-prompt-field creative-direction-field">
-                <label htmlFor={promptId} className="creative-field-label">{t("promptLabel")}</label>
-                <textarea ref={promptRef} id={promptId} value={prompt} placeholder={t("promptPlaceholder")} className="creative-prompt-textarea" onChange={(event) => setPrompt(event.target.value)} />
-                {selectedPreset ? <p className="creative-prompt-helper">{t("selectedPreset", { title: getPresetFamily(selectedPreset.id)?.title[locale] ?? presetT(`items.${selectedPreset.id}.title`) })}</p> : null}
-              </div>
-
-              <div className="creative-reference-field">
-                <span className="creative-field-label">{t("referenceLabel")}</span>
-                <div className="creative-upload-content">
-                  <div className="creative-reference-list" aria-live="polite">
-                  {referenceFiles.map((reference, index) => (
-                    <div key={reference.previewUrl} className="creative-reference-thumbnail">
-                      {/* Local object URLs are used only before creation starts. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} />
-                      <span className="creative-reference-role">{index === 0 ? t("primaryReference") : t("supportingReference")}</span>
-                      <button type="button" onClick={() => removeReference(index)} aria-label={t("removeReference", { index: index + 1 })} disabled={isCreating}><span aria-hidden="true">×</span></button>
-                    </div>
-                  ))}
-                  <button type="button" className={`creative-reference-add${isReferenceDragging ? " is-dragging" : ""}`} onClick={() => referenceInputRef.current?.click()} onDragOver={(event) => { event.preventDefault(); setIsReferenceDragging(true); }} onDragLeave={() => setIsReferenceDragging(false)} onDrop={(event) => { event.preventDefault(); setIsReferenceDragging(false); selectReferences(Array.from(event.dataTransfer.files)); }} disabled={referenceFiles.length >= 3 || isCreating} aria-describedby={referenceError ? referenceErrorId : undefined}>
-                    <DashboardIcon name="plus" /><span>{t("addReference")}</span>
-                  </button>
-                  </div>
-                </div>
-                <div className="creative-panel-footer">
-                  {referenceError ? <p id={referenceErrorId} className="creative-field-error" role="alert">{referenceError}</p> : <p>{t("referenceHelper")}</p>}
-                  <span className="creative-reference-count" aria-live="polite">{t("referenceCount", { count: referenceFiles.length })}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div className="creative-composer-controls">
-          <p id={disabledHintId} className={!canStartImageCreation && !isCreating ? "creative-disabled-reason" : "sr-only"}>{!canStartImageCreation && !isCreating ? disabledReason || t("startDisabledHint") : ""}</p>
-          <Button
-            type="submit"
-            variant="dark"
-            disabled={!canStartImageCreation}
-            aria-busy={isCreating}
-            aria-describedby={disabledHintId}
-            className="creative-start-button"
-          >
-            <span>{isCreating ? t("creating") : t("createImage")}</span>
-          </Button>
-        </div>
-
-        <div className="creative-composer-feedback">
-          <p id={statusId} role="status" aria-live="polite">{statusMessage}</p>
-        </div>
-      </form>
-    </section>
-    <GenerationStatusIndicator status={statusState} label={statusState === "failed" ? t("failedStatus") : statusState === "succeeded" ? t("successStatus") : t("activeStatus")} onClick={() => setModalOpen(true)} />
-    <GenerationProgressModal open={modalOpen && generationState === "pending"} onClose={() => setModalOpen(false)} closeLabel={t("closeProgress")} title={t("progressTitle")} description={t("progressDescription")} statuses={[t("progressStatuses.preparing"), t("progressStatuses.scene"), t("progressStatuses.generating"), t("progressStatuses.finalizing")]} />
-    </>
-  );
+export function CreativeComposer({ locale, userId }: { locale: AppLocale; userId: string | null }) {
+  const t = useTranslations("Dashboard.composer"); const presetT = useTranslations("Dashboard.presets"); const timelineT = useTranslations("GenerationTimeline"); const router = useRouter();
+  const productInput = useRef<HTMLInputElement>(null); const referenceInput = useRef<HTMLInputElement>(null); const locked = useRef(false);
+  const [step, setStep] = useState<FlowStep>("type"); const [projectName, setProjectName] = useState(""); const [products, setProducts] = useState<FilePreview[]>([]); const [references, setReferences] = useState<FilePreview[]>([]); const [aspectRatio, setAspectRatio] = useState<GenerationAspectRatio>(DEFAULT_GENERATION_ASPECT_RATIO); const [creationMode, setCreationMode] = useState<"preset" | "custom">("preset"); const [presetId, setPresetId] = useState<string | null>(null); const [presetVertical, setPresetVertical] = useState<SupportedVertical | null>(null); const [presentationMode, setPresentationMode] = useState<string | null>(null); const [direction, setDirection] = useState(""); const [error, setError] = useState(""); const [dragging, setDragging] = useState(false);
+  const selectedPreset = getCreativePreset(presetId); const presets = useMemo(() => getRecommendedFamilyPresets({ vertical: presetVertical }), [presetVertical]); const [generationStage, setGenerationStage] = useState(0); const [generationSucceeded, setGenerationSucceeded] = useState(false);
+  useEffect(() => () => { products.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl)); references.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl)); }, [products, references]);
+  function addProducts(files: File[]) { if (files.length + products.length > MAX_PROJECT_PRODUCT_IMAGES) return setError(t("productLimit")); if (files.some((file) => !isSupportedProductImageType(file.type))) return setError(t("invalidProductType")); if (files.some((file) => file.size > MAX_PRODUCT_IMAGE_FILE_SIZE)) return setError(t("productTooLarge")); setProducts((items) => [...items, ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }))]); setError(""); }
+  function addReferences(files: File[]) { const accepted = files.slice(0, 3 - references.length); if (accepted.some((file) => !isSupportedProductImageType(file.type) || file.size > MAX_PRODUCT_IMAGE_FILE_SIZE)) return setError(t("invalidProductType")); setReferences((items) => [...items, ...accepted.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }))]); setError(""); }
+  function proceed() { setError(""); if (step === "name" && !projectName.trim()) return setError(t("flow.nameRequired")); if (step === "product" && !products.length) return setError(t("productRequired")); if (step === "direction" && !selectedPreset && !direction.trim()) return setError(t("directionRequired")); const index = steps.indexOf(step); if (index >= 0 && index < steps.length - 1) setStep(steps[index + 1]!); }
+  async function generate() { if (!userId || !products.length || (!selectedPreset && !direction.trim()) || locked.current) return; locked.current = true; setGenerationStage(0); setGenerationSucceeded(false); setStep("generating"); setError(""); let phase: "product" | "reference" | "other" = "other"; try { const project = await createWorkspaceProject(locale, projectName.trim()); if (!project.ok) throw new Error("project"); const supabase = createClient(); phase = "product"; for (const { file } of products) { const extension = productImageExtensions[file.type as keyof typeof productImageExtensions]; const path = `${userId}/${project.projectId}/${crypto.randomUUID()}.${extension}`; if ((await supabase.storage.from("product-assets").upload(path, file, { contentType: file.type, upsert: false })).error) throw new Error("upload"); if ((await registerProductAsset(locale, project.projectId, path)).status !== "success") throw new Error("register"); } phase = "reference"; for (const { file } of references) { const extension = productImageExtensions[file.type as keyof typeof productImageExtensions]; const path = `${userId}/${project.projectId}/reference-${crypto.randomUUID()}.${extension}`; if ((await supabase.storage.from("product-assets").upload(path, file, { contentType: file.type, upsert: false })).error) throw new Error("reference upload"); if ((await registerReferenceAsset(locale, project.projectId, path)).status !== "success") throw new Error("reference register"); } phase = "other"; setGenerationStage(1); const directionData = new FormData(); directionData.set("creative_direction", direction.trim()); if ((await updateCreativeDirection(locale, project.projectId, { status: "idle" }, directionData)).status !== "success") throw new Error("direction"); setGenerationStage(2); const generationData = new FormData(); generationData.set("enhance_with_ai", "on"); generationData.set("aspect_ratio", aspectRatio); if (selectedPreset) generationData.set("preset_id", selectedPreset.id); if (presentationMode) generationData.set("presentation_mode", presentationMode); if (!(await createQueuedImageGeneration(locale, project.projectId, null, generationData)).ok) throw new Error("generation"); setGenerationStage(4); setGenerationSucceeded(true); await new Promise((resolve) => window.setTimeout(resolve, 400)); router.push(`/dashboard/projects/${project.projectId}`, { locale }); } catch { setError(phase === "product" ? t("productUploadFailed") : phase === "reference" ? t("referenceUploadFailed") : t("creationError")); setStep("failed"); locked.current = false; } }
+  const currentIndex = Math.max(0, steps.indexOf(step)); const navItems = [["product", t("flow.navProduct")], ["format", t("flow.navFormat")], ["direction", t("flow.navDirection")], ["reference", t("flow.navReference")], ["details", t("flow.navDetails")]] as const;
+  const furthestReachable = !projectName.trim() ? 1 : !products.length ? 2 : !selectedPreset && !direction.trim() ? 4 : 7;
+  if (step === "generating") return <section className="creation-flow creation-generation" aria-live="polite"><div className="creation-orbit" aria-hidden="true" /><p className="creation-kicker">KLAY</p><h1>{t("flow.generatingTitle")}</h1><ol className="generation-timeline">{[0, 1, 2, 3, 4].map((index) => { const state = generationSucceeded || index < generationStage ? "completed" : index === generationStage ? "active" : "pending"; return <li key={index} data-state={state}><span aria-hidden="true">{state === "completed" ? "✓" : ""}</span><div><strong>{timelineT(`stages.${index}.title`)}</strong><p>{timelineT(`stages.${index}.description`)}</p></div></li>; })}</ol></section>;
+  if (step === "failed") return <section className="creation-flow creation-failure"><h1>{t("creationError")}</h1><p role="alert">{error}</p><Button onClick={() => setStep("review")}>{t("flow.tryAgain")}</Button></section>;
+  return <section id="composer" className="creation-flow" aria-labelledby="creation-flow-title">
+    {step !== "type" ? <nav className="creation-progress" aria-label={t("flow.progressLabel")}>{navItems.map(([key, label]) => { const stepIndex = steps.indexOf(key); const isCurrent = step === key; const isComplete = currentIndex > stepIndex; const enabled = stepIndex <= furthestReachable; return <button key={key} type="button" onClick={() => setStep(key)} disabled={!enabled} aria-current={isCurrent ? "step" : undefined} className={isComplete ? "is-complete" : isCurrent ? "is-current" : ""}><span>{label}</span><i aria-hidden="true"><b /></i></button>; })}</nav> : null}
+    <div className="creation-stage" key={step}>
+      {step === "type" ? <><p className="creation-kicker">KLAY</p><h1 id="creation-flow-title">{t("heading")}</h1><div className="creation-type-options"><button type="button" className="creation-type-card" onClick={() => setStep("name")}><DashboardIcon name="image" /><strong>{t("outputType.image.title")}</strong><span>{t("outputType.image.description")}</span></button><button type="button" className="creation-type-card" disabled><DashboardIcon name="video" /><strong>{t("outputType.video.title")}</strong><span>{t("outputType.video.badge")}</span></button></div></> : null}
+      {step === "name" ? <><h1 id="creation-flow-title">{t("flow.nameTitle")}</h1><label className="sr-only" htmlFor="creation-project-name">{t("projectNameLabel")}</label><input id="creation-project-name" autoFocus value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder={t("flow.namePlaceholder")} maxLength={120} className="creation-name-input" /></> : null}
+      {step === "product" ? <><h1>{t("flow.productTitle")}</h1><p>{t("dropzone.secondary")}</p><div className={`creation-upload-grid ${products.length ? "has-product" : ""}`}>{products.map((product, index) => <article key={product.previewUrl} className={`creation-preview ${index === 0 ? "is-primary" : ""}`}><img src={product.previewUrl} alt={t("productPreviewAlt", { index: index + 1 })} /><span>{index === 0 ? t("flow.primaryView") : t("flow.supportingView")}</span><button type="button" onClick={() => setProducts((items) => items.filter((_, itemIndex) => itemIndex !== index))} aria-label={t("removeProductView", { index: index + 1 })}>×</button></article>)}{Array.from({ length: Math.max(0, MAX_PROJECT_PRODUCT_IMAGES - products.length) }, (_, index) => <button key={`slot-${index}`} type="button" className={`creation-upload ${products.length ? "is-supporting-slot" : ""} ${dragging ? "is-dragging" : ""}`} onClick={() => productInput.current?.click()} onDragOver={(event: DragEvent<HTMLButtonElement>) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); addProducts(Array.from(event.dataTransfer.files)); }}><strong>{products.length ? t("addProductView") : t("addProduct")}</strong><span>{products.length ? t("productMultiViewHelper") : t("dropzone.secondary")}</span>{!products.length ? <small>{t("dropzone.formats")}</small> : null}</button>)}</div>{products.length ? <p className="creation-upload-helper">{t("flow.productDescription")}</p> : null}<input ref={productInput} className="sr-only" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={(event: ChangeEvent<HTMLInputElement>) => { addProducts(Array.from(event.target.files ?? [])); event.target.value = ""; }} /></> : null}
+      {step === "format" ? <><h1>{t("steps.format.title")}</h1><p>{t("steps.format.description")}</p><div className="creation-ratio-grid" role="radiogroup">{GENERATION_ASPECT_RATIOS.map((ratio) => <button key={ratio.value} type="button" role="radio" aria-checked={aspectRatio === ratio.value} className={aspectRatio === ratio.value ? "is-selected" : ""} onClick={() => setAspectRatio(ratio.value)}><AspectRatioPreview value={ratio.value} /><strong>{ratio.value}</strong><span>{t(`aspectRatio.names.${ratio.nameKey}`)}</span><small>{t(`aspectRatio.descriptions.${ratio.descriptionKey}`)}</small></button>)}</div></> : null}
+      {step === "direction" ? <><h1>{t("flow.directionTitle")}</h1><div className="creation-paths"><button type="button" className={creationMode === "preset" ? "is-selected" : ""} onClick={() => setCreationMode("preset")}>{t("flow.presetPath")}</button><button type="button" className={creationMode === "custom" ? "is-selected" : ""} onClick={() => setCreationMode("custom")}>{t("flow.customPath")}</button></div>{creationMode === "preset" ? <><div className="creation-category-list" role="radiogroup" aria-label={presetT("filterLabel")}>{supportedVerticals.map((vertical) => <button key={vertical} type="button" role="radio" aria-checked={presetVertical === vertical} className={presetVertical === vertical ? "is-selected" : ""} onClick={() => { setPresetVertical(vertical); setPresetId(null); setPresentationMode(null); }}>{presetT(`filterCategories.${vertical}`)}</button>)}</div>{presetVertical ? <div className="creation-preset-grid">{presets.map((preset) => <button key={preset.id} type="button" className={presetId === preset.id ? "is-selected" : ""} onClick={() => { setPresetId(preset.id); setPresentationMode(null); }}><strong>{preset.localizedTitle[locale]}</strong><span>{preset.localizedDescription[locale]}</span></button>)}</div> : null}{selectedPreset ? <div className="creation-mode-grid">{getPresetPresentationModes(selectedPreset.id).map((mode) => <button key={mode.id} type="button" className={presentationMode === mode.id ? "is-selected" : ""} onClick={() => setPresentationMode(mode.id)}>{presetT(`presentationModes.${mode.id}`)}</button>)}</div> : null}</> : <textarea value={direction} onChange={(event) => setDirection(event.target.value)} placeholder={t("promptPlaceholder")} className="creation-direction-input" />}</> : null}
+      {step === "reference" ? <><h1>{t("flow.referenceTitle")}</h1><p>{t("flow.referenceDescription")}</p><div className="creation-reference-grid">{references.map((reference, index) => <article key={reference.previewUrl} className="creation-preview"><img src={reference.previewUrl} alt={t("referencePreviewAlt", { index: index + 1 })} /><button type="button" onClick={() => setReferences((items) => items.filter((_, itemIndex) => itemIndex !== index))} aria-label={t("removeReference", { index: index + 1 })}>×</button></article>)}</div><input ref={referenceInput} type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => { addReferences(Array.from(event.target.files ?? [])); event.target.value = ""; }} /><Button variant="secondary" onClick={() => referenceInput.current?.click()}>{t("addReference")}</Button></> : null}
+      {step === "details" ? <><h1>{t("flow.detailsTitle")}</h1><div className="creation-chip-list">{["cinematic", "minimal", "product", "hardLight", "night", "editorial"].map((item) => <button key={item} type="button" onClick={() => { const label = t(`flow.chips.${item}`); setDirection((current) => current.includes(label) ? current : [current.trim(), label].filter(Boolean).join(", ")); }}>{t(`flow.chips.${item}`)}</button>)}</div><textarea value={direction} onChange={(event) => setDirection(event.target.value)} placeholder={t("promptPlaceholder")} className="creation-direction-input" /></> : null}
+      {step === "review" ? <><h1>{t("flow.reviewTitle")}</h1><article className="creation-brief"><strong>{projectName}</strong><span>{aspectRatio}</span><span>{selectedPreset ? getPresetFamily(selectedPreset.id)?.title[locale] ?? selectedPreset.title : direction || t("flow.customPath")}</span><span>{t("flow.viewCount", { count: products.length })} · {references.length ? t("flow.referenceCount", { count: references.length }) : t("flow.noReference")}</span></article></> : null}
+      {error ? <p className="creation-error" role="alert">{error}</p> : null}
+    </div>
+    {step !== "type" ? <footer className="creation-actions"><Button variant="ghost" onClick={() => { const index = steps.indexOf(step); if (index > 0) setStep(steps[index - 1]!); }}>{t("flow.back")}</Button>{step === "review" ? <Button onClick={() => void generate()} disabled={!userId}>{t("flow.generate")}</Button> : <Button onClick={proceed}>{step === "reference" || step === "details" ? t("flow.skip") : t("flow.continue")}</Button>}</footer> : null}
+  </section>;
 }
