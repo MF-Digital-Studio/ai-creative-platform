@@ -42,12 +42,13 @@ export function orderImageEditImages(baseImage: ImageGenerationSourceAsset, prod
   ];
 }
 
-export function buildReferenceReplacementPrompt(userDirection: string): string {
+export function buildReferenceReplacementPrompt(userDirection: string, options: { commercialFashionSafetyContext?: string } = {}): string {
   return [
     "REFERENCE IMAGE — PRESERVE AS BASE PHOTOGRAPH. Image 1 is the photograph to edit. Preserve its composition, subject, pose, anatomy, framing, camera, perspective, lighting, shadows, skin, clothing, background, environment, depth of field, and photographic character. Do not recreate or redesign the scene. Modify only the smallest region needed for the product.",
     "SOURCE PRODUCT — EXACT IDENTITY, MULTI-VIEW EVIDENCE. The product identity images after Image 1 show the same physical product from different viewpoints and are collectively the sole authority for product identity. Treat them as identity evidence for one single product. The first product image is primary authority for silhouette, main color, overall form, and composition; later product images are supporting authority for rear/side views, hardware, texture, pattern, logo, sole, bag handles, straps, closure, zippers, and visible construction. Do not interpret them as separate products and do not generate multiple products. Reference product identity must never override it; here, it means the collective product identity set.",
     "REPLACE the existing product of the same category; remove it and insert the source product. If no product is present, place the source product naturally in the appropriate target region. Do not combine products, invent a third product, or alter unrelated areas.",
     "Allow only physical integration changes: perspective, scale, rotation, contact shadow, lighting adaptation, partial occlusion, and natural wrap/contact. These must not redesign the product.",
+    options.commercialFashionSafetyContext ?? "",
     `Apply this user direction only when it does not conflict with preservation or product identity: ${userDirection}`,
   ].join("\n\n");
 }

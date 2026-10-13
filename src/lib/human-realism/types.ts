@@ -13,5 +13,6 @@ export type HumanRealismContext = {
   presetHumanPresence?: "none" | "partial" | "full" | null;
   referenceHumanPresent?: boolean;
   interactionMode?: string | null;
+  expectsHuman?: boolean;
 };
 export type HumanRealismPolicy = { version: "human-realism-v2"; expected: boolean; applied: boolean; focusAreas: HumanFocusArea[] };

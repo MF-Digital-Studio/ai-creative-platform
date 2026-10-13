@@ -36,6 +36,8 @@ import { footwearAnatomyPrompt, resolveFootwearAnatomyPolicy } from "@/lib/footw
 import { resolveApparelFitPreservation } from "@/lib/apparel-fit-preservation/resolve-apparel-fit-profile";
 import { compileApparelFitPreservationPrompt } from "@/lib/apparel-fit-preservation/compile-apparel-fit-prompt";
 import type { ApparelFitProfile } from "@/lib/apparel-fit-preservation/types";
+import { resolveCommercialFashionSafetyLayer, normalizeCommercialFashionPrompt } from "./commercial-fashion-normalizer";
+import { resolveGenerationSemantics } from "../strategy/resolve-generation-semantics";
 
 const productPreservationInstructions = [
   "The supplied product is the exact commercial product being advertised.",
@@ -110,6 +112,12 @@ export type FinalPromptLayers = {
   watchV2Applied: boolean;
   footwearV2Applied: boolean;
   bagsV1Applied: boolean;
+  expectsHuman: boolean;
+  isWearableOnHuman: boolean;
+  isProductOnly: boolean;
+  requiresApparelFit: boolean;
+  requiresHumanRealism: boolean;
+  requiresCommercialFashionSafety: boolean;
 };
 
 export type ImageGenerationPromptOptions = {
@@ -133,6 +141,8 @@ export type ImageGenerationPromptOptions = {
   presetFamilyId?: string | null;
   presetRules?: { allowedSceneTypes: readonly string[]; disallowedSceneTypes: readonly string[]; hardRules: readonly string[]; softRules: readonly string[]; variantId: string | null; presentationMode?: string | null; humanPresence?: "none" | "partial" | "full" | null; modeContract?: PresentationModeContract | null; referenceOverriddenFields?: readonly PresentationContractField[]; presetPreservedFields?: readonly PresentationContractField[] } | null;
   referenceAuthority?: boolean;
+  referenceHumanPresent?: boolean;
+  interactionMode?: string | null;
   strictProductOnlyStudio?: boolean;
 };
 
@@ -164,6 +174,17 @@ export function buildImageGenerationPromptWithPolicy(
   const strategyVertical = fashionOnModel ? "apparel" : strategy.startsWith("jewelry_") ? "jewelry" : strategy === "watch_on_wrist" ? "watches" : strategy === "footwear_on_model" ? "footwear" : strategy === "bags_on_model" ? "bags" : null;
   const category = isProductProfile(options.productProfile) ? options.productProfile.vertical : presetVertical ?? strategyVertical ?? context.category;
   const vertical = isSupportedVertical(category) ? category : null;
+  const semantics = resolveGenerationSemantics({
+    vertical,
+    strategy,
+    visibleHuman: options.visibleHuman,
+    referenceHumanPresent: options.referenceHumanPresent,
+    presetHumanPresence: options.presetRules?.humanPresence,
+    presentationMode: options.presetRules?.presentationMode,
+    interactionMode: options.interactionMode,
+    strictProductOnly: options.strictProductOnlyStudio,
+  });
+  const apparelOnHuman = vertical === "apparel" && semantics.isWearableOnHuman;
   const footwearAnatomy = resolveFootwearAnatomyPolicy({
     vertical,
     productProfile: isProductProfile(options.productProfile) ? options.productProfile : null,
@@ -174,9 +195,13 @@ export function buildImageGenerationPromptWithPolicy(
     handsVisible: options.handsVisible, feetVisible: options.feetVisible,
     presentationMode: options.presetRules?.presentationMode,
     presetHumanPresence: options.presetRules?.humanPresence,
-    referenceHumanPresent: options.referenceAuthority && options.visibleHuman,
+    referenceHumanPresent: options.referenceHumanPresent,
+    interactionMode: options.interactionMode,
+    expectsHuman: semantics.requiresHumanRealism,
   });
   const humanRealismDirection = compileHumanRealismPrompt(humanRealism, vertical);
+  const commercialFashionSafety = resolveCommercialFashionSafetyLayer({ vertical, requiresCommercialFashionSafety: semantics.requiresCommercialFashionSafety });
+  const commercialFashionDirection = commercialFashionSafety.context;
   const productSourceCount = options.generationImages?.filter(({ role }) => role === "product_identity_source" || role === "product_identity_supporting").length ?? 0;
   const apparelFit = resolveApparelFitPreservation({
     profile: options.productProfile,
@@ -187,6 +212,7 @@ export function buildImageGenerationPromptWithPolicy(
     sourceProductExists: productSourceCount > 0,
     presentationMode: options.presetRules?.presentationMode,
     sourceViewCount: productSourceCount,
+    requiresApparelFit: semantics.requiresApparelFit,
   });
   const apparelFitDirection = compileApparelFitPreservationPrompt(apparelFit, options.referenceAuthority === true);
   const verticalQuality = vertical ? getVerticalQualityProfile(vertical) : null;
@@ -196,9 +222,9 @@ export function buildImageGenerationPromptWithPolicy(
   const verticalRealismPolicy = buildVerticalRealismPolicy(
     context.visualIntent,
     verticalQuality,
-    strategy,
+    apparelOnHuman ? "fashion_on_model" : strategy,
   );
-  const verticalCompositionPolicy = buildVerticalCompositionPolicy(verticalQuality, strategy);
+  const verticalCompositionPolicy = buildVerticalCompositionPolicy(verticalQuality, apparelOnHuman ? "fashion_on_model" : strategy);
   const productProfilePrompt = isProductProfile(options.productProfile)
     ? compileProductProfilePrompt(options.productProfile)
     : null;
@@ -231,7 +257,9 @@ export function buildImageGenerationPromptWithPolicy(
   const compositionDirection = compileCompositionDirection(options.composition ?? null);
   const complianceDirection = compileCreativeComplianceDirection(options.creativeCompliance ?? null);
   const referenceMatchDirection = options.referenceMatch?.compatible
-    ? renderReferenceShotProfile(options.referenceMatch.shotProfile, options.referenceMatch.mode)
+    ? (commercialFashionSafety.applied
+      ? normalizeCommercialFashionPrompt(renderReferenceShotProfile(options.referenceMatch.shotProfile, options.referenceMatch.mode))
+      : renderReferenceShotProfile(options.referenceMatch.shotProfile, options.referenceMatch.mode))
     : "";
   const identityManifest = options.identityManifest ?? buildProductIdentityManifest(options.productProfile);
   const identityLockDirection = compileProductIdentityLock(identityManifest);
@@ -243,7 +271,7 @@ export function buildImageGenerationPromptWithPolicy(
   const bagReferenceDirection = vertical === "bags" && options.generationImages?.some(({ role }) => role === "scene_reference" || role === "style_reference" || role === "reference_base_scene")
     ? "BAG REFERENCE SUPPRESSION: Any bag shown in any reference is only a positional and interaction guide. Use references for pose, carry position, framing, scene, camera, and lighting. Do not copy the reference bag's silhouette, handles, straps, hardware, logo, closure, material, or design. The uploaded source bag remains the exact identity authority. Reference 1 controls scene/pose/framing/camera; References 2 and 3 guide lighting/mood/style only."
     : "";
-  const fidelityPolicy = fashionOnModel
+  const fidelityPolicy = apparelOnHuman
     ? fashionOnModelInstructions
     : jewelryOnModel
       ? jewelryOnModelInstructions
@@ -260,7 +288,7 @@ export function buildImageGenerationPromptWithPolicy(
                 ? "The product placement in the supplied canvas is intentional; keep it in that position."
                 : "Keep the supplied product visually consistent with its reference image."
             }`;
-  const fidelityLabel = fashionOnModel
+  const fidelityLabel = apparelOnHuman
     ? "fashion_on_model"
     : jewelryOnModel
       ? "jewelry_on_model"
@@ -294,6 +322,7 @@ export function buildImageGenerationPromptWithPolicy(
     bagFamilyCompliance,
     presetFamilyDirection,
     apparelFitDirection,
+    commercialFashionDirection,
     humanRealismDirection,
     sceneDirection ? `Scene suitability (product-compatible scene structure; product identity remains higher priority):\n${sceneDirection}` : "",
     strictProductOnlyStudioDirection,
@@ -324,6 +353,12 @@ export function buildImageGenerationPromptWithPolicy(
       fidelityPolicy: fidelityLabel,
       footwearV2Applied: vertical === "footwear",
       bagsV1Applied: vertical === "bags",
+      expectsHuman: semantics.expectsHuman,
+      isWearableOnHuman: semantics.isWearableOnHuman,
+      isProductOnly: semantics.isProductOnly,
+      requiresApparelFit: semantics.requiresApparelFit,
+      requiresHumanRealism: semantics.requiresHumanRealism,
+      requiresCommercialFashionSafety: semantics.requiresCommercialFashionSafety,
       globalRealismApplied: Boolean(globalRealismPolicy),
       identityPriorities: verticalQuality?.identityPriorities ?? null,
       productProfileApplied: Boolean(productProfilePrompt),

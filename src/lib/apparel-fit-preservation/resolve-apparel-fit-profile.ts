@@ -60,10 +60,10 @@ export function resolveApparelFitPreservation(input: {
   sourceProductExists?: boolean;
   presentationMode?: string | null;
   sourceViewCount?: number;
+  requiresApparelFit?: boolean;
 }): ApparelFitPreservationPolicy {
   const validProfile = resolveApparelFitProfile(input.profile, input.sourceViewCount);
   const profile = validProfile ?? (input.vertical === "apparel" && input.sourceProductExists ? sourceFallbackProfile(input.sourceViewCount ?? 1) : null);
-  const onModel = input.strategy === "fashion_on_model" || input.presentationMode === "model_studio" || input.presentationMode === "seated_urban_moment";
-  const active = input.vertical === "apparel" && input.sourceProductExists === true && input.humanExpected && onModel && !input.productOnly;
+  const active = input.vertical === "apparel" && input.sourceProductExists === true && input.humanExpected && input.requiresApparelFit !== false && !input.productOnly;
   return { profile, active };
 }

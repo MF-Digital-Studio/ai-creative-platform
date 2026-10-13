@@ -168,6 +168,7 @@ export function resolveGenerationStrategy(input: {
   productContext?: GenerationProductContext | null;
   requestedPreservationMode?: ProductPreservationMode | null;
   referenceInteraction?: TrustedReferenceInteraction | null;
+  referenceHumanPresent?: boolean;
   presetFamilyId?: string | null;
   hasReference?: boolean;
   presentationMode?: string | null;
@@ -200,7 +201,9 @@ export function resolveGenerationStrategy(input: {
 
   if (isProductProfile(input.productProfile)) {
     return resolution(
-      resolveForProductProfile(input.productProfile, input.userPrompt, input.referenceInteraction),
+      input.productProfile.vertical === "apparel" && input.referenceHumanPresent === true
+        ? "fashion_on_model"
+        : resolveForProductProfile(input.productProfile, input.userPrompt, input.referenceInteraction),
       "product_profile",
       context.visualIntent,
     );

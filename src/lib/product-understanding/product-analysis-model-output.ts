@@ -30,7 +30,7 @@ export const productAnalysisModelOutputSchema = {
 } as const;
 
 const aliases: Record<SupportedVertical, string[]> = {
-  apparel: ["apparel", "clothing", "garment", "fashion apparel", "jacket", "shirt", "trousers", "pants", "hoodie", "sweater", "dress", "coat", "skirt", "top"],
+  apparel: ["apparel", "clothing", "garment", "fashion apparel", "jacket", "shirt", "trousers", "pants", "hoodie", "sweater", "dress", "fitted dress", "mini dress", "evening dress", "bodycon dress", "coat", "skirt", "top"],
   footwear: ["footwear", "shoe", "shoes", "sneaker", "sneakers", "boot", "boots", "heel", "heels", "sandal", "sandals"],
   bags: ["bag", "bags", "handbag", "backpack", "tote", "clutch", "purse", "crossbody", "satchel"],
   watches: ["watch", "watches", "wristwatch", "timepiece"],

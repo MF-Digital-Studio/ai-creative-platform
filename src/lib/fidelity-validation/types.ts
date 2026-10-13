@@ -32,6 +32,7 @@ export type FidelityValidationIssue = {
   region?: string;
   repairable?: boolean;
   commercialImpact?: FidelityCommercialImpact;
+  presetMismatchFields?: PresentationContractField[];
   finding: string;
   expected: string;
   sourceAuthoritative: boolean;
@@ -74,6 +75,7 @@ export type FidelityValidationBrief = {
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
   apparelArtworkIdentity?: { available: boolean; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
+  apparelArtworkEvidence?: { artworkPresent: boolean | null; artworkSide: "front" | "back" | "unknown" } | null;
   preset?: {
     familyId: string; variantId: string | null; vertical?: string;
     allowedSceneTypes?: readonly string[]; disallowedSceneTypes?: readonly string[];
@@ -110,6 +112,7 @@ export type FidelityValidationInput = {
   referenceMatch?: ReferenceMatchResolution | null;
   identityManifest?: ProductIdentityManifest | null;
   apparelArtworkIdentity?: { data: Buffer; mimeType: string; containsText: boolean; side: "front" | "back" | "unknown"; confidence: number } | null;
+  apparelArtworkEvidence?: FidelityValidationBrief["apparelArtworkEvidence"];
   exactProductApparel?: boolean;
   preset?: FidelityValidationBrief["preset"];
   variationHistory?: FidelityValidationBrief["variationHistory"];

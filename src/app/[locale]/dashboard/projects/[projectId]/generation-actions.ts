@@ -110,6 +110,9 @@ import { createGenerationPerformanceRecorder } from "@/lib/generation/performanc
 import { DEFAULT_GENERATION_ASPECT_RATIO } from "@/lib/generation/aspect-ratios";
 import { createNotification } from "@/lib/notifications/create-notification";
 import { compileApparelFitPreservationPrompt } from "@/lib/apparel-fit-preservation/compile-apparel-fit-prompt";
+import { finalizeCommercialFashionProviderPrompt, resolveCommercialFashionSafetyLayer } from "@/lib/generation/prompts/commercial-fashion-normalizer";
+import { createModerationInputSummary } from "@/lib/generation/moderation-input-summary";
+import { classifyHumanReferenceFashion, isProviderModerationBlocked, type KlayReferenceClassification } from "@/lib/generation/reference-fashion-classification";
 import { APPAREL_FIT_PRESERVATION_VERSION } from "@/lib/apparel-fit-preservation/apparel-fit-version";
 
 export type RegisterProductAssetResult = {
@@ -495,7 +498,7 @@ export async function runQueuedImageGeneration(
   let performance: ReturnType<typeof createGenerationPerformanceRecorder> | null = null;
   const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, referenceAnalysisCalls: 0, artworkAnalysisCalls: 0, segmentationCalls: 0, projectionAnalysisCalls: 0, repairCalls: 0 };
   safeGenerationEvent("queue", "processor_entered", { generationId });
-  let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null } | null = null;
+  let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null; klayClassification: KlayReferenceClassification } | null = null;
   let outputStored = false;
   let terminalSuccessPersisted = false;
   let postStorageStep = "storage";
@@ -771,6 +774,9 @@ export async function runQueuedImageGeneration(
       : null;
     const presentationModeContract = getPresentationModeContract(presetFamily?.id, resolvedPresetVariant?.presentationMode);
     const referenceShot = referenceAnalysis.styleBrief ? getReferenceShotProfile(referenceAnalysis.styleBrief) : null;
+    const referenceHumanPresent = Boolean(referenceShot?.humanPose || (referenceShot?.interaction && ["held", "worn", "near_face"].includes(referenceShot.interaction)));
+    const referenceFashionClassification = classifyHumanReferenceFashion({ hasReference: usableReferenceImages.length > 0, humanDetected: referenceHumanPresent, styleBrief: referenceAnalysis.styleBrief, userDirection: metadataUserPrompt });
+    logDevelopmentGenerationEvent("human_reference_classified", { generationId: queuedGeneration.id, humanReferenceClassification: referenceFashionClassification.humanReferenceClassification, klayClassification: referenceFashionClassification.klayClassification, explicitSexualEvidence: referenceFashionClassification.explicitSexualEvidence });
     const referenceSpecifiedFields = referenceShot ? [
       referenceShot.background || referenceShot.environment ? "environment" : null,
       referenceShot.cameraDistance && referenceShot.cameraDistance !== "unknown" ? "cameraDistance" : null,
@@ -798,6 +804,7 @@ export async function runQueuedImageGeneration(
       productProfile,
       requestedPreservationMode: resolvePreservationMode(queuedGeneration.preservation_mode),
       referenceInteraction,
+      referenceHumanPresent,
       presetFamilyId: presetFamily?.id ?? null,
       hasReference: usableReferenceImages.length > 0,
       presentationMode: resolvedPresetVariant?.presentationMode ?? null,
@@ -1090,10 +1097,11 @@ export async function runQueuedImageGeneration(
       data,
       mimeType,
     })), apparelArtwork ? { id: asset.id, bucketId: asset.bucket_id, objectPath: asset.object_path, data: apparelArtwork.data, mimeType: "image/png" } : null);
+    const visibleHuman = !strictProductOnlyStudio && !/\b(?:no|without)\s+(?:visible\s+)?(?:person|people|human|model|body|skin|hands?)\b/i.test(metadataUserPrompt) && (referenceHumanPresent || ["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(strategy) || /\b(?:person|woman|man|model|hand|arm|leg|foot|feet|face|wrist|neck|ear|body)\b/i.test(metadataUserPrompt) || ["held", "worn", "near_face"].includes(referenceInteraction ?? ""));
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null, referenceAuthority: usableReferenceImages.length > 0, strictProductOnlyStudio, visibleHuman: !strictProductOnlyStudio && !/\b(?:no|without)\s+(?:visible\s+)?(?:person|people|human|model|body|skin|hands?)\b/i.test(metadataUserPrompt) && (["fashion_on_model", "jewelry_on_model", "watch_on_wrist", "footwear_on_model", "bags_on_model"].includes(strategy) || /\b(?:person|woman|man|model|hand|arm|leg|foot|feet|face|wrist|neck|ear|body)\b/i.test(metadataUserPrompt) || ["held", "worn", "near_face"].includes(referenceInteraction ?? "")) },
+      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null, referenceAuthority: usableReferenceImages.length > 0, strictProductOnlyStudio, visibleHuman, referenceHumanPresent, interactionMode: resolvedPresetVariant?.interactionMode ?? referenceInteraction },
     );
     if (presetFamily) {
       console.info("[preset] validator_context", { generationId, selectedPresetId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedVariantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, overrideReason: usableReferenceImages.length > 0 ? "reference_authority" : strategyResolution.reason !== "preset_strategy_hint" ? strategyResolution.reason : null, variationSource: "generation_seed" });
@@ -1157,15 +1165,25 @@ export async function runQueuedImageGeneration(
     }
     effectivePreservationMode = finalPolicy.preservationMode;
     fidelityMetadata.effective_mode = effectivePreservationMode;
+    const commercialFashionSafetyInput = {
+      vertical: productProfile?.vertical ?? finalPrompt.layers.vertical,
+      requiresCommercialFashionSafety: finalPrompt.layers.requiresCommercialFashionSafety,
+    };
+    const commercialFashionSafety = resolveCommercialFashionSafetyLayer(commercialFashionSafetyInput);
+    const providerCreativeDirection = promptEnhancement.prompt;
+    logDevelopmentGenerationEvent("commercial_fashion_safety_resolved", { generationId: queuedGeneration.id, applied: commercialFashionSafety.applied, referenceReplacement: usesReferenceReplacement });
     let activePrompt = usesReferenceReplacement
-      ? `${buildReferenceReplacementPrompt(promptEnhancement.prompt)}\n\n${compileOutputFormatGuidance(aspectRatio)}${strategy === "watch_on_wrist" ? `\n\n${watchOnWristInstructions}` : ""}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
+      ? `${buildReferenceReplacementPrompt(providerCreativeDirection, commercialFashionSafety.applied ? { commercialFashionSafetyContext: commercialFashionSafety.context } : undefined)}\n\n${compileOutputFormatGuidance(aspectRatio)}${strategy === "watch_on_wrist" ? `\n\n${watchOnWristInstructions}` : ""}${apparelIdentityManifest ? `\n\n${compileApparelArtworkLock(apparelIdentityManifest)}` : ""}`
       : finalPrompt.prompt;
-    const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman: finalPrompt.layers.humanRealismApplied });
+    const humanRealismPolicy = resolveHumanRealismPolicy({ strategy, vertical: productProfile?.vertical ?? finalPrompt.layers.vertical, visibleHuman, referenceHumanPresent, interactionMode: resolvedPresetVariant?.interactionMode ?? referenceInteraction, expectsHuman: finalPrompt.layers.requiresHumanRealism });
     const humanRealismDirection = compileHumanRealismPrompt(humanRealismPolicy, productProfile?.vertical ?? finalPrompt.layers.vertical);
     if (humanRealismDirection && !activePrompt.includes(humanRealismDirection)) activePrompt = `${activePrompt}\n\n${humanRealismDirection}`;
     const apparelFitPolicy = { active: finalPrompt.layers.apparelFitPreservationActive, profile: finalPrompt.layers.apparelFitProfile };
     const apparelFitDirection = compileApparelFitPreservationPrompt(apparelFitPolicy, usableReferenceImages.length > 0);
     if (apparelFitDirection && !activePrompt.includes(apparelFitDirection)) activePrompt = `${activePrompt}\n\n${apparelFitDirection}`;
+    if (referenceFashionClassification.promptContext && !activePrompt.includes(referenceFashionClassification.promptContext)) activePrompt = `${activePrompt}\n\n${referenceFashionClassification.promptContext}`;
+    const finalProviderPrompt = finalizeCommercialFashionProviderPrompt(activePrompt, commercialFashionSafetyInput);
+    activePrompt = finalProviderPrompt.prompt;
     logDevelopmentGenerationEvent("apparel_fit_profile_resolved", {
       generationId: queuedGeneration.id,
       version: APPAREL_FIT_PRESERVATION_VERSION,
@@ -1184,10 +1202,18 @@ export async function runQueuedImageGeneration(
       });
     }
 
+    const moderationInputSummary = createModerationInputSummary({
+      images: generationImages,
+      humanReferenceDetected: referenceHumanPresent,
+      commercialSafetyApplied: finalProviderPrompt.applied,
+      referenceFreeTextIncluded: Boolean(referenceAnalysis.styleBrief),
+    });
+    logDevelopmentGenerationEvent("moderation_input_summary", moderationInputSummary);
+
     providerDiagnosticContext = {
       provider: queuedGeneration.provider, model: queuedGeneration.model, imageCount: generationImages.length,
       preservationMode: effectivePreservationMode, strategy: finalPolicy.strategy,
-      sceneFamily: finalPolicy.sceneFamily,
+      sceneFamily: finalPolicy.sceneFamily, klayClassification: referenceFashionClassification.klayClassification,
     };
     const imageModelCapabilities = getImageModelCapabilities(queuedGeneration.model);
     logDevelopmentGenerationEvent("image_model_capabilities", {
@@ -1278,6 +1304,7 @@ export async function runQueuedImageGeneration(
       preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null,
       variationHistory,
       ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
+      apparelArtworkEvidence: apparelIdentityManifest ? { artworkPresent: apparelIdentityManifest.artworkPresent, artworkSide: apparelIdentityManifest.artworkSide } : null,
       exactProductApparel: apparelFidelityMode.exactProductApparel,
     }));
     executionCounts.visionValidationCalls += 1;
@@ -1314,6 +1341,7 @@ export async function runQueuedImageGeneration(
       identityCriticalIssueCount: originalIdentityIssueCounts.critical,
       identityMajorIssueCount: originalIdentityIssueCounts.major,
       apparelFitIssues: fidelityValidation.issues.filter(({ category }) => category === "apparel_fit").map(({ code }) => code),
+      presetMismatchFields: fidelityValidation.issues.filter(({ code }) => code.toLowerCase().startsWith("preset_")).flatMap(({ presetMismatchFields }) => presetMismatchFields ?? []),
     });
     if (fidelityValidation.status === "validation_unavailable") {
       logDevelopmentGenerationEvent("fidelity_validation_unavailable", {
@@ -1438,6 +1466,7 @@ export async function runQueuedImageGeneration(
           identityManifest,
           preset: presetFamily ? { familyId: presetFamily.id, variantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, interactionMode: resolvedPresetVariant?.interactionMode ?? null, strictProductOnlyStudio, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null,
           ...(apparelArtwork ? { apparelArtworkIdentity: { data: apparelArtwork.data, mimeType: "image/png", containsText: apparelArtwork.identitySource.containsText, side: apparelArtwork.side, confidence: apparelArtwork.identitySource.confidence } } : {}),
+          apparelArtworkEvidence: apparelIdentityManifest ? { artworkPresent: apparelIdentityManifest.artworkPresent, artworkSide: apparelIdentityManifest.artworkSide } : null,
           exactProductApparel: apparelFidelityMode.exactProductApparel,
         }));
         executionCounts.visionValidationCalls += 1;
@@ -1840,9 +1869,12 @@ export async function runQueuedImageGeneration(
     logDevelopmentGenerationEvent("failed", { generationId });
     safeGenerationEvent("queue", "processor_exit", { generationId, status: "failed" });
     const completedAt = new Date();
+    const providerModerationBlocked = providerDiagnosticContext !== null && isProviderModerationBlocked(error);
+    const failureCategory = providerModerationBlocked ? "provider_moderation_blocked" : "generation_failed";
     const { data: failedGeneration, error: failurePersistenceError } = await admin.from("generations").update({
       status: "failed",
-      error_message: "generation_failed",
+      error_message: failureCategory,
+      ...(providerDiagnosticContext ? { provider_metadata: { failureCategory, klayClassification: providerDiagnosticContext.klayClassification, providerDecision: providerModerationBlocked ? "moderation_blocked" : "provider_error", providerFalsePositiveCandidate: providerModerationBlocked && providerDiagnosticContext.klayClassification === "adult_editorial_fashion" } } : {}),
       processing_completed_at: completedAt.toISOString(),
       ...(processingStartedAt ? { processing_duration_ms: completedAt.getTime() - processingStartedAt.getTime() } : {}),
     }).eq("id", generationId).in("status", ["queued", "processing"]).select("id, project_id").maybeSingle();
@@ -1855,6 +1887,6 @@ export async function runQueuedImageGeneration(
     }
     const errorMessage = error instanceof Error ? error.message.toLowerCase() : "";
     const retryable = /network|timeout|temporar|rate limit|download|upload|database|fetch failed|econn|5\d\d/.test(errorMessage);
-    return { ok: false, message: "generationFailed", retryable, failureCategory: retryable ? "transient_infrastructure" : "generation_failed" };
+    return { ok: false, message: "generationFailed", retryable: providerModerationBlocked ? false : retryable, failureCategory: providerModerationBlocked ? "provider_moderation_blocked" : retryable ? "transient_infrastructure" : "generation_failed" };
   }
 }

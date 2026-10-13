@@ -1364,7 +1364,7 @@
         "enhanceWithAIHelper": "Yaratıcı yönünüzü üretimden önce daha ayrıntılı bir üretim prompt’una dönüştürür.",
         "run": "Üretimi çalıştır",
         "running": "Üretiliyor…",
-        "generationFailed": "Görsel üretimi tamamlanamadı. Lütfen tekrar deneyin.",
+        "generationFailed": "Görsel sağlayıcısı bu referansı işleyemedi. Başka bir referans görsel deneyin.",
         "activeStatus": "Görsel üretiliyor…",
         "successStatus": "Görsel hazır",
         "failedStatus": "Üretim başarısız",

@@ -1369,7 +1369,7 @@
         "enhanceWithAIHelper": "Turn your creative direction into a more detailed production prompt before generation.",
         "run": "Run generation",
         "running": "Generatingâ€¦",
-        "generationFailed": "We couldnâ€™t complete the image generation. Please try again.",
+        "generationFailed": "The image provider could not process this reference. Try another reference image.",
         "activeStatus": "Generating image…",
         "successStatus": "Image ready",
         "failedStatus": "Generation failed",

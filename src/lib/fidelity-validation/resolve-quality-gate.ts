@@ -1,4 +1,5 @@
 import { fidelityValidationCategories, type FidelityIdentityImpact, type FidelityIssueSeverity, type FidelityLikelyCause, type FidelityValidationCheck, type FidelityValidationIssue, type FidelityValidationResult } from "./types";
+import type { PresentationContractField } from "@/lib/creative-presets/presentation-mode-contracts";
 import { FIDELITY_VALIDATION_VERSION } from "./validation-version";
 
 const validCategories = new Set<string>(fidelityValidationCategories);
@@ -31,7 +32,7 @@ const codeCause: Record<string, FidelityLikelyCause> = {
   package_geometry_changed: "geometry_change", geometry_drift: "geometry_change", footwear_silhouette_changed: "geometry_change", footwear_panel_structure_changed: "geometry_change", changed_dial_layout: "geometry_change", watch_dial_structure_changed: "geometry_change", pendant_geometry_changed: "geometry_change",
 };
 
-function isIssue(value: unknown): value is Omit<FidelityValidationIssue, "issueCode" | "confidence" | "identityImpact" | "likelyCause"> & Partial<Pick<FidelityValidationIssue, "issueCode" | "confidence" | "identityImpact" | "likelyCause">> {
+function isIssue(value: unknown): value is Omit<FidelityValidationIssue, "issueCode" | "confidence" | "identityImpact" | "likelyCause" | "presetMismatchFields"> & Partial<Pick<FidelityValidationIssue, "issueCode" | "confidence" | "identityImpact" | "likelyCause">> & { presetMismatchFields?: unknown } {
   if (typeof value !== "object" || value === null) return false;
   const item = value as Record<string, unknown>;
   return typeof item.code === "string" && typeof item.category === "string" && validCategories.has(item.category) && typeof item.severity === "string" &&
@@ -116,15 +117,36 @@ export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityV
   };
 }
 
+const presentationContractFields = new Set<PresentationContractField>(["sceneType", "environment", "cameraDistance", "cameraAngle", "framing", "subjectScale", "subjectPlacement", "productOrientation", "physicalSupport", "gravityBehavior", "humanPresence", "interactionMode", "surface", "propLanguage", "lighting", "captureProfile", "productCount", "targetDetail"]);
+
+function inferredPresetMismatchFields(issue: FidelityValidationIssue): PresentationContractField[] {
+  const explicit = (issue.presetMismatchFields ?? []).filter((field): field is PresentationContractField => presentationContractFields.has(field));
+  if (explicit.length) return [...new Set(explicit)];
+  const detail = `${issue.finding} ${issue.expected} ${issue.region}`.toLowerCase();
+  const inferred: PresentationContractField[] = [];
+  const keywords: Array<[PresentationContractField, RegExp]> = [["cameraDistance", /camera distance|macro|close-up|wide/], ["cameraAngle", /camera angle|overhead|eye.level|low.angle/], ["framing", /framing|crop|full.body|close.up/], ["environment", /environment|street|studio|background/], ["lighting", /lighting|light/], ["surface", /surface|tabletop|floor/], ["propLanguage", /prop/], ["subjectPlacement", /placement|centered|negative space/], ["humanPresence", /human|person|model|body/], ["interactionMode", /interaction|wearing|carrying|holding/]];
+  for (const [field, pattern] of keywords) if (pattern.test(detail)) inferred.push(field);
+  return [...new Set(inferred)];
+}
+
 export function suppressReferenceAuthorityPresetIssues(issues: FidelityValidationIssue[], referenceAuthority: boolean, overriddenFields: readonly string[] = []): FidelityValidationIssue[] {
   if (!referenceAuthority) return issues;
   if (!overriddenFields.length) return issues;
   return issues.filter((issue) => {
     const code = issue.code.toLowerCase();
+    if (code === "preset_presentation_mode_mismatch") {
+      const fields = inferredPresetMismatchFields(issue);
+      return fields.length === 0 || !fields.every((field) => overriddenFields.includes(field));
+    }
     if (code === "preset_scene_mismatch" || code === "preset_environment_too_generic" || code === "bag_preset_scene_mismatch") return !overriddenFields.includes("environment");
     if (code === "preset_interaction_mismatch") return !overriddenFields.includes("interactionMode");
     return !referenceOverriddenPresetCodes.has(code);
   });
+}
+
+/** Artwork-specific findings require a positive source artwork signal. */
+export function suppressUnsupportedApparelArtworkIssues(issues: FidelityValidationIssue[], artworkPresent: boolean | null | undefined): FidelityValidationIssue[] {
+  return artworkPresent === true ? issues : issues.filter((issue) => !issue.code.toLowerCase().startsWith("apparel_artwork_"));
 }
 
 export function mapStructuredValidationOutput(value: unknown): FidelityValidationIssue[] {
@@ -138,11 +160,15 @@ export function mapStructuredValidationOutput(value: unknown): FidelityValidatio
       ? "product_identity" as const : input.category;
     const confidence = typeof input.confidence === "number" && Number.isFinite(input.confidence) ? Math.max(0, Math.min(1, input.confidence)) : 0.9;
     const identityImpact = input.identityImpact ?? defaultImpact(canonicalCode, category, input.severity);
+    const presetMismatchFields = Array.isArray(input.presetMismatchFields)
+      ? input.presetMismatchFields.filter((field): field is PresentationContractField => typeof field === "string" && presentationContractFields.has(field as PresentationContractField))
+      : [];
     const normalized = {
       code: canonicalCode, issueCode: input.issueCode || canonicalCode, category, severity: input.severity, finding: input.finding, expected: input.expected,
       confidence, identityImpact, likelyCause: input.likelyCause ?? codeCause[canonicalCode] ?? "unknown" as FidelityLikelyCause,
       region: input.region ?? "unspecified", repairable: input.repairable ?? category === "human_realism",
       commercialImpact: input.commercialImpact ?? (input.severity === "critical" ? "high" : input.severity === "major" ? "medium" : "low"),
+      presetMismatchFields,
       sourceAuthoritative: true,
     } satisfies FidelityValidationIssue;
     return { ...normalized, severity: confidenceAdjustedSeverity(normalized) };
