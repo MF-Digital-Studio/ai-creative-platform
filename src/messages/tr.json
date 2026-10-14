@@ -703,7 +703,8 @@
       "resetZoom": "Yakınlaştırmayı sıfırla",
       "favoriteAdd": "Favorilere ekle",
       "favoriteRemove": "Favorilerden çıkar",
-      "favoriteError": "Favori durumu güncellenemedi."
+      "favoriteError": "Favori durumu güncellenemedi.",
+      "galleryLabel": "Son üretimler galerisi"
     },
     "composer": {
       "heading": "Yeni ürün üret",

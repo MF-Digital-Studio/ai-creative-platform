@@ -16,6 +16,11 @@ const referenceOverriddenPresetCodes = new Set(["preset_scene_mismatch", "preset
 const majorHumanCodes = new Set(["human_skin_plastic", "human_skin_overretouched", "human_texture_unrealistic", "human_face_uncanny", "human_expression_unnatural", "human_hair_synthetic", "human_posture_unnatural", "plastic_skin_appearance", "unrealistic_human_texture", "face_realism_error", "plastic_skin", "over_retouched_skin", "facial_realism_drift", "hair_realism_drift", "human_product_contact_error", "body_interaction_failure", "nail_anatomy_error", "pose_implausible"]);
 const criticalApparelFitCodes = new Set(["apparel_silhouette_mismatch", "apparel_fit_mismatch", "apparel_proportion_mismatch", "apparel_structure_mismatch", "apparel_product_body_interaction_error"]);
 const majorApparelFitCodes = new Set(["apparel_length_mismatch", "apparel_pocket_placement_error", "apparel_closure_structure_error", "apparel_material_behavior_mismatch", "apparel_drape_mismatch"]);
+const physicalIntegrationCodes = new Set([
+  "watch_case_rotation_mismatch", "watch_wrist_axis_mismatch", "watch_flat_overlay_appearance", "watch_strap_not_wrapped", "watch_contact_failure",
+  "watch_flat_product_appearance", "watch_front_face_only_render", "watch_dial_orientation_mismatch", "watch_case_depth_missing", "watch_side_geometry_missing", "watch_bracelet_wrap_error", "watch_case_floating", "watch_contact_shadow_missing", "watch_perspective_mismatch", "watch_reflection_integration_error", "watch_scale_to_wrist_error",
+  "jewelry_flat_product_appearance", "jewelry_front_face_only_render", "jewelry_depth_missing", "jewelry_side_profile_missing", "jewelry_body_attachment_error", "jewelry_contact_shadow_missing", "earring_ear_attachment_error", "earring_setting_depth_missing", "earring_floating", "jewelry_perspective_mismatch", "jewelry_reflection_integration_error", "jewelry_scale_to_body_error",
+]);
 const severeStructuralCodes = new Set(["severe_physical_failure", "malformed_product", "structural_duplication", "duplicate_product", "product_duplication"]);
 const jewelryCriticalCodes = new Set(["jewelry_product_substitution", "jewelry_center_stone_shape_drift", "jewelry_center_stone_count_drift", "jewelry_prong_count_drift", "jewelry_setting_geometry_drift", "jewelry_halo_structure_drift", "jewelry_side_stone_drift", "jewelry_band_geometry_drift", "jewelry_metal_color_drift", "jewelry_reference_product_contamination"]);
 const bagCriticalCodes = new Set(["bag_product_substitution", "bag_silhouette_drift", "bag_handle_count_drift", "bag_strap_drift", "bag_closure_drift", "bag_flap_geometry_drift", "bag_hardware_drift", "bag_logo_monogram_drift", "bag_color_drift", "bag_pocket_layout_drift"]);
@@ -54,6 +59,7 @@ function confidenceAdjustedSeverity(issue: Pick<FidelityValidationIssue, "code" 
   if (majorPresetCodes.has(code)) return "major";
   if (bagMinorCodes.has(code)) return "minor";
   const confidence = issue.confidence ?? 0.9;
+  if (physicalIntegrationCodes.has(code)) return confidence >= 0.75 ? "critical" : confidence >= 0.55 ? "major" : "minor";
   if (issue.category === "reference_match" && /supporting.*(style|lighting)|style.*missed|lighting.*missed/.test(code)) return "minor";
   if (issue.category === "human_realism" && criticalHumanCodes.has(code)) return confidence < 0.75 ? (confidence < 0.55 ? "minor" : "major") : "critical";
   if (issue.category === "human_realism" && majorHumanCodes.has(code) && confidence >= 0.75 && issue.severity === "minor") return "major";
@@ -101,10 +107,11 @@ export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityV
   const majorHumanCount = normalized.filter((issue) => issue.category === "human_realism" && issue.severity === "major").length;
   const majorHumanTerminal = normalized.some((issue) => issue.category === "human_realism" && majorHumanCodes.has(issue.code.toLowerCase()) && issue.severity === "major" && issue.confidence >= 0.8);
   const criticalApparelFit = normalized.some((issue) => issue.category === "apparel_fit" && criticalApparelFitCodes.has(issue.code.toLowerCase()) && issue.severity === "critical" && issue.confidence >= 0.75);
+  const physicalIntegrationFailure = normalized.some((issue) => physicalIntegrationCodes.has(issue.code.toLowerCase()) && issue.severity === "critical" && issue.confidence >= 0.75);
   const majorApparelFit = normalized.some((issue) => issue.category === "apparel_fit" && majorApparelFitCodes.has(issue.code.toLowerCase()) && issue.severity === "major" && issue.confidence >= 0.8);
   const presetComplianceFailure = normalized.some((issue) => presetComplianceCodes.has(issue.code.toLowerCase()) && issue.severity !== "minor" && issue.confidence >= 0.75);
   const majorPresetFailure = normalized.some((issue) => majorPresetCodes.has(issue.code.toLowerCase()) && issue.severity === "major" && issue.confidence >= 0.75);
-  const status = footwearAnatomyFailure || criticalIdentity || criticalHuman || majorHumanTerminal || criticalApparelFit || majorApparelFit || severeStructure || presetComplianceFailure || majorPresetFailure || majorIdentityCount >= 2 || majorHumanCount >= 2
+  const status = footwearAnatomyFailure || criticalIdentity || criticalHuman || majorHumanTerminal || criticalApparelFit || physicalIntegrationFailure || majorApparelFit || severeStructure || presetComplianceFailure || majorPresetFailure || majorIdentityCount >= 2 || majorHumanCount >= 2
     ? "fail"
     : normalized.length > 0 ? "pass_with_warnings" : "pass";
   const severity = normalized.some((issue) => issue.severity === "critical") ? "critical" : normalized.some((issue) => issue.severity === "major") ? "major" : normalized.length ? "minor" : null;

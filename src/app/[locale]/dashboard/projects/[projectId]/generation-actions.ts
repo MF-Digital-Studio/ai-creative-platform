@@ -1105,7 +1105,7 @@ export async function runQueuedImageGeneration(
     const finalPrompt = buildImageGenerationPromptWithPolicy(
       promptEnhancement.prompt,
       effectivePreservationMode,
-      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null, referenceAuthority: usableReferenceImages.length > 0, strictProductOnlyStudio, visibleHuman, referenceHumanPresent, interactionMode: resolvedPresetVariant?.interactionMode ?? referenceInteraction },
+      { strategy, useCase: qualityUseCase, productProfile, sceneSuitability, composition, creativeCompliance, referenceMatch, identityManifest, generationImages, apparelIdentityManifest, exactProductApparel: apparelFidelityMode.exactProductApparel, aspectRatio, presetFamilyId: presetFamily?.id ?? null, presetRules: presetFamily ? { allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, hardRules: presetFamily.hardRules, softRules: presetFamily.softRules, variantId: resolvedVariantId, presentationMode: resolvedPresetVariant?.presentationMode ?? null, humanPresence: resolvedPresetVariant?.humanPresence ?? null, modeContract: presentationModeContract, referenceOverriddenFields, presetPreservedFields } : null, referenceAuthority: usableReferenceImages.length > 0, referenceStyle: referenceAnalysis.styleBrief, strictProductOnlyStudio, visibleHuman, referenceHumanPresent, interactionMode: resolvedPresetVariant?.interactionMode ?? referenceInteraction },
     );
     if (presetFamily) {
       console.info("[preset] validator_context", { generationId, selectedPresetId: presetFamily.id, selectedPresetFamily: presetFamily.id, selectedVariantId: resolvedVariantId, allowedSceneTypes: presetFamily.allowedSceneTypes, disallowedSceneTypes: presetFamily.disallowedSceneTypes, overrideReason: usableReferenceImages.length > 0 ? "reference_authority" : strategyResolution.reason !== "preset_strategy_hint" ? strategyResolution.reason : null, variationSource: "generation_seed" });
@@ -1152,6 +1152,13 @@ export async function runQueuedImageGeneration(
       resolvedStrategy: strategy,
       resolvedVertical: finalPrompt.layers.vertical,
       watch_v2: finalPrompt.layers.watchV2Applied,
+    });
+    logDevelopmentGenerationEvent("watch_wrist_integration_resolved", {
+      active: finalPrompt.layers.watchWristIntegrationActive,
+      directReference: finalPrompt.layers.watchWristIntegrationActive && usableReferenceImages.length > 0,
+      wristGeometryAvailable: Boolean(referenceAnalysis.styleBrief?.poseLanguage && /wrist|arm|hand/i.test(referenceAnalysis.styleBrief.poseLanguage)),
+      placementContractResolved: finalPrompt.layers.watchWristIntegrationActive,
+      sourceIdentityPreserved: (productProfile?.vertical ?? finalPrompt.layers.vertical) === "watches",
     });
     const finalPolicy = validateGenerationPolicy({
       strategy,
@@ -1383,6 +1390,8 @@ export async function runQueuedImageGeneration(
       repairableIssueCodes: mappedRepairPlan.repairableIssueCodes,
     });
     const repairPlan = repairEligibility.eligible ? mappedRepairPlan : { ...mappedRepairPlan, shouldRetry: false, categories: [], repairInstructions: [] };
+    const watchIssueCodes = fidelityValidation.issues.filter(({ code }) => code.toLowerCase().startsWith("watch_")).map(({ code }) => code);
+    logDevelopmentGenerationEvent("watch_wrist_validation_summary", { issueCodes: watchIssueCodes, hardFailure: fidelityValidation.status === "fail" && watchIssueCodes.length > 0, repairEligible: repairPlan.shouldRetry && watchIssueCodes.length > 0 });
     const jewelryReferenceRepair = productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 && repairPlan.shouldRetry && repairPlan.issueCodes.every((code) => code.toLowerCase().startsWith("jewelry_"));
     if (productProfile?.vertical === "jewelry" && usableReferenceImages.length > 0 && fidelityValidation.status !== "validation_unavailable") {
       const criticalIssueCount = fidelityValidation.issues.filter(({ category, severity }) => category === "product_identity" && severity === "critical").length;

@@ -4623,14 +4623,14 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-project-card { overflow: hidden; border: 1px solid var(--dashboard-border); border-radius: var(--radius-md); background: var(--dashboard-surface); text-decoration: none; transition: border-color var(--transition-fast) ease, transform var(--transition-fast) ease; }
 .dashboard-project-card:hover { border-color: var(--dashboard-border-strong); transform: translateY(-2px); }
 .dashboard-project-media > img { object-fit: contain; }
-.dashboard-generation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.dashboard-generation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); gap: 0.875rem; margin: 0; padding: 0.125rem; list-style: none; }
 .dashboard-generation-item { min-width: 0; }
-.dashboard-generation-card { position: relative; display: grid; gap: 0.5rem; border-radius: var(--radius-sm); color: var(--dashboard-foreground); cursor: pointer; transition: box-shadow var(--transition-fast) ease, transform var(--transition-fast) ease; }
+.dashboard-generation-card { position: relative; display: grid; gap: 0.625rem; overflow: hidden; border: 1px solid var(--dashboard-border); border-radius: var(--radius-md); background: var(--dashboard-surface); color: var(--dashboard-foreground); cursor: pointer; box-shadow: var(--shadow-subtle); transition: border-color var(--transition-fast) ease, box-shadow var(--transition-fast) ease, transform var(--transition-fast) ease; }
 .dashboard-generation-card-link { position: absolute; z-index: 1; inset: 0; border-radius: inherit; }
 .dashboard-generation-card-link:focus-visible { outline: 2px solid var(--dashboard-focus); outline-offset: 3px; }
-.dashboard-generation-media { position: relative; overflow: hidden; border-radius: var(--radius-sm); background: var(--dashboard-surface-raised); }
-.dashboard-generation-media img { display: block; width: 100%; height: auto; object-fit: contain; transition: filter var(--transition-fast) ease, transform var(--transition-fast) ease; }
-.dashboard-generation-copy { display: grid; gap: 0.15rem; min-width: 0; padding: 0 0.1rem; }
+.dashboard-generation-media { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--dashboard-surface-raised); }
+.dashboard-generation-media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: filter var(--transition-fast) ease, transform var(--transition-fast) ease; }
+.dashboard-generation-copy { display: grid; gap: 0.15rem; min-width: 0; padding: 0 0.75rem 0.75rem; }
 .dashboard-generation-copy strong { overflow: hidden; font-size: 0.875rem; font-weight: 560; text-overflow: ellipsis; white-space: nowrap; }
 .dashboard-generation-copy time { color: color-mix(in srgb, var(--dashboard-muted) 82%, transparent); font-size: 0.75rem; }
 .dashboard-generation-actions { position: absolute; z-index: 2; inset: auto 0 0; display: flex; align-items: center; gap: 0.35rem; padding: 2.25rem 0.75rem 0.75rem; background: linear-gradient(transparent, rgb(0 0 0 / 58%)); opacity: 0; pointer-events: none; transform: translateY(0.25rem); transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease; }
@@ -4638,7 +4638,7 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-generation-actions button, .dashboard-generation-actions a { pointer-events: auto; }
 .dashboard-generation-actions button { min-height: 2.15rem; padding-inline: 0.65rem; background: rgb(15 15 15 / 54%); backdrop-filter: blur(8px); }
 .dashboard-generation-item:hover .dashboard-generation-actions, .dashboard-generation-item:focus-within .dashboard-generation-actions { opacity: 1; transform: translateY(0); }
-.dashboard-generation-item:hover .dashboard-generation-card { box-shadow: 0 0.375rem 1rem color-mix(in srgb, var(--dashboard-foreground) 7%, transparent); transform: translateY(-0.125rem); }
+.dashboard-generation-item:hover .dashboard-generation-card, .dashboard-generation-item:focus-within .dashboard-generation-card { border-color: var(--dashboard-border-strong); box-shadow: 0 0.5rem 1.25rem color-mix(in srgb, var(--dashboard-foreground) 8%, transparent); transform: translateY(-0.125rem); }
 .dashboard-generation-item:hover .dashboard-generation-media img { filter: brightness(0.94); transform: scale(1.01); }
 .dashboard-generation-actions :focus-visible, .dashboard-generation-menu-trigger:focus-visible, .dashboard-generation-mobile-menu :focus-visible { outline: 2px solid white; outline-offset: 2px; }
 .dashboard-generation-menu-trigger, .dashboard-generation-mobile-menu { display: none; }
@@ -4654,9 +4654,7 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-generation-favorite.is-active, .dashboard-generation-item:is(:hover, :focus-within) .dashboard-generation-favorite { opacity: 1; }
 .dashboard-generation-favorite.is-active { border-color: var(--dashboard-accent); background: var(--dashboard-accent-surface); color: var(--dashboard-accent); }
 .favorite-feedback { width: fit-content; margin: 0 0 0.75rem; border: 1px solid var(--dashboard-border); border-radius: var(--radius-sm); background: var(--dashboard-surface); padding: 0.5rem 0.65rem; color: var(--dashboard-muted); font-size: 0.75rem; }
-@media (min-width: 640px) { .dashboard-generation-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 900px) { .dashboard-generation-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (min-width: 1400px) { .dashboard-generation-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 768px) { .dashboard-generation-grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 1rem; } }
 @media (hover: none), (max-width: 767px) {
   .dashboard-generation-actions { display: none; }
   .dashboard-generation-menu-trigger { display: grid; }

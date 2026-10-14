@@ -703,7 +703,8 @@
       "resetZoom": "Reset zoom",
       "favoriteAdd": "Add to favorites",
       "favoriteRemove": "Remove from favorites",
-      "favoriteError": "Favorite status could not be updated."
+      "favoriteError": "Favorite status could not be updated.",
+      "galleryLabel": "Recent generations gallery"
     },
     "composer": {
       "heading": "Create a new product",

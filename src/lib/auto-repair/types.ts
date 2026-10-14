@@ -13,6 +13,8 @@ export const repairCategories = [
   "face_realism_repair", "skin_realism_repair", "hand_anatomy_repair", "foot_anatomy_repair", "limb_anatomy_repair", "hair_realism_repair", "body_interaction_repair",
   "apparel_fit_repair", "apparel_structure_repair", "apparel_material_repair", "apparel_interaction_repair",
   "presentation_repair", "environment_repair", "interaction_repair",
+  "watch_depth_repair", "watch_wrap_repair", "watch_contact_repair", "watch_perspective_repair",
+  "jewelry_depth_repair", "jewelry_attachment_repair", "earring_attachment_repair", "jewelry_contact_repair", "jewelry_perspective_repair",
 ] as const;
 export type RepairCategory = (typeof repairCategories)[number];
 

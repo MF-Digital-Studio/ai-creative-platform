@@ -13,6 +13,7 @@ export async function RecentGenerations({ generations }: { generations: Dashboar
     fullscreen: t("fullscreen"), project: t("openProject"), edit: t("edit"),
     closeFullscreen: t("closeFullscreen"), zoomIn: t("zoomIn"), zoomOut: t("zoomOut"), resetZoom: t("resetZoom"),
     favoriteAdd: t("favoriteAdd"), favoriteRemove: t("favoriteRemove"), favoriteError: t("favoriteError"),
+    galleryLabel: t("galleryLabel"),
   };
   return <RecentGenerationsGallery generations={generations} messages={messages} locale={locale} favoriteAction={toggleGenerationFavorite.bind(null, locale as AppLocale)} />;
 }

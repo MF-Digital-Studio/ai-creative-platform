@@ -38,6 +38,8 @@ import { compileApparelFitPreservationPrompt } from "@/lib/apparel-fit-preservat
 import type { ApparelFitProfile } from "@/lib/apparel-fit-preservation/types";
 import { resolveCommercialFashionSafetyLayer, normalizeCommercialFashionPrompt } from "./commercial-fashion-normalizer";
 import { resolveGenerationSemantics } from "../strategy/resolve-generation-semantics";
+import { compileWatchWristIntegrationPrompt, resolveWatchWristIntegration } from "@/lib/watch-wrist-integration/watch-wrist-integration";
+import type { ReferenceStyleBrief } from "@/lib/generation/references/reference-style-brief";
 
 const productPreservationInstructions = [
   "The supplied product is the exact commercial product being advertised.",
@@ -58,6 +60,7 @@ const jewelryOnModelInstructions = [
   "Preserve the exact jewelry design. Keep gemstone count, placement, proportions, metal form, metal thickness, ring band, center-stone form and cut, prongs or settings, pendant, chain, earring, bracelet, clasp, and original symmetry unchanged.",
   "The jewelry must be worn naturally and physically correctly at believable body scale. Prioritize the jewelry as the large, sharply readable hero subject in a close luxury commercial photograph.",
   "For rings, make the complete band wrap naturally around one anatomically plausible finger with aligned perspective, realistic skin contact, and a subtle contact shadow; the ring must fit the finger precisely and naturally without a gap or skin intersection. For necklaces, follow neck and collarbone curvature, gravity, chain tension, and believable pendant contact. For bracelets, wrap or drape naturally around the wrist with credible contact. For earrings, attach at a believable ear point and let dangling forms follow gravity.",
+  "Render the jewelry as a truly worn 3D object, fully integrated with the body. Show believable material thickness, side profile, setting depth, and environment-matched reflections with local contact shadow. For earrings, show dimensional gemstone cuts plus physically credible prongs, bezels, mounts, posts, clips, or hoop structure; the earring must follow the ear angle and camera perspective, sit naturally at the ear or lobe, and never look like a flat front-facing product image pasted onto the ear.",
   "Do not float, paste, overlay, fuse, composite, distort, redesign, or reinterpret the jewelry. No pasted-on appearance, distorted ring band, incorrect gemstone count, melted metal, warped prongs or settings, oversized or undersized jewelry, broken anatomy, detached shadow logic, low-detail generic jewelry, AI-art, or CGI look. Maintain luxury commercial photography realism.",
 ].join("\n");
 
@@ -79,6 +82,7 @@ export const watchOnWristInstructions = [
   "The supplied image is a watch reference for a real person to wear naturally on their wrist in the requested photograph.",
   "Preserve this exact watch identity: dial geometry and layout, indices, hands, bezel, crown, lugs, case proportions, strap or bracelet construction, colors, materials, branding, and believable scale. Place the same watch naturally wrapped around a clearly visible wrist with a plausible orientation and correct strap contact.",
   "Show realistic skin texture, wrist proportions, skin compression and contact beneath the strap, and natural strap pressure. Keep the dial readable. Do not add a competing or duplicate watch, and add no extra jewelry unless explicitly requested.",
+  "Render the watch as a truly worn object physically integrated with the wrist: show believable 3D depth, case thickness, bezel depth, sidewalls, lug geometry, crown depth, and bracelet or strap attachment depth. Match watch perspective to the wrist and camera angle; make the bracelet or strap curve naturally around the wrist, seat the case flush to skin with believable local contact shadow and slight seating interaction where appropriate, and match metal, glass, bezel, bracelet, and dial reflections to the environment lighting.",
   "Never paste, overlay, or composite the original watch image flat onto skin; do not fuse anatomy, distort the wrist, warp the dial, or detach the strap from the wrist.",
 ].join("\n");
 
@@ -110,6 +114,7 @@ export type FinalPromptLayers = {
   verticalQualityApplied: boolean;
   visualIntent: VisualIntent;
   watchV2Applied: boolean;
+  watchWristIntegrationActive: boolean;
   footwearV2Applied: boolean;
   bagsV1Applied: boolean;
   expectsHuman: boolean;
@@ -144,6 +149,7 @@ export type ImageGenerationPromptOptions = {
   referenceHumanPresent?: boolean;
   interactionMode?: string | null;
   strictProductOnlyStudio?: boolean;
+  referenceStyle?: ReferenceStyleBrief | null;
 };
 
 export function compileOutputFormatGuidance(aspectRatio: GenerationAspectRatio, vertical?: SupportedVertical | null): string {
@@ -185,6 +191,8 @@ export function buildImageGenerationPromptWithPolicy(
     strictProductOnly: options.strictProductOnlyStudio,
   });
   const apparelOnHuman = vertical === "apparel" && semantics.isWearableOnHuman;
+  const watchWristIntegration = resolveWatchWristIntegration({ vertical, expectsHuman: semantics.expectsHuman, isProductOnly: semantics.isProductOnly, onWristStrategy: strategy === "watch_on_wrist", interactionMode: options.interactionMode, creativeDirection, directReference: options.referenceAuthority, referenceStyle: options.referenceStyle });
+  const watchWristDirection = compileWatchWristIntegrationPrompt(watchWristIntegration);
   const footwearAnatomy = resolveFootwearAnatomyPolicy({
     vertical,
     productProfile: isProductProfile(options.productProfile) ? options.productProfile : null,
@@ -318,6 +326,7 @@ export function buildImageGenerationPromptWithPolicy(
       ...productProfilePrompt.interaction,
     ].join("\n") : "",
     fidelityPolicy,
+    watchWristDirection,
     footwearAnatomy.applies ? footwearAnatomyPrompt : "",
     bagFamilyCompliance,
     presetFamilyDirection,
@@ -373,6 +382,7 @@ export function buildImageGenerationPromptWithPolicy(
       verticalQualityApplied: Boolean(verticalQuality),
       visualIntent: context.visualIntent,
       watchV2Applied: vertical === "watches",
+      watchWristIntegrationActive: watchWristIntegration.active,
     },
   };
 }

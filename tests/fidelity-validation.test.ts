@@ -4,6 +4,9 @@ import test from "node:test";
 import { mapStructuredValidationOutput, resolveQualityGate, suppressReferenceAuthorityPresetIssues } from "../src/lib/fidelity-validation/resolve-quality-gate";
 import type { FidelityValidationBrief, FidelityValidationIssue, FidelityValidationResult } from "../src/lib/fidelity-validation/types";
 import { renderValidationInstructions } from "../src/lib/fidelity-validation/build-validation-brief";
+import { resolveWatchWristIntegration, compileWatchWristIntegrationPrompt } from "../src/lib/watch-wrist-integration/watch-wrist-integration";
+import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
+import { compileRepairInstructions } from "../src/lib/auto-repair/compile-repair-instructions";
 
 function issue(overrides: Partial<FidelityValidationIssue>): FidelityValidationIssue {
   return {
@@ -23,6 +26,57 @@ function issue(overrides: Partial<FidelityValidationIssue>): FidelityValidationI
 
 test("critical issue fails the quality gate", () => {
   assert.equal(resolveQualityGate([issue({ code: "different_product", severity: "critical", category: "product_identity" })]).status, "fail");
+});
+
+test("watch wrist V2 activates without user prompt, excludes product-only, and retains reference wrist authority", () => {
+  const automatic = resolveWatchWristIntegration({ vertical: "watches", expectsHuman: true, isProductOnly: false, onWristStrategy: true });
+  assert.equal(automatic.active, true);
+  assert.equal(automatic.sourceIdentityPreserved, true);
+  assert.match(compileWatchWristIntegrationPrompt(automatic), /flat catalog orientation is not placement authority/i);
+  assert.match(compileWatchWristIntegrationPrompt(automatic), /curve around the wrist/i);
+  assert.match(compileWatchWristIntegrationPrompt(automatic), /12 marker.*left or upper-left/i);
+  const productOnly = resolveWatchWristIntegration({ vertical: "watches", expectsHuman: true, isProductOnly: true, onWristStrategy: true });
+  assert.equal(productOnly.active, false);
+  const reference = resolveWatchWristIntegration({ vertical: "watches", expectsHuman: true, isProductOnly: false, directReference: true, referenceStyle: { poseLanguage: "angled wrist and arm", visualIntent: "photo", composition: { framing: "close", cameraAngle: "side", cameraDistance: "close", subjectPlacement: "center" }, lighting: { character: "soft", direction: "side", flashBehavior: null, ambientExposure: "even", contrast: "low" }, environment: { setting: "studio", architecturalCharacter: null, surfaceCharacter: null }, color: { palette: "neutral", grading: "natural", saturation: "low" }, texture: { grain: "none", sharpness: "high", retouching: "natural" }, depthOfField: "shallow", realismCharacter: "photo" } });
+  assert.equal(reference.active, true);
+  assert.equal(reference.directReference, true);
+  assert.equal(reference.wristGeometryAvailable, true);
+});
+
+test("watch wrist V2 high-confidence physical failures reject and repair only placement", () => {
+  for (const code of ["WATCH_CASE_ROTATION_MISMATCH", "WATCH_WRIST_AXIS_MISMATCH", "WATCH_DIAL_ORIENTATION_MISMATCH", "WATCH_FLAT_OVERLAY_APPEARANCE", "WATCH_STRAP_NOT_WRAPPED", "WATCH_CASE_FLOATING", "WATCH_PERSPECTIVE_MISMATCH", "WATCH_CASE_DEPTH_MISSING"]) {
+    assert.equal(resolveQualityGate([issue({ code, category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]).status, "fail");
+  }
+  const validation = resolveQualityGate([issue({ code: "WATCH_CASE_ROTATION_MISMATCH", category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]);
+  const plan = resolveRepairPlan(validation);
+  assert.equal(plan.shouldRetry, true);
+  const repair = compileRepairInstructions("base", plan);
+  assert.match(repair, /Preserve the exact source watch identity and the existing human pose, scene, framing, and lighting/);
+  assert.match(repair, /Correct only the watch's physical placement/);
+});
+
+test("high-confidence worn watch and jewelry integration failures normalize and reject", () => {
+  for (const code of ["WATCH_FLAT_PRODUCT_APPEARANCE", "WATCH_BRACELET_WRAP_ERROR", "JEWELRY_DEPTH_MISSING", "EARRING_EAR_ATTACHMENT_ERROR"]) {
+    const result = resolveQualityGate([issue({ code, category: "body_interaction", severity: "minor", confidence: 0.92, identityImpact: "none" })]);
+    assert.equal(result.issues[0]?.code, code);
+    assert.equal(result.issues[0]?.severity, "critical", code);
+    assert.equal(result.status, "fail", code);
+  }
+});
+
+test("on-body validation guidance is active only for worn jewelry and watches", () => {
+  const base: Omit<FidelityValidationBrief, "vertical" | "strategy"> = {
+    sourceAuthority: "source", referencePreservation: false, productProfile: null, sceneSuitability: null,
+    composition: null, appliedRequirements: [], allowedTransformations: [], verticalChecks: [],
+  };
+  const watchWorn = renderValidationInstructions({ ...base, vertical: "watches", strategy: "watch_on_wrist" });
+  const watchProduct = renderValidationInstructions({ ...base, vertical: "watches", strategy: "rigid_product" });
+  const jewelryWorn = renderValidationInstructions({ ...base, vertical: "jewelry", strategy: "jewelry_on_model" });
+  const jewelryProduct = renderValidationInstructions({ ...base, vertical: "jewelry", strategy: "jewelry_still_life" });
+  assert.match(watchWorn, /WATCH_CASE_DEPTH_MISSING/);
+  assert.doesNotMatch(watchProduct, /WATCH_CASE_DEPTH_MISSING/);
+  assert.match(jewelryWorn, /EARRING_EAR_ATTACHMENT_ERROR/);
+  assert.doesNotMatch(jewelryProduct, /EARRING_EAR_ATTACHMENT_ERROR/);
 });
 
 test("bag Studio scene mismatch is a meaningful failure and gets scene-only repair eligibility", async () => {

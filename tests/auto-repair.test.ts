@@ -54,6 +54,21 @@ test("issue mappings cover ring, stones, composition, nails, watch, footwear, an
   for (const [code, category] of scenarios) assert.deepEqual(resolveRepairPlan(validation("fail", [issue(code)])).categories, [category]);
 });
 
+test("physical integration issue codes route to targeted watch and jewelry repairs", () => {
+  const scenarios: Array<[string, string]> = [
+    ["watch_case_depth_missing", "watch_depth_repair"],
+    ["watch_bracelet_wrap_error", "watch_wrap_repair"],
+    ["watch_contact_shadow_missing", "watch_contact_repair"],
+    ["watch_perspective_mismatch", "watch_perspective_repair"],
+    ["jewelry_depth_missing", "jewelry_depth_repair"],
+    ["jewelry_body_attachment_error", "jewelry_attachment_repair"],
+    ["earring_ear_attachment_error", "earring_attachment_repair"],
+    ["jewelry_contact_shadow_missing", "jewelry_contact_repair"],
+    ["jewelry_perspective_mismatch", "jewelry_perspective_repair"],
+  ];
+  for (const [code, category] of scenarios) assert.deepEqual(resolveRepairPlan(validation("fail", [issue(code, "critical")])).categories, [category]);
+});
+
 test("repair prompt appends targeted instructions and preserves existing layers", () => {
   const plan = resolveRepairPlan(validation("fail", [issue("floating_ring"), issue("black_nails_missing")]));
   const prompt = compileRepairInstructions("PRODUCT PROFILE RULES\nSCENE RULES\nCOMPOSITION RULES", plan);
