@@ -15,6 +15,7 @@ export type GenerationQualityBenchmarkFixture = {
   inputRoles: readonly BenchmarkInputRole[];
   humanInteractionExpected: boolean;
   referenceCompositionExpected: boolean;
+  watchWearabilityExpected?: boolean;
   description: string;
 };
 
@@ -25,7 +26,9 @@ export const generationQualityBenchmarkFixtures: readonly GenerationQualityBench
   { id: "jewelry-studio-single", vertical: "jewelry", presetFamily: "jewelry-studio", inputRoles: ["primary_product"], humanInteractionExpected: false, referenceCompositionExpected: false, description: "Single-view jewelry detail studio." },
   { id: "jewelry-on-model-multiview-reference", vertical: "jewelry", presetFamily: "jewelry-on-model", inputRoles: ["primary_product", "supporting_product", "reference_scene"], humanInteractionExpected: true, referenceCompositionExpected: true, description: "Multi-view jewelry with subtype-appropriate body contact." },
   { id: "watches-product-single", vertical: "watches", presetFamily: "watches-product-composition", inputRoles: ["primary_product"], humanInteractionExpected: false, referenceCompositionExpected: false, description: "Single-view watch product composition." },
-  { id: "watches-on-wrist-multiview-reference", vertical: "watches", presetFamily: "watches-on-wrist", inputRoles: ["primary_product", "supporting_product", "reference_scene"], humanInteractionExpected: true, referenceCompositionExpected: true, description: "Multi-view watch with wrist fit and dial visibility." },
+  { id: "watches-on-wrist-close-crop", vertical: "watches", presetFamily: "watches-on-wrist", inputRoles: ["primary_product"], humanInteractionExpected: true, referenceCompositionExpected: false, watchWearabilityExpected: true, description: "Close wrist crop that isolates case rotation, strap wrap, and skin contact." },
+  { id: "watches-on-wrist-multiview-reference", vertical: "watches", presetFamily: "watches-on-wrist", inputRoles: ["primary_product", "supporting_product", "reference_scene"], humanInteractionExpected: true, referenceCompositionExpected: true, watchWearabilityExpected: true, description: "Multi-view watch with reference-guided wrist anatomy, placement, and identity." },
+  { id: "watches-on-wrist-commercial-rejection", vertical: "watches", presetFamily: "watches-on-wrist", inputRoles: ["primary_product", "reference_scene"], humanInteractionExpected: true, referenceCompositionExpected: true, watchWearabilityExpected: true, description: "On-wrist placement rejection control for commercially unusable fit or physical integration." },
   { id: "footwear-studio-single", vertical: "footwear", presetFamily: "footwear-studio", inputRoles: ["primary_product"], humanInteractionExpected: false, referenceCompositionExpected: false, description: "Single-view footwear studio." },
   { id: "footwear-street-multiview-reference", vertical: "footwear", presetFamily: "footwear-street", inputRoles: ["primary_product", "supporting_product", "reference_scene"], humanInteractionExpected: true, referenceCompositionExpected: true, description: "Multi-view footwear on-foot reference composition." },
   { id: "bags-studio-single", vertical: "bags", presetFamily: "bags-studio", inputRoles: ["primary_product"], humanInteractionExpected: false, referenceCompositionExpected: false, description: "Single-view bag studio." },
@@ -60,6 +63,7 @@ export type BenchmarkResult = BenchmarkObservation & {
   costMeasurementStatus: CostMeasurementStatus;
   estimatedCostUsd: number | null;
   productIdentityFindings: readonly BenchmarkObservation["validation"]["issues"][number][];
+  watchWearabilityFindings: readonly BenchmarkObservation["validation"]["issues"][number][];
 };
 
 export type GenerationQualityBenchmarkReport = {
@@ -77,6 +81,10 @@ export type GenerationQualityBenchmarkReport = {
     humanReviewsRecorded: number;
   };
 };
+
+const watchWearabilityCodes = new Set([
+  "watch_case_rotation_mismatch", "watch_wrist_axis_mismatch", "watch_dial_orientation_mismatch", "watch_flat_overlay_appearance", "watch_flat_product_appearance", "watch_strap_not_wrapped", "watch_bracelet_wrap_error", "watch_lug_strap_geometry_impossible", "watch_case_floating", "watch_contact_failure", "watch_contact_shadow_missing", "watch_unwearable_fit", "watch_case_depth_missing", "watch_side_geometry_missing", "watch_perspective_mismatch", "watch_scale_to_wrist_error",
+]);
 
 function costMeasurementStatus(cost: BenchmarkObservation["cost"]): CostMeasurementStatus {
   if (cost.estimatedUsd !== null && cost.usageComplete && cost.pricingComplete) return "complete";
@@ -109,6 +117,7 @@ export function evaluateGenerationQualityBenchmark(
       costMeasurementStatus: measurementStatus,
       estimatedCostUsd: measurementStatus === "complete" ? observation.cost.estimatedUsd : null,
       productIdentityFindings: observation.validation.issues.filter((issue) => issue.category === "product_identity" || issue.identityImpact === "critical" || issue.identityImpact === "major"),
+      watchWearabilityFindings: observation.validation.issues.filter((issue) => watchWearabilityCodes.has(issue.code.toLowerCase())),
     };
   });
   return {

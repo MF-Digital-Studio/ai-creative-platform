@@ -18,7 +18,7 @@ const criticalApparelFitCodes = new Set(["apparel_silhouette_mismatch", "apparel
 const majorApparelFitCodes = new Set(["apparel_length_mismatch", "apparel_pocket_placement_error", "apparel_closure_structure_error", "apparel_material_behavior_mismatch", "apparel_drape_mismatch"]);
 const physicalIntegrationCodes = new Set([
   "watch_case_rotation_mismatch", "watch_wrist_axis_mismatch", "watch_flat_overlay_appearance", "watch_strap_not_wrapped", "watch_contact_failure",
-  "watch_flat_product_appearance", "watch_front_face_only_render", "watch_dial_orientation_mismatch", "watch_case_depth_missing", "watch_side_geometry_missing", "watch_bracelet_wrap_error", "watch_case_floating", "watch_contact_shadow_missing", "watch_perspective_mismatch", "watch_reflection_integration_error", "watch_scale_to_wrist_error",
+  "watch_flat_product_appearance", "watch_front_face_only_render", "watch_dial_orientation_mismatch", "watch_case_depth_missing", "watch_side_geometry_missing", "watch_bracelet_wrap_error", "watch_case_floating", "watch_contact_shadow_missing", "watch_perspective_mismatch", "watch_reflection_integration_error", "watch_scale_to_wrist_error", "watch_lug_strap_geometry_impossible", "watch_unwearable_fit",
   "jewelry_flat_product_appearance", "jewelry_front_face_only_render", "jewelry_depth_missing", "jewelry_side_profile_missing", "jewelry_body_attachment_error", "jewelry_contact_shadow_missing", "earring_ear_attachment_error", "earring_setting_depth_missing", "earring_floating", "jewelry_perspective_mismatch", "jewelry_reflection_integration_error", "jewelry_scale_to_body_error",
 ]);
 const severeStructuralCodes = new Set(["severe_physical_failure", "malformed_product", "structural_duplication", "duplicate_product", "product_duplication"]);

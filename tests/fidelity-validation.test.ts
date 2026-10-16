@@ -44,7 +44,7 @@ test("watch wrist V2 activates without user prompt, excludes product-only, and r
 });
 
 test("watch wrist V2 high-confidence physical failures reject and repair only placement", () => {
-  for (const code of ["WATCH_CASE_ROTATION_MISMATCH", "WATCH_WRIST_AXIS_MISMATCH", "WATCH_DIAL_ORIENTATION_MISMATCH", "WATCH_FLAT_OVERLAY_APPEARANCE", "WATCH_STRAP_NOT_WRAPPED", "WATCH_CASE_FLOATING", "WATCH_PERSPECTIVE_MISMATCH", "WATCH_CASE_DEPTH_MISSING"]) {
+  for (const code of ["WATCH_CASE_ROTATION_MISMATCH", "WATCH_WRIST_AXIS_MISMATCH", "WATCH_DIAL_ORIENTATION_MISMATCH", "WATCH_FLAT_OVERLAY_APPEARANCE", "WATCH_STRAP_NOT_WRAPPED", "WATCH_CASE_FLOATING", "WATCH_PERSPECTIVE_MISMATCH", "WATCH_CASE_DEPTH_MISSING", "WATCH_LUG_STRAP_GEOMETRY_IMPOSSIBLE", "WATCH_UNWEARABLE_FIT"]) {
     assert.equal(resolveQualityGate([issue({ code, category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]).status, "fail");
   }
   const validation = resolveQualityGate([issue({ code: "WATCH_CASE_ROTATION_MISMATCH", category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]);
@@ -53,6 +53,14 @@ test("watch wrist V2 high-confidence physical failures reject and repair only pl
   const repair = compileRepairInstructions("base", plan);
   assert.match(repair, /Preserve the exact source watch identity and the existing human pose, scene, framing, and lighting/);
   assert.match(repair, /Correct only the watch's physical placement/);
+});
+
+test("watch wearability aliases receive a targeted identity-preserving repair", () => {
+  const validation = resolveQualityGate([issue({ code: "WATCH_LUG_STRAP_GEOMETRY_IMPOSSIBLE", category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]);
+  const plan = resolveRepairPlan(validation);
+  assert.equal(plan.shouldRetry, true);
+  assert.ok(plan.categories.includes("watch_wrap_repair"));
+  assert.match(compileRepairInstructions("base", plan), /physically possible connection/i);
 });
 
 test("high-confidence worn watch and jewelry integration failures normalize and reject", () => {

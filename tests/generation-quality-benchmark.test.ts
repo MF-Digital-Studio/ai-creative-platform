@@ -19,7 +19,7 @@ const observation = {
 };
 
 test("benchmark fixtures cover every supported vertical with single and multi-view scenarios", () => {
-  assert.equal(generationQualityBenchmarkFixtures.length, 12);
+  assert.equal(generationQualityBenchmarkFixtures.length, 14);
   for (const vertical of ["apparel", "jewelry", "watches", "footwear", "bags", "cosmetics"]) {
     const scenarios = generationQualityBenchmarkFixtures.filter((fixture) => fixture.vertical === vertical);
     assert.ok(scenarios.some((fixture) => fixture.inputRoles.length === 1), `${vertical} single-view`);
@@ -33,7 +33,19 @@ test("benchmark records verified technical success without inventing a human qua
   assert.equal(report.results[0]?.terminalDecision, "succeeded");
   assert.equal(report.results[0]?.estimatedCostUsd, 0.041);
   assert.equal(report.summary.humanReviewsRecorded, 0);
-  assert.match(formatGenerationQualityBenchmarkSummary(report), /1\/12 scenarios evaluated/);
+  assert.match(formatGenerationQualityBenchmarkSummary(report), /1\/14 scenarios evaluated/);
+});
+
+test("watch benchmarks separate wearability findings from watch identity findings", () => {
+  const report = evaluateGenerationQualityBenchmark([{
+    ...observation,
+    fixtureId: "watches-on-wrist-commercial-rejection",
+    validation: { status: "fail", commerciallyUsable: false, issues: [{ code: "watch_lug_strap_geometry_impossible", category: "body_interaction", severity: "critical", identityImpact: "none" }] },
+    qualityGatePassed: false,
+  }]);
+  assert.equal(report.results[0]?.watchWearabilityFindings[0]?.code, "watch_lug_strap_geometry_impossible");
+  assert.equal(report.results[0]?.productIdentityFindings.length, 0);
+  assert.equal(report.results[0]?.commercialSuccess, false);
 });
 
 test("rejected and unverified results cannot be reported as commercial successes", () => {
