@@ -6,6 +6,7 @@ import { resolveHumanRealismPolicy } from "../src/lib/human-realism/human-realis
 import { compileHumanRealismPrompt } from "../src/lib/human-realism/compile-human-realism-prompt";
 import { resolveRepairPlan } from "../src/lib/auto-repair/resolve-repair-plan";
 import { awaitGenerationPipeline } from "../src/lib/generation/await-generation-pipeline";
+import { dispatchQueuedGeneration } from "../src/lib/generation/dispatch-queued-generation";
 
 test("creation persists Sunburst and xhigh defaults with environment override", async () => {
   const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
@@ -18,7 +19,8 @@ test("server action awaits the canonical synchronous runner and runner has atomi
   const dispatch = await readFile("src/lib/generation/dispatch-queued-generation.ts", "utf8");
   const awaitPipeline = await readFile("src/lib/generation/await-generation-pipeline.ts", "utf8");
   assert.match(source, /\.insert\([\s\S]+dispatchQueuedGeneration\(generation\.id\)/);
-  assert.match(dispatch, /await awaitGenerationPipeline\(generationId, runPipeline \?\? runQueuedImageGeneration\)/);
+  assert.match(dispatch, /await awaitGenerationPipeline\(generationId, runner\)/);
+  assert.match(dispatch, /finalizer\(generationId, "dispatch_failed"\)/);
   assert.match(awaitPipeline, /const result = await runner\(generationId\)/);
   assert.match(source, /await dispatchQueuedGeneration\(generation\.id\)/);
   assert.match(source, /safeGenerationEvent\("create", "insert_success"/);
@@ -47,6 +49,44 @@ test("dispatch waits for the pipeline result before reporting completion", async
   release({ ok: true });
   assert.equal(await pending, true);
   assert.equal(completed, true);
+});
+
+test("dispatch finalizes a runner exception only while the record is still queued", async () => {
+  const finalizations: Array<{ id: string; category: string }> = [];
+  const result = await dispatchQueuedGeneration(
+    "generation-1",
+    async () => { throw new Error("provider timeout"); },
+    async (id, category) => { finalizations.push({ id, category }); return true; },
+  );
+  assert.equal(result, false);
+  assert.deepEqual(finalizations, [{ id: "generation-1", category: "dispatch_failed" }]);
+});
+
+test("duplicate dispatch cannot turn a claimed processing job into a failure", async () => {
+  let queuedFinalizerCalled = false;
+  const result = await dispatchQueuedGeneration(
+    "generation-1",
+    async () => ({ ok: false }),
+    async () => {
+      // The production finalizer has a status = queued predicate; false means
+      // another worker has already claimed the record and no state was changed.
+      queuedFinalizerCalled = true;
+      return false;
+    },
+  );
+  assert.equal(result, false);
+  assert.equal(queuedFinalizerCalled, true);
+});
+
+test("a successful pipeline does not run failure finalization", async () => {
+  let finalized = false;
+  const result = await dispatchQueuedGeneration(
+    "generation-1",
+    async () => ({ ok: true }),
+    async () => { finalized = true; },
+  );
+  assert.equal(result, true);
+  assert.equal(finalized, false);
 });
 
 test("dispatch failure marks a still-queued record failed and notifies once", async () => {

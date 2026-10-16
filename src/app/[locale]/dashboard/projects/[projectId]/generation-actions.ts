@@ -200,14 +200,22 @@ export async function createImageEdit(locale: AppLocale, projectId: string, base
     const editHumanRealismIssue = validation.status !== "validation_unavailable" && validation.issueCodes.includes("EDIT_HUMAN_REALISM_ERROR");
     const { error: saveError } = await admin.from("generations").update({ status: "succeeded", output_bucket_id: generatedAssetsBucket, output_object_path: objectPath, output_mime_type: "image/png", provider_request_id: typeof result.providerMetadata?.requestId === "string" ? result.providerMetadata.requestId : null, fidelity_status: validation.status === "pass" ? "locked" : validation.status === "validation_unavailable" ? "not_available" : "not_checked", provider_metadata: { operation: "image_edit", humanRealism: { version: HUMAN_REALISM_VERSION, expected: humanRealismExpected, applied: editHumanRealismPolicy.applied, focusAreas: editHumanRealismPolicy.focusAreas, issues: editHumanRealismIssue ? [{ issueCode: "EDIT_HUMAN_REALISM_ERROR", confidence: 1, severity: "major", region: "edited_human_region", repairable: true, commercialImpact: "high" }] : [], hardFailure: false, repairEligible: editHumanRealismIssue, repairTriggered: repairAttempted && editHumanRealismIssue, repairCategory: repairAttempted && editHumanRealismIssue ? "body_interaction_repair" : null }, edit: { version: "image-edit-v1", baseGenerationId, editOfGenerationId: baseGenerationId, instruction: instruction.trim(), resolvedScopes: intent.allowedChanges, preservedElements: intent.preservedElements, validatorStatus: validation.status, validatorIssueCodes: validation.issueCodes, repairAttempted, editVersion: 1 }, costTelemetry: createCostTelemetry({ productUnderstandingCalls: 0, referenceAnalysisCalls: 0, imageGenerationCalls: imageGenerationCalls - (repairAttempted ? 1 : 0), validationCalls, repairGenerationCalls: repairAttempted ? 1 : 0, inputProductImageCount: productInputs.length, inputReferenceCount: 0, repairAttempted, finalOutcome: validation.status === "validation_unavailable" ? "unverified" : "succeeded", validationOutcome: validation.status, providerUsage: result.usage }), provider: result.providerMetadata ?? {} }, processing_completed_at: processingCompletedAt.toISOString(), processing_duration_ms: processingCompletedAt.getTime() - now.getTime() }).eq("id", edit.id).eq("status", "processing");
     if (saveError) throw new Error("Unable to save edited image record.");
-    await createNotification({ userId, type: "image_edit_completed", projectId, projectName: project.title, generationId: edit.id });
+    try {
+      await createNotification({ userId, type: "image_edit_completed", projectId, projectName: project.title, generationId: edit.id });
+    } catch (notificationError) {
+      console.warn("[generation] image_edit_notification_failed", { generationId: edit.id, reason: notificationError instanceof Error ? notificationError.name : "notification_error" });
+    }
     revalidatePath(`/${locale}/dashboard/projects/${projectId}`, "page");
     return { ok: true, generationId: edit.id, status: "succeeded" };
   } catch (error) {
     const completedAt = new Date();
     const diagnostics = getSafeProviderErrorDiagnostics(error, { generationId: edit.id, provider: "openai", model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst", imageCount: orderedEditProducts.length + 1, preservationMode: "reference_edit", strategy: "reference_edit", sceneFamily: null });
     await admin.from("generations").update({ status: "failed", error_message: generationFailureCode, processing_completed_at: completedAt.toISOString(), processing_duration_ms: completedAt.getTime() - now.getTime(), provider_metadata: mergeProviderFailureMetadata(editInitialMetadata, { category: "generation_failed", code: diagnostics.code, status: diagnostics.status, providerDecision: "provider_error", klayClassification: null, providerFalsePositiveCandidate: false }) }).eq("id", edit.id).eq("status", "processing");
-    await createNotification({ userId, type: "image_edit_failed", projectId, projectName: project.title, generationId: edit.id });
+    try {
+      await createNotification({ userId, type: "image_edit_failed", projectId, projectName: project.title, generationId: edit.id });
+    } catch (notificationError) {
+      console.warn("[generation] image_edit_notification_failed", { generationId: edit.id, reason: notificationError instanceof Error ? notificationError.name : "notification_error" });
+    }
     return { ok: false, error: "Edit could not be completed.", code: "creationFailed" };
   }
 }
@@ -1905,7 +1913,13 @@ export async function runQueuedImageGeneration(
       safeGenerationEvent("queue", "failure_persist_error", { generationId });
     } else if (failedGeneration) {
       const { data: failedProject } = await admin.from("projects").select("user_id, title").eq("id", failedGeneration.project_id).maybeSingle();
-      if (failedProject) await createNotification({ userId: failedProject.user_id, type: "generation_failed", projectId: failedGeneration.project_id, projectName: failedProject.title, generationId });
+      if (failedProject) {
+        try {
+          await createNotification({ userId: failedProject.user_id, type: "generation_failed", projectId: failedGeneration.project_id, projectName: failedProject.title, generationId });
+        } catch (notificationError) {
+          console.warn("[generation] failure_notification_failed", { generationId, reason: notificationError instanceof Error ? notificationError.name : "notification_error" });
+        }
+      }
       safeGenerationEvent("queue", "status_transition", { generationId, status: "failed" });
     }
     const errorMessage = error instanceof Error ? error.message.toLowerCase() : "";
