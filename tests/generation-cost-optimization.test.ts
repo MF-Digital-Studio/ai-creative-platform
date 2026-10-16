@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { createCostTelemetry } from "../src/lib/generation/cost-telemetry";
+import { buildGenerationFailureTelemetry } from "../src/lib/generation/failure-telemetry";
 import { readReferenceAnalysisCache } from "../src/lib/generation/references/reference-analysis-cache";
 
 const styleBrief = {
@@ -32,14 +33,31 @@ test("repair attempts are counted once as repair generation, including failed pr
   assert.equal(telemetry.totalExternalAICalls, 3);
 });
 
-test("failed generation persistence retains attempted-call telemetry and measured stages", async () => {
-  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
-  const providerAttempt = source.indexOf("executionCounts.imageGenerationCalls += 1;\n    const result = await performance.measure(\"provider_initial\"");
-  const failureTelemetry = source.indexOf("const failureCostTelemetry = createCostTelemetry");
-  assert.ok(providerAttempt >= 0);
-  assert.ok(failureTelemetry > providerAttempt);
-  assert.match(source.slice(failureTelemetry), /finalOutcome: "failed"/);
-  assert.match(source.slice(failureTelemetry), /stages: failureStageDurations/);
+test("failure telemetry retains attempted calls, measured stages, and known input counts", () => {
+  const telemetry = buildGenerationFailureTelemetry({
+    executionCounts: { imageGenerationCalls: 2, visionValidationCalls: 1, promptEnhancementCalls: 1, productAnalysisCalls: 1, referenceAnalysisCalls: 0, artworkAnalysisCalls: 0, segmentationCalls: 0, projectionAnalysisCalls: 0, repairCalls: 1 },
+    inputProductImageCount: 2,
+    inputReferenceCount: 1,
+    stageDurations: { asset_load: 12, provider_initial: 40, total: 65 },
+  });
+  assert.equal(telemetry.costTelemetry.totalExternalAICalls, 5);
+  assert.equal(telemetry.costTelemetry.imageGenerationCalls, 1);
+  assert.equal(telemetry.costTelemetry.repairGenerationCalls, 1);
+  assert.equal(telemetry.costTelemetry.inputProductImageCount, 2);
+  assert.equal(telemetry.costTelemetry.inputReferenceCount, 1);
+  assert.equal(telemetry.execution.totalDurationMs, 65);
+  assert.deepEqual(telemetry.execution.stages, { asset_load: 12, provider_initial: 40, total: 65 });
+});
+
+test("failure telemetry represents input counts as unknown before assets load", () => {
+  const telemetry = buildGenerationFailureTelemetry({
+    executionCounts: { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, referenceAnalysisCalls: 0, artworkAnalysisCalls: 0, segmentationCalls: 0, projectionAnalysisCalls: 0, repairCalls: 0 },
+    inputProductImageCount: null,
+    inputReferenceCount: null,
+  });
+  assert.equal(telemetry.costTelemetry.inputProductImageCount, null);
+  assert.equal(telemetry.costTelemetry.inputReferenceCount, null);
+  assert.equal(telemetry.execution.totalDurationMs, undefined);
 });
 
 test("reference cache requires the same ordered assets, model, and version", () => {

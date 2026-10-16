@@ -10,8 +10,9 @@ export type CostTelemetryInput = {
   artworkAnalysisCalls?: number;
   segmentationCalls?: number;
   projectionAnalysisCalls?: number;
-  inputProductImageCount: number;
-  inputReferenceCount: number;
+  // A failure before asset loading cannot truthfully report zero inputs.
+  inputProductImageCount: number | null;
+  inputReferenceCount: number | null;
   repairAttempted: boolean;
   finalOutcome: CostTelemetryOutcome;
   validationOutcome: string;

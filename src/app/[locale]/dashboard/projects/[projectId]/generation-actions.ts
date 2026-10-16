@@ -48,6 +48,7 @@ import {
 } from "@/lib/generation/references/reference-analysis";
 import { readReferenceAnalysisCache } from "@/lib/generation/references/reference-analysis-cache";
 import { createCostTelemetry } from "@/lib/generation/cost-telemetry";
+import { buildGenerationFailureTelemetry } from "@/lib/generation/failure-telemetry";
 import { resolveReferenceMatch } from "@/lib/generation/references/resolve-reference-match";
 import { getReferenceShotProfile, REFERENCE_MATCH_VERSION, type ReferenceMode } from "@/lib/generation/references/reference-shot-profile";
 import { buildReferenceReplacementPrompt, orderGenerationImages, orderReferenceReplacementImages, orderImageEditImages } from "@/lib/generation/image-roles";
@@ -507,6 +508,8 @@ export async function runQueuedImageGeneration(
   const generationStartedAt = Date.now();
   let performance: ReturnType<typeof createGenerationPerformanceRecorder> | null = null;
   const executionCounts = { imageGenerationCalls: 0, visionValidationCalls: 0, promptEnhancementCalls: 0, productAnalysisCalls: 0, referenceAnalysisCalls: 0, artworkAnalysisCalls: 0, segmentationCalls: 0, projectionAnalysisCalls: 0, repairCalls: 0 };
+  let inputProductImageCount: number | null = null;
+  let inputReferenceCount: number | null = null;
   safeGenerationEvent("queue", "processor_entered", { generationId });
   let providerDiagnosticContext: { provider: GenerationProvider; model: string; imageCount: number; preservationMode: string; strategy: string; sceneFamily: string | null; klayClassification: KlayReferenceClassification } | null = null;
   let outputStored = false;
@@ -619,6 +622,7 @@ export async function runQueuedImageGeneration(
       return { asset: productAsset, blob: data, data: Buffer.from(await data.arrayBuffer()), mimeType: data.type };
     })));
     const usableProductImages = productDownloads.filter((image): image is NonNullable<typeof image> => image !== null);
+    inputProductImageCount = usableProductImages.length;
     const primaryProductImage = usableProductImages.find(({ asset: productAsset }) => productAsset.id === asset.id);
     if (!primaryProductImage) {
       throw new Error("Unable to download the input image.");
@@ -699,6 +703,7 @@ export async function runQueuedImageGeneration(
     const usableReferenceImages = referenceImages.filter(
       (image): image is NonNullable<typeof image> => image !== null,
     );
+    inputReferenceCount = usableReferenceImages.length;
     if (requestedReferenceAssetIds.length && process.env.NODE_ENV === "development") {
       console.info("[reference] analysis_started", { generationId: queuedGeneration.id, requestedCount: requestedReferenceAssetIds.length, usableCount: usableReferenceImages.length });
     }
@@ -1896,21 +1901,11 @@ export async function runQueuedImageGeneration(
       ? getSafeProviderErrorDiagnostics(error, { generationId, ...providerDiagnosticContext })
       : null;
     const failureStageDurations = performance?.finish();
-    const failureCostTelemetry = createCostTelemetry({
-      productUnderstandingCalls: executionCounts.productAnalysisCalls,
-      referenceAnalysisCalls: executionCounts.referenceAnalysisCalls,
-      imageGenerationCalls: executionCounts.imageGenerationCalls - executionCounts.repairCalls,
-      validationCalls: executionCounts.visionValidationCalls,
-      repairGenerationCalls: executionCounts.repairCalls,
-      promptEnhancementCalls: executionCounts.promptEnhancementCalls,
-      artworkAnalysisCalls: executionCounts.artworkAnalysisCalls,
-      segmentationCalls: executionCounts.segmentationCalls,
-      projectionAnalysisCalls: executionCounts.projectionAnalysisCalls,
-      inputProductImageCount: 0,
-      inputReferenceCount: 0,
-      repairAttempted: executionCounts.repairCalls > 0,
-      finalOutcome: "failed",
-      validationOutcome: "not_completed",
+    const failureTelemetry = buildGenerationFailureTelemetry({
+      executionCounts,
+      inputProductImageCount,
+      inputReferenceCount,
+      stageDurations: failureStageDurations,
     });
     const failureMetadata = providerDiagnosticContext
       ? mergeProviderFailureMetadata(persistedProviderMetadata, {
@@ -1927,8 +1922,8 @@ export async function runQueuedImageGeneration(
       error_message: terminalFailureReason ?? failureCategory,
       provider_metadata: {
         ...failureMetadata,
-        execution: { version: GENERATION_EXECUTION_POLICY_VERSION, imageGenerationCalls: executionCounts.imageGenerationCalls, visionValidationCalls: executionCounts.visionValidationCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, productAnalysisCalls: executionCounts.productAnalysisCalls, referenceAnalysisCalls: executionCounts.referenceAnalysisCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, segmentationCalls: executionCounts.segmentationCalls, projectionAnalysisCalls: executionCounts.projectionAnalysisCalls, repairCalls: executionCounts.repairCalls, ...(failureStageDurations ? { totalDurationMs: failureStageDurations.total, stages: failureStageDurations } : {}) },
-        costTelemetry: failureCostTelemetry,
+        execution: failureTelemetry.execution,
+        costTelemetry: failureTelemetry.costTelemetry,
         providerStatus: "failed",
       },
       processing_completed_at: completedAt.toISOString(),
