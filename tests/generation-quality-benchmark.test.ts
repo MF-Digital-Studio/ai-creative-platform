@@ -19,7 +19,7 @@ const observation = {
 };
 
 test("benchmark fixtures cover every supported vertical with single and multi-view scenarios", () => {
-  assert.equal(generationQualityBenchmarkFixtures.length, 14);
+  assert.equal(generationQualityBenchmarkFixtures.length, 18);
   for (const vertical of ["apparel", "jewelry", "watches", "footwear", "bags", "cosmetics"]) {
     const scenarios = generationQualityBenchmarkFixtures.filter((fixture) => fixture.vertical === vertical);
     assert.ok(scenarios.some((fixture) => fixture.inputRoles.length === 1), `${vertical} single-view`);
@@ -33,7 +33,7 @@ test("benchmark records verified technical success without inventing a human qua
   assert.equal(report.results[0]?.terminalDecision, "succeeded");
   assert.equal(report.results[0]?.estimatedCostUsd, 0.041);
   assert.equal(report.summary.humanReviewsRecorded, 0);
-  assert.match(formatGenerationQualityBenchmarkSummary(report), /1\/14 scenarios evaluated/);
+  assert.match(formatGenerationQualityBenchmarkSummary(report), /1\/18 scenarios evaluated/);
 });
 
 test("watch benchmarks separate wearability findings from watch identity findings", () => {
@@ -64,6 +64,24 @@ test("watch benchmarks separately expose contact, bracelet articulation, and dia
   assert.equal(result?.watchBraceletArticulationFindings[0]?.code, "bracelet_case_transition_inconsistent");
   assert.equal(result?.watchDialDetailFidelityFindings[0]?.code, "dial_detail_fidelity_loss");
   assert.equal(result?.productIdentityFindings[0]?.code, "dial_detail_fidelity_loss");
+});
+
+test("watch orientation benchmarks cover both wrists, both visible surfaces, and stay separate from fit", () => {
+  const scenarios = generationQualityBenchmarkFixtures
+    .filter((fixture) => fixture.vertical === "watches" && fixture.watchOrientationScenario)
+    .map((fixture) => fixture.watchOrientationScenario)
+    .sort();
+  assert.deepEqual(scenarios, ["left_inner", "left_outer", "right_inner", "right_outer"]);
+
+  const report = evaluateGenerationQualityBenchmark([{
+    ...observation,
+    fixtureId: "watches-on-wrist-right-inner-orientation",
+    validation: { status: "fail", commerciallyUsable: false, issues: [{ code: "watch_wrist_side_orientation_mismatch", category: "body_interaction", severity: "critical", identityImpact: "none" }] },
+    qualityGatePassed: false,
+  }]);
+  assert.equal(report.results[0]?.watchOrientationFindings[0]?.code, "watch_wrist_side_orientation_mismatch");
+  assert.equal(report.results[0]?.watchBraceletArticulationFindings.length, 0);
+  assert.equal(report.results[0]?.watchContactRealismFindings.length, 0);
 });
 
 test("rejected and unverified results cannot be reported as commercial successes", () => {

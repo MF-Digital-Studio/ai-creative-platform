@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import { useTranslations } from "next-intl";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { dashboardPrimaryNavigation } from "@/data/dashboard-navigation";

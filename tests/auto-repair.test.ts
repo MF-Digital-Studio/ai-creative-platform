@@ -65,6 +65,9 @@ test("physical integration issue codes route to targeted watch and jewelry repai
     ["case_skin_seating_unconvincing", "watch_contact_repair"],
     ["dial_detail_fidelity_loss", "identity_reinforcement"],
     ["watch_perspective_mismatch", "watch_perspective_repair"],
+    ["watch_wrist_side_orientation_mismatch", "watch_perspective_repair"],
+    ["watch_crown_side_inconsistency", "watch_perspective_repair"],
+    ["watch_case_pose_orientation_mismatch", "watch_perspective_repair"],
     ["jewelry_depth_missing", "jewelry_depth_repair"],
     ["jewelry_body_attachment_error", "jewelry_attachment_repair"],
     ["earring_ear_attachment_error", "earring_attachment_repair"],
@@ -80,6 +83,14 @@ test("watch refinement repair preserves first-link articulation, contact realism
   assert.match(prompt, /first links continuously from the existing lugs/i);
   assert.match(prompt, /restrained pressure, local shadow/i);
   assert.match(prompt, /marker count and positions, hands, logo placement, subdials/i);
+});
+
+test("watch orientation repair changes only case rotation and preserves crown-side identity", () => {
+  const plan = resolveRepairPlan(validation("fail", [issue("watch_wrist_side_orientation_mismatch", "critical"), issue("watch_crown_side_inconsistency", "critical")]));
+  const prompt = compileRepairInstructions("base", plan);
+  assert.match(prompt, /12 toward the forearm or elbow and 6 toward the hand/i);
+  assert.match(prompt, /preserve source crown\/pusher side/i);
+  assert.match(prompt, /without changing wrist pose, bracelet fit, or source watch identity/i);
 });
 
 test("repair prompt appends targeted instructions and preserves existing layers", () => {

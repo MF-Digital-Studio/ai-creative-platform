@@ -43,8 +43,19 @@ test("watch wrist V2 activates without user prompt, excludes product-only, and r
   assert.equal(reference.wristGeometryAvailable, true);
 });
 
+test("watch wrist placement resolves side and surface without using image-top for dial orientation", () => {
+  const leftOuter = resolveWatchWristIntegration({ vertical: "watches", expectsHuman: true, isProductOnly: false, onWristStrategy: true, creativeDirection: "left wrist, outer wrist visible" });
+  const rightInner = resolveWatchWristIntegration({ vertical: "watches", expectsHuman: true, isProductOnly: false, onWristStrategy: true, creativeDirection: "right wrist, palm-up inner wrist" });
+  assert.equal(leftOuter.placementContract?.wristSide, "left");
+  assert.equal(leftOuter.placementContract?.visibleWristSurface, "outer");
+  assert.equal(rightInner.placementContract?.wristSide, "right");
+  assert.equal(rightInner.placementContract?.visibleWristSurface, "inner");
+  assert.match(leftOuter.placementContract?.dialTwelveDirection ?? "", /forearm\/elbow.*hand/i);
+  assert.match(rightInner.placementContract?.crownSideConsistency ?? "", /never.*mirror/i);
+});
+
 test("watch wrist V2 high-confidence physical failures reject and repair only placement", () => {
-  for (const code of ["WATCH_CASE_ROTATION_MISMATCH", "WATCH_WRIST_AXIS_MISMATCH", "WATCH_DIAL_ORIENTATION_MISMATCH", "WATCH_FLAT_OVERLAY_APPEARANCE", "WATCH_STRAP_NOT_WRAPPED", "WATCH_CASE_FLOATING", "WATCH_PERSPECTIVE_MISMATCH", "WATCH_CASE_DEPTH_MISSING", "WATCH_LUG_STRAP_GEOMETRY_IMPOSSIBLE", "WATCH_UNWEARABLE_FIT", "BRACELET_CASE_TRANSITION_INCONSISTENT", "BRACELET_SEGMENT_FLOATING", "CONTACT_SHADOW_TOO_WEAK", "CASE_SKIN_SEATING_UNCONVINCING"]) {
+  for (const code of ["WATCH_CASE_ROTATION_MISMATCH", "WATCH_WRIST_AXIS_MISMATCH", "WATCH_DIAL_ORIENTATION_MISMATCH", "WATCH_WRIST_SIDE_ORIENTATION_MISMATCH", "WATCH_CROWN_SIDE_INCONSISTENCY", "WATCH_CASE_POSE_ORIENTATION_MISMATCH", "WATCH_FLAT_OVERLAY_APPEARANCE", "WATCH_STRAP_NOT_WRAPPED", "WATCH_CASE_FLOATING", "WATCH_PERSPECTIVE_MISMATCH", "WATCH_CASE_DEPTH_MISSING", "WATCH_LUG_STRAP_GEOMETRY_IMPOSSIBLE", "WATCH_UNWEARABLE_FIT", "BRACELET_CASE_TRANSITION_INCONSISTENT", "BRACELET_SEGMENT_FLOATING", "CONTACT_SHADOW_TOO_WEAK", "CASE_SKIN_SEATING_UNCONVINCING"]) {
     assert.equal(resolveQualityGate([issue({ code, category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]).status, "fail");
   }
   const validation = resolveQualityGate([issue({ code: "WATCH_CASE_ROTATION_MISMATCH", category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]);
@@ -62,6 +73,7 @@ test("watch refinement validation keeps dial detail separate from bracelet and c
     vertical: "watches", strategy: "watch_on_wrist",
   });
   for (const code of ["BRACELET_CASE_TRANSITION_INCONSISTENT", "BRACELET_SEGMENT_FLOATING", "CONTACT_SHADOW_TOO_WEAK", "CASE_SKIN_SEATING_UNCONVINCING", "DIAL_DETAIL_FIDELITY_LOSS"]) assert.match(brief, new RegExp(code));
+  for (const code of ["WATCH_WRIST_SIDE_ORIENTATION_MISMATCH", "WATCH_CROWN_SIDE_INCONSISTENCY", "WATCH_CASE_POSE_ORIENTATION_MISMATCH"]) assert.match(brief, new RegExp(code));
 
   const contact = resolveQualityGate([issue({ code: "CONTACT_SHADOW_TOO_WEAK", category: "body_interaction", severity: "minor", confidence: .92, repairable: true })]);
   assert.equal(contact.status, "fail");
