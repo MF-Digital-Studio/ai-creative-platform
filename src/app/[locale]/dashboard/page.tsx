@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { CreativeComposer } from "@/components/dashboard/creative-composer";
+import { DashboardHomeHero } from "@/components/dashboard/dashboard-home-hero";
 import { WorkspaceOverview } from "@/components/dashboard/workspace-overview";
 import { RecentGenerations } from "@/components/dashboard/recent-generations";
+import { TemplateRail } from "@/components/dashboard/template-rail";
 import { getAuthenticatedUserId } from "@/lib/auth/require-user";
 import { getDashboardGenerations } from "@/lib/generations/get-dashboard-generations";
 import { isSupportedLocale } from "@/i18n/routing";
@@ -40,7 +42,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   return (
     <main className="dashboard-main">
       <div className="dashboard-main-inner dashboard-container dashboard-home-inner">
-        <CreativeComposer locale={locale} userId={userId} />
+        <DashboardHomeHero />
+        <div className="dashboard-home-create">
+          <CreativeComposer locale={locale} userId={userId} />
+        </div>
+        <TemplateRail />
         <RecentGenerations generations={dashboardData.generations} />
         <WorkspaceOverview projectCount={dashboardData.projectCount} completedCount={dashboardData.completedCount} activeCount={dashboardData.activeCount} />
       </div>

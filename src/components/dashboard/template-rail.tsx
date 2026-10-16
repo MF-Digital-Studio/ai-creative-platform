@@ -10,7 +10,7 @@ export async function TemplateRail({ vertical }: { vertical?: SupportedVertical 
     <section id="templates" className="dashboard-content-section" aria-labelledby="dashboard-templates-heading">
       <div className="dashboard-section-heading">
         <h2 id="dashboard-templates-heading">{vertical ? t("recommendedHeading") : t("heading")}</h2>
-        {vertical ? <p>{t("recommendedDescription")}</p> : null}
+        <p>{vertical ? t("recommendedDescription") : t("description")}</p>
       </div>
       <CreativePresetRail vertical={vertical} />
     </section>

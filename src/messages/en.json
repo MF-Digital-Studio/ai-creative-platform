@@ -526,6 +526,21 @@
     "backgroundJobs": { "active": "Creating image" },
     "metadataTitle": "Creative Workspace",
     "metadataDescription": "Create campaign-ready product visuals and explore creative directions in the Klay.ai workspace.",
+    "home": {
+      "eyebrow": "KLAY CREATIVE STUDIO",
+      "title": "From product photo\nto campaign world.",
+      "description": "Create realistic, distinctive, campaign-ready imagery with your product kept at the center.",
+      "jumpLabel": "Dashboard sections",
+      "createLink": "Create a new image",
+      "exploreLink": "Explore directions",
+      "visualLabel": "Klay creative direction examples",
+      "jewelryAlt": "Close jewelry campaign worn by a model",
+      "cosmeticsAlt": "Cosmetics product campaign in a natural setting",
+      "apparelAlt": "Apparel campaign in the city",
+      "frame1": "Jewelry / On model",
+      "frame2": "Cosmetics / Scenic",
+      "frame3": "Apparel / Street"
+    },
     "navigation": {
       "brand": "Klay.ai",
       "homeLabel": "Return to the Klay.ai home page",
@@ -680,6 +695,7 @@
     "overview": {
       "heading": "Workspace",
       "description": "A quick overview of your projects and generations.",
+      "openProjects": "Open all projects",
       "projects": "Projects",
       "projectsDescription": "Projects in your workspace",
       "completed": "Generations",
@@ -689,6 +705,7 @@
     },
     "generations": {
       "heading": "Recent generations",
+      "viewAll": "All projects",
       "emptyHeading": "You don’t have a generation yet.",
       "emptyDescription": "Your first image will appear here when it’s ready.",
       "start": "Create your first image",
@@ -765,6 +782,7 @@
       "referencePreviewAlt": "Visual reference {index}",
       "removeReference": "Remove visual reference {index}",
       "invalidProductType": "Please select a JPEG, PNG, or WebP image.",
+      "invalidImage": "This file cannot be decoded as a valid JPEG, PNG, or WebP image. Please choose another file.",
       "productTooLarge": "The image must be 20 MB or smaller.",
       "productRequired": "Add a product image to continue.",
       "directionRequired": "Choose a preset or add a creative direction.",

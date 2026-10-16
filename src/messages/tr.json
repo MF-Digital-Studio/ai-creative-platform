@@ -526,6 +526,21 @@
     "backgroundJobs": { "active": "Görsel hazırlanıyor" },
     "metadataTitle": "Yaratıcı Çalışma Alanı",
     "metadataDescription": "Klay.ai çalışma alanında kampanyaya hazır ürün görselleri oluşturun ve yaratıcı yönleri keşfedin.",
+    "home": {
+      "eyebrow": "KLAY CREATIVE STUDIO",
+      "title": "Ürün fotoğrafından\nkampanya dünyasına.",
+      "description": "Ürününüzü merkeze alan gerçekçi, yaratıcı ve kullanıma hazır kampanya görselleri üretin.",
+      "jumpLabel": "Ana sayfa bölümleri",
+      "createLink": "Yeni görsel oluştur",
+      "exploreLink": "Yönleri keşfet",
+      "visualLabel": "Klay yaratıcı yön örnekleri",
+      "jewelryAlt": "Model üzerinde yakın plan takı kampanyası",
+      "cosmeticsAlt": "Doğal ortamda kozmetik ürün kampanyası",
+      "apparelAlt": "Şehirde giyim kampanyası",
+      "frame1": "Takı / Model üzerinde",
+      "frame2": "Kozmetik / Doğal ortam",
+      "frame3": "Giyim / Sokak"
+    },
     "navigation": {
       "brand": "Klay.ai",
       "homeLabel": "Klay.ai ana sayfasına dön",
@@ -680,6 +695,7 @@
     "overview": {
       "heading": "Çalışma alanı",
       "description": "Projelerinize ve üretimlerinize hızlı bir bakış.",
+      "openProjects": "Tüm projeleri aç",
       "projects": "Projeler",
       "projectsDescription": "Çalışma alanınızdaki projeler",
       "completed": "Üretimler",
@@ -689,6 +705,7 @@
     },
     "generations": {
       "heading": "Son üretimler",
+      "viewAll": "Tüm projeler",
       "emptyHeading": "Henüz bir üretiminiz yok.",
       "emptyDescription": "İlk görselinizi oluşturduğunuzda burada görünecek.",
       "start": "İlk görselini oluştur",
@@ -765,6 +782,7 @@
       "referencePreviewAlt": "Görsel referans {index}",
       "removeReference": "Görsel referans {index} kaldır",
       "invalidProductType": "Lütfen JPEG, PNG veya WebP görsel seçin.",
+      "invalidImage": "Bu dosya geçerli bir JPEG, PNG veya WebP görseli olarak okunamadı. Lütfen başka bir dosya seçin.",
       "productTooLarge": "Görsel 20 MB veya daha küçük olmalıdır.",
       "productRequired": "Ürün görseli ekleyerek başlayın.",
       "directionRequired": "Bir preset seçin veya yaratıcı yönünüzü yazın.",

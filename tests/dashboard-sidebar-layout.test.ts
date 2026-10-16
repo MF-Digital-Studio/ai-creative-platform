@@ -27,3 +27,23 @@ test("dashboard topbar greets the signed-in user in both locales", () => {
     assert.ok(messages.Dashboard.topbar.welcomeWithoutName);
   }
 });
+
+test("dashboard home keeps the creation workflow while adding editorial discovery", () => {
+  const page = read("src/app/[locale]/dashboard/page.tsx");
+  const composer = read("src/components/dashboard/creative-composer.tsx");
+  const hero = read("src/components/dashboard/dashboard-home-hero.tsx");
+
+  assert.match(page, /DashboardHomeHero[\s\S]*CreativeComposer[\s\S]*TemplateRail[\s\S]*RecentGenerations[\s\S]*WorkspaceOverview/);
+  assert.match(hero, /next\/image/);
+  assert.match(hero, /href="#composer"/);
+  assert.match(composer, /DASHBOARD_PRESET_EVENT/);
+  assert.match(composer, /current === "type" \? "name" : current/);
+
+  for (const locale of ["tr", "en"]) {
+    const messages = JSON.parse(read(`src/messages/${locale}.json`)) as { Dashboard: { home: Record<string, string>; generations: Record<string, string>; overview: Record<string, string> } };
+    assert.ok(messages.Dashboard.home.title);
+    assert.ok(messages.Dashboard.home.description);
+    assert.ok(messages.Dashboard.generations.viewAll);
+    assert.ok(messages.Dashboard.overview.openProjects);
+  }
+});
