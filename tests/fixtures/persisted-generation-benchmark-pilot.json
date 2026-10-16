@@ -1,0 +1,48 @@
+[
+  {
+    "fixtureId": "watches-on-wrist-multiview-reference",
+    "evidenceSource": "synthetic",
+    "generation": {
+      "status": "succeeded",
+      "processingDurationMs": 820,
+      "providerMetadata": {
+        "validation": { "status": "pass", "commerciallyUsable": true, "issueCodes": [] },
+        "fidelity_validation": { "status": "pass", "commerciallyUsable": true, "issueCodes": [] },
+        "qualityGatePassed": true,
+        "qualityRejected": false,
+        "validationUnavailable": false,
+        "verificationStatus": "verified",
+        "auto_repair": { "attempted": false, "selectedAttempt": 0 },
+        "costTelemetry": { "totalExternalAICalls": 4 }
+      }
+    },
+    "humanVisualReview": "not_reviewed"
+  },
+  {
+    "fixtureId": "apparel-studio-single",
+    "evidenceSource": "synthetic",
+    "generation": {
+      "status": "failed",
+      "providerMetadata": {
+        "validation": { "status": "fail", "commerciallyUsable": false, "issueCodes": ["product_identity_drift"] },
+        "qualityGatePassed": false,
+        "qualityRejected": true,
+        "verificationStatus": "verified"
+      }
+    }
+  },
+  {
+    "fixtureId": "cosmetics-scenic-multiview-reference",
+    "evidenceSource": "synthetic",
+    "generation": {
+      "status": "succeeded",
+      "providerMetadata": {
+        "validation": { "status": "validation_unavailable", "commerciallyUsable": null, "issueCodes": [] },
+        "qualityGatePassed": null,
+        "qualityRejected": false,
+        "validationUnavailable": true,
+        "verificationStatus": "unverified"
+      }
+    }
+  }
+]

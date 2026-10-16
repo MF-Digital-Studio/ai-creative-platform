@@ -5,6 +5,8 @@ import type { SupportedVertical } from "@/lib/verticals/supported-verticals";
 export type BenchmarkInputRole = "primary_product" | "supporting_product" | "reference_scene";
 export type HumanVisualReview = "not_reviewed" | "pass" | "warning" | "fail";
 export type CostMeasurementStatus = "complete" | "incomplete" | "unavailable";
+export type SourceGenerationTerminalStatus = "queued" | "processing" | "succeeded" | "failed";
+export type BenchmarkEvidenceSource = "synthetic" | "persisted_production" | "unknown";
 
 export type GenerationQualityBenchmarkFixture = {
   id: string;
@@ -38,13 +40,17 @@ export type BenchmarkObservation = {
     status: FidelityValidationStatus;
     commerciallyUsable: boolean | null;
     issues: readonly Pick<FidelityValidationIssue, "code" | "category" | "severity" | "identityImpact">[];
+    // Persisted metadata often retains codes but not each finding's full classification.
+    unclassifiedIssueCodes?: readonly string[];
   };
   qualityGatePassed: boolean | null;
-  repair: { attempted: boolean; selectedAttempt: 0 | 1 | null };
+  repair: { attempted: boolean | null; selectedAttempt: 0 | 1 | null };
   providerCallCount: number | null;
   latencyMs: number | null;
   cost: { estimatedUsd: number | null; usageComplete: boolean; pricingComplete: boolean };
   humanVisualReview: HumanVisualReview;
+  evidenceSource?: BenchmarkEvidenceSource;
+  sourceTerminalStatus?: SourceGenerationTerminalStatus;
 };
 
 export type BenchmarkResult = BenchmarkObservation & {
