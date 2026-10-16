@@ -1190,6 +1190,7 @@
     },
     "projectsIndex": {
       "title": "Projeler",
+      "description": "Ürün görsellerinizi ve üretimlerinizi tek bir yaratıcı arşivde yönetin.",
       "count": "{count} proje",
       "resultCount": "{count} sonuç",
       "search": "Proje ara",

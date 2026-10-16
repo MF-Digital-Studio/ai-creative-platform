@@ -56,7 +56,8 @@ export default async function ProjectsPage({params, searchParams}: ProjectsPageP
     previewAlt: tRecent.raw("thumbnailAlt") as string,
     noPreview: t("noPreview"),
     open: t("open"),
-    projectActions: tRecent("projectActions"),
+    updatedLabel: t("updatedLabel"),
+    projectActions: t.raw("actionsFor") as string,
     delete: tRecent("delete"),
     deleteProject: tRecent("deleteProject"),
     deleteHeading: tRecent("deleteHeading"),
@@ -70,7 +71,12 @@ export default async function ProjectsPage({params, searchParams}: ProjectsPageP
     <main className="dashboard-main">
       <div className="dashboard-main-inner dashboard-container dashboard-project-index">
         <header className="projects-index-header">
-          <div><h1>{t("title")}</h1><p>{t("count", {count: result.totalCount})}</p></div>
+          <div className="projects-index-heading">
+            <p className="projects-index-eyebrow">{tRecent("allEyebrow")}</p>
+            <h1>{t("title")}</h1>
+            <p className="projects-index-description">{t("description")}</p>
+            <p className="projects-index-count">{t("count", {count: result.totalCount})}</p>
+          </div>
           <NewProjectButton action={createProject.bind(null, locale)} variant="primary" className="projects-create-button" messages={{create: tRecent("newProject"), creating: tRecent("creating"), error: tRecent("createError")}} />
         </header>
 

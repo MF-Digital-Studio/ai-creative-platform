@@ -1190,6 +1190,7 @@
     },
     "projectsIndex": {
       "title": "Projects",
+      "description": "Manage your product imagery and generations in one creative library.",
       "count": "{count} projects",
       "resultCount": "{count} results",
       "search": "Search projects",

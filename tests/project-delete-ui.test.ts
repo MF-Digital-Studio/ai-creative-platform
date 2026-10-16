@@ -6,6 +6,7 @@ import test from "node:test";
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), "utf8");
 const dashboardHome = read("src/app/[locale]/dashboard/page.tsx");
+const projectsPage = read("src/app/[locale]/dashboard/projects/page.tsx");
 const gallery = read("src/components/projects/project-gallery-card.tsx");
 const detail = read("src/components/projects/project-header.tsx");
 const menu = read("src/components/projects/project-card-menu.tsx");
@@ -22,6 +23,31 @@ const messages = {
 test("dashboard home omits recent projects while the projects area retains the shared menu", () => {
   assert.doesNotMatch(dashboardHome, /RecentWork|recent-work/);
   assert.match(gallery, /<ProjectCardMenu/);
+});
+
+test("projects library preserves server pagination and URL filter semantics", () => {
+  assert.match(projectsPage, /getProjectsPage\(userId, \{page, pageSize: 16, search, status, sort\}\)/);
+  assert.match(projectsPage, /query\.q/);
+  assert.match(projectsPage, /query\.status/);
+  assert.match(projectsPage, /query\.sort/);
+  assert.match(projectsPage, /params\.set\("page", String\(target\)\)/);
+  assert.match(projectsPage, /<ProjectsToolbar/);
+});
+
+test("projects library cards expose real previews, timestamps, status and named actions", () => {
+  assert.match(gallery, /project\.thumbnail_url/);
+  assert.match(gallery, /data-thumbnail-source=\{project\.thumbnail_source/);
+  assert.match(gallery, /<time dateTime=\{project\.updated_at\}>/);
+  assert.match(gallery, /<StatusBadge/);
+  assert.match(gallery, /messages\.projectActions\.replace\("\{title\}", title\)/);
+});
+
+test("projects library editorial copy exists in both locales", () => {
+  for (const locale of ["en", "tr"]) {
+    const catalog = JSON.parse(read(`src/messages/${locale}.json`)) as {Dashboard: {projectsIndex: Record<string, string>}};
+    assert.ok(catalog.Dashboard.projectsIndex.title);
+    assert.ok(catalog.Dashboard.projectsIndex.description);
+  }
 });
 
 test("dashboard and projects surfaces share the card menu and delete modal", () => {
