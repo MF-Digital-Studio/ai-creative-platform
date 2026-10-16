@@ -48,6 +48,24 @@ test("watch benchmarks separate wearability findings from watch identity finding
   assert.equal(report.results[0]?.commercialSuccess, false);
 });
 
+test("watch benchmarks separately expose contact, bracelet articulation, and dial-detail findings", () => {
+  const report = evaluateGenerationQualityBenchmark([{
+    ...observation,
+    fixtureId: "watches-on-wrist-close-crop",
+    validation: { status: "fail", commerciallyUsable: false, issues: [
+      { code: "contact_shadow_too_weak", category: "body_interaction", severity: "critical", identityImpact: "none" },
+      { code: "bracelet_case_transition_inconsistent", category: "body_interaction", severity: "critical", identityImpact: "none" },
+      { code: "dial_detail_fidelity_loss", category: "product_identity", severity: "major", identityImpact: "major" },
+    ] },
+    qualityGatePassed: false,
+  }]);
+  const result = report.results[0];
+  assert.equal(result?.watchContactRealismFindings[0]?.code, "contact_shadow_too_weak");
+  assert.equal(result?.watchBraceletArticulationFindings[0]?.code, "bracelet_case_transition_inconsistent");
+  assert.equal(result?.watchDialDetailFidelityFindings[0]?.code, "dial_detail_fidelity_loss");
+  assert.equal(result?.productIdentityFindings[0]?.code, "dial_detail_fidelity_loss");
+});
+
 test("rejected and unverified results cannot be reported as commercial successes", () => {
   const report = evaluateGenerationQualityBenchmark([
     { ...observation, validation: { status: "fail", commerciallyUsable: false, issues: [{ code: "watch_dial_structure_changed", category: "product_identity", severity: "critical", identityImpact: "critical" }] }, qualityGatePassed: false, repair: { attempted: true, selectedAttempt: 1 } },

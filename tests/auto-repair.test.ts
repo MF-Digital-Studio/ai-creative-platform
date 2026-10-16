@@ -59,6 +59,11 @@ test("physical integration issue codes route to targeted watch and jewelry repai
     ["watch_case_depth_missing", "watch_depth_repair"],
     ["watch_bracelet_wrap_error", "watch_wrap_repair"],
     ["watch_contact_shadow_missing", "watch_contact_repair"],
+    ["bracelet_case_transition_inconsistent", "watch_wrap_repair"],
+    ["bracelet_segment_floating", "watch_wrap_repair"],
+    ["contact_shadow_too_weak", "watch_contact_repair"],
+    ["case_skin_seating_unconvincing", "watch_contact_repair"],
+    ["dial_detail_fidelity_loss", "identity_reinforcement"],
     ["watch_perspective_mismatch", "watch_perspective_repair"],
     ["jewelry_depth_missing", "jewelry_depth_repair"],
     ["jewelry_body_attachment_error", "jewelry_attachment_repair"],
@@ -67,6 +72,14 @@ test("physical integration issue codes route to targeted watch and jewelry repai
     ["jewelry_perspective_mismatch", "jewelry_perspective_repair"],
   ];
   for (const [code, category] of scenarios) assert.deepEqual(resolveRepairPlan(validation("fail", [issue(code, "critical")])).categories, [category]);
+});
+
+test("watch refinement repair preserves first-link articulation, contact realism, and dial hierarchy", () => {
+  const plan = resolveRepairPlan(validation("fail", [issue("bracelet_case_transition_inconsistent", "critical"), issue("contact_shadow_too_weak", "critical"), issue("dial_detail_fidelity_loss", "major")]));
+  const prompt = compileRepairInstructions("base", plan);
+  assert.match(prompt, /first links continuously from the existing lugs/i);
+  assert.match(prompt, /restrained pressure, local shadow/i);
+  assert.match(prompt, /marker count and positions, hands, logo placement, subdials/i);
 });
 
 test("repair prompt appends targeted instructions and preserves existing layers", () => {
