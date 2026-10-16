@@ -48,6 +48,7 @@ export function ProductImageUpload({ projectId, userId, initialAssets, registerA
         if (uploadError) throw uploadError;
         const registration = await registerAsset(projectId, path);
         if (registration.status === "limit") { setError(t("limitError")); break; }
+        if (registration.status === "invalid_image") { setError(t("invalidImage")); break; }
         if (registration.status !== "success" || !registration.asset) throw new Error("metadata");
         const { data, error: signedUrlError } = await supabase.storage.from("product-assets").createSignedUrl(path, 3600);
         if (signedUrlError || !data?.signedUrl) throw signedUrlError ?? new Error("signed-url");

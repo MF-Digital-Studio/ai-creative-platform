@@ -205,6 +205,11 @@ test("OpenAI image input normalization converts disguised HEIF data to PNG", asy
   assert.equal((await sharp(normalized.data).metadata()).format, "png");
 });
 
+test("unsupported or corrupt image bytes fail with a clear decode error", async () => {
+  const unsupportedHeif = Buffer.from("00000018667479706865696300000000686569636d696631", "hex");
+  await assert.rejects(() => normalizeImageInputForOpenAI(unsupportedHeif, "image/png"), /cannot be decoded/i);
+});
+
 test("contain placement preserves product ratio and remains inside the canvas", () => {
   const placement = resolveProductPlacement(300, 100, 100, 100);
 

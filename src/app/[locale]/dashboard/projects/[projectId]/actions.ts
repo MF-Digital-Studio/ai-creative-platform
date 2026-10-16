@@ -20,9 +20,10 @@ import {
 import { getProjectProductAssets } from "@/lib/assets/product-assets";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { assertImageInputDecodable } from "@/lib/generation/providers/normalize-image-input";
 
 export type RegisterProductAssetResult = {
-  status: "error" | "limit" | "success";
+  status: "error" | "invalid_image" | "limit" | "success";
   asset?: { id: string; objectPath: string; role: ProductAssetRole; sortOrder: number };
 };
 
@@ -119,6 +120,12 @@ export async function registerProductAsset(
     ) {
       await admin.storage.from("product-assets").remove([objectPath]);
       return { status: "error" };
+    }
+    try {
+      await assertImageInputDecodable(Buffer.from(await uploadedImage.arrayBuffer()));
+    } catch {
+      await admin.storage.from("product-assets").remove([objectPath]);
+      return { status: "invalid_image" };
     }
 
     const role = nextProductAssetRole(existingAssets.length);

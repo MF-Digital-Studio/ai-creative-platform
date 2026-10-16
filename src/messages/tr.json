@@ -1322,6 +1322,7 @@
         "helper": "JPEG, PNG veya WebP · Maks. 20 MB",
         "uploading": "Yükleniyor…",
         "invalidType": "Lütfen JPEG, PNG veya WebP görsel yükleyin.",
+        "invalidImage": "Bu dosya geçerli bir JPEG, PNG veya WebP görseli olarak okunamadı. Lütfen başka bir dosya seçin.",
         "tooLarge": "Görsel 20 MB veya daha küçük olmalıdır.",
         "uploadError": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
         "metadataError": "Görsel yüklendi ancak projeye kaydedilemedi. Lütfen tekrar deneyin.",

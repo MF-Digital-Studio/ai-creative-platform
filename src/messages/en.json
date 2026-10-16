@@ -1327,6 +1327,7 @@
         "helper": "JPEG, PNG or WebP Â· Max 20 MB",
         "uploading": "Uploadingâ€¦",
         "invalidType": "Please upload a JPEG, PNG, or WebP image.",
+        "invalidImage": "This file cannot be decoded as a valid JPEG, PNG, or WebP image. Please choose another file.",
         "tooLarge": "Image must be 20 MB or smaller.",
         "uploadError": "We couldnâ€™t upload the image. Please try again.",
         "metadataError": "The image was uploaded, but we couldnâ€™t save it to the project. Please try again.",
