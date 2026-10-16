@@ -207,6 +207,25 @@ test("low-confidence mild identity variation cannot become critical", () => {
   assert.equal(result.status, "pass_with_warnings");
 });
 
+test("canonical identity drift cannot be downgraded by a contradictory impact label", () => {
+  const [mapped] = mapStructuredValidationOutput({ findings: [{
+    code: "PRODUCT_IDENTITY_DRIFT", category: "realism", severity: "minor", confidence: .96,
+    identityImpact: "none", likelyCause: "unknown", region: "product", repairable: true,
+    commercialImpact: "low", finding: "different product design", expected: "source product",
+  }] });
+  const result = resolveQualityGate([mapped!]);
+  assert.equal(mapped?.identityImpact, "critical");
+  assert.equal(mapped?.severity, "critical");
+  assert.equal(result.status, "fail");
+  assert.equal(result.commerciallyUsable, false);
+});
+
+test("direct quality-gate input also normalizes contradictory canonical identity impact", () => {
+  const result = resolveQualityGate([issue({ code: "product_identity_drift", severity: "minor", confidence: .96, identityImpact: "none" })]);
+  assert.equal(result.issues[0]?.identityImpact, "critical");
+  assert.equal(result.status, "fail");
+});
+
 test("human realism findings stay separate from product identity", () => {
   const result = resolveQualityGate([
     issue({ code: "hand_anatomy_error", category: "human_realism", severity: "critical", identityImpact: "none", likelyCause: "body_interaction" }),

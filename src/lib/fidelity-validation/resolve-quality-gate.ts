@@ -26,6 +26,10 @@ const jewelryCriticalCodes = new Set(["jewelry_product_substitution", "jewelry_c
 const bagCriticalCodes = new Set(["bag_product_substitution", "bag_silhouette_drift", "bag_handle_count_drift", "bag_strap_drift", "bag_closure_drift", "bag_flap_geometry_drift", "bag_hardware_drift", "bag_logo_monogram_drift", "bag_color_drift", "bag_pocket_layout_drift"]);
 const bagMinorCodes = new Set(["bag_natural_deformation", "bag_perspective_variation", "bag_material_reflection_variation", "bag_strap_bend"]);
 const hardCriticalIdentityCodes = new Set(["product_identity_drift", "different_product", "wrong_artwork", "missing_artwork", "wrong_logo", "garment_type_changed", "garment_color_changed", "apparel_color_drift", "text_unreadable", "wording_changed", "branding_corrupted", "package_geometry_changed", "critical_component_missing", "center_stone_shape_changed", "stone_count_changed", "setting_changed", "band_geometry_changed", "pendant_geometry_changed", "watch_dial_structure_changed", "changed_dial_layout", "footwear_silhouette_changed", "footwear_panel_structure_changed", "apparel_artwork_identity_drift", "apparel_artwork_text_drift", ...jewelryCriticalCodes, ...bagCriticalCodes]);
+// These codes directly state a source-product substitution or exact visible
+// identity loss, unlike category-specific geometry variants that retain their
+// existing calibrated severity handling below.
+const nonOverridableCriticalIdentityCodes = new Set(["product_identity_drift", "different_product", "jewelry_product_substitution", "bag_product_substitution"]);
 const majorIdentityCodes = new Set(["stone_layout_changed", "stone_count_changed", "setting_changed", "band_geometry_changed", "watch_dial_structure_changed", "footwear_panel_structure_changed", "package_geometry_changed", "garment_artwork_changed", "changed_dial_layout", "apparel_artwork_structure_drift", "apparel_artwork_placement_drift", "apparel_artwork_scale_drift", "apparel_artwork_color_drift", "apparel_scale_drift", "apparel_color_drift", "apparel_silhouette_drift", "text_distortion", "typography_distortion", "logo_identity_changed", "metal_color_changed", "bezel_geometry_changed", "sole_shape_changed"]);
 const placementVariationCodes = new Set(["apparel_artwork_placement_drift", "apparel_scale_drift", "apparel_artwork_scale_drift", "artwork_position_shift", "logo_position_shift", "print_position_shift", "chain_fall_variation", "perspective_scale_variation", "wrist_angle_variation", "footwear_flex", "fabric_deformation", "lighting_color_variation", "cosmetics_reflection_variation", "label_curvature"]);
 const codeCause: Record<string, FidelityLikelyCause> = {
@@ -78,14 +82,20 @@ function confidenceAdjustedSeverity(issue: Pick<FidelityValidationIssue, "code" 
 
 export function resolveQualityGate(issues: FidelityValidationIssue[]): FidelityValidationResult {
   const normalized = issues.map((issue) => {
+    const code = issue.code.toLowerCase();
     const confidence = Math.max(0, Math.min(1, Number.isFinite(issue.confidence) ? issue.confidence! : 0.9));
-    const identityImpact = issue.identityImpact ?? defaultImpact(issue.code.toLowerCase(), issue.category, issue.severity);
+    // Canonical identity-drift codes are stronger evidence than a contradictory
+    // model-supplied impact label. Without this, a known product substitution
+    // could be downgraded to a non-blocking warning.
+    const identityImpact = nonOverridableCriticalIdentityCodes.has(code)
+      ? "critical"
+      : issue.identityImpact ?? defaultImpact(code, issue.category, issue.severity);
     const normalizedIssue = {
       ...issue,
       issueCode: issue.issueCode || issue.code,
       confidence,
       identityImpact,
-      likelyCause: issue.likelyCause ?? codeCause[issue.code.toLowerCase()] ?? (issue.category === "geometry" ? "geometry_change" : "unknown"),
+      likelyCause: issue.likelyCause ?? codeCause[code] ?? (issue.category === "geometry" ? "geometry_change" : "unknown"),
       region: issue.region ?? "unspecified",
       repairable: issue.repairable ?? issue.category === "human_realism",
       commercialImpact: issue.commercialImpact ?? (issue.severity === "critical" ? "high" : issue.severity === "major" ? "medium" : "low"),
@@ -166,7 +176,9 @@ export function mapStructuredValidationOutput(value: unknown): FidelityValidatio
     const category = hardCriticalIdentityCodes.has(canonicalCode) || majorIdentityCodes.has(canonicalCode) || canonicalCode.startsWith("apparel_artwork_") || canonicalCode.startsWith("jewelry_") || ["apparel_scale_drift", "apparel_color_drift", "apparel_silhouette_drift"].includes(canonicalCode)
       ? "product_identity" as const : input.category;
     const confidence = typeof input.confidence === "number" && Number.isFinite(input.confidence) ? Math.max(0, Math.min(1, input.confidence)) : 0.9;
-    const identityImpact = input.identityImpact ?? defaultImpact(canonicalCode, category, input.severity);
+    const identityImpact = nonOverridableCriticalIdentityCodes.has(canonicalCode)
+      ? "critical"
+      : input.identityImpact ?? defaultImpact(canonicalCode, category, input.severity);
     const presetMismatchFields = Array.isArray(input.presetMismatchFields)
       ? input.presetMismatchFields.filter((field): field is PresentationContractField => typeof field === "string" && presentationContractFields.has(field as PresentationContractField))
       : [];

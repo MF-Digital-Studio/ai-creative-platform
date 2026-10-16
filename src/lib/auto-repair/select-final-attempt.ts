@@ -41,7 +41,7 @@ export type FinalCandidateSelection = {
   attempt: GenerationAttempt;
 };
 
-export function resolveFinalCandidateSelection(original: GenerationAttempt, repair: GenerationAttempt | null, accepted: (attempt: GenerationAttempt) => boolean = (attempt) => attempt.validation.status === "pass" || attempt.validation.status === "pass_with_warnings"): FinalCandidateSelection {
+export function resolveFinalCandidateSelection(original: GenerationAttempt, repair: GenerationAttempt | null, accepted: (attempt: GenerationAttempt) => boolean = (attempt) => (attempt.validation.status === "pass" || attempt.validation.status === "pass_with_warnings") && attempt.validation.commerciallyUsable === true): FinalCandidateSelection {
   let attempt: GenerationAttempt;
   let reason: FinalCandidateSelectionReason;
   if (accepted(original)) {

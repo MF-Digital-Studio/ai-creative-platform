@@ -147,6 +147,19 @@ test("final candidate selection records pass and chooses objectively less severe
   assert.equal(resolveGenerationTerminalDecision({ validationStatus: "pass", qualityGatePassed: null, commerciallyUsable: null }), "succeeded");
 });
 
+test("a status warning with commercially unusable metadata cannot be selected as a successful repair", () => {
+  const original = attempt("fail", [issue("geometry_drift", "major")]);
+  const contradictoryRepair = {
+    ...attempt("pass_with_warnings", [issue("product_identity_drift", "major")]),
+    attempt: 1 as const,
+    validation: { ...validation("pass_with_warnings", [issue("product_identity_drift", "major")], false), commerciallyUsable: false },
+  };
+  const selection = resolveFinalCandidateSelection(original, contradictoryRepair);
+  assert.equal(selection.qualityGatePassed, false);
+  assert.equal(selection.qualityRejected, true);
+  assert.notEqual(selection.reason, "repair_passed");
+});
+
 test("at most one automatic repair is permitted", () => {
   assert.equal(MAX_AUTO_REPAIR_ATTEMPTS, 1);
   const repair = { ...attempt("fail", []), attempt: 1 as const };

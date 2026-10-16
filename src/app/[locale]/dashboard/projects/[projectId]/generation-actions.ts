@@ -1529,7 +1529,7 @@ export async function runQueuedImageGeneration(
     }
 
     const finalSelection = resolveFinalCandidateSelection(originalAttempt, repairAttempt, (attempt) => {
-      const statusAccepted = attempt.validation.status === "pass" || attempt.validation.status === "pass_with_warnings";
+      const statusAccepted = (attempt.validation.status === "pass" || attempt.validation.status === "pass_with_warnings") && attempt.validation.commerciallyUsable === true;
       if (!apparelFidelityMode.productFidelityFirst || !apparelIdentityManifest || attempt.validation.status === "validation_unavailable") return statusAccepted;
       const gate = evaluateApparelProductFidelity({ validationStatus: attempt.validation.status, issueCodes: attempt.validation.issues.map(({ code }) => code), benchmarkStatus: queuedGeneration.provider_metadata?.apparel_product_fidelity_benchmark === "passed" ? "passed" : "not_run" });
       return statusAccepted && gate.qualityGatePassed;
