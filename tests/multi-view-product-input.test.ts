@@ -51,6 +51,14 @@ test("generation snapshots product views separately from references and validate
   assert.match(source, /product_images:[\s\S]*asset_ids:[\s\S]*supporting_asset_ids/); assert.match(source, /references:[\s\S]*referenceGuidance/); assert.match(source, /supportingProducts: usableProductImages/);
 });
 
+test("concurrent registration trusts the database-assigned product role", () => {
+  const source = readFileSync("src/app/[locale]/dashboard/projects/[projectId]/actions.ts", "utf8");
+  assert.match(source, /select\("id, product_role, sort_order"\)/);
+  assert.match(source, /if \(asset\.product_role === "primary"\)/);
+  assert.match(source, /role: asset\.product_role, sortOrder: asset\.sort_order/);
+  assert.doesNotMatch(source, /if \(role === "primary"\)/);
+});
+
 test("TR and EN expose multi-view labels, limits, and error states", () => {
   for (const locale of ["tr", "en"]) { const messages = JSON.parse(readFileSync(`src/messages/${locale}.json`, "utf8")); const upload = messages.Dashboard.project.upload; assert.ok(upload.multiViewDescription && upload.multiViewRules && upload.primary && upload.supporting); assert.ok(upload.limitError && upload.minimumError && upload.mutationError); assert.ok(messages.Dashboard.composer.productMultiViewHelper && messages.Dashboard.composer.productLimit); }
 });

@@ -34,7 +34,7 @@ test("reference cache requires the same ordered assets, model, and version", () 
 
 test("multi-view registration analyzes only the primary product", async () => {
   const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/actions.ts", "utf8");
-  assert.match(source, /if \(role === "primary"\)[\s\S]*triggerProductAnalysisAfterRegistration/);
+  assert.match(source, /if \(asset\.product_role === "primary"\)[\s\S]*triggerProductAnalysisAfterRegistration/);
   assert.match(source, /Supporting views are[\s\S]*identity evidence/);
 });
 

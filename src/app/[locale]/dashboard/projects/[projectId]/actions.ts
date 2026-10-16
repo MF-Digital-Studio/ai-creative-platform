@@ -131,9 +131,9 @@ export async function registerProductAsset(
       asset_type: "product",
       product_role: role,
       sort_order: sortOrder,
-    }).select("id").single();
+    }).select("id, product_role, sort_order").single();
 
-    if (assetError || !asset) {
+    if (assetError || !asset || (asset.product_role !== "primary" && asset.product_role !== "supporting") || !Number.isInteger(asset.sort_order)) {
       await admin.storage.from("product-assets").remove([objectPath]);
       return { status: existingAssets.length >= MAX_PROJECT_PRODUCT_IMAGES ? "limit" : "error" };
     }
@@ -141,14 +141,17 @@ export async function registerProductAsset(
     // The primary image owns the canonical ProductProfile. Supporting views are
     // retained as identity evidence for generation and validation without a
     // second full Product Understanding request.
-    if (role === "primary") {
+    // The database trigger serializes concurrent registrations and can change
+    // the optimistic role computed above. Only the persisted primary owns the
+    // canonical profile and its one Product Understanding call.
+    if (asset.product_role === "primary") {
       const [{ analyzeProductAsset }, { triggerProductAnalysisAfterRegistration }] = await Promise.all([
         import("@/lib/product-understanding/analyze-product-asset"),
         import("@/lib/product-understanding/product-analysis-trigger"),
       ]);
       await triggerProductAnalysisAfterRegistration({ assetId: asset.id, projectId, userId }, analyzeProductAsset);
     }
-    registeredAsset = { id: asset.id, objectPath, role, sortOrder };
+    registeredAsset = { id: asset.id, objectPath, role: asset.product_role, sortOrder: asset.sort_order };
   } catch {
     return { status: "error" };
   }

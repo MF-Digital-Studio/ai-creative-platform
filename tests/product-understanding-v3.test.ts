@@ -129,12 +129,12 @@ test("failed provider status is not persisted as a supported or unsupported resu
 
 test("primary upload path triggers the canonical Product Understanding analyzer", async () => {
   const sourceText = await readFile("src/app/[locale]/dashboard/projects/[projectId]/actions.ts", "utf8");
-  assert.match(sourceText, /if\s*\(role\s*===\s*["']primary["']\)/);
+  assert.match(sourceText, /if\s*\(asset\.product_role\s*===\s*["']primary["']\)/);
   assert.match(sourceText, /triggerProductAnalysisAfterRegistration/);
 });
 test("supporting product views do not independently invoke Product Understanding", async () => {
   const sourceText = await readFile("src/app/[locale]/dashboard/projects/[projectId]/actions.ts", "utf8");
-  const guard = sourceText.indexOf('if (role === "primary")');
+  const guard = sourceText.indexOf('if (asset.product_role === "primary")');
   const analyzer = sourceText.indexOf("triggerProductAnalysisAfterRegistration", guard);
   assert.ok(guard >= 0 && analyzer > guard);
   assert.match(sourceText.slice(guard, sourceText.indexOf("\n    }", guard)), /analyzeProductAsset/);
@@ -173,7 +173,7 @@ test("unsupported classification returns without an automatic second provider re
 test("adding supporting images cannot multiply Product Understanding calls", async () => {
   const sourceText = await readFile("src/app/[locale]/dashboard/projects/[projectId]/actions.ts", "utf8");
   assert.equal((sourceText.match(/triggerProductAnalysisAfterRegistration\(/g) ?? []).length, 1);
-  assert.match(sourceText, /role === "primary"/);
+  assert.match(sourceText, /asset\.product_role === "primary"/);
 });
 
 test("analysis schema and cache identity use V3", () => {
