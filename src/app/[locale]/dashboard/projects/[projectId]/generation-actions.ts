@@ -1242,6 +1242,7 @@ export async function runQueuedImageGeneration(
       imageCount: generationImages.length,
     });
     safeGenerationEvent("provider", "request_start", { generationId: queuedGeneration.id, provider: queuedGeneration.provider, model: queuedGeneration.model });
+    executionCounts.imageGenerationCalls += 1;
     const result = await performance.measure("provider_initial", () => getImageGenerationProvider(queuedGeneration.provider).generate({
       generationId: queuedGeneration.id,
       projectId: project.id,
@@ -1255,7 +1256,6 @@ export async function runQueuedImageGeneration(
       ...(usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
     }));
     console.info("[generation] output_format_resolved", { requestedAspectRatio: aspectRatio, providerWidth: outputCanvas.width, providerHeight: outputCanvas.height, exactRatio: outputCanvas.width * Number(aspectRatio.split(":")[1]) === outputCanvas.height * Number(aspectRatio.split(":")[0]) });
-    executionCounts.imageGenerationCalls += 1;
     providerDiagnosticContext = null;
 
     let finalImageData = result.imageData;
@@ -1437,6 +1437,8 @@ export async function runQueuedImageGeneration(
         attempt: 1,
       });
       try {
+        executionCounts.repairCalls = 1;
+        executionCounts.imageGenerationCalls += 1;
         const repairResult = await performance.measure("provider_repair", () => getImageGenerationProvider(queuedGeneration.provider).generate({
           generationId: queuedGeneration.id,
           projectId: project.id,
@@ -1453,8 +1455,6 @@ export async function runQueuedImageGeneration(
           aspectRatio,
           ...(jewelryReferenceRepair ? { operation: "image_edit" as const } : usesReferenceReplacement ? { operation: "reference_product_replacement" as const } : {}),
         }));
-        executionCounts.imageGenerationCalls += 1;
-        executionCounts.repairCalls = 1;
         let repairImageData = repairResult.imageData;
         let repairMimeType = repairResult.mimeType;
         if (pixelLockInput && effectivePreservationMode === "pixel_lock") {
@@ -1895,17 +1895,42 @@ export async function runQueuedImageGeneration(
     const failureDiagnostics = providerDiagnosticContext
       ? getSafeProviderErrorDiagnostics(error, { generationId, ...providerDiagnosticContext })
       : null;
-    const { data: failedGeneration, error: failurePersistenceError } = await admin.from("generations").update({
-      status: "failed",
-      error_message: terminalFailureReason ?? failureCategory,
-      ...(providerDiagnosticContext ? { provider_metadata: mergeProviderFailureMetadata(persistedProviderMetadata, {
+    const failureStageDurations = performance?.finish();
+    const failureCostTelemetry = createCostTelemetry({
+      productUnderstandingCalls: executionCounts.productAnalysisCalls,
+      referenceAnalysisCalls: executionCounts.referenceAnalysisCalls,
+      imageGenerationCalls: executionCounts.imageGenerationCalls - executionCounts.repairCalls,
+      validationCalls: executionCounts.visionValidationCalls,
+      repairGenerationCalls: executionCounts.repairCalls,
+      promptEnhancementCalls: executionCounts.promptEnhancementCalls,
+      artworkAnalysisCalls: executionCounts.artworkAnalysisCalls,
+      segmentationCalls: executionCounts.segmentationCalls,
+      projectionAnalysisCalls: executionCounts.projectionAnalysisCalls,
+      inputProductImageCount: 0,
+      inputReferenceCount: 0,
+      repairAttempted: executionCounts.repairCalls > 0,
+      finalOutcome: "failed",
+      validationOutcome: "not_completed",
+    });
+    const failureMetadata = providerDiagnosticContext
+      ? mergeProviderFailureMetadata(persistedProviderMetadata, {
         category: failureCategory,
         code: failureDiagnostics?.code ?? null,
         status: failureDiagnostics?.status ?? null,
         providerDecision: providerModerationBlocked ? "moderation_blocked" : "provider_error",
         klayClassification: providerDiagnosticContext.klayClassification,
         providerFalsePositiveCandidate: providerModerationBlocked && providerDiagnosticContext.klayClassification === "adult_editorial_fashion",
-      }) } : {}),
+      })
+      : { ...(persistedProviderMetadata ?? {}) };
+    const { data: failedGeneration, error: failurePersistenceError } = await admin.from("generations").update({
+      status: "failed",
+      error_message: terminalFailureReason ?? failureCategory,
+      provider_metadata: {
+        ...failureMetadata,
+        execution: { version: GENERATION_EXECUTION_POLICY_VERSION, imageGenerationCalls: executionCounts.imageGenerationCalls, visionValidationCalls: executionCounts.visionValidationCalls, promptEnhancementCalls: executionCounts.promptEnhancementCalls, productAnalysisCalls: executionCounts.productAnalysisCalls, referenceAnalysisCalls: executionCounts.referenceAnalysisCalls, artworkAnalysisCalls: executionCounts.artworkAnalysisCalls, segmentationCalls: executionCounts.segmentationCalls, projectionAnalysisCalls: executionCounts.projectionAnalysisCalls, repairCalls: executionCounts.repairCalls, ...(failureStageDurations ? { totalDurationMs: failureStageDurations.total, stages: failureStageDurations } : {}) },
+        costTelemetry: failureCostTelemetry,
+        providerStatus: "failed",
+      },
       processing_completed_at: completedAt.toISOString(),
       ...(processingStartedAt ? { processing_duration_ms: completedAt.getTime() - processingStartedAt.getTime() } : {}),
     }).eq("id", generationId).in("status", ["queued", "processing"]).select("id, project_id").maybeSingle();

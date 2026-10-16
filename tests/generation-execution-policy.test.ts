@@ -94,6 +94,7 @@ test("pricing estimation requires configured model pricing and actual usage", ()
   process.env.GENERATION_MODEL_PRICING = JSON.stringify({ test: { inputPerMillionUsd: 2, outputPerMillionUsd: 4 } });
   assert.equal(estimateGenerationCostUsd("test", { inputTokens: 1000, outputTokens: 500 }), 0.004);
   assert.equal(estimateGenerationCostUsd("missing", { inputTokens: 1000 }), null);
+  assert.equal(estimateGenerationCostUsd("test", { inputTokens: 1000 }), null);
   if (old === undefined) delete process.env.GENERATION_MODEL_PRICING;
   else process.env.GENERATION_MODEL_PRICING = old;
 });

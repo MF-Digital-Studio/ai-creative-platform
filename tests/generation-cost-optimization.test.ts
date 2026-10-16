@@ -25,6 +25,23 @@ test("cost telemetry produces deterministic external call counts", () => {
   }
 });
 
+test("repair attempts are counted once as repair generation, including failed provider attempts", () => {
+  const telemetry = createCostTelemetry({ productUnderstandingCalls: 0, referenceAnalysisCalls: 0, imageGenerationCalls: 1, validationCalls: 1, repairGenerationCalls: 1, inputProductImageCount: 1, inputReferenceCount: 0, repairAttempted: true, finalOutcome: "failed", validationOutcome: "not_completed" });
+  assert.equal(telemetry.imageGenerationCalls, 1);
+  assert.equal(telemetry.repairGenerationCalls, 1);
+  assert.equal(telemetry.totalExternalAICalls, 3);
+});
+
+test("failed generation persistence retains attempted-call telemetry and measured stages", async () => {
+  const source = await readFile("src/app/[locale]/dashboard/projects/[projectId]/generation-actions.ts", "utf8");
+  const providerAttempt = source.indexOf("executionCounts.imageGenerationCalls += 1;\n    const result = await performance.measure(\"provider_initial\"");
+  const failureTelemetry = source.indexOf("const failureCostTelemetry = createCostTelemetry");
+  assert.ok(providerAttempt >= 0);
+  assert.ok(failureTelemetry > providerAttempt);
+  assert.match(source.slice(failureTelemetry), /finalOutcome: "failed"/);
+  assert.match(source.slice(failureTelemetry), /stages: failureStageDurations/);
+});
+
 test("reference cache requires the same ordered assets, model, and version", () => {
   const cache = { version: 1, model: "vision-mini", orderedAssetIds: ["reference-1", "reference-2"], styleBrief, analyzedAt: "2026-10-09T00:00:00.000Z" };
   assert.ok(readReferenceAnalysisCache(cache, { version: 1, model: "vision-mini", orderedAssetIds: ["reference-1", "reference-2"] }));

@@ -14,6 +14,9 @@ export function estimateGenerationCostUsd(model: string, usage: GenerationUsage)
   let hasUsage = false;
   let cost = 0;
   for (const [tokens, rate] of pairs) {
+    // A configured rate without its matching provider usage is an incomplete
+    // invoice, not an exact partial total.
+    if (rate !== undefined && tokens === undefined) return null;
     if (tokens === undefined || rate === undefined) continue;
     if (!Number.isFinite(tokens) || tokens < 0) return null;
     hasUsage = true;
