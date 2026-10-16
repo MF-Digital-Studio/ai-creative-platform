@@ -47,3 +47,67 @@ test("dashboard home keeps the creation workflow while adding editorial discover
     assert.ok(messages.Dashboard.overview.openProjects);
   }
 });
+
+test("creative composer preserves its guarded production sequence", () => {
+  const composer = read("src/components/dashboard/creative-composer.tsx");
+
+  assert.match(
+    composer,
+    /const steps: readonly FlowStep\[\] = \[\s*"type",\s*"name",\s*"product",\s*"format",\s*"direction",\s*"reference",\s*"details",\s*"review",\s*\]/,
+  );
+  assert.match(composer, /step === "name" && !projectName\.trim\(\)/);
+  assert.match(composer, /step === "product" && !products\.length/);
+  assert.match(
+    composer,
+    /step === "direction" && !selectedPreset && !direction\.trim\(\)/,
+  );
+  assert.match(composer, /locked\.current/);
+  assert.match(
+    composer,
+    /createWorkspaceProject[\s\S]*registerProductAsset[\s\S]*registerReferenceAsset[\s\S]*updateCreativeDirection[\s\S]*createQueuedImageGeneration/,
+  );
+  assert.match(composer, /registration\.status === "invalid_image"/);
+});
+
+test("creative composer exposes input authority and accessible selection states", () => {
+  const composer = read("src/components/dashboard/creative-composer.tsx");
+
+  assert.match(composer, /flow\.productAuthority/);
+  assert.match(composer, /flow\.referenceAuthority/);
+  assert.match(composer, /role="radiogroup"/);
+  assert.match(composer, /role="radio"/);
+  assert.match(composer, /aria-checked=/);
+  assert.match(composer, /aria-busy="true"/);
+  assert.match(composer, /disabled=\{!userId\}/);
+});
+
+test("creative composer owns preview URLs until removal or unmount", () => {
+  const composer = read("src/components/dashboard/creative-composer.tsx");
+
+  assert.match(composer, /const productPreviews = useRef<FilePreview\[\]>\(\[\]\)/);
+  assert.match(composer, /const referencePreviews = useRef<FilePreview\[\]>\(\[\]\)/);
+  assert.match(
+    composer,
+    /useEffect\(\s*\(\) => \(\) => \{[\s\S]*productPreviews\.current\.forEach[\s\S]*referencePreviews\.current\.forEach[\s\S]*\},\s*\[\],\s*\)/,
+  );
+  assert.match(composer, /function removeProduct[\s\S]*URL\.revokeObjectURL/);
+  assert.match(composer, /function removeReference[\s\S]*URL\.revokeObjectURL/);
+  assert.match(composer, /MAX_PROJECT_REFERENCE_IMAGES/);
+});
+
+test("creative composer production copy is complete in both locales", () => {
+  for (const locale of ["tr", "en"]) {
+    const messages = JSON.parse(read(`src/messages/${locale}.json`)) as {
+      Dashboard: { composer: { flow: Record<string, string> } };
+    };
+    const flow = messages.Dashboard.composer.flow;
+
+    assert.match(flow.stepLabel, /\{current\}/);
+    assert.match(flow.stepLabel, /\{total\}/);
+    assert.ok(flow.productAuthority);
+    assert.ok(flow.referenceAuthority);
+    assert.ok(flow.presentationLabel);
+    assert.ok(flow.reviewDescription);
+    assert.ok(flow.generatingDescription);
+  }
+});
