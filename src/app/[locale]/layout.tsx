@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,11 +10,21 @@ import { ThemeProviderBoundary } from "@/components/theme/theme-provider-boundar
 
 import "../globals.css";
 
-const nunito = Nunito({
+const googleSans = localFont({
+  src: [
+    {
+      path: "../../../public/Google_Sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf",
+      weight: "400 700",
+      style: "normal",
+    },
+    {
+      path: "../../../public/Google_Sans/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf",
+      weight: "400 700",
+      style: "italic",
+    },
+  ],
   variable: "--font-sans",
   display: "swap",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
   preload: true,
 });
 
@@ -74,7 +84,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} data-theme="light" suppressHydrationWarning>
       <head><ThemeInitScript /></head>
-      <body className={nunito.variable}>
+      <body className={googleSans.variable}>
         <ThemeProviderBoundary><NextIntlClientProvider>{children}</NextIntlClientProvider></ThemeProviderBoundary>
       </body>
     </html>
