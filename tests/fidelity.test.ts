@@ -33,7 +33,11 @@ import {
 } from "../src/lib/creative-presets/creative-preset-context";
 import { getCreativePreset } from "../src/lib/creative-presets/creative-presets";
 import { resolveGenerationStrategy } from "../src/lib/generation/strategy/generation-strategy";
-import { assertImageInputDecodable, normalizeImageInputForOpenAI } from "../src/lib/generation/providers/normalize-image-input";
+import {
+  assertImageInputDecodable,
+  getImageInputDecodeDiagnostic,
+  normalizeImageInputForOpenAI,
+} from "../src/lib/generation/providers/normalize-image-input";
 import { verticalQualityProfiles } from "../src/lib/generation/quality/vertical-quality-profiles";
 import { supportedVerticals } from "../src/lib/verticals/supported-verticals";
 
@@ -214,8 +218,51 @@ test("upload preflight performs a bounded pixel decode after metadata succeeds",
   const validJpeg = await sharp({ create: { width: 400, height: 400, channels: 3, background: "#123456" } }).jpeg().toBuffer();
   const truncatedJpeg = validJpeg.subarray(0, validJpeg.length - 100);
   assert.equal((await sharp(truncatedJpeg, { failOn: "none" }).metadata()).format, "jpeg");
-  await assert.rejects(() => assertImageInputDecodable(truncatedJpeg), /cannot be decoded/i);
+  await assert.rejects(
+    () => assertImageInputDecodable(truncatedJpeg),
+    (error: unknown) => {
+      assert.match(error instanceof Error ? error.message : "", /cannot be decoded/i);
+      assert.deepEqual(getImageInputDecodeDiagnostic(error), {
+        errorClass: "ImageInputDecodeError",
+        stage: "pixels",
+        reason: "corrupt_or_truncated",
+      });
+      return true;
+    },
+  );
   await assert.doesNotReject(() => assertImageInputDecodable(validJpeg));
+});
+
+test("upload preflight reports bounded pixel-limit rejection without image details", async () => {
+  const oversized = await sharp({ create: { width: 5000, height: 5000, channels: 3, background: "#123456" } }).png().toBuffer();
+
+  await assert.rejects(
+    () => assertImageInputDecodable(oversized),
+    (error: unknown) => {
+      assert.deepEqual(getImageInputDecodeDiagnostic(error), {
+        errorClass: "ImageInputDecodeError",
+        stage: "metadata",
+        reason: "input_pixel_limit",
+      });
+      return true;
+    },
+  );
+});
+
+test("unsupported HEIF bytes are classified without relying on their claimed MIME type", async () => {
+  const unsupportedHeif = Buffer.from("00000018667479706865696300000000686569636d696631", "hex");
+
+  await assert.rejects(
+    () => assertImageInputDecodable(unsupportedHeif),
+    (error: unknown) => {
+      assert.deepEqual(getImageInputDecodeDiagnostic(error), {
+        errorClass: "ImageInputDecodeError",
+        stage: "metadata",
+        reason: "unsupported_codec_or_format",
+      });
+      return true;
+    },
+  );
 });
 
 test("contain placement preserves product ratio and remains inside the canvas", () => {

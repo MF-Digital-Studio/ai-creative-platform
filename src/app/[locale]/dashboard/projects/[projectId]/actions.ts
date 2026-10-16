@@ -20,7 +20,7 @@ import {
 import { getProjectProductAssets } from "@/lib/assets/product-assets";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { assertImageInputDecodable } from "@/lib/generation/providers/normalize-image-input";
+import { assertImageInputDecodable, getImageInputDecodeDiagnostic } from "@/lib/generation/providers/normalize-image-input";
 
 export type RegisterProductAssetResult = {
   status: "error" | "invalid_image" | "limit" | "success";
@@ -123,7 +123,10 @@ export async function registerProductAsset(
     }
     try {
       await assertImageInputDecodable(Buffer.from(await uploadedImage.arrayBuffer()));
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[product-asset] image_decode_rejected", getImageInputDecodeDiagnostic(error));
+      }
       await admin.storage.from("product-assets").remove([objectPath]);
       return { status: "invalid_image" };
     }

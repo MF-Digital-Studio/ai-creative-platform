@@ -2,10 +2,23 @@ import sharp from "sharp";
 
 type ImageInputData = Blob | Buffer;
 
+export type ImageInputDecodeStage = "metadata" | "pixels";
+
+export type ImageInputDecodeReason =
+  | "corrupt_or_truncated"
+  | "input_pixel_limit"
+  | "unsupported_codec_or_format"
+  | "unknown";
+
 export class ImageInputDecodeError extends Error {
-  constructor() {
+  readonly reason: ImageInputDecodeReason;
+  readonly stage: ImageInputDecodeStage;
+
+  constructor(stage: ImageInputDecodeStage, reason: ImageInputDecodeReason) {
     super("The uploaded image cannot be decoded. Please upload a valid JPEG, PNG, or WebP file.");
     this.name = "ImageInputDecodeError";
+    this.stage = stage;
+    this.reason = reason;
   }
 }
 
@@ -17,6 +30,42 @@ export type NormalizedImageInput = {
 const supportedFormats = new Set(["jpeg", "png", "webp"]);
 const maxInputPixels = 24_000_000;
 
+function classifyImageInputDecodeFailure(error: unknown): ImageInputDecodeReason {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (message.includes("pixel limit")) return "input_pixel_limit";
+  if (
+    message.includes("unsupported") ||
+    message.includes("not supported") ||
+    message.includes("invalid input") ||
+    message.includes("unknown image format")
+  ) {
+    return "unsupported_codec_or_format";
+  }
+  if (
+    message.includes("premature end") ||
+    message.includes("corrupt") ||
+    message.includes("bad seek") ||
+    message.includes("truncated")
+  ) {
+    return "corrupt_or_truncated";
+  }
+
+  return "unknown";
+}
+
+export function getImageInputDecodeDiagnostic(error: unknown): {
+  errorClass: string;
+  reason: ImageInputDecodeReason;
+  stage: ImageInputDecodeStage | "unknown";
+} {
+  if (error instanceof ImageInputDecodeError) {
+    return { errorClass: error.name, stage: error.stage, reason: error.reason };
+  }
+
+  return { errorClass: error instanceof Error ? error.name : "unknown", stage: "unknown", reason: "unknown" };
+}
+
 function mimeTypeForFormat(format: "jpeg" | "png" | "webp"): NormalizedImageInput["mimeType"] {
   return format === "jpeg" ? "image/jpeg" : `image/${format}`;
 }
@@ -24,11 +73,11 @@ function mimeTypeForFormat(format: "jpeg" | "png" | "webp"): NormalizedImageInpu
 async function readImageMetadata(source: Buffer) {
   try {
     const metadata = await sharp(source, { failOn: "none", limitInputPixels: maxInputPixels, sequentialRead: true }).metadata();
-    if (!metadata.format) throw new ImageInputDecodeError();
+    if (!metadata.format) throw new ImageInputDecodeError("metadata", "unsupported_codec_or_format");
     return metadata;
   } catch (error) {
     if (error instanceof ImageInputDecodeError) throw error;
-    throw new ImageInputDecodeError();
+    throw new ImageInputDecodeError("metadata", classifyImageInputDecodeFailure(error));
   }
 }
 
@@ -45,8 +94,8 @@ export async function assertImageInputDecodable(data: ImageInputData): Promise<v
       .rotate()
       .raw()
       .toBuffer();
-  } catch {
-    throw new ImageInputDecodeError();
+  } catch (error) {
+    throw new ImageInputDecodeError("pixels", classifyImageInputDecodeFailure(error));
   }
 }
 
@@ -69,7 +118,7 @@ export async function normalizeImageInputForOpenAI(
   try {
     png = await sharp(source, { failOn: "none", limitInputPixels: maxInputPixels, sequentialRead: true }).rotate().png().toBuffer();
   } catch {
-    throw new ImageInputDecodeError();
+    throw new ImageInputDecodeError("pixels", "unknown");
   }
   if (png.length === 0) {
     throw new Error(`Unable to normalize image input (${fallbackMimeType || "unknown"}).`);
