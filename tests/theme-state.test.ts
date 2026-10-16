@@ -38,7 +38,16 @@ test("refresh initialization restores preference before paint", () => {
   const initializer = source("src/components/theme/theme-init-script.tsx");
   assert.match(initializer, /localStorage\.getItem\(k\)/);
   assert.match(initializer, /dataset\.theme=d/);
+  assert.match(initializer, /dangerouslySetInnerHTML/);
+  assert.match(initializer, /themePreferenceSource/);
   assert.match(source("src/app/[locale]/layout.tsx"), /<ThemeInitScript \/>/);
+});
+
+test("dashboard defaults dark while stored light and system preferences remain supported", () => {
+  const css = source("src/app/globals.css");
+  assert.match(css, /\.dashboard-shell \{[\s\S]*?--dashboard-background: #09090b;/);
+  assert.match(css, /data-theme-preference="light"[\s\S]*?--dashboard-background: #f2f1f5;/);
+  assert.match(css, /data-theme-preference-source="stored"/);
 });
 
 test("system mode subscribes to live OS preference changes", () => {
@@ -68,6 +77,8 @@ test("mobile drawer and backdrop adapt to dashboard theme tokens", () => {
 
 test("root theme initialization suppresses the expected hydration attribute mismatch", () => {
   const layout = source("src/app/[locale]/layout.tsx");
-  assert.match(layout, /data-theme="light" suppressHydrationWarning/);
+  assert.match(layout, /data-theme="light"/);
+  assert.match(layout, /data-theme-preference-source="default"/);
+  assert.match(layout, /suppressHydrationWarning/);
   assert.match(source("src/components/theme/theme-init-script.tsx"), /matchMedia\("\(prefers-color-scheme: dark\)"\)/);
 });

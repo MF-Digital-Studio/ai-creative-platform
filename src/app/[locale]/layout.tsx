@@ -82,7 +82,13 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} data-theme="light" suppressHydrationWarning>
+    <html
+      lang={locale}
+      data-theme="light"
+      data-theme-preference="system"
+      data-theme-preference-source="default"
+      suppressHydrationWarning
+    >
       <head><ThemeInitScript /></head>
       <body className={googleSans.variable}>
         <ThemeProviderBoundary><NextIntlClientProvider>{children}</NextIntlClientProvider></ThemeProviderBoundary>

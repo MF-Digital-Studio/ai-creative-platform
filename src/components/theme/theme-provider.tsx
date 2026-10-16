@@ -9,11 +9,15 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const storageKey = "klay-theme-preference";
 const preferenceEvent = "klay-theme-preference-change";
 
-function getPreference(): ThemePreference {
+function getStoredPreference(): ThemePreference | null {
   try {
     const saved = window.localStorage.getItem(storageKey);
-    return isThemePreference(saved) ? saved : "system";
-  } catch { return "system"; }
+    return isThemePreference(saved) ? saved : null;
+  } catch { return null; }
+}
+
+function getPreference(): ThemePreference {
+  return getStoredPreference() ?? "system";
 }
 
 function subscribePreference(onChange: () => void) {
@@ -31,21 +35,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const applyTheme = () => {
-      const selected = getPreference();
-      document.documentElement.dataset.theme = resolveTheme(selected, media.matches);
-      document.documentElement.dataset.themePreference = selected;
+      const stored = getStoredPreference();
+      const selected = stored ?? "system";
+      const root = document.documentElement;
+      root.dataset.theme = resolveTheme(selected, media.matches);
+      root.dataset.themePreference = selected;
+      root.dataset.themePreferenceSource = stored ? "stored" : "default";
     };
     applyTheme();
     media.addEventListener("change", applyTheme);
-    return () => media.removeEventListener("change", applyTheme);
-  }, []);
+    window.addEventListener("storage", applyTheme);
+    return () => {
+      media.removeEventListener("change", applyTheme);
+      window.removeEventListener("storage", applyTheme);
+    };
+  }, [preference]);
 
   const setPreference = useCallback((value: ThemePreference) => {
     try { window.localStorage.setItem(storageKey, value); } catch { /* Keep the in-memory selection. */ }
     window.dispatchEvent(new Event(preferenceEvent));
     const media = window.matchMedia("(prefers-color-scheme: dark)");
-    document.documentElement.dataset.theme = resolveTheme(value, media.matches);
-    document.documentElement.dataset.themePreference = value;
+    const root = document.documentElement;
+    root.dataset.theme = resolveTheme(value, media.matches);
+    root.dataset.themePreference = value;
+    root.dataset.themePreferenceSource = "stored";
   }, []);
   const context = useMemo(() => ({ preference, setPreference }), [preference, setPreference]);
   return <ThemeContext.Provider value={context}>{children}</ThemeContext.Provider>;
