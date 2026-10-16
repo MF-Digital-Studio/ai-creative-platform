@@ -15,6 +15,7 @@ export type NormalizedImageInput = {
 };
 
 const supportedFormats = new Set(["jpeg", "png", "webp"]);
+const maxInputPixels = 24_000_000;
 
 function mimeTypeForFormat(format: "jpeg" | "png" | "webp"): NormalizedImageInput["mimeType"] {
   return format === "jpeg" ? "image/jpeg" : `image/${format}`;
@@ -22,7 +23,7 @@ function mimeTypeForFormat(format: "jpeg" | "png" | "webp"): NormalizedImageInpu
 
 async function readImageMetadata(source: Buffer) {
   try {
-    const metadata = await sharp(source, { failOn: "none" }).metadata();
+    const metadata = await sharp(source, { failOn: "none", limitInputPixels: maxInputPixels, sequentialRead: true }).metadata();
     if (!metadata.format) throw new ImageInputDecodeError();
     return metadata;
   } catch (error) {
@@ -31,10 +32,22 @@ async function readImageMetadata(source: Buffer) {
   }
 }
 
-/** Validates actual image bytes rather than trusting upload MIME metadata. */
+/**
+ * Validates actual image bytes rather than trusting upload MIME metadata.
+ * Raw output forces libvips to decode every source pixel while the input-pixel
+ * cap prevents an upload from allocating an unbounded decoded raster.
+ */
 export async function assertImageInputDecodable(data: ImageInputData): Promise<void> {
   const source = Buffer.isBuffer(data) ? data : Buffer.from(await data.arrayBuffer());
   await readImageMetadata(source);
+  try {
+    await sharp(source, { failOn: "warning", limitInputPixels: maxInputPixels, sequentialRead: true })
+      .rotate()
+      .raw()
+      .toBuffer();
+  } catch {
+    throw new ImageInputDecodeError();
+  }
 }
 
 export async function normalizeImageInputForOpenAI(
@@ -54,7 +67,7 @@ export async function normalizeImageInputForOpenAI(
 
   let png: Buffer;
   try {
-    png = await sharp(source, { failOn: "none" }).rotate().png().toBuffer();
+    png = await sharp(source, { failOn: "none", limitInputPixels: maxInputPixels, sequentialRead: true }).rotate().png().toBuffer();
   } catch {
     throw new ImageInputDecodeError();
   }

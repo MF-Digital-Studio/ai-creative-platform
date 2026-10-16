@@ -33,7 +33,7 @@ import {
 } from "../src/lib/creative-presets/creative-preset-context";
 import { getCreativePreset } from "../src/lib/creative-presets/creative-presets";
 import { resolveGenerationStrategy } from "../src/lib/generation/strategy/generation-strategy";
-import { normalizeImageInputForOpenAI } from "../src/lib/generation/providers/normalize-image-input";
+import { assertImageInputDecodable, normalizeImageInputForOpenAI } from "../src/lib/generation/providers/normalize-image-input";
 import { verticalQualityProfiles } from "../src/lib/generation/quality/vertical-quality-profiles";
 import { supportedVerticals } from "../src/lib/verticals/supported-verticals";
 
@@ -208,6 +208,14 @@ test("OpenAI image input normalization converts disguised HEIF data to PNG", asy
 test("unsupported or corrupt image bytes fail with a clear decode error", async () => {
   const unsupportedHeif = Buffer.from("00000018667479706865696300000000686569636d696631", "hex");
   await assert.rejects(() => normalizeImageInputForOpenAI(unsupportedHeif, "image/png"), /cannot be decoded/i);
+});
+
+test("upload preflight performs a bounded pixel decode after metadata succeeds", async () => {
+  const validJpeg = await sharp({ create: { width: 400, height: 400, channels: 3, background: "#123456" } }).jpeg().toBuffer();
+  const truncatedJpeg = validJpeg.subarray(0, validJpeg.length - 100);
+  assert.equal((await sharp(truncatedJpeg, { failOn: "none" }).metadata()).format, "jpeg");
+  await assert.rejects(() => assertImageInputDecodable(truncatedJpeg), /cannot be decoded/i);
+  await assert.doesNotReject(() => assertImageInputDecodable(validJpeg));
 });
 
 test("contain placement preserves product ratio and remains inside the canvas", () => {
