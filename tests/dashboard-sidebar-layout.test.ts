@@ -28,16 +28,16 @@ test("dashboard topbar greets the signed-in user in both locales", () => {
   }
 });
 
-test("dashboard home keeps the creation workflow while adding editorial discovery", () => {
+test("dashboard home keeps the composer before preset discovery", () => {
   const page = read("src/app/[locale]/dashboard/page.tsx");
   const composer = read("src/components/dashboard/creative-composer.tsx");
   const hero = read("src/components/dashboard/dashboard-home-hero.tsx");
 
   assert.match(page, /DashboardHomeHero[\s\S]*CreativeComposer[\s\S]*TemplateRail[\s\S]*RecentGenerations[\s\S]*WorkspaceOverview/);
-  assert.match(hero, /next\/image/);
-  assert.match(hero, /href="#composer"/);
+  assert.doesNotMatch(hero, /next\/image/);
+  assert.match(hero, /dashboard-home-hero-copy/);
   assert.match(composer, /DASHBOARD_PRESET_EVENT/);
-  assert.match(composer, /current === "type" \? "name" : current/);
+  assert.match(composer, /creation-flow/);
 
   for (const locale of ["tr", "en"]) {
     const messages = JSON.parse(read(`src/messages/${locale}.json`)) as { Dashboard: { home: Record<string, string>; generations: Record<string, string>; overview: Record<string, string> } };
@@ -48,19 +48,28 @@ test("dashboard home keeps the creation workflow while adding editorial discover
   }
 });
 
-test("creative composer preserves its guarded production sequence", () => {
+test("creative composer presents exactly one step from the guided sequence", () => {
   const composer = read("src/components/dashboard/creative-composer.tsx");
 
   assert.match(
     composer,
     /const steps: readonly FlowStep\[\] = \[\s*"type",\s*"name",\s*"product",\s*"format",\s*"direction",\s*"reference",\s*"details",\s*"review",\s*\]/,
   );
+  for (const step of ["type", "name", "product", "format", "direction", "reference", "details", "review"]) {
+    assert.match(composer, new RegExp(`\\{step === "${step}" \\? \\(`));
+  }
+});
+
+test("creative composer preserves guarded navigation and submission", () => {
+  const composer = read("src/components/dashboard/creative-composer.tsx");
+
   assert.match(composer, /step === "name" && !projectName\.trim\(\)/);
   assert.match(composer, /step === "product" && !products\.length/);
-  assert.match(
-    composer,
-    /step === "direction" && !selectedPreset && !direction\.trim\(\)/,
-  );
+  assert.match(composer, /step === "direction" && !selectedPreset && !direction\.trim\(\)/);
+  assert.match(composer, /const furthestReachable =[\s\S]*!projectName\.trim\(\)[\s\S]*!products\.length[\s\S]*!selectedPreset && !direction\.trim\(\)/);
+  assert.match(composer, /disabled=\{!enabled\}/);
+  assert.match(composer, /if \(index > 0\) setStep\(steps\[index - 1\]!\)/);
+  assert.match(composer, /<Button onClick=\{proceed\}>/);
   assert.match(composer, /locked\.current/);
   assert.match(
     composer,
