@@ -1,0 +1,388 @@
+.frame {
+  --dashboard-rail-width: 15rem;
+}
+
+.frame[data-collapsed] {
+  --dashboard-rail-width: 4.25rem;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  width: var(--dashboard-rail-width);
+  min-height: 100svh;
+  flex-direction: column;
+  border-right: 1px solid var(--dashboard-border);
+  background: var(--dashboard-sidebar);
+  padding: 0.75rem;
+  color: var(--dashboard-foreground);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}
+
+.brand {
+  display: flex;
+  min-width: 0;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: var(--radius-sm);
+  padding: 0 0.5rem;
+  color: var(--dashboard-foreground);
+  text-decoration: none;
+}
+
+.brandMark {
+  position: relative;
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 1.75rem;
+  place-items: center;
+  border: 1px solid var(--dashboard-border-strong);
+  border-radius: calc(var(--radius-sm) - 0.125rem);
+  background: var(--dashboard-surface);
+  font-size: 0.75rem;
+  font-weight: 780;
+  letter-spacing: -0.06em;
+}
+
+.brandMark::after {
+  position: absolute;
+  right: -0.1875rem;
+  bottom: -0.1875rem;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border: 2px solid var(--dashboard-sidebar);
+  border-radius: 50%;
+  background: var(--dashboard-accent);
+  content: "";
+}
+
+.brandName {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toggle {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--dashboard-muted-soft);
+  cursor: pointer;
+  transition: background-color var(--transition-fast) ease, border-color var(--transition-fast) ease, color var(--transition-fast) ease;
+}
+
+.toggle:hover {
+  border-color: var(--dashboard-border);
+  background: var(--dashboard-surface-hover);
+  color: var(--dashboard-foreground);
+}
+
+.toggle svg,
+.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.primaryAction {
+  position: relative;
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--dashboard-accent) 30%, var(--dashboard-border));
+  border-radius: var(--radius-sm);
+  background: var(--dashboard-accent-surface);
+  padding: 0 0.75rem;
+  color: var(--dashboard-foreground);
+  font-size: 0.8125rem;
+  font-weight: 660;
+  text-decoration: none;
+  transition: background-color var(--transition-fast) ease, border-color var(--transition-fast) ease, color var(--transition-fast) ease;
+}
+
+.primaryAction:hover {
+  border-color: color-mix(in srgb, var(--dashboard-accent) 55%, var(--dashboard-border));
+  background: color-mix(in srgb, var(--dashboard-accent) 20%, var(--dashboard-sidebar));
+}
+
+.primaryAction .icon {
+  color: var(--dashboard-accent);
+}
+
+.navSection {
+  margin-top: 2rem;
+}
+
+.sectionLabel {
+  display: block;
+  padding: 0 0.625rem 0.625rem;
+  color: var(--dashboard-muted-soft);
+  font-size: 0.625rem;
+  font-weight: 680;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.navItem,
+.utilityItem {
+  position: relative;
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0 0.625rem;
+  color: var(--dashboard-muted);
+  font-size: 0.8125rem;
+  font-weight: 580;
+  text-decoration: none;
+  transition: background-color var(--transition-fast) ease, color var(--transition-fast) ease;
+}
+
+.navItem:hover,
+.utilityItem:hover {
+  background: var(--dashboard-surface-hover);
+  color: var(--dashboard-foreground);
+}
+
+.navItem[data-active="true"] {
+  background: var(--dashboard-accent-surface);
+  color: var(--dashboard-foreground);
+}
+
+.navItem[data-active="true"]::before {
+  position: absolute;
+  left: -0.75rem;
+  width: 0.1875rem;
+  height: 1.25rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--dashboard-accent);
+  content: "";
+}
+
+.navItem[data-active="true"] .icon {
+  color: var(--dashboard-accent);
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1.5rem;
+}
+
+.planSlot {
+  min-width: 0;
+}
+
+.utilityItem {
+  color: var(--dashboard-muted-soft);
+}
+
+.tooltip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.75rem);
+  z-index: 80;
+  width: max-content;
+  max-width: 12rem;
+  border: 1px solid var(--dashboard-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--dashboard-surface);
+  padding: 0.4375rem 0.625rem;
+  color: var(--dashboard-foreground);
+  font-size: 0.75rem;
+  font-weight: 560;
+  line-height: 1.25;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-0.25rem, -50%);
+  transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
+}
+
+.frame[data-collapsed] .sidebar {
+  align-items: center;
+  padding-inline: 0.625rem;
+}
+
+.frame[data-collapsed] .header {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 0.375rem;
+}
+
+.frame[data-collapsed] .brand {
+  width: 2.5rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.frame[data-collapsed] .brandMark {
+  width: 2rem;
+  height: 2rem;
+  flex-basis: 2rem;
+}
+
+.frame[data-collapsed] .brandName,
+.frame[data-collapsed] .sectionLabel,
+.frame[data-collapsed] .label {
+  display: none;
+}
+
+.frame[data-collapsed] .body,
+.frame[data-collapsed] .navSection,
+.frame[data-collapsed] .nav,
+.frame[data-collapsed] .footer,
+.frame[data-collapsed] .planSlot {
+  width: 100%;
+}
+
+.frame[data-collapsed] .primaryAction {
+  width: 2.75rem;
+  min-height: 2.75rem;
+  justify-content: center;
+  margin-inline: auto;
+  padding: 0;
+}
+
+.frame[data-collapsed] .navSection {
+  margin-top: 1.5rem;
+}
+
+.frame[data-collapsed] .nav {
+  justify-items: center;
+}
+
+.frame[data-collapsed] :is(.navItem, .utilityItem) {
+  width: 2.75rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.frame[data-collapsed] .navItem[data-active="true"]::before {
+  left: -0.75rem;
+}
+
+.frame[data-collapsed] :is(.primaryAction, .navItem, .utilityItem):is(:hover, :focus-visible) .tooltip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+.sidebar :global(.dashboard-plan-card) {
+  margin: 0;
+  border-color: var(--dashboard-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--dashboard-surface) 72%, transparent);
+  box-shadow: none;
+}
+
+.sidebar :global(.dashboard-sidebar-account-menu) {
+  display: block;
+  width: 100%;
+  border-top: 1px solid var(--dashboard-border);
+  padding-top: 0.5rem;
+}
+
+.sidebar :global(.dashboard-sidebar-account) {
+  min-height: 2.75rem;
+}
+
+.frame[data-collapsed] .sidebar :global(.dashboard-plan-compact) {
+  margin-inline: auto;
+}
+
+.frame[data-collapsed] .sidebar :global(.dashboard-sidebar-account) {
+  width: 2.75rem;
+  justify-content: center;
+  margin-inline: auto;
+  padding: 0;
+}
+
+.frame[data-collapsed] .sidebar :global(.dashboard-sidebar-account-copy),
+.frame[data-collapsed] .sidebar :global(.dashboard-sidebar-chevron) {
+  display: none;
+}
+
+.frame[data-collapsed] .sidebar :global(.dashboard-sidebar-account-actions) {
+  right: auto;
+  bottom: 0;
+  left: calc(100% + 0.75rem);
+  width: 10rem;
+}
+
+@media (max-width: 767px) {
+  .frame,
+  .frame[data-collapsed] {
+    --dashboard-rail-width: 0rem;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}
+
+@media (max-height: 680px) and (min-width: 768px) {
+  .navSection {
+    margin-top: 1rem;
+  }
+
+  .footer {
+    padding-top: 0.75rem;
+  }
+
+  .sidebar :global(.dashboard-plan-card) {
+    gap: 0.375rem;
+    padding: 0.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle,
+  .primaryAction,
+  .navItem,
+  .utilityItem,
+  .tooltip {
+    transition: none;
+  }
+}

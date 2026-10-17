@@ -3,12 +3,18 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
+import { resolveDashboardSidebarCollapsed } from "../src/components/dashboard/dashboard-sidebar-state";
+import {
+  dashboardPrimaryNavigation,
+  isDashboardNavigationItemActive,
+} from "../src/data/dashboard-navigation";
+
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), "utf8");
 
 test("plan card sits in the desktop sidebar footer above the website link", () => {
   const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
-  assert.match(sidebar, /dashboard-sidebar-spacer[\s\S]*dashboard-sidebar-footer[\s\S]*dashboard-sidebar-plan-slot[\s\S]*dashboard-site-link/);
+  assert.match(sidebar, /<footer className=\{styles\.footer\}>[\s\S]*<DashboardPlanCard[\s\S]*returnToWebsite[\s\S]*<DashboardAccountMenu/);
 });
 
 test("plan card follows the mobile spacer inside the drawer footer", () => {
@@ -17,20 +23,44 @@ test("plan card follows the mobile spacer inside the drawer footer", () => {
 });
 
 test("sidebar defaults respect explicit preferences before the tablet fallback", () => {
-  const frame = read("src/components/dashboard/dashboard-frame.tsx");
-  const styles = read("src/app/globals.css");
-
-  assert.match(frame, /if \(saved === "true"\) return true;[\s\S]*if \(saved === "false"\) return false;[\s\S]*matchMedia/);
-  assert.match(styles, /--dashboard-rail-width: 13\.5rem;/);
-  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1199px\) \{\s*\.dashboard-shell\[data-collapsed\]/);
-  assert.doesNotMatch(styles, /\.dashboard-shell,\s*\.dashboard-shell\[data-collapsed\] \{ --dashboard-rail-width: 4\.25rem; \}/);
+  assert.equal(resolveDashboardSidebarCollapsed(null, false), false);
+  assert.equal(resolveDashboardSidebarCollapsed(null, true), true);
+  assert.equal(resolveDashboardSidebarCollapsed("true", false), true);
+  assert.equal(resolveDashboardSidebarCollapsed("false", true), false);
 });
 
-test("sidebar marks the Create hash destination active", () => {
-  const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
+test("sidebar resolves Home, Create and Projects active destinations", () => {
+  const home = dashboardPrimaryNavigation.find((item) => item.key === "home")!;
+  const create = dashboardPrimaryNavigation.find((item) => item.key === "create")!;
+  const projects = dashboardPrimaryNavigation.find((item) => item.key === "projects")!;
 
-  assert.match(sidebar, /useSyncExternalStore\(subscribeToHash, getHash/);
-  assert.match(sidebar, /item\.key === "create"[\s\S]*hash === "#composer"/);
+  assert.equal(isDashboardNavigationItemActive(home, "/dashboard", ""), true);
+  assert.equal(isDashboardNavigationItemActive(home, "/dashboard", "#composer"), false);
+  assert.equal(isDashboardNavigationItemActive(create, "/dashboard", "#composer"), true);
+  assert.equal(isDashboardNavigationItemActive(projects, "/dashboard/projects/example", ""), true);
+});
+
+test("sidebar uses scoped semantic theme styles and keeps compact access affordances", () => {
+  const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
+  const styles = read("src/components/dashboard/dashboard-sidebar.module.css");
+
+  assert.match(styles, /--dashboard-rail-width: 15rem/);
+  assert.match(styles, /\.frame\[data-collapsed\][\s\S]*--dashboard-rail-width: 4\.25rem/);
+  assert.match(styles, /var\(--dashboard-sidebar\)/);
+  assert.match(styles, /var\(--dashboard-accent-surface\)/);
+  assert.doesNotMatch(styles, /#[0-9a-f]{3,8}/i);
+  assert.match(sidebar, /role="tooltip"/);
+  assert.match(sidebar, /DashboardPlanCard collapsed=\{collapsed\}/);
+  assert.match(sidebar, /DashboardAccountMenu displayName=\{displayName\} collapsed=\{collapsed\}/);
+});
+
+test("mobile drawer retains dismissal, focus trap and route-change handling", () => {
+  const mobileNav = read("src/components/dashboard/dashboard-mobile-nav.tsx");
+
+  assert.match(mobileNav, /event\.key === "Escape"/);
+  assert.match(mobileNav, /event\.key !== "Tab"/);
+  assert.match(mobileNav, /previousLocationRef\.current !== locationKey/);
+  assert.match(mobileNav, /dashboard-drawer-backdrop[\s\S]*closeDrawer\(true\)/);
 });
 
 test("dashboard topbar greets the signed-in user in both locales", () => {

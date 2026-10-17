@@ -15,3 +15,14 @@ export const dashboardPrimaryNavigation: DashboardNavigationItem[] = [
 export const dashboardFooterNavigation: DashboardNavigationItem[] = [
   { key: "account", icon: "account", href: "/dashboard/account" },
 ];
+
+export function isDashboardNavigationItemActive(
+  item: DashboardNavigationItem,
+  pathname: string,
+  hash: string,
+) {
+  if (item.key === "home") return pathname === "/dashboard" && hash !== "#composer";
+  if (item.key === "create") return pathname === "/dashboard" && hash === "#composer";
+  if (item.key === "projects") return pathname.startsWith("/dashboard/projects");
+  return pathname === item.href;
+}

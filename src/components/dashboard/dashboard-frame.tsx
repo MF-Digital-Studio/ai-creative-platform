@@ -2,6 +2,8 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { resolveDashboardSidebarCollapsed } from "@/components/dashboard/dashboard-sidebar-state";
+import styles from "@/components/dashboard/dashboard-sidebar.module.css";
 
 const storageKey = "klay-dashboard-sidebar-collapsed";
 const sidebarChangeEvent = "klay-dashboard-sidebar-change";
@@ -20,10 +22,8 @@ function subscribe(onChange: () => void) {
 
 function getCollapsed() {
   const saved = window.localStorage.getItem(storageKey);
-  if (saved === "true") return true;
-  if (saved === "false") return false;
-
-  return window.matchMedia("(min-width: 768px) and (max-width: 1199px)").matches;
+  const tabletViewport = window.matchMedia("(min-width: 768px) and (max-width: 1199px)").matches;
+  return resolveDashboardSidebarCollapsed(saved, tabletViewport);
 }
 
 export function DashboardFrame({ children, topbar, displayName }: { children: React.ReactNode; topbar: React.ReactNode; displayName?: string | null }) {
@@ -49,7 +49,7 @@ export function DashboardFrame({ children, topbar, displayName }: { children: Re
     window.dispatchEvent(new Event(sidebarChangeEvent));
   }
 
-  return <div className="dashboard-shell" data-collapsed={collapsed || undefined}>
+  return <div className={`dashboard-shell ${styles.frame}`} data-collapsed={collapsed || undefined}>
     <DashboardSidebar displayName={displayName} collapsed={collapsed} onToggle={toggleSidebar} />
     <div className="dashboard-workspace-shell">{topbar}{children}</div>
   </div>;

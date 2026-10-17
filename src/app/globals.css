@@ -5088,15 +5088,6 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-shell :is(.project-direction-textarea, .projects-toolbar-search, .projects-toolbar-select):focus-within { border-color: var(--dashboard-foreground); }
 .dashboard-shell :is(.creative-product-upload, .creative-reference-add, .project-product-picker, .project-direction-textarea, .projects-toolbar-search, .projects-toolbar-select):focus-visible { outline-color: var(--dashboard-foreground); }
 @media (min-width: 768px) and (max-width: 1199px) {
-  .dashboard-shell, .dashboard-shell[data-collapsed] { --dashboard-rail-width: 4.75rem; }
-  .dashboard-sidebar-toggle { visibility: hidden; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-sidebar { padding-inline: 0.75rem; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-sidebar-brand-row { flex-direction: column; min-height: 5rem; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-sidebar :is(.dashboard-brand-full, .dashboard-sidebar-caption, .dashboard-nav-label, .dashboard-sidebar-account-copy, .dashboard-sidebar-chevron) { display: none; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-brand-compact { display: inline; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-brand-mark { width: 2.75rem; justify-content: center; padding: 0; font-size: 1.4rem; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-sidebar-group { margin-top: 1.5rem; }
-  .dashboard-shell:not([data-collapsed]) .dashboard-sidebar :is(.dashboard-nav-item, .dashboard-sidebar-account) { justify-content: center; padding-inline: 0; }
   .dashboard-container, .dashboard-main-inner.dashboard-container, .dashboard-topbar-inner.dashboard-container { max-width: none; }
   .dashboard-settings-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .dashboard-settings-nav { max-width: 38rem; }
@@ -6607,84 +6598,6 @@ html[data-motion="ready"] .signup-form-wrap {
   background: var(--dashboard-background);
 }
 
-.dashboard-sidebar {
-  border-right-color: var(--dashboard-border);
-  background: var(--dashboard-sidebar);
-  padding: 0.875rem 0.625rem 0.625rem;
-}
-
-.dashboard-sidebar-brand-row {
-  min-height: 2.75rem;
-  padding-inline: 0.125rem;
-}
-
-.dashboard-brand-mark {
-  gap: 0.5rem;
-  min-height: 2.375rem;
-  border-radius: calc(var(--radius-sm) - 0.125rem);
-  padding-inline: 0.5rem;
-  color: var(--dashboard-foreground);
-  font-size: 1rem;
-  font-weight: 760;
-  letter-spacing: -0.055em;
-  text-decoration: none;
-}
-
-.dashboard-brand-mark::before {
-  width: 0.4375rem;
-  height: 0.4375rem;
-  flex: none;
-  border-radius: 50%;
-  background: var(--dashboard-accent);
-  content: "";
-}
-
-.dashboard-sidebar-toggle {
-  width: 2rem;
-  height: 2rem;
-  border-color: transparent;
-  color: var(--dashboard-muted-soft);
-}
-
-.dashboard-sidebar-toggle:hover {
-  border-color: var(--dashboard-border);
-  background: var(--dashboard-surface-hover);
-}
-
-.dashboard-sidebar-group { margin-top: 2.25rem; }
-.dashboard-sidebar-caption {
-  padding-inline: 0.625rem;
-  color: var(--dashboard-muted-soft);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-}
-
-.dashboard-sidebar-nav { gap: 0.125rem; }
-.dashboard-nav-item {
-  min-height: 2.5rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding-inline: 0.625rem;
-  color: var(--dashboard-muted);
-  font-size: 0.8125rem;
-  font-weight: 580;
-  transition: background-color var(--transition-fast) ease, color var(--transition-fast) ease, transform var(--transition-fast) ease;
-}
-
-.dashboard-nav-item:hover {
-  background: color-mix(in srgb, var(--dashboard-surface-hover) 82%, transparent);
-  color: var(--dashboard-foreground);
-}
-
-.dashboard-shell .dashboard-nav-item[data-active="true"] {
-  border-color: transparent;
-  background: var(--dashboard-accent-surface);
-  color: var(--dashboard-foreground);
-}
-
-.dashboard-shell .dashboard-nav-item[data-active="true"] .dashboard-nav-icon { color: var(--dashboard-accent); }
-.dashboard-nav-icon { width: 1rem; height: 1rem; }
-
 .dashboard-plan-card {
   gap: 0.625rem;
   border-color: var(--dashboard-border);
@@ -6701,8 +6614,6 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-plan-progress span { background: var(--dashboard-accent); }
 .dashboard-plan-upgrade { color: var(--dashboard-accent); font-size: 0.6875rem; }
 
-.dashboard-site-link { color: var(--dashboard-muted-soft); }
-.dashboard-sidebar-account-menu { display: block; border-top-color: var(--dashboard-border); }
 .dashboard-sidebar-account { min-height: 3rem; color: var(--dashboard-foreground); }
 .dashboard-sidebar-avatar {
   border: 1px solid color-mix(in srgb, var(--dashboard-accent) 24%, var(--dashboard-border));
@@ -6810,26 +6721,6 @@ html[data-motion="ready"] .signup-form-wrap {
   border-color: color-mix(in srgb, var(--dashboard-accent) 22%, var(--dashboard-border));
   background: var(--dashboard-accent-surface);
   color: var(--dashboard-foreground);
-}
-
-.dashboard-shell[data-collapsed] .dashboard-sidebar {
-  padding-inline: 0.625rem;
-}
-
-.dashboard-shell[data-collapsed] .dashboard-sidebar-brand-row {
-  min-height: 4.5rem;
-}
-
-.dashboard-shell[data-collapsed] .dashboard-brand-mark {
-  width: 2.5rem;
-  font-size: 1.125rem;
-}
-
-.dashboard-shell[data-collapsed] .dashboard-brand-mark::before { display: none; }
-.dashboard-shell[data-collapsed] .dashboard-nav-item { width: 2.5rem; min-height: 2.5rem; }
-
-@media (min-width: 768px) and (max-width: 1199px) {
-  .dashboard-shell[data-collapsed] { --dashboard-rail-width: 4.25rem; }
 }
 
 @media (max-width: 767px) {

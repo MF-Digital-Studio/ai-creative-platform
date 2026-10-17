@@ -13,23 +13,26 @@ import {
 import { Link, usePathname } from "@/i18n/navigation";
 import { DashboardPlanCard } from "@/components/dashboard/dashboard-plan-card";
 import { DashboardAccountMenu } from "@/components/dashboard/dashboard-account-menu";
+import { useDashboardNavigationLocation } from "@/hooks/use-dashboard-navigation-location";
 
 export function DashboardMobileNav({ displayName }: { displayName?: string | null }) {
   const t = useTranslations("Dashboard.navigation");
   const drawerId = useId();
   const pathname = usePathname();
+  const { hash, isActive } = useDashboardNavigationLocation();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const previousPathnameRef = useRef(pathname);
+  const locationKey = `${pathname}${hash}`;
+  const previousLocationRef = useRef(locationKey);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (previousPathnameRef.current !== pathname) {
-      previousPathnameRef.current = pathname;
+    if (previousLocationRef.current !== locationKey) {
+      previousLocationRef.current = locationKey;
       setIsOpen(false);
     }
-  }, [pathname]);
+  }, [locationKey]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -171,7 +174,7 @@ export function DashboardMobileNav({ displayName }: { displayName?: string | nul
 
             <nav aria-label={t("primaryLabel")} className="dashboard-drawer-nav">
               <span className="dashboard-drawer-caption">{t("workspaceGroup")}</span>
-              {dashboardPrimaryNavigation.map((item) => renderItem(item, item.key === "home" ? pathname === "/dashboard" : item.key === "projects" ? pathname.startsWith("/dashboard/projects") : false))}
+              {dashboardPrimaryNavigation.map((item) => renderItem(item, isActive(item)))}
             </nav>
             <div className="dashboard-drawer-spacer" />
             <div className="dashboard-drawer-footer">
