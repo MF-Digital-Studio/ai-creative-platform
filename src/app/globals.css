@@ -6561,7 +6561,7 @@ html[data-motion="ready"] .signup-form-wrap {
   --dashboard-status-success: #7fb794;
   --dashboard-status-progress: #a68af7;
   --dashboard-status-error: #e0848e;
-  --dashboard-rail-width: 13.75rem;
+  --dashboard-rail-width: 13.5rem;
   --dashboard-topbar-height: 3.5rem;
   --dashboard-container-width: none;
   --dashboard-content-padding: clamp(1rem, 2.4vw, 2.5rem);
@@ -6702,7 +6702,7 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-plan-upgrade { color: var(--dashboard-accent); font-size: 0.6875rem; }
 
 .dashboard-site-link { color: var(--dashboard-muted-soft); }
-.dashboard-sidebar-account-menu { border-top-color: var(--dashboard-border); }
+.dashboard-sidebar-account-menu { display: block; border-top-color: var(--dashboard-border); }
 .dashboard-sidebar-account { min-height: 3rem; color: var(--dashboard-foreground); }
 .dashboard-sidebar-avatar {
   border: 1px solid color-mix(in srgb, var(--dashboard-accent) 24%, var(--dashboard-border));
@@ -6829,7 +6829,6 @@ html[data-motion="ready"] .signup-form-wrap {
 .dashboard-shell[data-collapsed] .dashboard-nav-item { width: 2.5rem; min-height: 2.5rem; }
 
 @media (min-width: 768px) and (max-width: 1199px) {
-  .dashboard-shell,
   .dashboard-shell[data-collapsed] { --dashboard-rail-width: 4.25rem; }
 }
 

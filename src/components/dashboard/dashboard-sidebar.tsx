@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { DashboardIcon } from "@/components/dashboard/dashboard-icons";
 import { dashboardPrimaryNavigation } from "@/data/dashboard-navigation";
@@ -13,9 +14,19 @@ type DashboardSidebarProps = {
   onToggle: () => void;
 };
 
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
+function getHash() {
+  return window.location.hash;
+}
+
 export function DashboardSidebar({ displayName, collapsed, onToggle }: DashboardSidebarProps) {
   const t = useTranslations("Dashboard.navigation");
   const pathname = usePathname();
+  const hash = useSyncExternalStore(subscribeToHash, getHash, () => "");
 
   return <aside className="dashboard-sidebar" aria-label={t("primaryLabel")}>
     <div className="dashboard-sidebar-brand-row">
@@ -30,7 +41,11 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
       <span className="dashboard-sidebar-caption">{t("workspaceGroup")}</span>
       <nav aria-label={t("primaryLabel")} className="dashboard-sidebar-nav">
         {dashboardPrimaryNavigation.map((item) => {
-          const active = item.key === "home" ? pathname === "/dashboard" : item.key === "projects" ? pathname.startsWith("/dashboard/projects") : false;
+          const active = item.key === "home"
+            ? pathname === "/dashboard" && hash !== "#composer"
+            : item.key === "create"
+              ? pathname === "/dashboard" && hash === "#composer"
+              : pathname.startsWith("/dashboard/projects");
           const label = t(`items.${item.key}`);
           return <Link key={item.key} href={item.href} className="dashboard-nav-item" aria-label={label} aria-current={active ? "page" : undefined} data-active={active || undefined} data-tooltip={collapsed ? label : undefined}>
             <DashboardIcon name={item.icon} className="dashboard-nav-icon" /><span className="dashboard-nav-label">{label}</span>

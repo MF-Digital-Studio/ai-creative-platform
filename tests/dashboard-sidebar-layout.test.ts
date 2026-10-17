@@ -16,6 +16,23 @@ test("plan card follows the mobile spacer inside the drawer footer", () => {
   assert.match(mobileNav, /dashboard-drawer-spacer[\s\S]*dashboard-drawer-footer[\s\S]*dashboard-drawer-plan-slot[\s\S]*dashboard-drawer-nav-secondary/);
 });
 
+test("sidebar defaults respect explicit preferences before the tablet fallback", () => {
+  const frame = read("src/components/dashboard/dashboard-frame.tsx");
+  const styles = read("src/app/globals.css");
+
+  assert.match(frame, /if \(saved === "true"\) return true;[\s\S]*if \(saved === "false"\) return false;[\s\S]*matchMedia/);
+  assert.match(styles, /--dashboard-rail-width: 13\.5rem;/);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1199px\) \{\s*\.dashboard-shell\[data-collapsed\]/);
+  assert.doesNotMatch(styles, /\.dashboard-shell,\s*\.dashboard-shell\[data-collapsed\] \{ --dashboard-rail-width: 4\.25rem; \}/);
+});
+
+test("sidebar marks the Create hash destination active", () => {
+  const sidebar = read("src/components/dashboard/dashboard-sidebar.tsx");
+
+  assert.match(sidebar, /useSyncExternalStore\(subscribeToHash, getHash/);
+  assert.match(sidebar, /item\.key === "create"[\s\S]*hash === "#composer"/);
+});
+
 test("dashboard topbar greets the signed-in user in both locales", () => {
   const topbar = read("src/components/dashboard/dashboard-topbar.tsx");
   assert.match(topbar, /dashboard-topbar-welcome/);

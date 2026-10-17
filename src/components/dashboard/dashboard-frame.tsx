@@ -20,7 +20,10 @@ function subscribe(onChange: () => void) {
 
 function getCollapsed() {
   const saved = window.localStorage.getItem(storageKey);
-  return window.matchMedia("(min-width: 768px) and (max-width: 1199px)").matches || saved === "true";
+  if (saved === "true") return true;
+  if (saved === "false") return false;
+
+  return window.matchMedia("(min-width: 768px) and (max-width: 1199px)").matches;
 }
 
 export function DashboardFrame({ children, topbar, displayName }: { children: React.ReactNode; topbar: React.ReactNode; displayName?: string | null }) {
