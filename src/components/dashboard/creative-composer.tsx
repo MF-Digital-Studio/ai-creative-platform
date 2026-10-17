@@ -520,7 +520,10 @@ export function CreativeComposer({
         {step === "type" ? (
           <>
             <div className="creation-intro-copy">
-              <p className="creation-kicker">KLAY STUDIO</p>
+              <div className="creation-intro-meta">
+                <p className="creation-kicker">KLAY STUDIO</p>
+                <span>{stepEyebrow}</span>
+              </div>
               <h1 id="creation-flow-title">{t("heading")}</h1>
               <p>{t("description")}</p>
             </div>
@@ -530,18 +533,38 @@ export function CreativeComposer({
                 className="creation-type-card is-primary"
                 onClick={() => setStep("name")}
               >
-                <span className="creation-type-icon"><DashboardIcon name="image" /></span>
-                <span className="creation-type-copy">
-                  <strong>{t("outputType.image.title")}</strong>
-                  <span>{t("outputType.image.description")}</span>
+                <span className="creation-type-visual" aria-hidden="true">
+                  <span className="creation-type-frame is-landscape">
+                    <DashboardIcon name="image" />
+                  </span>
+                  <span className="creation-type-frame is-portrait" />
+                  <span className="creation-type-frame is-square" />
                 </span>
-                <span className="creation-type-arrow" aria-hidden="true">↗</span>
+                <span className="creation-type-footer">
+                  <span className="creation-type-icon">
+                    <DashboardIcon name="image" />
+                  </span>
+                  <span className="creation-type-copy">
+                    <strong>{t("outputType.image.title")}</strong>
+                    <span>{t("outputType.image.description")}</span>
+                  </span>
+                  <span className="creation-type-arrow" aria-hidden="true">
+                    <DashboardIcon name="arrow" />
+                  </span>
+                </span>
               </button>
               <button type="button" className="creation-type-card" disabled>
-                <span className="creation-type-icon"><DashboardIcon name="video" /></span>
-                <span className="creation-type-copy">
-                  <strong>{t("outputType.video.title")}</strong>
-                  <span>{t("outputType.video.badge")}</span>
+                <span className="creation-type-status">
+                  {t("outputType.video.badge")}
+                </span>
+                <span className="creation-type-video-mark" aria-hidden="true">
+                  <DashboardIcon name="video" />
+                </span>
+                <span className="creation-type-footer">
+                  <span className="creation-type-copy">
+                    <strong>{t("outputType.video.title")}</strong>
+                    <span>{t("outputType.video.description")}</span>
+                  </span>
                 </span>
               </button>
             </div>
