@@ -14,7 +14,7 @@ export function DashboardIcon({ name, ...props }: DashboardIconProps) {
     stroke: "currentColor",
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
-    strokeWidth: 1.6,
+    strokeWidth: 1.75,
     ...props,
   };
 

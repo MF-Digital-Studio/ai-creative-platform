@@ -22,7 +22,7 @@ export function DashboardSidebar({ displayName, collapsed, onToggle }: Dashboard
       <Link href="/dashboard" className="dashboard-brand-mark" aria-label={t("brand")}>
         <span className="dashboard-brand-compact" aria-hidden="true">K</span><span className="dashboard-brand-full">{t("brand")}</span>
       </Link>
-      <button type="button" className="dashboard-sidebar-toggle" aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")} aria-expanded={!collapsed} onClick={onToggle}>
+      <button type="button" className="dashboard-sidebar-toggle" aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")} aria-expanded={!collapsed} title={collapsed ? t("expandSidebar") : t("collapseSidebar")} onClick={onToggle}>
         <DashboardIcon name={collapsed ? "expand" : "collapse"} />
       </button>
     </div>
