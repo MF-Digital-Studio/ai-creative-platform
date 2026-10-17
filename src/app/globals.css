@@ -6400,6 +6400,11 @@ html[data-motion="ready"] .signup-form-wrap {
 .project-inspector .project-settings-panel { position: static; display: grid; gap: 0; padding: 0 1.25rem; }
 .project-inspector .project-controls-title { padding: 1.25rem 0 1rem; color: var(--dashboard-muted-soft); font-size: 0.625rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .project-inspector .project-control-section { gap: 0.75rem; padding: 1rem 0; }
+.project-inspector .project-product-identity-section { border-top-color: color-mix(in srgb, var(--dashboard-accent) 38%, var(--dashboard-border)); }
+.project-inspector .project-product-identity-section .project-product-role { border-color: color-mix(in srgb, var(--dashboard-accent) 45%, var(--dashboard-border)); background: var(--dashboard-accent-surface); }
+.project-inspector .project-reference-direction-section { border-top-style: dashed; }
+.project-inspector .project-direction-form { background: color-mix(in srgb, var(--dashboard-accent-surface) 50%, transparent); margin-inline: -0.5rem; padding-inline: 0.5rem; }
+.project-inspector .project-generate-form { position: sticky; bottom: 0; z-index: 1; background: var(--dashboard-surface); box-shadow: 0 -0.75rem 1rem var(--dashboard-surface); }
 .project-inspector .project-image-edit { margin: 0 1.25rem; }
 .project-inspector .project-direction-textarea { min-height: 6.5rem; }
 .project-inspector-details { display: grid; gap: 0.75rem; margin: 0 1.25rem; border-top: 1px solid var(--dashboard-border); padding: 1.125rem 0; }

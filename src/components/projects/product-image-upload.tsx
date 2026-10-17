@@ -95,7 +95,7 @@ export function ProductImageUpload({ projectId, userId, initialAssets, registerA
 
   function handleDrop(event: DragEvent<HTMLButtonElement>) { event.preventDefault(); setIsDragging(false); void uploadFiles(Array.from(event.dataTransfer.files)); }
 
-  return <section aria-labelledby="product-image-heading" className="project-control-section">
+  return <section aria-labelledby="product-image-heading" className="project-control-section project-product-identity-section">
     <div><h3 id="product-image-heading" className="text-base font-semibold tracking-[-0.02em] text-[var(--dashboard-foreground)]">{t("heading")}</h3><p className="mt-1 text-sm leading-6 text-[var(--dashboard-muted)]">{t("multiViewDescription")}</p><p className="text-xs leading-5 text-[var(--dashboard-muted)]">{t("multiViewRules")}</p></div>
     <div className="project-product-grid" aria-live="polite" aria-busy={isBusy}>
       {assets.map((asset, index) => <article className="project-product-card" key={asset.id}>

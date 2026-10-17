@@ -53,6 +53,7 @@ export function CreativeDirectionForm({
         <label htmlFor="creative-direction" className="text-sm font-medium text-[var(--dashboard-foreground)]">
           {messages.label}
         </label>
+        <p className="project-direction-description">{messages.description}</p>
         <textarea
           key={creativeDirection ?? "empty"}
           id="creative-direction"

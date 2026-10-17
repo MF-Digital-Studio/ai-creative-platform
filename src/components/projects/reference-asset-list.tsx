@@ -39,7 +39,7 @@ export function ReferenceAssetList({ projectId, userId, initialUrls, registerAss
     finally { setUploading(false); if (inputRef.current) inputRef.current.value = ""; }
   }
 
-  return <section className="project-control-section" aria-labelledby="project-references-heading">
+  return <section className="project-control-section project-reference-direction-section" aria-labelledby="project-references-heading">
     <div className="project-control-heading"><h3 id="project-references-heading">{t("heading")}</h3><span>{urls.length}/{MAX_PROJECT_REFERENCE_IMAGES}</span></div>
     <p>{t("description")}</p>
     <div className="project-reference-list">
